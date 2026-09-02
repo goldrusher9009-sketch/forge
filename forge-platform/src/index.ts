@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.61 AI Customer Success & Churn Prevention Engine ---
+app.post('/api/customer-success', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, productType, customerSegments, totalCustomers, mrrArr, averageContractValue, currentChurnRate, npsScore, supportTicketVolume, onboardingCompletionRate, featureAdoptionRate, customerTenureMonths, topChurnReasons, successTeamSize, currentHealthMetrics } = req.body;
+    const p = `You are a customer success expert. Generate a comprehensive CS & churn prevention strategy.
+Company: ${companyName}, Industry: ${industry}, Product: ${productType}
+Segments: ${customerSegments}, Total Customers: ${totalCustomers}, MRR/ARR: ${mrrArr}
+ACV: ${averageContractValue}, Current Churn Rate: ${currentChurnRate}, NPS: ${npsScore}
+Support Tickets/Mo: ${supportTicketVolume}, Onboarding Completion: ${onboardingCompletionRate}
+Feature Adoption: ${featureAdoptionRate}, Avg Tenure: ${customerTenureMonths} months
+Top Churn Reasons: ${topChurnReasons}, CS Team Size: ${successTeamSize}
+Current Health Metrics: ${currentHealthMetrics}
+
+Return JSON: { reportTitle, executiveSummary, csHealthScore (0-100), csHealthStatus ("Excellent"/"Good"/"At Risk"/"Critical"), estimatedChurnImpact, retentionOpportunity, customerHealthScoring { healthDimensions: [{dimension, weight, currentScore, targetScore, keySignals:[]}], redFlagIndicators:[], earlyWarningSignals:[] }, churnRiskSegmentation: [{segment, churnRiskLevel, affectedCustomers, monthlyRevenueAtRisk, primaryChurnDrivers:[], urgency}], retentionPlaybooks: [{playbook, targetSegment, trigger, timeline, steps:[], expectedOutcome, successMetrics:[]}], onboardingOptimization { currentGaps:[], criticalMilestones:[{milestone, targetDay, currentCompletionRate, interventions:[]}], timeToValueReduction, recommendedChanges:[] }, featureAdoptionStrategy { lowAdoptionFeatures:[{feature, adoptionRate, businessImpact, activationTactics:[]}], adoptionCampaigns:[{campaign, targetFeature, approach, expectedLift}] }, npsImprovementPlan { detractorRecovery:[], passiveConversion:[], promoterAmplification:[], targetNPS }, csTeamOptimization { coverageModel, accountCapacity, toolStackRecommendations:[], qbrFramework, escalationPlaybook }, voiceOfCustomer { feedbackChannels:[], insightCategories:[{category, frequency, sentiment, actionItems:[]}], closedLoopProcess }, expansionRevenue { upsellTriggers:[], crossSellOpportunities:[], expansionPlaybook:[], netRevenueRetentionTarget }, successMetrics: [{metric, currentValue, targetValue, timeframe}], quickWins:[] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid AI response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.60 AI Market Expansion & Internationalization Engine ---
 app.post('/api/market-expansion', requireAuth, async (req: AuthRequest, res) => {
   try {
