@@ -39500,6 +39500,32 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.04 Acquisition Due Diligence Checklist ---
+app.post('/api/due-diligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { targetCompany, acquirerCompany, dealType, dealValue, industry, targetRevenue, targetEmployees, dealRationale, keyRisks, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a comprehensive acquisition due diligence checklist and analysis for acquiring ${targetCompany || 'the target company'}.
+Acquirer: ${acquirerCompany || 'not specified'}
+Deal type: ${dealType || 'full acquisition'}
+Deal value: ${dealValue || 'not specified'}
+Industry: ${industry || 'not specified'}
+Target revenue: ${targetRevenue || 'not specified'}
+Target employees: ${targetEmployees || 'not specified'}
+Deal rationale: ${dealRationale || 'not specified'}
+Key risks identified: ${keyRisks || 'not specified'}
+Return JSON: { checklistTitle: string, executiveSummary: string, dealOverview:{dealType:string,rationale:string,synergies:string[],risks:string[]}, workstreams:[{workstream:string,owner:string,timeline:string,priority:'Critical'|'High'|'Medium',items:[{category:string,item:string,status:'Not Started'|'In Progress'|'Complete'|'Red Flag',notes:string,documents:string[]}]}], redFlags:[{area:string,finding:string,severity:'Critical'|'High'|'Medium',recommendation:string}], financialSummary:{revenueQuality:string,marginAnalysis:string,cashFlowNotes:string,workingCapital:string,debtObligations:string,earnoutConsiderations:string}, legalRisks:[{risk:string,severity:string,mitigation:string}], integrationConsiderations:{day1Priorities:string[],culturalFactors:string[],systemsIntegration:string[],retentionRisks:string[]}, valuationConsiderations:{methodology:string,keyDrivers:string[],synergiesValue:string,purchasePriceAdjustments:string[]}, timeline:[{phase:string,duration:string,keyActivities:string[]}], goNoGoSummary:{recommendation:'Proceed'|'Proceed with Conditions'|'Pause'|'Do Not Proceed',conditions:string[],dealBreakers:string[]} }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3200 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.03 Digital Transformation Roadmap ---
 app.post('/api/digital-transform', requireAuth, async (req: AuthRequest, res) => {
   try {

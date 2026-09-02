@@ -597,6 +597,128 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.04 Acquisition Due Diligence Checklist ---
+const DD_SEV_COLOR: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400' };
+const DD_STATUS_COLOR: Record<string,string> = { 'Complete':'text-green-400','In Progress':'text-blue-400','Not Started':'text-gray-400','Red Flag':'text-red-400' };
+const GONOGO_COLOR: Record<string,string> = { 'Proceed':'text-green-400','Proceed with Conditions':'text-yellow-400','Pause':'text-orange-400','Do Not Proceed':'text-red-400' };
+function DueDiligencePanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ targetCompany:'', acquirerCompany:'', dealType:'Full Acquisition', dealValue:'', industry:'', targetRevenue:'', targetEmployees:'', dealRationale:'', keyRisks:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'workstreams'|'redflags'|'financial'|'integration'>('overview');
+  const [expandedWS, setExpandedWS] = useState<number|null>(null);
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/due-diligence`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🔬 Acquisition Due Diligence</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['targetCompany','Target Company'],['acquirerCompany','Acquirer Company'],['dealType','Deal Type'],['dealValue','Deal Value'],['industry','Industry'],['targetRevenue','Target Revenue'],['targetEmployees','Target Employees']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+        <div><label className="text-xs text-gray-400">Provider</label><select className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      </div>
+      {[['dealRationale','Deal Rationale & Strategic Fit'],['keyRisks','Key Risks Already Identified']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Analyzing…':'Run Due Diligence'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.checklistTitle}</p>
+            <p className="text-gray-300 text-sm mb-3">{result.executiveSummary}</p>
+            {result.goNoGoSummary && (
+              <div className="flex items-center gap-3 mt-2">
+                <span className="text-xs text-gray-400">Recommendation:</span>
+                <span className={`font-bold text-sm ${GONOGO_COLOR[result.goNoGoSummary.recommendation]||'text-gray-300'}`}>{result.goNoGoSummary.recommendation}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['overview','workstreams','redflags','financial','integration'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs capitalize ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s==='redflags'?'Red Flags':s}</button>)}
+          </div>
+          {subtab==='overview' && (
+            <div className="space-y-3">
+              {result.dealOverview && <div className="bg-gray-800 rounded p-3">
+                <div className="grid grid-cols-2 gap-3 mb-3 text-xs">
+                  <div><span className="text-gray-400">Deal Type: </span><span className="text-white">{result.dealOverview.dealType}</span></div>
+                </div>
+                <p className="text-gray-300 text-xs mb-2">{result.dealOverview.rationale}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><p className="text-xs text-green-400 mb-1">Synergies</p><ul>{(result.dealOverview.synergies||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">+ {s}</li>)}</ul></div>
+                  <div><p className="text-xs text-red-400 mb-1">Risks</p><ul>{(result.dealOverview.risks||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">- {s}</li>)}</ul></div>
+                </div>
+              </div>}
+              {result.goNoGoSummary && (
+                <div className="bg-gray-800 rounded p-3">
+                  {(result.goNoGoSummary.conditions||[]).length>0&&<div className="mb-2"><p className="text-xs text-yellow-400 mb-1">Conditions</p><ul>{result.goNoGoSummary.conditions.map((c:string,i:number)=><li key={i} className="text-yellow-300 text-xs">• {c}</li>)}</ul></div>}
+                  {(result.goNoGoSummary.dealBreakers||[]).length>0&&<div><p className="text-xs text-red-400 mb-1">Deal Breakers</p><ul>{result.goNoGoSummary.dealBreakers.map((c:string,i:number)=><li key={i} className="text-red-300 text-xs">⚠ {c}</li>)}</ul></div>}
+                </div>
+              )}
+              {result.timeline&&<div className="space-y-2">{result.timeline.map((ph:any,i:number)=><div key={i} className="bg-gray-800 rounded p-2"><div className="flex justify-between mb-1"><p className="text-white text-xs font-medium">{ph.phase}</p><span className="text-gray-400 text-xs">{ph.duration}</span></div><ul>{(ph.keyActivities||[]).map((a:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {a}</li>)}</ul></div>)}</div>}
+            </div>
+          )}
+          {subtab==='workstreams' && (
+            <div className="space-y-2">
+              {(result.workstreams||[]).map((ws:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded overflow-hidden">
+                  <button className="w-full flex items-center justify-between p-3" onClick={()=>setExpandedWS(expandedWS===i?null:i)}>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-0.5 rounded ${ws.priority==='Critical'?'bg-red-900 text-red-300':ws.priority==='High'?'bg-orange-900 text-orange-300':'bg-yellow-900 text-yellow-300'}`}>{ws.priority}</span>
+                      <span className="text-white text-sm">{ws.workstream}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-400"><span>{ws.timeline}</span><span>{expandedWS===i?'▲':'▼'}</span></div>
+                  </button>
+                  {expandedWS===i && <div className="px-3 pb-3 space-y-1">{(ws.items||[]).map((item:any,j:number)=><div key={j} className="flex items-start gap-2 bg-gray-700/50 rounded p-2"><span className={`text-xs mt-0.5 ${DD_STATUS_COLOR[item.status]||'text-gray-400'}`}>●</span><div><p className="text-gray-200 text-xs">{item.item}</p>{item.notes&&<p className="text-gray-400 text-xs">{item.notes}</p>}</div></div>)}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='redflags' && (
+            <div className="space-y-2">
+              {(result.redFlags||[]).length===0?<p className="text-gray-400 text-sm">No red flags identified.</p>:(result.redFlags||[]).map((rf:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3 border-l-2 border-red-500">
+                  <div className="flex items-center justify-between mb-1"><p className="text-white text-sm font-medium">{rf.area}</p><span className={`text-xs ${DD_SEV_COLOR[rf.severity]||'text-gray-400'}`}>{rf.severity}</span></div>
+                  <p className="text-gray-300 text-xs mb-1">{rf.finding}</p>
+                  <p className="text-blue-300 text-xs">→ {rf.recommendation}</p>
+                </div>
+              ))}
+              {(result.legalRisks||[]).length>0&&<div className="mt-3"><p className="text-xs text-gray-400 mb-2">Legal Risks</p>{result.legalRisks.map((lr:any,i:number)=><div key={i} className="bg-gray-800 rounded p-2 mb-1"><div className="flex justify-between"><p className="text-gray-200 text-xs">{lr.risk}</p><span className="text-xs text-yellow-400">{lr.severity}</span></div><p className="text-gray-400 text-xs">{lr.mitigation}</p></div>)}</div>}
+            </div>
+          )}
+          {subtab==='financial' && result.financialSummary && (
+            <div className="space-y-2">
+              {Object.entries(result.financialSummary).map(([k,v])=>(
+                <div key={k} className="bg-gray-800 rounded p-3">
+                  <p className="text-xs text-gray-400 mb-1 capitalize">{k.replace(/([A-Z])/g,' $1').trim()}</p>
+                  <p className="text-gray-200 text-sm">{v as string}</p>
+                </div>
+              ))}
+              {result.valuationConsiderations&&<div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Valuation</p><p className="text-gray-200 text-xs mb-2">{result.valuationConsiderations.methodology}</p><p className="text-green-300 text-xs mb-1">Synergies Value: {result.valuationConsiderations.synergiesValue}</p><ul>{(result.valuationConsiderations.purchasePriceAdjustments||[]).map((a:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {a}</li>)}</ul></div>}
+            </div>
+          )}
+          {subtab==='integration' && result.integrationConsiderations && (
+            <div className="space-y-3">
+              {[['Day 1 Priorities',result.integrationConsiderations.day1Priorities,'text-indigo-300'],['Cultural Factors',result.integrationConsiderations.culturalFactors,'text-purple-300'],['Systems Integration',result.integrationConsiderations.systemsIntegration,'text-blue-300'],['Retention Risks',result.integrationConsiderations.retentionRisks,'text-red-300']].map(([label,items,color])=>(
+                <div key={label as string} className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">{label}</p><ul className="space-y-1">{(items as string[]).map((it,i)=><li key={i} className={`text-xs ${color}`}>• {it}</li>)}</ul></div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.03 Digital Transformation Roadmap ---
 const EFFORT_COLOR: Record<string,string> = { 'Low':'text-green-400','Medium':'text-yellow-400','High':'text-red-400' };
 const TECH_PRIORITY_COLOR: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400' };
@@ -6784,7 +6906,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6873,6 +6995,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
     { id: 'digitaltransform', label: '🚀 Digital Transform' },
+    { id: 'duediligence', label: '🔬 Due Diligence' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -7013,6 +7136,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'duediligence' && <DueDiligencePanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
