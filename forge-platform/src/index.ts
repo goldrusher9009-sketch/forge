@@ -39500,6 +39500,49 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.61 AI Workforce Planning & Skills Gap Analyzer ---
+app.post('/api/workforce-planner', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { company, industry, currentHeadcount, growthTarget, timeHorizon, keyRoles, currentSkills, strategicGoals } = req.body;
+    const p = `You are a workforce planning and HR strategy expert. Generate a comprehensive workforce planning and skills gap analysis.
+Company: ${company || 'Our Company'}
+Industry: ${industry || 'Technology'}
+Current Headcount: ${currentHeadcount || '50 employees'}
+Growth Target: ${growthTarget || '20% growth in 12 months'}
+Time Horizon: ${timeHorizon || '12-18 months'}
+Key Roles: ${keyRoles || 'Engineering, Sales, Product'}
+Current Skills: ${currentSkills || 'General technical and business skills'}
+Strategic Goals: ${strategicGoals || 'Scale revenue and expand product'}
+
+Return JSON only:
+{
+  "planTitle": "string",
+  "executiveSummary": "string",
+  "workforceReadinessScore": 0-100,
+  "talentRisk": "Low|Moderate|High|Critical",
+  "headcountPlan": [{ "role": "string", "current": number, "target": number, "gap": number, "priority": "Critical|High|Medium|Low", "timeline": "string" }],
+  "skillsGapAnalysis": [{ "skill": "string", "currentLevel": "None|Basic|Intermediate|Advanced", "requiredLevel": "Basic|Intermediate|Advanced|Expert", "gap": "string", "developmentPath": "string" }],
+  "criticalRoles": [{ "role": "string", "riskLevel": "string", "successorReady": true|false, "mitigation": "string" }],
+  "hiringPlan": [{ "role": "string", "count": number, "quarter": "string", "sourcingStrategy": "string", "estimatedCost": "string" }],
+  "learningDevelopment": [{ "program": "string", "targetAudience": "string", "skillsCovered": ["string"], "format": "string", "duration": "string" }],
+  "retentionStrategy": [{ "initiative": "string", "targetGroup": "string", "expectedImpact": "string", "cost": "string" }],
+  "diversityInclusion": { "currentState": "string", "goals": ["string"], "initiatives": ["string"] },
+  "orgDesign": { "currentStructure": "string", "recommendedStructure": "string", "rationale": "string" },
+  "budgetRequirements": [{ "category": "string", "amount": "string", "justification": "string" }],
+  "workforceMilestones": [{ "milestone": "string", "timeline": "string", "metric": "string" }],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.60 AI Market Entry Strategy Engine ---
 app.post('/api/market-entry', requireAuth, async (req: AuthRequest, res) => {
   try {

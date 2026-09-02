@@ -597,6 +597,46 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.61 AI Workforce Planning & Skills Gap Analyzer ---
+const TALENT_RISK_COLOR: Record<string,string> = { 'Low':'bg-green-700','Moderate':'bg-yellow-700','High':'bg-orange-700','Critical':'bg-red-700' };
+const SKILL_GAP_COLOR: Record<string,string> = { 'None':'bg-red-800','Basic':'bg-orange-700','Intermediate':'bg-yellow-700','Advanced':'bg-green-700','Expert':'bg-blue-700' };
+function WorkforcePlannerPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', currentHeadcount:'', growthTarget:'', timeHorizon:'', keyRoles:'', currentSkills:'', strategicGoals:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/workforce-planner`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-2xl font-bold text-white">👥 Workforce Planning & Skills Gap Analyzer</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {[['company','Company Name'],['industry','Industry'],['currentHeadcount','Current Headcount'],['growthTarget','Growth Target'],['timeHorizon','Time Horizon'],['keyRoles','Key Roles'],['currentSkills','Current Skills'],['strategicGoals','Strategic Goals']].map(([k,l])=>(
+          <div key={k}><label className="text-gray-400 text-xs">{l}</label><input className="w-full bg-gray-800 text-white rounded px-3 py-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Analyzing...' : 'Generate Workforce Plan'}</button>
+      {error && <div className="text-red-400 text-sm">{error}</div>}
+      {result && <div className="space-y-4">
+        <div className="bg-gray-800 rounded p-4"><div className="flex items-center gap-3 mb-2"><h3 className="text-lg font-bold text-white">{result.planTitle}</h3><span className={`px-3 py-1 rounded-full text-xs text-white ${TALENT_RISK_COLOR[result.talentRisk]||'bg-gray-700'}`}>{result.talentRisk} Risk</span><span className="text-2xl font-bold text-green-400">{result.workforceReadinessScore}/100</span></div><p className="text-gray-300 text-sm">{result.executiveSummary}</p></div>
+        {result.headcountPlan?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">📊 Headcount Plan</h4><div className="space-y-2">{result.headcountPlan.map((h:any,i:number)=><div key={i} className="bg-gray-700 rounded p-3 flex items-center gap-4"><div className="flex-1"><div className="text-white text-sm font-medium">{h.role}</div><div className="text-gray-400 text-xs">{h.timeline}</div></div><div className="flex gap-3 text-center"><div><div className="text-gray-400 text-xs">Current</div><div className="text-white font-bold">{h.current}</div></div><div><div className="text-gray-400 text-xs">Target</div><div className="text-white font-bold">{h.target}</div></div><div><div className="text-gray-400 text-xs">Gap</div><div className={`font-bold ${h.gap>0?'text-red-400':'text-green-400'}`}>{h.gap>0?'+':''}{h.gap}</div></div></div><span className={`text-xs px-2 py-1 rounded text-white ${h.priority==='Critical'?'bg-red-700':h.priority==='High'?'bg-orange-700':h.priority==='Medium'?'bg-yellow-700':'bg-gray-600'}`}>{h.priority}</span></div>)}</div></div>}
+        {result.skillsGapAnalysis?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">🎯 Skills Gap Analysis</h4><div className="space-y-2">{result.skillsGapAnalysis.map((s:any,i:number)=><div key={i} className="bg-gray-700 rounded p-3"><div className="flex items-center gap-3 mb-1"><span className="text-white text-sm font-medium">{s.skill}</span><span className={`text-xs px-2 py-0.5 rounded text-white ${SKILL_GAP_COLOR[s.currentLevel]||'bg-gray-600'}`}>{s.currentLevel}</span><span className="text-gray-400 text-xs">→</span><span className={`text-xs px-2 py-0.5 rounded text-white ${SKILL_GAP_COLOR[s.requiredLevel]||'bg-blue-700'}`}>{s.requiredLevel}</span></div><p className="text-gray-400 text-xs">{s.developmentPath}</p></div>)}</div></div>}
+        {result.hiringPlan?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">🔍 Hiring Plan</h4><div className="space-y-2">{result.hiringPlan.map((h:any,i:number)=><div key={i} className="bg-gray-700 rounded p-3 flex items-center gap-4"><div className="flex-1"><div className="text-white text-sm">{h.role} <span className="text-blue-400 font-bold">×{h.count}</span></div><div className="text-gray-400 text-xs">{h.sourcingStrategy}</div></div><div className="text-right"><div className="text-gray-400 text-xs">{h.quarter}</div><div className="text-green-400 text-sm font-medium">{h.estimatedCost}</div></div></div>)}</div></div>}
+        {result.retentionStrategy?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">💙 Retention Strategy</h4><div className="space-y-2">{result.retentionStrategy.map((r:any,i:number)=><div key={i} className="bg-gray-700 rounded p-3"><div className="text-white text-sm">{r.initiative}</div><div className="text-gray-400 text-xs">{r.targetGroup} · {r.expectedImpact} · {r.cost}</div></div>)}</div></div>}
+        {result.quickWins?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-2">⚡ Quick Wins</h4><ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">✓</span>{w}</li>)}</ul></div>}
+      </div>}
+    </div>
+  );
+}
+
 // --- v9.60 AI Market Entry Strategy Engine ---
 const ENTRY_VIABILITY_COLOR: Record<string,string> = { 'High Confidence':'bg-green-700','Moderate Risk':'bg-yellow-700','High Risk':'bg-orange-700','Not Recommended':'bg-red-700' };
 const PRIORITY_COLOR: Record<string,string> = { 'Primary':'bg-blue-700','Secondary':'bg-purple-700','Tertiary':'bg-gray-700' };
@@ -10834,7 +10874,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10922,6 +10962,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'workforceplanner', label: '👥 Workforce Plan' },
     { id: 'marketentry2', label: '🌍 Market Entry' },
     { id: 'boardprep2', label: '🏛️ Board Prep' },
     { id: 'csplaybookbuilder', label: '🎯 CS Playbook' },
@@ -10953,6 +10994,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'workforceplanner', label: '👥 Workforce Plan' },
     { id: 'marketentry2', label: '🌍 Market Entry' },
     { id: 'boardprep2', label: '🏛️ Board Prep' },
     { id: 'csplaybookbuilder', label: '🎯 CS Playbook' },
@@ -11124,6 +11166,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'workforceplanner' && <WorkforcePlannerPanel api={api} />}
         {tab === 'marketentry2' && <MarketEntryPanel api={api} />}
         {tab === 'boardprep2' && <BoardPrepV2Panel api={api} />}
         {tab === 'csplaybookbuilder' && <CSPlaybookBuilderPanel api={api} />}
@@ -11149,6 +11192,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'workforceplanner' && <WorkforcePlannerPanel api={api} />}
         {tab === 'marketentry2' && <MarketEntryPanel api={api} />}
         {tab === 'boardprep2' && <BoardPrepV2Panel api={api} />}
         {tab === 'csplaybookbuilder' && <CSPlaybookBuilderPanel api={api} />}
@@ -11157,6 +11201,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'workforceplanner' && <WorkforcePlannerPanel api={api} />}
         {tab === 'marketentry2' && <MarketEntryPanel api={api} />}
         {tab === 'boardprep2' && <BoardPrepV2Panel api={api} />}
         {tab === 'csplaybookbuilder' && <CSPlaybookBuilderPanel api={api} />}
