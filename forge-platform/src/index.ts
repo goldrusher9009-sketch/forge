@@ -39500,6 +39500,79 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.43 AI Pricing & Revenue Optimization Engine ---
+app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, businessModel, currentPricing, arpu, churnRate, competitors, targetSegments, growthGoal } = req.body;
+  const p = `You are a world-class pricing strategist and revenue optimization expert. Create a comprehensive pricing and revenue optimization strategy.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Business Model: ${businessModel || 'Unknown'}
+Current Pricing: ${currentPricing || 'Unknown'}
+ARPU: ${arpu || 'Unknown'}
+Churn Rate: ${churnRate || 'Unknown'}
+Competitors: ${competitors || 'Unknown'}
+Target Segments: ${targetSegments || 'Unknown'}
+Growth Goal: ${growthGoal || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Pricing & Revenue Optimization Report for [company]",
+  "executiveSummary": "3-sentence revenue health assessment and pricing opportunity",
+  "revenueScore": <number 0-100>,
+  "pricingMaturity": "Cost-Plus|Competitive|Value-Based|Dynamic|AI-Optimized",
+  "biggestLeakage": "largest revenue leakage identified",
+  "quickestWin": "fastest revenue improvement available",
+  "revenueUpliftPotential": "estimated % revenue increase from optimization",
+  "revenueAudit": {
+    "pricingStrategy": { "score": <0-100>, "finding": "assessment", "opportunity": "improvement" },
+    "packageDesign": { "score": <0-100>, "finding": "assessment", "opportunity": "improvement" },
+    "expansionRevenue": { "score": <0-100>, "finding": "assessment", "opportunity": "improvement" },
+    "churnPrevention": { "score": <0-100>, "finding": "assessment", "opportunity": "improvement" },
+    "monetization": { "score": <0-100>, "finding": "assessment", "opportunity": "improvement" }
+  },
+  "pricingModels": [
+    { "model": "pricing model name", "fit": "High/Medium/Low", "description": "how it works for this company", "pros": ["pro 1"], "cons": ["con 1"], "implementation": "implementation approach" }
+  ],
+  "recommendedTiers": [
+    { "tierName": "tier name", "targetSegment": "who it targets", "price": "price point", "billingCadence": "monthly/annual", "keyFeatures": ["feature 1", "feature 2"], "positioningStatement": "why this tier", "conversionStrategy": "how to upsell to next tier" }
+  ],
+  "expansionRevenuePlaybook": [
+    { "motion": "expansion motion (upsell/cross-sell/seat expansion)", "trigger": "when to activate", "tactic": "specific tactic", "expectedLift": "revenue lift estimate", "tooling": "required tools" }
+  ],
+  "churnRevenueRecovery": {
+    "churnDiagnosis": "root cause analysis",
+    "atRiskSignals": ["signal 1", "signal 2"],
+    "interventions": [{ "intervention": "action", "timing": "when", "expectedSave": "% churn saved" }],
+    "winbackProgram": "churned customer recovery strategy"
+  },
+  "competitivePricing": [
+    { "competitor": "competitor name", "pricePoint": "their pricing", "positioning": "their strategy", "yourAdvantage": "your competitive edge", "responseStrategy": "how to respond" }
+  ],
+  "revenueMetrics": {
+    "targetARR": "target ARR based on goals",
+    "nrrTarget": "target net revenue retention",
+    "ltvTarget": "target LTV",
+    "paybackTarget": "target payback period",
+    "expansionMRRTarget": "target expansion MRR %"
+  },
+  "implementationRoadmap": [
+    { "phase": "phase name", "timeline": "timeline", "actions": ["action 1", "action 2"], "revenueImpact": "expected impact", "risk": "risk level" }
+  ],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.42 AI Talent Intelligence & Workforce Planning Engine ---
 app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
