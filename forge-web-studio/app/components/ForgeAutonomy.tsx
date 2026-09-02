@@ -597,6 +597,111 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.90 Investor Update Generator ---
+function InvestorUpdatePanel({ api }: { api: string }) {
+  const [company, setCompany] = React.useState('');
+  const [period, setPeriod] = React.useState('');
+  const [highlights, setHighlights] = React.useState('');
+  const [metrics, setMetrics] = React.useState('');
+  const [challenges, setChallenges] = React.useState('');
+  const [asks, setAsks] = React.useState('');
+  const [nextPeriodGoals, setNextPeriodGoals] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/investor-update`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ company, period, highlights, metrics, challenges, asks, nextPeriodGoals }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div style={{ padding: 24, maxWidth: 860 }}>
+      <h2 style={{ marginBottom: 4 }}>📨 Investor Update Generator</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Generate professional monthly/quarterly investor update emails that build trust and momentum.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[['Company', company, setCompany, 'e.g. Forge AI'], ['Period', period, setPeriod, 'e.g. August 2026'], ['Highlights', highlights, setHighlights, 'e.g. Closed $50k MRR, launched v2'], ['Key Metrics', metrics, setMetrics, 'e.g. MRR $50k (+15%), 1,200 users'], ['Challenges', challenges, setChallenges, 'e.g. Hiring delays, churn spike'], ['Asks', asks, setAsks, 'e.g. Intros to Series A VCs, talent'], ['Next Period Goals', nextPeriodGoals, setNextPeriodGoals, 'e.g. $75k MRR, hire 2 engineers']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading || !company} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Writing...' : 'Generate Investor Update'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24, background: '#111827', borderRadius: 12, padding: 24, fontFamily: 'Georgia, serif' }}>
+          <div style={{ fontSize: 12, color: '#888', marginBottom: 4, fontFamily: 'monospace' }}>Subject: {result.subject}</div>
+          <hr style={{ border: '1px solid #222', margin: '12px 0' }} />
+          <p style={{ color: '#ccc' }}>{result.greeting}</p>
+          <div style={{ background: '#1a1a2e', borderRadius: 8, padding: 14, marginBottom: 16 }}>
+            <div style={{ fontWeight: 700, color: '#facc15', marginBottom: 6, fontSize: 13 }}>⚡ TL;DR</div>
+            <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.tldr}</p>
+          </div>
+          {result.highlights?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>🏆 Highlights</div>
+              {result.highlights.map((h: any, i: number) => (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600, fontSize: 14 }}>{h.emoji} {h.title}</div>
+                  <div style={{ color: '#aaa', fontSize: 13, paddingLeft: 20 }}>{h.detail}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.metrics?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>📊 Metrics</div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 10 }}>
+                {result.metrics.map((m: any, i: number) => (
+                  <div key={i} style={{ background: '#1a1a2e', borderRadius: 8, padding: 12, textAlign: 'center' }}>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: '#34d399' }}>{m.value}</div>
+                    <div style={{ fontSize: 12, color: '#888' }}>{m.label}</div>
+                    <div style={{ fontSize: 11, color: m.trend?.startsWith('+') ? '#34d399' : '#f87171' }}>{m.trend}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.challenges?.length > 0 && (
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>🧱 Challenges & Actions</div>
+              {result.challenges.map((c: any, i: number) => (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600, color: '#f87171', fontSize: 13 }}>{c.challenge}</div>
+                  <div style={{ color: '#aaa', fontSize: 13, paddingLeft: 12 }}>→ {c.action}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.asks?.length > 0 && (
+            <div style={{ background: '#7c3aed22', borderRadius: 8, padding: 14, marginBottom: 16, border: '1px solid #7c3aed55' }}>
+              <div style={{ fontWeight: 700, color: '#7c3aed', marginBottom: 8 }}>🙏 How You Can Help</div>
+              {result.asks.map((a: any, i: number) => (
+                <div key={i} style={{ marginBottom: 6 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{a.ask}</div>
+                  <div style={{ color: '#aaa', fontSize: 12 }}>{a.context}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontWeight: 700, marginBottom: 8 }}>🎯 Next Month Goals</div>
+            <ul style={{ margin: 0, paddingLeft: 20 }}>{result.nextPeriodGoals?.map((g: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 13, marginBottom: 4 }}>{g}</li>)}</ul>
+          </div>
+          <p style={{ color: '#ccc' }}>{result.closing}</p>
+          {result.ps && <p style={{ color: '#888', fontSize: 13, fontStyle: 'italic' }}>{result.ps}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.89 Customer Success Playbook Generator ---
 const SEVERITY_COLOR: Record<string,string> = { high: '#ef4444', medium: '#f59e0b', low: '#34d399' };
 function CSPlaybookPanel({ api }: { api: string }) {
@@ -5154,7 +5259,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -5231,6 +5336,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
     { id: 'partnershipproposal', label: '🤝 Partnership Proposal' },
     { id: 'pricingstrategy', label: '💰 Pricing Strategy' },
@@ -5357,6 +5463,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
         {tab === 'partnershipproposal' && <PartnershipProposalPanel api={api} />}
         {tab === 'pricingstrategy' && <PricingStrategyPanel api={api} />}

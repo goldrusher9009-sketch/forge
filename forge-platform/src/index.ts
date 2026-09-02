@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.90 Investor Update Generator ---
+app.post('/api/investor-update', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, period, highlights, metrics, challenges, asks, nextPeriodGoals, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a professional investor update email for ${company || 'the company'}.
+Period: ${period || 'this month'}
+Highlights: ${highlights || 'key wins'}
+Key metrics: ${metrics || 'MRR, users, churn'}
+Challenges: ${challenges || 'obstacles faced'}
+Asks from investors: ${asks || 'intros, advice'}
+Next period goals: ${nextPeriodGoals || 'growth targets'}
+Return JSON: { subject: string, greeting: string, tldr: string, highlights: [{emoji:string,title:string,detail:string}], metrics: [{label:string,value:string,trend:string,context:string}], challenges: [{challenge:string,action:string}], asks: [{ask:string,context:string}], nextPeriodGoals: string[], closing: string, ps: string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.89 Customer Success Playbook Generator ---
 app.post('/api/cs-playbook', requireAuth, async (req: AuthRequest, res) => {
   try {
