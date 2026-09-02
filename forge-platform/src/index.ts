@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.97 Product Launch Checklist Generator ---
+app.post('/api/launch-checklist', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { productName, productType, targetMarket, launchDate, teamSize, channels, budget, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a comprehensive product launch checklist for "${productName || 'the product'}".
+Product type: ${productType || 'SaaS'}
+Target market: ${targetMarket || 'B2B'}
+Launch date: ${launchDate || 'in 90 days'}
+Team size: ${teamSize || '10 people'}
+Launch channels: ${channels || 'website, email, social media, PR'}
+Budget: ${budget || 'not specified'}
+Return JSON: { launchTitle: string, launchDate: string, phases:[{phase:string,timeline:string,status:'Not Started',items:[{category:string,task:string,owner:string,dueDate:string,priority:'Critical'|'High'|'Medium'|'Low',notes:string,dependencies:string[]}]}], goNoGoCriteria:[{criterion:string,threshold:string,owner:string}], launchDayRunbook:[{time:string,action:string,owner:string,contingency:string}], postLaunchMonitoring:[{metric:string,target:string,frequency:string,tool:string}], riskRegister:[{risk:string,probability:'High'|'Medium'|'Low',impact:'High'|'Medium'|'Low',mitigation:string}], successMetrics:[{metric:string,target:string,timeframe:string}] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.96 Board Meeting Agenda Generator ---
 app.post('/api/board-agenda', requireAuth, async (req: AuthRequest, res) => {
   try {
