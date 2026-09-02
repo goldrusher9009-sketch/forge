@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.23 AI Innovation & R&D Portfolio Strategy Engine ---
+app.post('/api/innovation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { companyType, industryVertical, currentRdBudget, existingCapabilities, innovationHorizon, competitivePressures, customerPainPoints, emergingTechnologies, teamComposition, innovationGoals } = req.body;
+  const p = `You are a world-class Chief Innovation Officer. Build a comprehensive Innovation & R&D Portfolio Strategy report.
+Company: ${companyType}, Industry: ${industryVertical}, R&D budget: ${currentRdBudget}, Capabilities: ${existingCapabilities}, Horizon: ${innovationHorizon}, Competition: ${competitivePressures}, Customer pain: ${customerPainPoints}, Tech: ${emergingTechnologies}, Team: ${teamComposition}, Goals: ${innovationGoals}
+
+Return JSON:
+- reportTitle (string)
+- executiveSummary (string)
+- innovationScore (number 0-100)
+- innovationArchetype (string: "Disruptor"|"Fast Follower"|"Platform Builder"|"Optimizer"|"Ecosystem Player")
+- primaryOpportunity (string)
+- innovationFramework (object: philosophy string, horizons string[], portfolio_balance string, governance_model string)
+- portfolioStrategy (array of objects: horizon string, percentage string, initiatives string[], expectedReturn string, timeToValue string)
+- technologyRadar (object: adopt string[], trial string[], assess string[], hold string[])
+- buildBuyPartner (object: build_rationale string, buy_targets string[], partner_strategy string, open_source_plays string[])
+- innovationOps (object: ideation_process string, stage_gate_model string, kill_criteria string, scaling_playbook string, metrics_framework string)
+- talentStrategy (object: key_roles string[], capability_gaps string[], external_talent string, culture_initiatives string[])
+- experimentationEngine (object: hypothesis_framework string, mvp_methodology string, learning_loops string, fail_fast_culture string)
+- ipStrategy (object: patent_approach string, trade_secrets string, open_innovation string, licensing_strategy string)
+- roadmap (array of objects: initiative string, horizon string, investment string, milestone string, owner string)
+- metrics (array of objects: kpi string, target string, measurement string)
+- quickWins (array of 5 strings)`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0] || '{}';
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.22 AI M&A Intelligence & Due Diligence Engine ---
 app.post('/api/ma-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
