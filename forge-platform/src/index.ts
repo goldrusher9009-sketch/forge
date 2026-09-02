@@ -39215,6 +39215,26 @@ Return ONLY JSON:
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.49 Pitch Deck Builder — generate a structured pitch deck outline
+app.post('/api/pitch-deck', requireAuth, async (req: any, res: any) => {
+  try {
+    const { startup, problem, solution, market, traction, ask } = req.body;
+    if (!startup || !problem || !solution) return res.status(400).json({ error: 'startup, problem, solution required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a top startup pitch deck consultant. Create a compelling pitch deck outline for this startup:\nName: ${startup}\nProblem: ${problem}\nSolution: ${solution}\nMarket: ${market||'not specified'}\nTraction: ${traction||'early stage'}\nAsk: ${ask||'not specified'}\n\nReturn ONLY JSON:\n{"tagline":"one punchy tagline","slides":[{"slide":1,"title":"Cover","content":"What to put on this slide","speaker_notes":"What to say"},{"slide":2,"title":"Problem","content":"content","speaker_notes":"notes"},{"slide":3,"title":"Solution","content":"content","speaker_notes":"notes"},{"slide":4,"title":"Market Size","content":"content","speaker_notes":"notes"},{"slide":5,"title":"Product","content":"content","speaker_notes":"notes"},{"slide":6,"title":"Traction","content":"content","speaker_notes":"notes"},{"slide":7,"title":"Business Model","content":"content","speaker_notes":"notes"},{"slide":8,"title":"Competition","content":"content","speaker_notes":"notes"},{"slide":9,"title":"Team","content":"content","speaker_notes":"notes"},{"slide":10,"title":"The Ask","content":"content","speaker_notes":"notes"}],"investor_hook":"opening hook sentence for the pitch","key_metrics":["metric1","metric2","metric3"],"red_flags_to_avoid":["thing to avoid 1","thing to avoid 2"]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, startup, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

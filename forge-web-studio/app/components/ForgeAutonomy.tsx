@@ -597,6 +597,94 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.49 Pitch Deck Builder ---
+function PitchDeckPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ startup: '', problem: '', solution: '', market: '', traction: '', ask: '' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  const build = async () => {
+    if (!form.startup || !form.problem || !form.solution) return;
+    setLoading(true); setErr(''); setResult(null); setActiveSlide(0);
+    try {
+      const r = await fetch(`${api.base}/api/pitch-deck`, {
+        method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      setResult(d);
+    } catch(e: any) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const inp = (k: string) => ({ value: (form as any)[k], onChange: (e: any) => setForm(f => ({...f, [k]: e.target.value})),
+    style: { width: '100%', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13, boxSizing: 'border-box' as any } });
+
+  return (
+    <div>
+      <h3 style={{ color: '#e2e8f0', marginBottom: 8 }}>🚀 Pitch Deck Builder</h3>
+      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Generate a structured investor pitch deck outline.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <div><label style={{ color: '#94a3b8', fontSize: 12 }}>Startup Name *</label><input {...inp('startup')} placeholder="Acme AI" /></div>
+        <div><label style={{ color: '#94a3b8', fontSize: 12 }}>Market / TAM</label><input {...inp('market')} placeholder="$10B SaaS market" /></div>
+        <div><label style={{ color: '#94a3b8', fontSize: 12 }}>Problem *</label><input {...inp('problem')} placeholder="The problem you solve" /></div>
+        <div><label style={{ color: '#94a3b8', fontSize: 12 }}>Traction</label><input {...inp('traction')} placeholder="100 users, $5K MRR" /></div>
+        <div><label style={{ color: '#94a3b8', fontSize: 12 }}>Solution *</label><input {...inp('solution')} placeholder="Your unique solution" /></div>
+        <div><label style={{ color: '#94a3b8', fontSize: 12 }}>The Ask</label><input {...inp('ask')} placeholder="$500K pre-seed" /></div>
+      </div>
+      <button onClick={build} disabled={loading || !form.startup || !form.problem || !form.solution}
+        style={{ background: '#6366f1', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Building...' : 'Build Pitch Deck'}
+      </button>
+      {err && <p style={{ color: '#f87171', marginTop: 8 }}>{err}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ background: '#1e1b4b', border: '1px solid #4338ca', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+            <div style={{ color: '#a5b4fc', fontSize: 11, marginBottom: 4 }}>INVESTOR HOOK</div>
+            <p style={{ color: '#e0e7ff', fontStyle: 'italic', fontSize: 14 }}>"{result.investor_hook}"</p>
+            <div style={{ color: '#818cf8', fontSize: 12, marginTop: 6 }}>✨ {result.tagline}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
+            {result.slides?.map((s: any, i: number) => (
+              <button key={i} onClick={() => setActiveSlide(i)}
+                style={{ background: activeSlide === i ? '#6366f1' : '#1e293b', color: activeSlide === i ? '#fff' : '#94a3b8', border: '1px solid #334155', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>
+                {s.slide}. {s.title}
+              </button>
+            ))}
+          </div>
+          {result.slides?.[activeSlide] && (
+            <div style={{ background: '#1e293b', borderRadius: 8, padding: 14, marginBottom: 12 }}>
+              <h4 style={{ color: '#6366f1', marginBottom: 8 }}>Slide {result.slides[activeSlide].slide}: {result.slides[activeSlide].title}</h4>
+              <p style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 8 }}>{result.slides[activeSlide].content}</p>
+              <div style={{ background: '#0f172a', borderRadius: 4, padding: 8, borderLeft: '2px solid #6366f1' }}>
+                <div style={{ color: '#64748b', fontSize: 11, marginBottom: 4 }}>SPEAKER NOTES</div>
+                <p style={{ color: '#94a3b8', fontSize: 12 }}>{result.slides[activeSlide].speaker_notes}</p>
+              </div>
+            </div>
+          )}
+          {result.key_metrics && (
+            <div style={{ background: '#1e293b', borderRadius: 6, padding: 10, marginBottom: 8 }}>
+              <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>📊 Key Metrics to Highlight</div>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {result.key_metrics.map((m: string, i: number) => <span key={i} style={{ background: '#0f172a', color: '#38bdf8', borderRadius: 4, padding: '2px 8px', fontSize: 12 }}>{m}</span>)}
+              </div>
+            </div>
+          )}
+          {result.red_flags_to_avoid && (
+            <div style={{ background: '#2d1b1b', border: '1px solid #7f1d1d', borderRadius: 6, padding: 10 }}>
+              <div style={{ color: '#fca5a5', fontSize: 12, marginBottom: 6 }}>🚫 Red Flags to Avoid</div>
+              {result.red_flags_to_avoid.map((f: string, i: number) => <p key={i} style={{ color: '#f87171', fontSize: 12, margin: '2px 0' }}>• {f}</p>)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.48 Risk Analyzer ---
 function RiskAnalyzerPanel({ api }: { api: Api }) {
   const [plan, setPlan] = useState('');
@@ -2519,7 +2607,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2562,6 +2650,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'writecoach', label: '✍️ Coach' },
     { id: 'decision', label: '⚖️ Decide' },
     { id: 'risk', label: '⚠️ Risks' },
+    { id: 'pitch', label: '🚀 Pitch Deck' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2647,6 +2736,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'writecoach' && <WritingCoachPanel api={api} />}
         {tab === 'decision' && <DecisionMatrixPanel api={api} />}
         {tab === 'risk' && <RiskAnalyzerPanel api={api} />}
+        {tab === 'pitch' && <PitchDeckPanel api={api} />}
       </div>
     </div>
   );
