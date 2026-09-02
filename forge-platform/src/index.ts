@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.74 Social Media Audit ---
+app.post('/api/social-audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { handle, platform, bio, recentPosts, goals, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Perform a social media audit for ${platform || 'Instagram'} account @${handle || 'unknown'}.
+Bio: ${bio || 'Not provided'}
+Recent posts description: ${recentPosts || 'Not provided'}
+Goals: ${goals || 'grow audience and increase engagement'}
+Provide: 1) Profile Audit (bio, profile pic, link), 2) Content Analysis (themes, consistency, quality), 3) Engagement Assessment, 4) Brand Voice evaluation, 5) Top 5 specific improvement recommendations, 6) Content ideas for next 2 weeks. Return JSON: { scores: { profile: number, content: number, engagement: number, brand: number }, summary: string, recommendations: string[], contentIdeas: string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.73 Webinar Script Writer ---
 app.post('/api/webinar-script', requireAuth, async (req: AuthRequest, res) => {
   try {
