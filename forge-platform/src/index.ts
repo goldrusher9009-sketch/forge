@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.15 AI Community-Led Growth & Developer Advocacy Engine ---
+app.post('/api/community-growth', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+  const { productType, targetAudience, communitySize, primaryPlatforms, topContributors, contentCadence, devRelBudget, competitorCommunities, openSourceStrategy, advocacyGoals } = req.body;
+  const p = `You are a community growth and developer relations expert. Generate a comprehensive community-led growth strategy.
+Product: ${productType}, audience=${targetAudience}, community size=${communitySize}
+Platforms: ${primaryPlatforms}, top contributors=${topContributors}
+Content cadence: ${contentCadence}, budget=${devRelBudget}
+Competitor communities: ${competitorCommunities}, OSS strategy=${openSourceStrategy}
+Advocacy goals: ${advocacyGoals}
+
+Return JSON: { strategyTitle, executiveSummary, communityScore (0-100), primaryGrowthMotion, advocacyMultiplier, communityFramework: { vision, flywheel, north_star_metric }, platformStrategy: [{ platform, purpose, content_mix[], posting_frequency, growth_tactics[], kpis[] }] (4 platforms), developerProgram: { champion_tiers[], onboarding_journey[], rewards_structure, exclusives[], ambassador_playbook }, contentEngine: { pillar_topics[], content_types[], distribution_channels[], repurposing_strategy, seo_strategy }, eventStrategy: { virtual_events[], conference_presence[], hackathons[], community_calls[], sponsorships[] }, openSourcePlaybook: { contribution_guidelines, maintainer_strategy, governance_model, ecosystem_partners[], monetization_bridge }, communityOps: { moderation_framework, health_metrics[], toolstack[], feedback_loops[], community_council }, advocacyPrograms: [{ program, target_advocates, value_prop, activation_steps[], success_metrics[] }] (4 programs), growthExperiments: [{ experiment, hypothesis, channel, metric, timeline }] (6 items), metrics: [{ kpi, target, measurement_method }] (10 items), ninetyDayPlan: [{ phase, weeks, focus, deliverables[], owner }] (3 phases), quickWins: [] (5 items) }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    res.json(json ? JSON.parse(json) : { error: 'Parse failed', raw: text });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.14 AI Product-Led Growth & PLG Optimization Engine ---
 app.post('/api/plg-optimizer', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
