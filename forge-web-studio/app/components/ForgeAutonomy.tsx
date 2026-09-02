@@ -597,6 +597,130 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.16 Pricing Strategy Optimizer ---
+const SUIT_COLOR: Record<string,string> = { 'Excellent':'text-green-400','Good':'text-blue-400','Fair':'text-yellow-400','Poor':'text-red-400' };
+function PricingStrategyPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', businessModel:'SaaS', currentPrice:'', costStructure:'', targetMargin:'', competitors:'', customerSegments:'', valueProposition:'', pricingGoal:'Grow Revenue', marketPosition:'Mid-market', revenueTarget:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'diagnosis'|'models'|'segments'|'competitive'|'experiments'|'projection'|'tactics'>('diagnosis');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/pricing-strategy`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">💲 Pricing Strategy Optimizer</h2>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {[['company','Company'],['product','Product'],['industry','Industry'],['businessModel','Business Model'],['currentPrice','Current Price'],['targetMargin','Target Margin %'],['pricingGoal','Pricing Goal'],['marketPosition','Market Position'],['revenueTarget','Revenue Target']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} /></div>
+        ))}
+      </div>
+      {[['costStructure','Cost Structure (COGS, fixed, variable)'],['competitors','Competitors & Their Prices'],['customerSegments','Customer Segments'],['valueProposition','Value Proposition']].map(([k,l])=>(
+        <div key={k} className="mb-2"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-emerald-700 hover:bg-emerald-600 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Analyzing…':'Optimize Pricing'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded p-4 mb-4">
+            <p className="text-white font-bold mb-1">{result.reportTitle}</p>
+            <p className="text-gray-300 text-sm mb-2">{result.executiveSummary}</p>
+            {result.recommendedStrategy && <div className="bg-emerald-900 rounded p-2"><p className="text-emerald-300 text-xs font-bold">Recommended: {result.recommendedStrategy.model}</p><p className="text-gray-300 text-xs">{result.recommendedStrategy.rationale}</p></div>}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['diagnosis','models','segments','competitive','experiments','projection','tactics'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-emerald-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='diagnosis' && result.pricingDiagnosis && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Current Strategy</p><p className="text-white text-sm">{result.pricingDiagnosis.currentStrategy}</p></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-800 rounded p-3"><p className="text-red-400 text-xs font-bold mb-2">Issues</p><ul>{(result.pricingDiagnosis.issues||[]).map((i:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {i}</li>)}</ul></div>
+                <div className="bg-gray-800 rounded p-3"><p className="text-green-400 text-xs font-bold mb-2">Opportunities</p><ul>{(result.pricingDiagnosis.opportunities||[]).map((o:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {o}</li>)}</ul></div>
+              </div>
+              {result.valueBasedAnalysis && <div className="bg-gray-800 rounded p-3"><p className="text-yellow-300 text-xs font-bold mb-2">Value-Based Analysis</p><p className="text-emerald-300 text-sm mb-1">Recommended Range: {result.valueBasedAnalysis.recommendedRange}</p><p className="text-gray-300 text-xs">{result.valueBasedAnalysis.justification}</p><div className="flex flex-wrap gap-1 mt-2">{(result.valueBasedAnalysis.keyValueDrivers||[]).map((d:string,i:number)=><span key={i} className="bg-gray-700 text-xs px-2 py-0.5 rounded text-gray-300">{d}</span>)}</div></div>}
+            </div>
+          )}
+          {subtab==='models' && (
+            <div className="space-y-2">
+              {(result.pricingModels||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-1"><p className="text-white font-medium">{m.model}</p><span className={SUIT_COLOR[m.suitability]||'text-gray-400'}>{m.suitability}</span></div>
+                  <p className="text-gray-300 text-xs mb-2">{m.description}</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-green-400 mb-1">Pros</p><ul>{(m.pros||[]).map((p:string,j:number)=><li key={j} className="text-gray-300">• {p}</li>)}</ul></div><div><p className="text-red-400 mb-1">Cons</p><ul>{(m.cons||[]).map((c:string,j:number)=><li key={j} className="text-gray-300">• {c}</li>)}</ul></div></div>
+                  {m.exampleStructure && <p className="text-indigo-300 text-xs mt-2">Example: {m.exampleStructure}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='segments' && (
+            <div className="space-y-2">
+              {(result.segmentPricing||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-2"><p className="text-white font-medium">{s.segment}</p><span className="text-emerald-300 font-bold">{s.recommendedPrice}</span></div>
+                  <p className="text-gray-400 text-xs mb-1">Willingness to Pay: {s.willingness}</p>
+                  <p className="text-gray-300 text-xs mb-1">{s.rationale}</p>
+                  {s.packaging && <p className="text-indigo-300 text-xs">Packaging: {s.packaging}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='competitive' && (
+            <div className="space-y-2">
+              {(result.competitiveBenchmark||[]).map((c:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3 flex items-center justify-between">
+                  <div><p className="text-white font-medium">{c.competitor}</p><p className="text-gray-400 text-xs">{c.positioning}</p></div>
+                  <div className="text-right"><p className="text-yellow-300">{c.price}</p><p className="text-gray-400 text-xs">Gap: {c.gap}</p></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='experiments' && (
+            <div className="space-y-2">
+              {(result.experimentPlan||[]).map((e:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-white font-medium text-sm mb-1">{e.test}</p>
+                  <p className="text-gray-400 text-xs mb-1">Hypothesis: {e.hypothesis}</p>
+                  <p className="text-gray-300 text-xs mb-1">Method: {e.method} | Duration: {e.duration}</p>
+                  <p className="text-green-300 text-xs">Success: {e.successMetric}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='projection' && result.revenueProjection && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">
+                {[['conservative','Conservative','text-yellow-300'],['base','Base Case','text-green-300'],['optimistic','Optimistic','text-blue-300']].map(([k,l,c])=><div key={k} className="bg-gray-800 rounded p-3 text-center"><p className="text-gray-400 text-xs mb-1">{l}</p><p className={`${c} font-bold`}>{(result.revenueProjection as any)[k]}</p></div>)}
+              </div>
+              {result.revenueProjection.assumptions && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Assumptions</p><ul>{(result.revenueProjection.assumptions||[]).map((a:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {a}</li>)}</ul></div>}
+              {(result.implementationRoadmap||[]).map((p:any,i:number)=><div key={i} className="bg-gray-800 rounded p-2 flex justify-between items-center"><div><p className="text-white text-xs font-medium">{p.phase}: {p.action}</p><p className="text-gray-400 text-xs">{p.timeline}</p></div><span className="text-red-300 text-xs">{p.risk}</span></div>)}
+            </div>
+          )}
+          {subtab==='tactics' && (
+            <div className="space-y-2">
+              {(result.psychologicalTactics||[]).map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-yellow-300 text-xs font-bold mb-1">{t.tactic}</p>
+                  <p className="text-gray-300 text-xs mb-1">{t.application}</p>
+                  <p className="text-green-300 text-xs">Impact: {t.expectedImpact}</p>
+                </div>
+              ))}
+              {result.metricsToTrack && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Metrics to Track</p>{Array.isArray(result.metricsToTrack)?result.metricsToTrack.map((m:string,i:number)=><p key={i} className="text-indigo-300 text-xs">• {m}</p>):<p className="text-indigo-300 text-xs">{result.metricsToTrack}</p>}</div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.15 Executive Coaching & Leadership Development ---
 const PRIORITY_BADGE: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-orange-800','Medium':'bg-yellow-800','Low':'bg-gray-700' };
 function ExecCoachingPanel({ api }: { api: string }) {
@@ -8147,7 +8271,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8248,6 +8372,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'innovationsprint', label: '💡 Innovation Sprint' },
     { id: 'negotiationcoach', label: '🤝 Negotiation Coach' },
     { id: 'execcoaching', label: '🎯 Executive Coaching' },
+    { id: 'pricingstrategy', label: '💲 Pricing Strategy' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -8400,6 +8525,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'innovationsprint' && <InnovationSprintPanel api={api} />}
         {tab === 'negotiationcoach' && <NegotiationCoachPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
+        {tab === 'pricingstrategy' && <PricingStrategyPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

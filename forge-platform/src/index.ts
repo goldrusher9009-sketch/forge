@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.16 Pricing Strategy Optimizer ---
+app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, businessModel, currentPrice, costStructure, targetMargin, competitors, customerSegments, valueProposition, pricingGoal, marketPosition, revenueTarget, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a world-class pricing strategist. Analyze and optimize pricing strategy.
+Company: ${company} | Product: ${product} | Industry: ${industry}
+Business Model: ${businessModel} | Current Price: ${currentPrice}
+Cost Structure: ${costStructure} | Target Margin: ${targetMargin}
+Competitors: ${competitors}
+Customer Segments: ${customerSegments}
+Value Proposition: ${valueProposition}
+Pricing Goal: ${pricingGoal}
+Market Position: ${marketPosition}
+Revenue Target: ${revenueTarget}
+
+Return JSON: { reportTitle, executiveSummary, pricingDiagnosis: { currentStrategy, issues, opportunities, priceElasticity }, recommendedStrategy: { model, rationale, implementation }, pricingModels: [{ model, description, pros, cons, suitability, exampleStructure }], segmentPricing: [{ segment, willingness, recommendedPrice, rationale, packaging }], competitiveBenchmark: [{ competitor, price, positioning, gap }], valueBasedAnalysis: { keyValueDrivers, monetizableValue, recommendedRange, justification }, experimentPlan: [{ test, hypothesis, method, duration, successMetric }], revenueProjection: { conservative, base, optimistic, assumptions }, implementationRoadmap: [{ phase, action, timeline, risk }], psychologicalTactics: [{ tactic, application, expectedImpact }], metricsToTrack }`;
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.15 Executive Coaching & Leadership Development ---
 app.post('/api/exec-coaching', requireAuth, async (req: AuthRequest, res) => {
   const { coacheeRole, industry, yearsExperience, currentChallenges, leadershipStyle, teamSize, organizationSize, goals, recentFeedback, strengths, developmentAreas, coachingFocus, provider = 'anthropic' } = req.body;
