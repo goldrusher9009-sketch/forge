@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.69 AI Customer Experience & Journey Orchestration Engine ---
+app.post('/api/cx-journey', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, productType, industry, customerSegments, currentJourneyStages, painPoints, npsScore, csatScore, churnRate, avgResolutionTime, supportVolume, topComplaintThemes, channelMix, techStack, cxGoals, budget } = req.body;
+    const p = `You are a world-class CX strategist and customer journey architect. Design a comprehensive CX & Journey Orchestration strategy for:
+Company: ${companyName}
+Product: ${productType}
+Industry: ${industry}
+Segments: ${customerSegments}
+Journey Stages: ${currentJourneyStages}
+Pain Points: ${painPoints}
+NPS: ${npsScore}
+CSAT: ${csatScore}
+Churn Rate: ${churnRate}
+Avg Resolution Time: ${avgResolutionTime}
+Support Volume: ${supportVolume}
+Top Complaints: ${topComplaintThemes}
+Channel Mix: ${channelMix}
+Tech Stack: ${techStack}
+CX Goals: ${cxGoals}
+Budget: ${budget}
+
+Return JSON: { reportTitle, executiveSummary, cxHealthScore (0-100), cxMaturityLevel ("World-Class"|"Advanced"|"Developing"|"Basic"), estimatedChurnReduction, estimatedNPSLift, customerJourneyMap: { stages: [{ stageName, description, customerGoals: [], touchpoints: [], emotions: [], painPoints: [], opportunities: [], kpis: [], currentExperience ("Poor"|"Mediocre"|"Good"|"Excellent"), targetExperience, gapAnalysis }] }, personaProfiles: [{ personaName, segment, description, motivations: [], frustrations: [], preferredChannels: [], decisionFactors: [], lifetimeValue, churnRisk ("High"|"Medium"|"Low"), engagementPattern }], momentsThatMatter: [{ moment, whyItMatters, currentState, targetState, emotionalImpact, businessImpact, interventions: [] }], omniChannelStrategy: { channelRoles: [{ channel, role, strengths: [], weaknesses: [], optimizationActions: [] }], orchestrationRules: [], handoffProtocols: [], selfServiceOpportunities: [] }, proactiveEngagement: { triggers: [{ trigger, segment, timing, channel, message, expectedOutcome }], healthScoreModel: { signals: [], scoring: [], thresholds: [] }, playbooks: [{ name, trigger, steps: [], owner, successMetric }] }, aiCXOpportunities: [{ useCase, description, implementationComplexity ("Low"|"Medium"|"High"), expectedImpact, timeToValue, requiredCapabilities: [] }], voiceOfCustomer: { feedbackProgram: { channels: [], frequency: [], closedLoopProcess: [] }, analysisFramework: [], insightToActionProcess: [] }, cxMetrics: { laggingIndicators: [{ metric, current, target, howToImprove }], leadingIndicators: [{ metric, current, target, howToImprove }], operationalMetrics: [{ metric, current, target }] }, implementationRoadmap: [{ phase, timeline, initiatives: [], investment, expectedROI, successMetrics: [] }], quickWins: [] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.68 AI Competitive Intelligence & Market Positioning Engine ---
 app.post('/api/competitive-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
