@@ -597,6 +597,193 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v10.01 AI Customer Experience Optimization Engine ---
+const IMPACT_COLOR2: Record<string,string> = { 'High':'bg-green-700','Medium':'bg-yellow-700','Low':'bg-gray-700' };
+const PRIORITY_COLOR3: Record<string,string> = { 'Must Have':'bg-red-700','Nice to Have':'bg-yellow-700','Future':'bg-gray-700' };
+function CXOptimizerPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ companyName:'', industry:'', customerSegments:'', currentNPS:'', touchpoints:'', painPoints:'', cxGoals:'', budget:'', timeline:'12 months', channels:'', competitorCX:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeSection, setActiveSection] = React.useState('overview');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/cx-optimizer`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const sections = [
+    { id:'overview', label:'Overview' }, { id:'journey', label:'Journey Map' }, { id:'initiatives', label:'Initiatives' },
+    { id:'omnichannel', label:'Omnichannel' }, { id:'metrics', label:'Metrics' }
+  ];
+  return (
+    <div className="p-4 space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-xl font-bold text-white mb-1">💎 Customer Experience Optimization Engine</h2>
+        <p className="text-gray-400 text-sm mb-4">AI-powered CX strategy, journey mapping & optimization roadmap</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[['companyName','Company Name'],['industry','Industry'],['customerSegments','Customer Segments'],['currentNPS','Current NPS Score'],['touchpoints','Key Touchpoints'],['painPoints','Top Pain Points'],['cxGoals','CX Goals'],['budget','Budget Range'],['channels','Channels (web, mobile, phone...)'],['competitorCX','Competitor CX Benchmark']].map(([k,label]) => (
+            <div key={k} className={k==='painPoints'||k==='cxGoals'?'col-span-2':''}>
+              <label className="text-gray-400 text-xs">{label}</label>
+              <input className="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={label} />
+            </div>
+          ))}
+          <div>
+            <label className="text-gray-400 text-xs">Timeline</label>
+            <select className="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mt-1" value={form.timeline} onChange={e=>setForm(f=>({...f,timeline:e.target.value}))}>
+              {['3 months','6 months','12 months','18 months','24 months'].map(v=><option key={v}>{v}</option>)}
+            </select>
+          </div>
+        </div>
+        <button onClick={run} disabled={loading||!form.companyName||!form.industry} className="mt-4 bg-purple-600 hover:bg-purple-500 disabled:bg-gray-600 text-white px-6 py-2 rounded font-medium text-sm w-full">
+          {loading ? '⚡ Optimizing Experience...' : '💎 Build CX Optimization Plan'}
+        </button>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4 flex items-center justify-between">
+            <div>
+              <h3 className="text-white font-bold text-lg">{result.planTitle}</h3>
+              <p className="text-gray-400 text-sm mt-1">{result.executiveSummary}</p>
+            </div>
+            <div className="text-center ml-4 flex gap-4">
+              <div><div className="text-4xl font-bold text-purple-400">{result.cxMaturityScore}</div><div className="text-gray-400 text-xs">CX Maturity</div></div>
+              {result.npsProjection && <div><div className="text-2xl font-bold text-green-400">{result.npsProjection}</div><div className="text-gray-400 text-xs">NPS Target</div></div>}
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {sections.map(s=><button key={s.id} onClick={()=>setActiveSection(s.id)} className={`px-3 py-1 rounded text-sm font-medium ${activeSection===s.id?'bg-purple-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.label}</button>)}
+          </div>
+          {activeSection==='overview' && (
+            <div className="space-y-3">
+              {result.momentsThatMatter && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">⭐ Moments That Matter</h4>
+                  {result.momentsThatMatter.map((m:any,i:number)=>(
+                    <div key={i} className="bg-gray-700 rounded p-3 mb-2">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-white text-sm font-medium">{m.moment}</span>
+                        <span className={`px-2 py-1 rounded text-xs text-white ${IMPACT_COLOR2[m.impact]||'bg-gray-600'}`}>{m.impact}</span>
+                      </div>
+                      <div className="flex gap-4 text-xs text-gray-400">
+                        <span>Current: <span className="text-yellow-400">{m.currentScore}/10</span></span>
+                        <span>Target: <span className="text-green-400">{m.targetScore}/10</span></span>
+                      </div>
+                      <p className="text-gray-300 text-xs mt-1">{m.initiative}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {result.voiceOfCustomer && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">🎙️ Voice of Customer</h4>
+                  <p className="text-gray-300 text-sm mb-3">{result.voiceOfCustomer.sentimentAnalysis}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><div className="text-blue-400 text-xs mb-1">Top Themes</div>{result.voiceOfCustomer.topThemes?.map((t:string,i:number)=><div key={i} className="text-gray-300 text-xs">• {t}</div>)}</div>
+                    <div><div className="text-green-400 text-xs mb-1">Actionable Insights</div>{result.voiceOfCustomer.actionableInsights?.map((a:string,i:number)=><div key={i} className="text-gray-300 text-xs">→ {a}</div>)}</div>
+                  </div>
+                  {result.voiceOfCustomer.verbatims && <div className="mt-3"><div className="text-purple-400 text-xs mb-1">Customer Verbatims</div>{result.voiceOfCustomer.verbatims.map((v:string,i:number)=><div key={i} className="bg-gray-700 rounded p-2 text-gray-300 text-xs italic mb-1">"{v}"</div>)}</div>}
+                </div>
+              )}
+              {result.quickWins && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">⚡ Quick Wins</h4>
+                  {result.quickWins.map((w:string,i:number)=><div key={i} className="bg-green-900/30 border border-green-700 rounded p-2 text-green-300 text-sm mb-2">✓ {w}</div>)}
+                </div>
+              )}
+            </div>
+          )}
+          {activeSection==='journey' && result.customerJourneyMap && (
+            <div className="space-y-3">
+              {result.customerJourneyMap.map((stage:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded-lg p-4 border-l-4 border-purple-500">
+                  <h4 className="text-purple-400 font-bold mb-2">{stage.stage}</h4>
+                  <p className="text-yellow-300 text-sm mb-2">😊 {stage.emotions}</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div><div className="text-blue-400 text-xs mb-1">Touchpoints</div>{stage.touchpoints?.map((t:string,j:number)=><div key={j} className="text-gray-300 text-xs">• {t}</div>)}</div>
+                    <div><div className="text-red-400 text-xs mb-1">Pain Points</div>{stage.painPoints?.map((p:string,j:number)=><div key={j} className="text-gray-300 text-xs">⚡ {p}</div>)}</div>
+                    <div><div className="text-green-400 text-xs mb-1">Opportunities</div>{stage.opportunities?.map((o:string,j:number)=><div key={j} className="text-gray-300 text-xs">✓ {o}</div>)}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='initiatives' && result.cxInitiatives && (
+            <div className="space-y-3">
+              {result.cxInitiatives.map((init:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-white font-semibold">{init.initiative}</h4>
+                    <div className="flex gap-1 ml-2">
+                      <span className="bg-blue-800 px-2 py-1 rounded text-xs text-blue-200">Effort: {init.effort}</span>
+                      <span className={`px-2 py-1 rounded text-xs text-white ${IMPACT_COLOR2[init.impact]||'bg-gray-700'}`}>Impact: {init.impact}</span>
+                    </div>
+                  </div>
+                  <p className="text-gray-300 text-sm mb-2">{init.description}</p>
+                  <div className="flex gap-4 text-xs text-gray-400 mb-2">
+                    <span>💰 {init.cost}</span><span>⏱ {init.timeframe}</span>
+                  </div>
+                  {init.kpis && <div className="flex gap-2 flex-wrap">{init.kpis.map((k:string,j:number)=><span key={j} className="bg-purple-900 text-purple-300 px-2 py-1 rounded text-xs">{k}</span>)}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='omnichannel' && result.omniChannelStrategy && (
+            <div className="space-y-3">
+              {result.omniChannelStrategy.map((ch:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2">{ch.channel}</h4>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div><div className="text-yellow-400 text-xs mb-1">Current State</div><p className="text-gray-300 text-sm">{ch.currentState}</p></div>
+                    <div><div className="text-green-400 text-xs mb-1">Target State</div><p className="text-gray-300 text-sm">{ch.targetState}</p></div>
+                  </div>
+                  <div><div className="text-blue-400 text-xs mb-1">Actions</div>{ch.actions?.map((a:string,j:number)=><div key={j} className="text-gray-300 text-sm">→ {a}</div>)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='metrics' && result.metrics && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h4 className="text-white font-semibold mb-3">📊 CX Metrics Dashboard</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {result.metrics.map((m:any,i:number)=>(
+                    <div key={i} className="bg-gray-700 rounded p-3">
+                      <div className="text-gray-400 text-xs">{m.metric}</div>
+                      <div className="flex justify-between mt-1">
+                        <span className="text-yellow-400 text-sm">Current: {m.current}</span>
+                        <span className="text-green-400 text-sm">Target: {m.target}</span>
+                      </div>
+                      <div className="text-gray-500 text-xs mt-1">📅 {m.frequency}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {result.roadmap && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">🗓️ CX Roadmap</h4>
+                  {result.roadmap.map((ph:any,i:number)=>(
+                    <div key={i} className="border-l-2 border-purple-500 pl-4 mb-4">
+                      <div className="text-purple-400 font-semibold text-sm">{ph.phase} <span className="text-gray-500 text-xs">({ph.timeframe})</span></div>
+                      <div className="text-blue-300 text-xs mt-1 mb-1">{ph.focus}</div>
+                      {ph.actions?.map((a:string,j:number)=><div key={j} className="text-gray-300 text-xs">• {a}</div>)}
+                      {ph.expectedNPSGain && <div className="text-green-400 text-xs mt-1">📈 NPS gain: {ph.expectedNPSGain}</div>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v10.00 AI Competitive Intelligence Command Center ---
 const THREAT_LEVEL_COLOR: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-red-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
 const POSITION_RATING_COLOR: Record<string,string> = { 'Dominant':'bg-green-700','Strong':'bg-blue-700','Competitive':'bg-yellow-700','Challenged':'bg-orange-700','Vulnerable':'bg-red-700' };
@@ -14457,7 +14644,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -14544,6 +14731,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
     { id: 'competitiveintelcmd', label: '🎯 Competitive Intel' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
@@ -14596,6 +14784,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'changemgmtplan', label: '🔄 Change Management' },
     { id: 'territoryplan', label: '🗺️ Territory Plan' },
     { id: 'maintegration', label: '🤝 M&A Integration' },
+    { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
     { id: 'competitiveintelcmd', label: '🎯 Competitive Intel' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
@@ -14634,6 +14823,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
     { id: 'competitiveintelcmd', label: '🎯 Competitive Intel' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
@@ -14690,6 +14880,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
     { id: 'competitiveintelcmd', label: '🎯 Competitive Intel' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
@@ -14830,6 +15021,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
@@ -14864,6 +15056,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
@@ -14889,6 +15082,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
@@ -14927,6 +15121,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'changemgmtplan' && <ChangeMgmtPlanPanel api={api} />}
         {tab === 'territoryplan' && <TerritoryPlanPanel api={api} />}
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
@@ -14945,6 +15140,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
@@ -14970,6 +15166,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
@@ -15008,6 +15205,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
@@ -15033,6 +15231,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
@@ -15067,6 +15266,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
         {tab === 'competitiveintelcmd' && <CompetitiveIntelPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}

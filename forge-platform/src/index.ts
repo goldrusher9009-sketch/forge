@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.01 AI Customer Experience Optimization Engine ---
+app.post('/api/cx-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, customerSegments, currentNPS, touchpoints, painPoints, cxGoals, budget, timeline, channels, competitorCX } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class customer experience strategist. Build a comprehensive CX optimization plan for ${companyName} in the ${industry} industry.
+Customer segments: ${customerSegments}. Current NPS: ${currentNPS}. Key touchpoints: ${touchpoints}. Pain points: ${painPoints}. CX goals: ${cxGoals}. Budget: ${budget}. Timeline: ${timeline}. Channels: ${channels}. Competitor CX: ${competitorCX}.
+Return ONLY valid JSON:
+{
+  "planTitle": "string",
+  "executiveSummary": "string",
+  "cxMaturityScore": 0-100,
+  "npsProjection": "string",
+  "customerJourneyMap": [{"stage": "string", "touchpoints": ["string"], "emotions": "string", "painPoints": ["string"], "opportunities": ["string"]}],
+  "segmentInsights": [{"segment": "string", "needs": ["string"], "frustrations": ["string"], "loyaltyDrivers": ["string"], "personalization": "string"}],
+  "momentsThatMatter": [{"moment": "string", "impact": "High|Medium|Low", "currentScore": 0-10, "targetScore": 0-10, "initiative": "string"}],
+  "cxInitiatives": [{"initiative": "string", "description": "string", "effort": "Low|Medium|High", "impact": "Low|Medium|High", "cost": "string", "timeframe": "string", "kpis": ["string"]}],
+  "voiceOfCustomer": {"topThemes": ["string"], "sentimentAnalysis": "string", "verbatims": ["string"], "actionableInsights": ["string"]},
+  "personalizationStrategy": {"approach": "string", "dataNeeds": ["string"], "tactics": ["string"], "expectedLift": "string"},
+  "omniChannelStrategy": [{"channel": "string", "currentState": "string", "targetState": "string", "actions": ["string"]}],
+  "cxTechnology": [{"tool": "string", "purpose": "string", "priority": "Must Have|Nice to Have|Future"}],
+  "employeeExperience": {"connection": "string", "initiatives": ["string"], "training": ["string"]},
+  "metrics": [{"metric": "string", "current": "string", "target": "string", "frequency": "string"}],
+  "roadmap": [{"phase": "string", "timeframe": "string", "focus": "string", "actions": ["string"], "expectedNPSGain": "string"}],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.00 AI Competitive Intelligence Command Center ---
 app.post('/api/competitive-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
