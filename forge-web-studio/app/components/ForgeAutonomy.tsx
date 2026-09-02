@@ -597,6 +597,104 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.51 User Stories ---
+function UserStoriesPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ feature: '', persona: 'user', context: 'web app' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [selected, setSelected] = useState<number|null>(null);
+
+  const generate = async () => {
+    if (!form.feature.trim()) return;
+    setLoading(true); setErr(''); setResult(null); setSelected(null);
+    try {
+      const r = await fetch(`${api.base}/api/user-stories`, {
+        method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      setResult(d);
+    } catch(e: any) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const prioColor: Record<string, string> = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e' };
+  const ptColor = (p: number) => p <= 2 ? '#22c55e' : p <= 5 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div>
+      <h3 style={{ color: '#e2e8f0', marginBottom: 8 }}>📋 User Story Generator</h3>
+      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Generate agile user stories with acceptance criteria.</p>
+      <textarea value={form.feature} onChange={e => setForm(f => ({...f, feature: e.target.value}))}
+        placeholder="Describe the feature..." rows={3}
+        style={{ width: '100%', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: 10, fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <input value={form.persona} onChange={e => setForm(f => ({...f, persona: e.target.value}))} placeholder="Persona (user, admin...)"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+        <input value={form.context} onChange={e => setForm(f => ({...f, context: e.target.value}))} placeholder="Context (web app, mobile...)"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+      </div>
+      <button onClick={generate} disabled={loading || !form.feature.trim()}
+        style={{ background: '#7c3aed', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Generating...' : 'Generate Stories'}
+      </button>
+      {err && <p style={{ color: '#f87171', marginTop: 8 }}>{err}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ background: '#2e1065', border: '1px solid #7c3aed', borderRadius: 8, padding: 10, marginBottom: 12 }}>
+            <span style={{ color: '#c4b5fd', fontSize: 12, fontWeight: 700 }}>EPIC: </span>
+            <span style={{ color: '#ede9fe', fontSize: 14 }}>{result.epic}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+            {result.stories?.map((s: any, i: number) => (
+              <button key={i} onClick={() => setSelected(selected === i ? null : i)}
+                style={{ background: selected === i ? '#7c3aed' : '#1e293b', color: selected === i ? '#fff' : '#94a3b8', border: `1px solid ${selected === i ? '#7c3aed' : '#334155'}`, borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>
+                {s.id} <span style={{ color: prioColor[s.priority] }}>●</span> {s.story_points}pts
+              </button>
+            ))}
+          </div>
+          {selected !== null && result.stories?.[selected] && (() => {
+            const s = result.stories[selected];
+            return (
+              <div style={{ background: '#1e293b', borderRadius: 8, padding: 14, marginBottom: 12 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <span style={{ color: '#a78bfa', fontWeight: 700 }}>{s.id}: {s.title}</span>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <span style={{ background: prioColor[s.priority]+'22', color: prioColor[s.priority], borderRadius: 4, padding: '2px 8px', fontSize: 11 }}>{s.priority}</span>
+                    <span style={{ background: ptColor(s.story_points)+'22', color: ptColor(s.story_points), borderRadius: 4, padding: '2px 8px', fontSize: 11 }}>{s.story_points} pts</span>
+                  </div>
+                </div>
+                <p style={{ color: '#e2e8f0', fontStyle: 'italic', fontSize: 13, marginBottom: 10 }}>"{s.story}"</p>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ color: '#94a3b8', fontSize: 11, marginBottom: 6 }}>✅ ACCEPTANCE CRITERIA</div>
+                  {s.acceptance_criteria?.map((ac: string, j: number) => (
+                    <div key={j} style={{ background: '#0f172a', borderRadius: 4, padding: '6px 10px', marginBottom: 4, color: '#e2e8f0', fontSize: 12, borderLeft: '2px solid #7c3aed' }}>{ac}</div>
+                  ))}
+                </div>
+                {s.labels && <div style={{ display: 'flex', gap: 4 }}>{s.labels.map((l: string, j: number) => <span key={j} style={{ background: '#1e1b4b', color: '#a5b4fc', borderRadius: 4, padding: '2px 6px', fontSize: 11 }}>{l}</span>)}</div>}
+              </div>
+            );
+          })()}
+          {result.definition_of_done && (
+            <div style={{ background: '#1e293b', borderRadius: 6, padding: 10, marginBottom: 8 }}>
+              <div style={{ color: '#22c55e', fontSize: 12, marginBottom: 6 }}>✅ Definition of Done</div>
+              {result.definition_of_done.map((d: string, i: number) => <p key={i} style={{ color: '#94a3b8', fontSize: 12, margin: '2px 0' }}>• {d}</p>)}
+            </div>
+          )}
+          {result.out_of_scope && (
+            <div style={{ background: '#1e293b', borderRadius: 6, padding: 10 }}>
+              <div style={{ color: '#f59e0b', fontSize: 12, marginBottom: 4 }}>🚫 Out of Scope</div>
+              {result.out_of_scope.map((o: string, i: number) => <p key={i} style={{ color: '#94a3b8', fontSize: 12, margin: '2px 0' }}>• {o}</p>)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.50 OKR Generator ---
 function OKRPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ goal: '', timeframe: 'Q1 2025', team: '' });
@@ -2709,7 +2807,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2754,6 +2852,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'risk', label: '⚠️ Risks' },
     { id: 'pitch', label: '🚀 Pitch Deck' },
     { id: 'okr', label: '🎯 OKRs' },
+    { id: 'userstories', label: '📋 Stories' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2841,6 +2940,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'risk' && <RiskAnalyzerPanel api={api} />}
         {tab === 'pitch' && <PitchDeckPanel api={api} />}
         {tab === 'okr' && <OKRPanel api={api} />}
+        {tab === 'userstories' && <UserStoriesPanel api={api} />}
       </div>
     </div>
   );

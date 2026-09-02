@@ -39255,6 +39255,26 @@ app.post('/api/okr-generate', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.51 User Story Generator — generate agile user stories from a feature description
+app.post('/api/user-stories', requireAuth, async (req: any, res: any) => {
+  try {
+    const { feature, persona, context } = req.body;
+    if (!feature || feature.trim().length < 10) return res.status(400).json({ error: 'feature description required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are an agile product manager. Generate user stories for: "${feature.slice(0,500)}"\nPersona: ${persona||'user'}, Context: ${context||'web app'}\n\nReturn ONLY JSON:\n{"epic":"Epic title for this feature set","stories":[{"id":"US-001","title":"Story title","story":"As a [persona], I want to [action] so that [benefit]","acceptance_criteria":["Given/When/Then criterion 1","criterion 2","criterion 3"],"story_points":3,"priority":"high"|"medium"|"low","labels":["frontend","backend"]},{"id":"US-002","title":"Story 2","story":"As a user...","acceptance_criteria":["criterion"],"story_points":5,"priority":"medium","labels":["backend"]}],"definition_of_done":["All acceptance criteria met","Code reviewed","Tests written","Deployed to staging"],"out_of_scope":["What this feature does NOT include"],"dependencies":["Any technical dependencies"]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1200 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, feature: feature.slice(0,200), ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
