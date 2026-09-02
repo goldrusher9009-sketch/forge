@@ -39500,6 +39500,94 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.09 AI Customer Success & Retention Intelligence Engine ---
+app.post('/api/cs-retention', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { productType, customerBase, averageContractValue, churnRate, npsScore, csTeamSize, topChurnReasons, customerSegments, currentOnboarding } = req.body;
+  const p = `You are a world-class customer success strategist specializing in retention, expansion, and churn prevention. Create a comprehensive CS intelligence report.
+
+Product: ${productType || 'B2B SaaS platform'}
+Customer Base: ${customerBase || '100-500 accounts'}
+Avg Contract Value: ${averageContractValue || '$10K-$50K ARR'}
+Current Churn Rate: ${churnRate || '5-10% annually'}
+NPS Score: ${npsScore || '30-50'}
+CS Team Size: ${csTeamSize || '5-15'}
+Top Churn Reasons: ${topChurnReasons || 'value realization, competition, budget'}
+Customer Segments: ${customerSegments || 'SMB, mid-market, enterprise'}
+Current Onboarding: ${currentOnboarding || 'manual onboarding process'}
+
+Return a JSON object with this exact structure:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "retentionHealthScore": number 0-100,
+  "churnRiskLevel": "Critical|High|Medium|Low",
+  "revenueAtRisk": "string",
+  "customerHealthFramework": {
+    "healthScoreComponents": [{ "component": "string", "weight": "string", "signals": ["string"] }],
+    "redFlags": ["string"],
+    "greenFlags": ["string"],
+    "healthTiers": [{ "tier": "string", "criteria": "string", "action": "string", "accountShare": "string" }]
+  },
+  "churnPredictionModel": {
+    "highRiskSignals": ["string"],
+    "mediumRiskSignals": ["string"],
+    "churnTimeline": "string",
+    "earlyWarningSystem": ["string"],
+    "interventionTriggers": ["string"]
+  },
+  "retentionPlaybooks": [
+    { "playbook": "string", "trigger": "string", "targetSegment": "string", "steps": ["string"], "timeline": "string", "successRate": "string", "owner": "string" }
+  ],
+  "onboardingOptimization": {
+    "currentGaps": ["string"],
+    "criticalMilestones": [{ "milestone": "string", "targetDay": number, "successMetric": "string" }],
+    "aha_moments": ["string"],
+    "improvedFlow": ["string"]
+  },
+  "expansionRevenue": {
+    "upsellOpportunities": [{ "segment": "string", "trigger": "string", "offer": "string", "expectedUplift": "string" }],
+    "crossSellOpportunities": ["string"],
+    "expansionSignals": ["string"],
+    "targetNDR": "string"
+  },
+  "voiceOfCustomer": {
+    "topPainPoints": ["string"],
+    "featureRequests": ["string"],
+    "delightDrivers": ["string"],
+    "npsDrivers": { "promoters": ["string"], "detractors": ["string"], "passives": ["string"] }
+  },
+  "csTeamStructure": {
+    "coverageModel": "string",
+    "accountSegmentation": [{ "segment": "string", "coverageRatio": "string", "touchFrequency": "string", "primaryActivities": ["string"] }],
+    "hiringNeeds": ["string"],
+    "toolStack": ["string"]
+  },
+  "metrics": [
+    { "metric": "string", "current": "string", "industryBenchmark": "string", "target": "string", "priority": "Critical|High|Medium" }
+  ],
+  "qbrTemplate": {
+    "sections": ["string"],
+    "keyQuestions": ["string"],
+    "successStories": "string",
+    "nextStepsFramework": "string"
+  },
+  "roadmap": [
+    { "initiative": "string", "timeframe": "string", "expectedImpact": "string", "owner": "string" }
+  ],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.08 AI Operations Excellence & Process Optimization Engine ---
 app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
