@@ -39500,6 +39500,99 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.66 AI Partnership & Business Development Intelligence Engine ---
+app.post('/api/partnership-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, productDescription, currentRevenue, targetGrowth, existingPartners, partnershipGoals, targetPartnerTypes, geographies, competitiveAdvantage, bdTeamSize, bdBudget, partnershipConstraints, pastPartnershipOutcomes, strategicPriorities } = req.body;
+    const p = `You are a world-class business development strategist and partnership architect. Analyze this company profile and create a comprehensive AI-powered partnership intelligence report.
+
+Company: ${companyName}, Industry: ${industry}
+Product: ${productDescription}, Revenue: ${currentRevenue}, Growth Target: ${targetGrowth}
+Existing Partners: ${existingPartners}, Goals: ${partnershipGoals}
+Target Partner Types: ${targetPartnerTypes}, Geographies: ${geographies}
+Advantage: ${competitiveAdvantage}, BD Team: ${bdTeamSize}, Budget: ${bdBudget}
+Constraints: ${partnershipConstraints}, Past Outcomes: ${pastPartnershipOutcomes}
+Strategic Priorities: ${strategicPriorities}
+
+Return JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "partnershipReadinessScore": number (0-100),
+  "partnershipReadinessStatus": "Partnership-Ready|Developing|Early Stage",
+  "estimatedRevenueFromPartnerships": "string",
+  "topPartnershipOpportunity": "string",
+  "partnershipPortfolioStrategy": {
+    "portfolioModel": "string",
+    "partnerMix": [{"type":"string","percentage":number,"rationale":"string"}],
+    "exclusivityStrategy": "string",
+    "geographicPriority": ["string"]
+  },
+  "targetPartnerProfiles": [
+    {
+      "partnerCategory": "string",
+      "priority": "Tier 1|Tier 2|Tier 3",
+      "partnerType": "Technology|Channel|OEM|Referral|Integration|Strategic",
+      "idealCharacteristics": ["string"],
+      "exampleCompanies": ["string"],
+      "valueExchange": {"weOffer":["string"],"theyOffer":["string"]},
+      "revenueModel": "string",
+      "timeToValue": "string",
+      "complexity": "High|Medium|Low",
+      "successProbability": number (0-100)
+    }
+  ],
+  "partnershipFrameworks": [
+    {
+      "frameworkName": "string",
+      "partnerType": "string",
+      "structure": "string",
+      "commercialTerms": {"revShare":"string","minimumCommitment":"string","paymentTerms":"string"},
+      "goToMarket": "string",
+      "successMetrics": ["string"],
+      "redFlags": ["string"]
+    }
+  ],
+  "outreachPlaybook": {
+    "prospectingApproach": "string",
+    "warmIntroStrategy": "string",
+    "coldOutreachTemplate": "string",
+    "partnerProposalStructure": ["string"],
+    "negotiationFramework": "string",
+    "dealClosingTactics": ["string"]
+  },
+  "partnerEnablementPlan": {
+    "onboardingJourney": [{"phase":"string","duration":"string","activities":["string"],"successCriteria":"string"}],
+    "enablementMaterials": ["string"],
+    "trainingCurriculum": ["string"],
+    "coMarketingPlaybook": "string",
+    "partnerPortal": "string"
+  },
+  "partnerSuccessFramework": {
+    "healthScoreMetrics": ["string"],
+    "qbrStructure": "string",
+    "escalationPath": "string",
+    "churnPrevention": ["string"],
+    "growthPlaybook": ["string"]
+  },
+  "competitiveIntel": {
+    "competitorPartnerships": [{"competitor":"string","partnerType":"string","implication":"string","response":"string"}],
+    "whitespaceOpportunities": ["string"],
+    "exclusivityTargets": ["string"]
+  },
+  "quickWins": ["string"],
+  "sixMonthRoadmap": [{"month":"string","focus":"string","targets":["string"],"kpis":["string"]}]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.65 AI Investor Relations & Fundraising Command Center ---
 app.post('/api/investor-relations', requireAuth, async (req: AuthRequest, res) => {
   try {
