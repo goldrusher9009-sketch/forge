@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.59 AI Board Meeting Prep & Director Intelligence ---
+app.post('/api/board-prep', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { company, meetingDate, boardMembers, agenda, keyMetrics, challenges } = req.body;
+    const p = `You are a world-class board advisor and corporate governance expert. Prepare a comprehensive board meeting package for "${company}" on ${meetingDate||'upcoming meeting'}. Board members: ${(boardMembers||[]).join(', ')||'unknown'}. Agenda items: ${(agenda||[]).join(', ')||'Q performance review'}. Key metrics: ${keyMetrics||'none provided'}. Key challenges: ${challenges||'none provided'}.
+Return ONLY valid JSON: { "prepTitle": string, "executiveSummary": string, "boardReadinessScore": number (0-100), "meetingType": "Regular"|"Special"|"Annual"|"Emergency", "boardPackage": { "coverPage": string, "tableOfContents": string[], "ceoLetter": string }, "agendaItems": [{ "item": string, "presenter": string, "duration": string, "type": "Information"|"Discussion"|"Vote"|"Approval", "materials": string[], "anticipatedQuestions": string[], "recommendedOutcome": string }], "financialSummary": { "headline": string, "performanceVsBudget": string, "keyVariances": string[], "outlook": string, "risks": string[] }, "strategicUpdates": [{ "initiative": string, "status": "On Track"|"At Risk"|"Behind"|"Complete", "milestone": string, "nextSteps": string[] }], "directorIntelligence": [{ "director": string, "background": string, "knownInterests": string[], "anticipatedQuestions": string[], "engagementTips": string[] }], "keyDecisions": [{ "decision": string, "recommendation": string, "rationale": string, "alternatives": string[], "risks": string[] }], "regulatoryCompliance": string[], "upcomingVotes": [{ "matter": string, "recommendation": string, "vote": string }], "executiveSessionTopics": string[], "followUpActions": [{ "action": string, "owner": string, "deadline": string }], "communicationPlan": string, "quickWins": string[] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.58 AI Customer Success Playbook Builder ---
 app.post('/api/cs-playbook-builder', requireAuth, async (req: AuthRequest, res) => {
   try {
