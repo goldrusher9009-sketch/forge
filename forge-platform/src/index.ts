@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.56 AI Talent Acquisition & People Strategy Engine ---
+app.post('/api/talent-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, headcount, openRoles, topHiringChallenge, currentAttritionRate, employerBrand, salaryBudget, remotePolicy, targetCandidateProfile, timeToHire, recruitingTeamSize } = req.body;
+  const p = `You are an elite Talent Acquisition & People strategist. Generate a comprehensive Talent Strategy & Hiring Optimization report for: Company=${companyName}, Industry=${industry}, Headcount=${headcount}, Open Roles=${openRoles}, Top Hiring Challenge=${topHiringChallenge}, Attrition Rate=${currentAttritionRate}, Employer Brand=${employerBrand}, Salary Budget=${salaryBudget}, Remote Policy=${remotePolicy}, Target Profile=${targetCandidateProfile}, Time to Hire=${timeToHire}, Recruiting Team=${recruitingTeamSize}.
+Return ONLY valid JSON: { "reportTitle": string, "executiveSummary": string, "talentScore": number, "hiringHealthStatus": string, "timeToHireTarget": string, "costPerHireEstimate": string, "topTalentRisk": string, "talentAudit": { "strengths": string[], "gaps": string[], "urgentFixes": string[], "marketPosition": string }, "candidatePersonas": [{ "role": string, "persona": string, "motivations": string[], "dealBreakers": string[], "sourcingChannels": string[], "interviewApproach": string, "compensationRange": string, "closingTactics": string[] }], "employerBrandStrategy": { "currentPerception": string, "targetPerception": string, "evp": string, "contentPillars": string[], "glassdoorStrategy": string, "linkedInPlaybook": string[], "referralProgram": string }, "sourcingPlaybook": [{ "channel": string, "strategy": string, "costPerLead": string, "quality": string, "tactics": string[] }], "interviewProcess": { "stages": [{ "stage": string, "format": string, "duration": string, "evaluates": string[], "scorecardDimensions": string[] }], "biasReductionTactics": string[], "candidateExperience": string[] }, "compensationStrategy": { "benchmarkingApproach": string, "totalCompPackage": string, "equityStrategy": string, "benefitsDifferentiators": string[], "offerAcceptanceTactics": string[] }, "retentionPlaybook": { "flightRiskIndicators": string[], "retentionLevers": string[], "managerEnablement": string[], "careerPathways": string, "recognitionProgram": string }, "hiringMetrics": { "kpis": [{ "metric": string, "current": string, "target": string, "howToImprove": string }] }, "quickWins": string[] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.55 AI Partnership & Business Development Engine ---
 app.post('/api/partnership-dev', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
