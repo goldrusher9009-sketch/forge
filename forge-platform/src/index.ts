@@ -39500,6 +39500,67 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.30 AI Executive Leadership & Board Governance Engine ---
+app.post('/api/exec-leadership', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, stage, boardSize, challenges } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const p = `You are an elite executive leadership and corporate governance advisor. Generate a comprehensive board governance and executive leadership strategy for: Company: ${companyName || 'Tech Company'}, Industry: ${industry || 'Technology'}, Stage: ${stage || 'Growth'}, Board Size: ${boardSize || '7'}, Challenges: ${challenges || 'scaling leadership, governance gaps'}.
+
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "leadershipScore": 85,
+  "governanceRating": "string",
+  "criticalGap": "string",
+  "boardComposition": {
+    "currentState": "string",
+    "idealComposition": "string",
+    "gaps": ["string"],
+    "recruitmentPriorities": ["string"]
+  },
+  "executiveTeamAssessment": {
+    "strengths": ["string"],
+    "gaps": ["string"],
+    "successionRisks": ["string"]
+  },
+  "governanceFramework": {
+    "committees": [{"name": "string", "purpose": "string", "priority": "string"}],
+    "policies": ["string"],
+    "reportingCadence": "string"
+  },
+  "ceoEffectiveness": {
+    "keyResponsibilities": ["string"],
+    "boardRelationship": "string",
+    "communicationStrategy": "string"
+  },
+  "riskOversight": [{"risk": "string", "boardRole": "string", "mitigation": "string"}],
+  "compensationStrategy": {
+    "philosophy": "string",
+    "executiveAlignment": "string",
+    "boardCompensation": "string"
+  },
+  "successionPlanning": {
+    "ceoSuccession": "string",
+    "keymanRisk": "string",
+    "developmentProgram": "string"
+  },
+  "stakeholderEngagement": [{"stakeholder": "string", "strategy": "string", "cadence": "string"}],
+  "kpis": [{"metric": "string", "target": "string", "owner": "string"}],
+  "ninetyDayPlan": [{"phase": "string", "actions": ["string"], "outcomes": ["string"]}],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = typeof result === 'string' ? result : JSON.stringify(result);
+    let data: any = {};
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.29 AI Product-Led Growth & Monetization Engine ---
 app.post('/api/plg-monetization', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
