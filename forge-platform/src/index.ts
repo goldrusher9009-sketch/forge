@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.16 AI Pricing Intelligence & Monetization Strategy Engine ---
+app.post('/api/pricing-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+  const { productType, currentPricing, competitorPricing, customerSegments, avgDealSize, churnRate, expansionRevenue, willingnessToPay, valueMetric, pricingGoal } = req.body;
+  const p = `You are a B2B SaaS pricing strategist. Generate a comprehensive pricing intelligence report.
+Product: ${productType}, current pricing=${currentPricing}
+Competitors: ${competitorPricing}, segments=${customerSegments}
+Economics: avg deal=${avgDealSize}, churn=${churnRate}, expansion=${expansionRevenue}
+WTP research: ${willingnessToPay}, value metric=${valueMetric}
+Goal: ${pricingGoal}
+
+Return JSON: { reportTitle, executiveSummary, pricingScore (0-100), revenueLeakage, primaryOpportunity, pricingAudit: { current_model_analysis, packaging_gaps[], positioning_misalignment, price_perception_issue }, valueBasedPricing: { value_metric_validation, quantified_roi, customer_value_drivers[], price_to_value_ratio }, pricingTiers: [{ tier_name, target_segment, price_point, billing_cadence, included_features[], upsell_triggers[], expected_conversion }] (4 tiers), competitorMatrix: [{ competitor, their_price, our_advantage, our_disadvantage, positioning }] (5 entries), expansionRevenuePlays: [{ play, trigger, mechanism, expected_expansion, priority }] (5 plays), pricingPsychology: { anchoring_strategy, decoy_pricing, urgency_levers[], social_proof_pricing }, packagingStrategy: { feature_grouping_rationale, good_better_best, add_ons[], enterprise_custom }, pricingExperiments: [{ hypothesis, test_design, segment, metric, expected_lift, timeline }] (5 items), negotiationPlaybook: { discount_policy, approval_tiers[], never_discount_below, counter_offer_scripts[] }, metrics: [{ kpi, current, target, lever }] (8 metrics), implementationRoadmap: [{ phase, timeline, changes[], expected_impact }] (3 phases), quickWins: [] (5 items) }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    res.json(json ? JSON.parse(json) : { error: 'Parse failed', raw: text });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.15 AI Community-Led Growth & Developer Advocacy Engine ---
 app.post('/api/community-growth', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
