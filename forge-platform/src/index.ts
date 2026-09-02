@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.38 Startup Ecosystem & Accelerator Builder ---
+app.post('/api/accelerator-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { organizationName, type, focus, targetStartupStage, cohortSize, programDuration, fundingOffered, mentorNetwork, partnerEcosystem, successMetrics, geographicFocus, applicationProcess, alumni, goals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a world-class startup accelerator designer and ecosystem builder. Generate a comprehensive Startup Ecosystem & Accelerator Builder plan for:
+Organization: ${organizationName}, Type: ${type} (accelerator/incubator/studio/fund)
+Focus: ${focus}, Target Stage: ${targetStartupStage}
+Cohort Size: ${cohortSize}, Duration: ${programDuration}
+Funding: ${fundingOffered}, Mentors: ${mentorNetwork}
+Partners: ${partnerEcosystem}, Success Metrics: ${successMetrics}
+Geography: ${geographicFocus}, Application: ${applicationProcess}
+Alumni: ${alumni}, Goals: ${goals}
+
+Return JSON: { programTitle, executiveSummary, programDesign: { model, thesis, differentiators, selectionCriteria }, cohortStructure: { phases: [{ phase, name, duration, focus, activities: [{ activity, format, frequency, facilitator }], milestones }] }, curriculumPlan: [{ week, theme, topics: [{ topic, format, expert }], homework, deliverable }], mentorProgram: { structure, engagementModel, matching: { criteria, process }, compensation, mentorTypes: [{ type, role, commitment, benefits }] }, networkAndResources: { corporatePartners: [{ partner, value, commitment }], investorNetwork: [{ type, stage, checkSize, engagementModel }], serviceProviders: [{ category, providers, discount }] }, applicationAndSelection: { timeline, criteria: [{ criterion, weight, howEvaluated }], process: [{ stage, description, timeline }], targetSources }, demoDay: { format, timeline, preparationPlan, inviteeTypes, followUpProcess }, portfolioSupport: { postProgramServices, alumni: { network, events, coInvestment }, kpis }, ecosystemActivities: [{ activity, frequency, purpose, audience }], financialModel: { revenueStreams: [{ stream, model, projected }], costs: [{ category, amount }], roi }, successMetrics: [{ metric, target, measurement }], implementationRoadmap: { phases: [{ phase, name, duration, keyActions, milestones }] } }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.37 Revenue Operations Command Center ---
 app.post('/api/revops', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, arr, growthRate, salesTeamSize, marketingBudget, currentCRM, currentStack, leadSources, avgDealSize, salesCycle, winRate, churnRate, nrr, cac, ltv, revenueGoal, revopsGoals } = req.body;

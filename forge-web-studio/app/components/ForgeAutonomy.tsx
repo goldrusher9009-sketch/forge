@@ -597,6 +597,91 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.38 Startup Ecosystem & Accelerator Builder ---
+function AcceleratorBuilderPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ organizationName:'', type:'', focus:'', targetStartupStage:'', cohortSize:'', programDuration:'', fundingOffered:'', mentorNetwork:'', partnerEcosystem:'', successMetrics:'', geographicFocus:'', applicationProcess:'', alumni:'', goals:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const sf = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try { const r = await fetch(`${api}/api/accelerator-builder`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e) { setResult({ error: String(e) }); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">🏗️ Startup Ecosystem & Accelerator Builder</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {[['organizationName','Organization Name'],['type','Type (accelerator/incubator/studio/fund)'],['focus','Focus Area/Vertical'],['targetStartupStage','Target Startup Stage'],['cohortSize','Cohort Size'],['programDuration','Program Duration'],['fundingOffered','Funding Offered'],['mentorNetwork','Mentor Network Description'],['partnerEcosystem','Partner Ecosystem'],['geographicFocus','Geographic Focus'],['applicationProcess','Application Process'],['alumni','Notable Alumni'],['goals','Program Goals']].map(([k,label]) => (
+          <div key={k} className={k==='goals'||k==='mentorNetwork'?'col-span-2':''}>
+            <label className="text-xs text-gray-400">{label}</label>
+            {k==='goals'||k==='mentorNetwork' ? <textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm h-16" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} /> : <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} />}
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-amber-600 hover:bg-amber-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Generating...' : 'Build Accelerator Program'}</button>
+      {result && !result.error && (
+        <div className="space-y-4 mt-4">
+          <div className="bg-gray-800 rounded-xl p-4 border border-amber-500/30">
+            <h3 className="text-lg font-bold text-amber-400">{result.programTitle}</h3>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+          </div>
+          {result.programDesign && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Program Design</h4>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-gray-700 rounded p-2"><div className="text-gray-400">Model</div><div className="text-amber-300">{result.programDesign.model}</div></div>
+                <div className="bg-gray-700 rounded p-2"><div className="text-gray-400">Thesis</div><div className="text-gray-200">{result.programDesign.thesis}</div></div>
+                <div className="bg-gray-700 col-span-2 rounded p-2"><div className="text-gray-400 mb-1">Differentiators</div>{(result.programDesign.differentiators||[]).map((d:string,i:number)=><div key={i} className="text-amber-200">• {d}</div>)}</div>
+              </div>
+            </div>
+          )}
+          {result.cohortStructure?.phases && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-3">Cohort Phases</h4>
+              <div className="space-y-3">{result.cohortStructure.phases.map((ph:any,i:number)=>(
+                <div key={i} className="border border-amber-700/30 rounded p-3">
+                  <div className="flex items-center gap-2 mb-2"><span className="bg-amber-700 text-white text-xs px-2 py-0.5 rounded">Phase {ph.phase}</span><span className="text-white font-semibold">{ph.name}</span><span className="text-gray-400 text-xs ml-auto">{ph.duration}</span></div>
+                  <div className="text-gray-300 text-xs mb-2">{ph.focus}</div>
+                  <div className="grid grid-cols-2 gap-1">{(ph.activities||[]).map((a:any,j:number)=>(
+                    <div key={j} className="bg-gray-700 rounded p-1 text-xs"><span className="text-amber-300">{a.activity}</span><span className="text-gray-500 ml-1">• {a.format}</span></div>
+                  ))}</div>
+                  {ph.milestones && <div className="text-yellow-400 text-xs mt-2">🎯 {ph.milestones}</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.networkAndResources?.investorNetwork && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Investor Network</h4>
+              <div className="grid grid-cols-2 gap-2">{result.networkAndResources.investorNetwork.map((inv:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 text-xs"><div className="text-amber-300 font-semibold">{inv.type}</div><div className="text-gray-300">Stage: {inv.stage}</div><div className="text-green-400">Check: {inv.checkSize}</div><div className="text-gray-400">{inv.engagementModel}</div></div>
+              ))}</div>
+            </div>
+          )}
+          {result.demoDay && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Demo Day</h4>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="bg-gray-700 rounded p-2"><div className="text-gray-400">Format</div><div className="text-amber-300">{result.demoDay.format}</div></div>
+                <div className="bg-gray-700 rounded p-2"><div className="text-gray-400">Timeline</div><div className="text-gray-200">{result.demoDay.timeline}</div></div>
+                <div className="bg-gray-700 rounded p-2"><div className="text-gray-400">Follow-up</div><div className="text-green-400">{result.demoDay.followUpProcess}</div></div>
+              </div>
+            </div>
+          )}
+          {result.successMetrics && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Success Metrics</h4>
+              <div className="grid grid-cols-2 gap-2">{result.successMetrics.map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 text-xs"><div className="text-amber-300">{m.metric}</div><div className="text-green-400 mt-1">Target: {m.target}</div><div className="text-gray-400">{m.measurement}</div></div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+    </div>
+  );
+}
 // --- v9.37 Revenue Operations Command Center ---
 const REVOPS_TREND: Record<string,string> = { 'up':'text-green-400','down':'text-red-400','flat':'text-gray-400','improving':'text-green-400','declining':'text-red-400' };
 function RevOpsPanel({ api }: { api: string }) {
@@ -9939,7 +10024,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10037,6 +10122,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'accelerator', label: '🏗️ Accelerator Builder' },
     { id: 'revops', label: '💹 RevOps Command' },
     { id: 'plgstrategy', label: '🚀 PLG Strategy' },
     { id: 'journeyorch', label: '🗺️ Journey Orchestration' },
@@ -10211,6 +10297,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'accelerator' && <AcceleratorBuilderPanel api={api} />}
         {tab === 'revops' && <RevOpsPanel api={api} />}
         {tab === 'plgstrategy' && <PLGStrategyPanel api={api} />}
         {tab === 'journeyorch' && <JourneyOrchestrationPanel api={api} />}
