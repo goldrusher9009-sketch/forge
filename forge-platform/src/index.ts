@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.43 M&A Due Diligence AI ---
+app.post('/api/ma-due-diligence', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirerCompany, targetCompany, industry, dealType, dealSize, strategicRationale, targetRevenue, targetEbitda, targetGrowthRate, targetMarket, targetCustomers, keyRisks, synergyHypothesis, integrationTimeline, regulatoryContext, financingStructure, ddGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are an M&A due diligence expert. Build a comprehensive DD framework for: Acquirer: ${acquirerCompany}, Target: ${targetCompany}, Industry: ${industry}, Deal Type: ${dealType}, Deal Size: ${dealSize}, Strategic Rationale: ${strategicRationale}, Target Revenue: ${targetRevenue}, Target EBITDA: ${targetEbitda}, Target Growth Rate: ${targetGrowthRate}, Target Market: ${targetMarket}, Target Customers: ${targetCustomers}, Key Risks: ${keyRisks}, Synergy Hypothesis: ${synergyHypothesis}, Integration Timeline: ${integrationTimeline}, Regulatory: ${regulatoryContext}, Financing: ${financingStructure}, Goals: ${ddGoals}. Return JSON: { ddTitle, executiveSummary, dealScore (0-100), dealRecommendation ("Proceed"/"Proceed with Caution"/"Renegotiate"/"Walk Away"), strategicFit, financialDDChecklist (array: {area, questions, redFlags, status}), commercialDDChecklist (array: {area, questions, redFlags, status}), operationalDDChecklist (array: {area, questions, redFlags, status}), legalDDChecklist (array: {area, questions, redFlags, status}), technologyDDChecklist (array: {area, questions, redFlags, status}), hrDDChecklist (array: {area, questions, redFlags, status}), riskMatrix (array: {risk, likelihood, impact, mitigation, dealBreaker}), synergyAnalysis (array: {type, description, value, timeToRealize, confidence}), valuationAnalysis, integrationRoadmap (array: {phase, timeline, workstreams, risks}), negotiationLeverage, keyDDQuestions (array: {category, question, priority}), redFlagSummary, dealStructureRecommendation }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.42 Pricing Strategy Engine ---
 app.post('/api/pricing-engine', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, product, currentPrice, currentRevenue, targetMarket, customerSegments, willingness_to_pay, competitors, competitorPricing, costStructure, grossMargin, cac, ltv, churnRate, growthRate, pricingGoals, constraints } = req.body;

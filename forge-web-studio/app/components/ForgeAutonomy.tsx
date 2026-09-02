@@ -597,6 +597,30 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.43 M&A Due Diligence AI ---
+const DD_RECO_COLOR: Record<string,string> = { 'Proceed':'bg-green-700','Proceed with Caution':'bg-yellow-700','Renegotiate':'bg-orange-700','Walk Away':'bg-red-700' };
+function MADueDiligencePanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ acquirerCompany:'', targetCompany:'', industry:'', dealType:'', dealSize:'', strategicRationale:'', targetRevenue:'', targetEbitda:'', targetGrowthRate:'', targetMarket:'', targetCustomers:'', keyRisks:'', synergyHypothesis:'', integrationTimeline:'', regulatoryContext:'', financingStructure:'', ddGoals:'' });
+  const [result, setResult] = useState<any>(null); const [loading, setLoading] = useState(false); const [error, setError] = useState(''); const [activeDD, setActiveDD] = useState('financial');
+  const run = async () => { setLoading(true); setError(''); try { const r = await fetch(`${api}/api/ma-due-diligence`, { method:'POST', headers:{'Content-Type':'application/json',...( (window as any).__forgeAuth ? {Authorization:`Bearer ${(window as any).__forgeAuth}`} : {})}, body: JSON.stringify(form) }); const d = await r.json(); if (!d.success) throw new Error(d.error); setResult(d); } catch(e:any){setError(e.message);} finally{setLoading(false);}};
+  const DD_TABS = [['financial','📊 Financial'],['commercial','🏪 Commercial'],['operational','⚙️ Operational'],['legal','⚖️ Legal'],['technology','💻 Technology'],['hr','👥 HR']];
+  const getChecklist = (key: string) => result?.[`${key}DDChecklist`] || [];
+  const STATUS_COLOR: Record<string,string> = {'Complete':'text-green-400','In Progress':'text-yellow-400','Pending':'text-gray-400','Red Flag':'text-red-400'};
+  return (<div className="p-4 space-y-4">
+    <h2 className="text-xl font-bold text-white">🔍 M&A Due Diligence AI</h2>
+    <div className="grid grid-cols-2 gap-3">{Object.entries(form).map(([k,v])=>(<div key={k}><label className="text-xs text-gray-400 capitalize">{k.replace(/([A-Z])/g,' $1')}</label><input className="w-full bg-gray-800 text-white rounded px-2 py-1 text-sm mt-0.5" value={v} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={k}/></div>))}</div>
+    <button onClick={run} disabled={loading} className="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">{loading?'Analyzing...':'Run Due Diligence'}</button>
+    {error && <p className="text-red-400 text-sm">{error}</p>}
+    {result && (<div className="space-y-4">
+      <div className="bg-gray-800 rounded p-4"><div className="flex items-center gap-3 mb-2"><h3 className="text-lg font-bold text-white">{result.ddTitle}</h3><span className={`px-3 py-1 rounded-full text-xs text-white ${DD_RECO_COLOR[result.dealRecommendation]||'bg-gray-700'}`}>{result.dealRecommendation}</span><span className="text-3xl font-bold text-blue-400">{result.dealScore}/100</span></div><p className="text-gray-300 text-sm">{result.executiveSummary}</p></div>
+      {result.redFlagSummary && <div className="bg-red-900/30 border border-red-700/30 rounded p-3"><h4 className="text-red-400 font-semibold text-sm mb-1">🚩 Red Flags</h4><p className="text-gray-300 text-xs">{typeof result.redFlagSummary==='string'?result.redFlagSummary:JSON.stringify(result.redFlagSummary)}</p></div>}
+      <div className="bg-gray-800 rounded p-4"><div className="flex gap-2 mb-3 flex-wrap">{DD_TABS.map(([k,l])=>(<button key={k} onClick={()=>setActiveDD(k)} className={`px-3 py-1 rounded text-xs ${activeDD===k?'bg-blue-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{l}</button>))}</div><div className="space-y-2">{getChecklist(activeDD).map((item:any,i:number)=>(<div key={i} className="bg-gray-700 rounded p-3"><div className="flex justify-between mb-1"><span className="text-white font-medium text-sm">{item.area}</span><span className={`text-xs ${STATUS_COLOR[item.status]||'text-gray-400'}`}>{item.status}</span></div>{item.redFlags && <p className="text-red-400 text-xs">🚩 {item.redFlags}</p>}</div>))}</div></div>
+      {result.riskMatrix?.length>0 && (<div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">Risk Matrix</h4><div className="space-y-2">{result.riskMatrix.map((r:any,i:number)=>(<div key={i} className={`rounded p-3 ${r.dealBreaker?'bg-red-900/40 border border-red-700/30':'bg-gray-700'}`}><div className="flex justify-between mb-1"><span className="text-white text-sm font-medium">{r.risk}{r.dealBreaker&&<span className="ml-2 text-red-400 text-xs">DEAL BREAKER</span>}</span><div className="flex gap-2 text-xs"><span className="text-yellow-400">L:{r.likelihood}</span><span className="text-red-400">I:{r.impact}</span></div></div><p className="text-gray-400 text-xs">{r.mitigation}</p></div>))}</div></div>)}
+      {result.synergyAnalysis?.length>0 && (<div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">Synergy Analysis</h4><div className="grid grid-cols-2 gap-2">{result.synergyAnalysis.map((s:any,i:number)=>(<div key={i} className="bg-green-900/30 border border-green-700/30 rounded p-2"><p className="text-white text-xs font-medium">{s.type}</p><p className="text-green-400 font-bold">{s.value}</p><p className="text-gray-400 text-xs">{s.timeToRealize} • {s.confidence} confidence</p></div>))}</div></div>)}
+    </div>)}
+  </div>);
+}
+
 // --- v9.42 Pricing Strategy Engine ---
 const PRICING_MODEL_COLOR: Record<string,string> = { 'Freemium':'bg-blue-700','Flat Rate':'bg-purple-700','Usage-Based':'bg-orange-700','Tiered':'bg-green-700','Value-Based':'bg-pink-700','Hybrid':'bg-indigo-700' };
 function PricingEnginePanel({ api }: { api: string }) {
@@ -10251,7 +10275,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10349,6 +10373,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'maduediligence', label: '🔍 M&A Due Diligence' },
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
@@ -10528,6 +10553,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'maduediligence' && <MADueDiligencePanel api={api} />}
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
