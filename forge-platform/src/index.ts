@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.95 Crisis Communication Plan Generator ---
+app.post('/api/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, crisisType, crisisDescription, affectedParties, severity, spokesperson, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a crisis communication plan for ${company || 'the organization'}.
+Crisis type: ${crisisType || 'general crisis'}
+Description: ${crisisDescription || 'not specified'}
+Affected parties: ${affectedParties || 'customers, employees, media'}
+Severity: ${severity || 'high'}
+Spokesperson: ${spokesperson || 'CEO'}
+Return JSON: { planTitle: string, crisisSeverity: 'Critical'|'High'|'Medium', immediateActions:[{timeframe:string,action:string,owner:string}], keyMessages:[{audience:string,coreMessage:string,toneGuidance:string,thingsToAvoid:string}], communicationChannels:[{channel:string,audience:string,timing:string,messageFormat:string}], statementTemplates:[{situation:string,template:string}], mediaStrategy:{approach:string,pressReleaseDraft:string,faqs:[{q:string,a:string}]}, internalComms:{employeeMessage:string,managementBriefing:string}, socialMediaGuidelines:{doPost:string[],doNotPost:string[],monitoringKeywords:string[]}, recoveryPlan:{shortTerm:string,longTerm:string,reputationRepair:string}, lessonsLearned:string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.94 Change Management Plan Generator ---
 app.post('/api/change-mgmt', requireAuth, async (req: AuthRequest, res) => {
   try {

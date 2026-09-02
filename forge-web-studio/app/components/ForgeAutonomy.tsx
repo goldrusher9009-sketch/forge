@@ -597,6 +597,128 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.95 Crisis Communication Plan Generator ---
+const CRISIS_SEV_COLOR: Record<string,string> = { Critical:'text-red-500', High:'text-orange-400', Medium:'text-yellow-400' };
+function CrisisCommsPanel({ api }: { api: string }) {
+  const [company, setCompany] = useState('');
+  const [crisisType, setCrisisType] = useState('');
+  const [crisisDescription, setCrisisDescription] = useState('');
+  const [affectedParties, setAffectedParties] = useState('');
+  const [severity, setSeverity] = useState('high');
+  const [spokesperson, setSpokesperson] = useState('');
+  const [provider, setProvider] = useState('anthropic');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'overview'|'messages'|'media'|'social'|'recovery'>('overview');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/crisis-comms`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify({ company, crisisType, crisisDescription, affectedParties, severity, spokesperson, provider }) });
+      const d = await r.json();
+      if (!r.ok) setError(d.error || 'Error');
+      else setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-lg font-bold text-white mb-3">🚨 Crisis Communication Plan</h2>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Company name" value={company} onChange={e=>setCompany(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Crisis type (e.g. data breach, PR scandal)" value={crisisType} onChange={e=>setCrisisType(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Affected parties" value={affectedParties} onChange={e=>setAffectedParties(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Spokesperson" value={spokesperson} onChange={e=>setSpokesperson(e.target.value)} />
+        </div>
+        <textarea className="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-3" rows={2} placeholder="Crisis description" value={crisisDescription} onChange={e=>setCrisisDescription(e.target.value)} />
+        <div className="flex gap-2">
+          <select className="bg-gray-700 text-white rounded px-3 py-2 text-sm" value={severity} onChange={e=>setSeverity(e.target.value)}>
+            {['critical','high','medium','low'].map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+          <select className="bg-gray-700 text-white rounded px-3 py-2 text-sm" value={provider} onChange={e=>setProvider(e.target.value)}>
+            {['anthropic','openai','gemini','groq'].map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          <button onClick={run} disabled={loading} className="bg-red-700 hover:bg-red-800 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+            {loading ? 'Generating…' : 'Generate Plan'}
+          </button>
+        </div>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <div className="flex justify-between items-start">
+              <h3 className="text-white font-bold text-lg">{result.planTitle}</h3>
+              <span className={`text-sm font-bold ${CRISIS_SEV_COLOR[result.crisisSeverity]||'text-gray-400'}`}>⚠️ {result.crisisSeverity}</span>
+            </div>
+            {result.immediateActions && (
+              <div className="mt-3">
+                <p className="text-red-400 text-xs font-semibold uppercase mb-2">🔴 Immediate Actions</p>
+                <div className="space-y-1">{result.immediateActions.map((a:any,i:number)=>(
+                  <div key={i} className="bg-red-900/30 border border-red-800 rounded px-3 py-2 flex justify-between">
+                    <span className="text-white text-xs">{a.action}</span>
+                    <span className="text-gray-400 text-xs">{a.timeframe} · {a.owner}</span>
+                  </div>
+                ))}</div>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {(['overview','messages','media','social','recovery'] as const).map(t=>(
+              <button key={t} onClick={()=>setActiveTab(t)} className={`px-3 py-1 rounded text-xs font-medium ${activeTab===t?'bg-red-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{t.charAt(0).toUpperCase()+t.slice(1)}</button>
+            ))}
+          </div>
+          {activeTab==='messages' && result.keyMessages && (
+            <div className="space-y-3">{result.keyMessages.map((m:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded-lg p-4">
+                <p className="text-blue-400 font-semibold text-sm">{m.audience}</p>
+                <p className="text-white text-sm mt-1 italic">"{m.coreMessage}"</p>
+                <p className="text-gray-400 text-xs mt-2">Tone: {m.toneGuidance}</p>
+                <p className="text-red-400 text-xs">Avoid: {m.thingsToAvoid}</p>
+              </div>
+            ))}</div>
+          )}
+          {activeTab==='media' && result.mediaStrategy && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              <p className="text-white text-sm">{result.mediaStrategy.approach}</p>
+              {result.mediaStrategy.pressReleaseDraft && (
+                <div className="bg-gray-700 rounded p-3"><p className="text-gray-400 text-xs font-semibold mb-1">Press Release Draft</p><p className="text-gray-300 text-xs whitespace-pre-line">{result.mediaStrategy.pressReleaseDraft}</p></div>
+              )}
+              {result.mediaStrategy.faqs && (
+                <div className="space-y-2">{result.mediaStrategy.faqs.map((f:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2"><p className="text-yellow-400 text-xs font-semibold">Q: {f.q}</p><p className="text-gray-300 text-xs mt-1">A: {f.a}</p></div>
+                ))}</div>
+              )}
+            </div>
+          )}
+          {activeTab==='social' && result.socialMediaGuidelines && (
+            <div className="bg-gray-800 rounded-lg p-4 grid grid-cols-2 gap-4">
+              <div><p className="text-green-400 text-xs font-semibold mb-2">✅ DO Post</p><ul className="space-y-1">{(result.socialMediaGuidelines.doPost||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {s}</li>)}</ul></div>
+              <div><p className="text-red-400 text-xs font-semibold mb-2">❌ Do NOT Post</p><ul className="space-y-1">{(result.socialMediaGuidelines.doNotPost||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {s}</li>)}</ul></div>
+              <div className="col-span-2"><p className="text-gray-400 text-xs font-semibold mb-1">Monitor Keywords</p><div className="flex flex-wrap gap-1">{(result.socialMediaGuidelines.monitoringKeywords||[]).map((k:string,i:number)=><span key={i} className="bg-gray-600 text-gray-200 text-xs px-2 py-0.5 rounded">{k}</span>)}</div></div>
+            </div>
+          )}
+          {activeTab==='recovery' && result.recoveryPlan && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              <div><p className="text-yellow-400 text-xs font-semibold">Short Term</p><p className="text-gray-300 text-sm mt-1">{result.recoveryPlan.shortTerm}</p></div>
+              <div><p className="text-green-400 text-xs font-semibold">Long Term</p><p className="text-gray-300 text-sm mt-1">{result.recoveryPlan.longTerm}</p></div>
+              <div><p className="text-blue-400 text-xs font-semibold">Reputation Repair</p><p className="text-gray-300 text-sm mt-1">{result.recoveryPlan.reputationRepair}</p></div>
+              {result.lessonsLearned && <div className="bg-gray-700 rounded p-3"><p className="text-gray-400 text-xs font-semibold">Lessons Learned</p><p className="text-gray-300 text-sm mt-1">{result.lessonsLearned}</p></div>}
+            </div>
+          )}
+          {activeTab==='overview' && result.internalComms && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              <div><p className="text-blue-400 text-xs font-semibold">Employee Message</p><p className="text-gray-300 text-sm mt-1 whitespace-pre-line">{result.internalComms.employeeMessage}</p></div>
+              <div><p className="text-purple-400 text-xs font-semibold">Management Briefing</p><p className="text-gray-300 text-sm mt-1">{result.internalComms.managementBriefing}</p></div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.94 Change Management Plan Generator ---
 const IMPACT_COLOR: Record<string,string> = { High:'text-red-400', Medium:'text-yellow-400', Low:'text-green-400' };
 const LIKELIHOOD_COLOR: Record<string,string> = { High:'bg-red-900/40 border-red-700', Medium:'bg-yellow-900/40 border-yellow-700', Low:'bg-green-900/40 border-green-700' };
@@ -5707,7 +5829,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -5787,6 +5909,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'fundraisingstrategy', label: '💸 Fundraising' },
     { id: 'kpidashboard', label: '📊 KPI Dashboard' },
     { id: 'changemgmt', label: '🔄 Change Mgmt' },
+    { id: 'crisiscomms', label: '🚨 Crisis Comms' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -5918,6 +6041,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'fundraisingstrategy' && <FundraisingStrategyPanel api={api} />}
         {tab === 'kpidashboard' && <KPIDashboardPanel api={api} />}
         {tab === 'changemgmt' && <ChangeMgmtPanel api={api} />}
+        {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
