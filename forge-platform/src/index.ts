@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.53 AI Legal Contract Intelligence ---
+app.post('/api/contract-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { contractType, parties, jurisdiction, contractValue, duration, keyTerms, liabilities, indemnification, terminationClauses, ipOwnership, confidentiality, disputeResolution, governingLaw, paymentTerms, deliverables, penalties, warranties, unusualClauses, negotiationPriorities, context } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a senior contract lawyer and legal intelligence expert. Analyze this contract and provide comprehensive legal intelligence. DISCLAIMER: This is AI analysis for informational purposes only, not legal advice.
+Contract Type: ${contractType}, Parties: ${parties}, Jurisdiction: ${jurisdiction}, Contract Value: ${contractValue}, Duration: ${duration}, Key Terms: ${keyTerms}, Liabilities: ${liabilities}, Indemnification: ${indemnification}, Termination Clauses: ${terminationClauses}, IP Ownership: ${ipOwnership}, Confidentiality: ${confidentiality}, Dispute Resolution: ${disputeResolution}, Governing Law: ${governingLaw}, Payment Terms: ${paymentTerms}, Deliverables: ${deliverables}, Penalties: ${penalties}, Warranties: ${warranties}, Unusual Clauses: ${unusualClauses}, Negotiation Priorities: ${negotiationPriorities}, Context: ${context}.
+Return JSON: { analysisTitle, executiveSummary, riskScore (0-100), riskRating ("Low"/"Medium"/"High"/"Critical"), disclaimer, riskAnalysis: [{clause, riskLevel ("Low"/"Medium"/"High"/"Critical"), issue, impact, recommendation, alternativeLanguage}], keyObligations: [{party, obligation, timeline, consequence}], financialExposure: {totalExposure, liabilityBreakdown: [{item, amount, likelihood, mitigation}], paymentRisks: string[]}, ipAnalysis: {ownershipStructure, licensingTerms, risks: string[], recommendations: string[]}, terminationAnalysis: {triggersForYou: string[], triggersForCounterparty: string[], noticePeriods, penaltiesOnTermination, recommendation}, negotiationPlaybook: {mustHave: [{clause, currentPosition, targetPosition, rationale, walkAwayCondition}], niceToHave: [{clause, ask, rationale}], redlines: [{clause, issue, proposedFix}], tradingChips: string[]}, benchmarkAnalysis: {standardTerms: [{term, contractVersion, marketStandard, deviation, concern}]}, hiddenRisks: [{risk, clauseReference, potentialImpact, mitigation}], complianceFlags: [{area, issue, requirement, action}], recommendedAmendments: [{section, currentText, proposedText, rationale, priority}], negotiationStrategy: {overallApproach, leveragePoints: string[], concessions: string[], timeline, escalationPath}, quickWins: [{action, impact, effort}] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.52 Customer Journey Orchestrator ---
 app.post('/api/journey-orchestrator', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, customerSegments, currentChannels, avgOrderValue, customerLifecycle, touchpoints, painPoints, conversionGoals, retentionGoals, nps, churnRate, cltv, dataAvailability, techStack, competitors, budget } = req.body;
