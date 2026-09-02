@@ -39500,6 +39500,88 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.74 AI Mergers & Acquisitions Intelligence Engine ---
+app.post('/api/ma-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { acquirerName, acquirerIndustry, acquirerRevenue, acquirerMarketCap, targetName, targetIndustry, targetRevenue, targetEbitda, targetGrowthRate, dealType, strategicRationale, proposedValuation, synergiesExpected, integrationTimeline, regulatoryEnvironment, competingBidders, financingStructure, keyRisks, dueDiligenceStatus, boardSentiment } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const p = `You are a world-class M&A investment banker and deal strategist. Analyze this M&A transaction and provide comprehensive intelligence.
+
+Acquirer: ${acquirerName}, Industry: ${acquirerIndustry}, Revenue: ${acquirerRevenue}, Market Cap: ${acquirerMarketCap}
+Target: ${targetName}, Industry: ${targetIndustry}, Revenue: ${targetRevenue}, EBITDA: ${targetEbitda}, Growth: ${targetGrowthRate}
+Deal Type: ${dealType}, Rationale: ${strategicRationale}, Proposed Valuation: ${proposedValuation}
+Synergies Expected: ${synergiesExpected}, Integration Timeline: ${integrationTimeline}
+Regulatory: ${regulatoryEnvironment}, Competing Bidders: ${competingBidders}, Financing: ${financingStructure}
+Key Risks: ${keyRisks}, Due Diligence: ${dueDiligenceStatus}, Board: ${boardSentiment}
+
+Return ONLY valid JSON (no markdown):
+{
+  "dealTitle": "string",
+  "executiveSummary": "string",
+  "dealHealthScore": 0-100,
+  "dealVerdict": "Strong Buy|Buy|Neutral|Pass|Strong Pass",
+  "estimatedCloseTimeline": "string",
+  "fairValueRange": {"low": "string", "mid": "string", "high": "string"},
+  "valuationAnalysis": {
+    "evEbitdaMultiple": "string",
+    "evRevenueMultiple": "string",
+    "dcfFairValue": "string",
+    "precedentTransactions": [{"deal": "string", "multiple": "string", "relevance": "string"}],
+    "premiumToMarket": "string",
+    "valuationVerdict": "Cheap|Fair|Rich|Very Rich",
+    "keyValueDrivers": ["string"]
+  },
+  "synergyAnalysis": {
+    "totalSynergyValue": "string",
+    "revenuesynergies": [{"source": "string", "value": "string", "timeline": "string", "confidence": "High|Medium|Low"}],
+    "costSynergies": [{"source": "string", "value": "string", "timeline": "string", "confidence": "High|Medium|Low"}],
+    "synergyRealizationRisk": "string",
+    "integrationCosts": "string",
+    "netSynergyNPV": "string"
+  },
+  "strategicFit": {
+    "score": 0-100,
+    "marketExpansion": "string",
+    "technologyGains": ["string"],
+    "talentAcquisition": "string",
+    "competitivePosition": "string",
+    "crossSellOpportunities": ["string"],
+    "culturalCompatibility": "string",
+    "strategicAlternatives": [{"alternative": "string", "pros": ["string"], "cons": ["string"]}]
+  },
+  "riskAssessment": {
+    "overallRiskScore": 0-100,
+    "regulatoryRisk": {"level": "High|Medium|Low", "issues": ["string"], "mitigants": ["string"], "probability": "string"},
+    "integrationRisk": {"level": "High|Medium|Low", "issues": ["string"], "mitigants": ["string"]},
+    "financialRisk": {"level": "High|Medium|Low", "issues": ["string"], "debtCapacity": "string"},
+    "operationalRisk": {"level": "High|Medium|Low", "issues": ["string"]},
+    "reputationalRisk": {"level": "High|Medium|Low", "issues": ["string"]},
+    "dealBreakers": ["string"]
+  },
+  "dueDiligenceChecklist": [{"area": "string", "status": "Complete|In Progress|Not Started", "findings": ["string"], "redFlags": ["string"], "priority": "Critical|High|Medium"}],
+  "negotiationStrategy": {
+    "walkAwayPrice": "string",
+    "openingPosition": "string",
+    "keyLeverages": ["string"],
+    "concessionAreas": ["string"],
+    "dealProtections": ["string"],
+    "earnOutStructure": "string",
+    "representationsAndWarranties": ["string"]
+  },
+  "integrationRoadmap": [{"phase": "string", "timeline": "string", "priorities": ["string"], "owner": "string", "budget": "string", "risks": ["string"]}],
+  "stakeholderAnalysis": [{"stakeholder": "string", "stance": "Supportive|Neutral|Opposed", "concerns": ["string"], "influenceStrategy": "string"}],
+  "dealTimeline": [{"milestone": "string", "date": "string", "status": "Completed|In Progress|Upcoming", "dependencies": ["string"]}],
+  "quickWins": ["string"]
+}`;
+    const t = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    let data: any;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.73 AI Crisis Management & Business Continuity Engine ---
 app.post('/api/crisis-management', requireAuth, async (req: AuthRequest, res) => {
   try {
