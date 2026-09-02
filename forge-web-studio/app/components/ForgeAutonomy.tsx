@@ -597,6 +597,115 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.02 Vendor Evaluation Framework ---
+const VENDOR_REC_COLOR: Record<string,string> = { 'Strongly Recommend':'text-green-400','Recommend':'text-blue-400','Neutral':'text-yellow-400','Not Recommend':'text-red-400' };
+function VendorEvalPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ projectName:'', vendorNames:'', budget:'', timeline:'', stakeholders:'', evaluationCriteria:'', mustHaves:'', niceToHaves:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'criteria'|'vendors'|'matrix'|'recommendation'>('overview');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/vendor-eval`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🔍 Vendor Evaluation Framework</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['projectName','Project Name'],['vendorNames','Vendor Names (comma-separated)'],['budget','Budget'],['timeline','Timeline'],['stakeholders','Key Stakeholders']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+        <div><label className="text-xs text-gray-400">Provider</label><select className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      </div>
+      {[['evaluationCriteria','Evaluation Criteria (e.g. cost, support, scalability)'],['mustHaves','Must-Have Requirements'],['niceToHaves','Nice-to-Have Features']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Evaluating…':'Run Evaluation'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.frameworkTitle}</p>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['overview','criteria','vendors','matrix','recommendation'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs capitalize ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s}</button>)}
+          </div>
+          {subtab==='overview' && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3">
+                <p className="text-xs text-gray-400 mb-2">Vendor Rankings</p>
+                {(result.rankingSummary||[]).map((r:any)=>(
+                  <div key={r.rank} className="flex items-start gap-3 mb-2 pb-2 border-b border-gray-700 last:border-0">
+                    <span className="text-2xl font-bold text-gray-500 w-6">#{r.rank}</span>
+                    <div><p className="text-white font-medium text-sm">{r.vendor} <span className="text-gray-400 text-xs">({r.score.toFixed(1)})</span></p><p className="text-gray-400 text-xs">{r.rationale}</p></div>
+                  </div>
+                ))}
+              </div>
+              {(result.implementationRisks||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Implementation Risks</p><ul className="space-y-1">{result.implementationRisks.map((r:string,i:number)=><li key={i} className="text-yellow-300 text-xs">⚠ {r}</li>)}</ul></div>}
+              {(result.negotiationLeverage||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Negotiation Leverage</p><ul className="space-y-1">{result.negotiationLeverage.map((r:string,i:number)=><li key={i} className="text-green-300 text-xs">• {r}</li>)}</ul></div>}
+            </div>
+          )}
+          {subtab==='criteria' && (
+            <div className="space-y-2">
+              {(result.evaluationCriteria||[]).map((c:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2"><p className="text-white text-sm font-medium">{c.criterion}</p>{c.mustHave&&<span className="text-xs bg-red-900 text-red-300 px-2 py-0.5 rounded">Must Have</span>}</div>
+                    <span className="text-xs text-gray-400">Weight: {c.weight}%</span>
+                  </div>
+                  <p className="text-gray-400 text-xs mb-2">{c.category} · {c.description}</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs"><div className="bg-red-900/30 rounded p-1"><p className="text-red-400 font-medium mb-0.5">Score 1</p><p className="text-gray-300">{c.scoringGuide?.['1']}</p></div><div className="bg-yellow-900/30 rounded p-1"><p className="text-yellow-400 font-medium mb-0.5">Score 3</p><p className="text-gray-300">{c.scoringGuide?.['3']}</p></div><div className="bg-green-900/30 rounded p-1"><p className="text-green-400 font-medium mb-0.5">Score 5</p><p className="text-gray-300">{c.scoringGuide?.['5']}</p></div></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='vendors' && (
+            <div className="space-y-4">
+              {(result.vendors||[]).map((v:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-white font-bold">{v.vendorName}</p>
+                    <span className={`text-xs font-medium ${VENDOR_REC_COLOR[v.recommendation]||'text-gray-400'}`}>{v.recommendation}</span>
+                  </div>
+                  <p className="text-gray-300 text-xs mb-3">{v.overview}</p>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div><p className="text-xs text-green-400 mb-1">Strengths</p><ul className="space-y-0.5">{(v.strengths||[]).map((s:string,j:number)=><li key={j} className="text-gray-300 text-xs">+ {s}</li>)}</ul></div>
+                    <div><p className="text-xs text-red-400 mb-1">Weaknesses</p><ul className="space-y-0.5">{(v.weaknesses||[]).map((s:string,j:number)=><li key={j} className="text-gray-300 text-xs">- {s}</li>)}</ul></div>
+                  </div>
+                  {(v.riskFlags||[]).length>0 && <div className="mb-2"><p className="text-xs text-yellow-400 mb-1">Risk Flags</p><ul className="space-y-0.5">{v.riskFlags.map((r:string,j:number)=><li key={j} className="text-yellow-300 text-xs">⚠ {r}</li>)}</ul></div>}
+                  {v.pricingNotes && <p className="text-gray-400 text-xs">💰 {v.pricingNotes}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='matrix' && result.comparisonMatrix && (
+            <div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr>{result.comparisonMatrix.headers.map((h:string,i:number)=><th key={i} className="text-left text-gray-400 p-2 border-b border-gray-700">{h}</th>)}</tr></thead><tbody>{result.comparisonMatrix.rows.map((row:any,i:number)=><tr key={i} className="border-b border-gray-800"><td className="text-gray-300 p-2">{row.criterion}</td>{Object.values(row.scores).map((s:any,j:number)=><td key={j} className={`p-2 font-medium ${s>=4?'text-green-400':s>=3?'text-yellow-400':'text-red-400'}`}>{s}/5</td>)}</tr>)}</tbody></table></div>
+          )}
+          {subtab==='recommendation' && result.finalRecommendation && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-4">
+                <p className="text-xs text-gray-400 mb-1">Preferred Vendor</p>
+                <p className="text-green-400 font-bold text-lg mb-2">{result.finalRecommendation.preferredVendor}</p>
+                <p className="text-gray-300 text-sm mb-3">{result.finalRecommendation.rationale}</p>
+                {(result.finalRecommendation.conditions||[]).length>0 && <div className="mb-3"><p className="text-xs text-gray-400 mb-1">Conditions for Approval</p><ul className="space-y-1">{result.finalRecommendation.conditions.map((c:string,i:number)=><li key={i} className="text-yellow-300 text-xs">• {c}</li>)}</ul></div>}
+                {result.finalRecommendation.alternativeIfFails && <p className="text-gray-400 text-xs">Alternative: {result.finalRecommendation.alternativeIfFails}</p>}
+              </div>
+              {(result.dueeDiligenceChecklist||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Due Diligence Checklist</p><ul className="space-y-1">{result.dueeDiligenceChecklist.map((c:string,i:number)=><li key={i} className="text-gray-300 text-xs flex gap-2"><span className="text-gray-600">☐</span>{c}</li>)}</ul></div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.01 Annual Performance Review Generator ---
 const RATING_COLOR: Record<string,string> = { 'Exceptional':'text-yellow-400','Exceeds Expectations':'text-green-400','Meets Expectations':'text-blue-400','Needs Improvement':'text-red-400' };
 const GOAL_STATUS_COLOR: Record<string,string> = { 'Achieved':'text-green-400','Partially Achieved':'text-yellow-400','Not Achieved':'text-red-400' };
@@ -6551,7 +6660,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6638,6 +6747,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'journeymap', label: '🗺️ Journey Map' },
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
+    { id: 'vendoreval', label: '🔍 Vendor Eval' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -6776,6 +6886,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'journeymap' && <JourneyMapPanel api={api} />}
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
+        {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

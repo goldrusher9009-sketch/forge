@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.02 Vendor Evaluation Framework ---
+app.post('/api/vendor-eval', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { projectName, vendorNames, evaluationCriteria, budget, timeline, stakeholders, mustHaves, niceToHaves, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a vendor evaluation framework for: ${projectName || 'vendor selection project'}.
+Vendors to evaluate: ${vendorNames || 'Vendor A, Vendor B, Vendor C'}
+Budget: ${budget || 'not specified'}
+Timeline: ${timeline || 'not specified'}
+Stakeholders: ${stakeholders || 'not specified'}
+Evaluation criteria: ${evaluationCriteria || 'not specified'}
+Must-haves: ${mustHaves || 'not specified'}
+Nice-to-haves: ${niceToHaves || 'not specified'}
+Return JSON: { frameworkTitle: string, executiveSummary: string, evaluationCriteria:[{criterion:string,category:string,weight:number,description:string,scoringGuide:{1:string,3:string,5:string},mustHave:boolean}], vendors:[{vendorName:string,overview:string,scores:[{criterion:string,score:1|2|3|4|5,evidence:string,notes:string}],totalWeightedScore:number,strengths:string[],weaknesses:string[],riskFlags:string[],pricingNotes:string,recommendation:'Strongly Recommend'|'Recommend'|'Neutral'|'Not Recommend'}], comparisonMatrix:{headers:string[],rows:Array<{criterion:string,scores:Record<string,number>}>}, rankingSummary:[{rank:number,vendor:string,score:number,rationale:string}], finalRecommendation:{preferredVendor:string,rationale:string,conditions:string[],alternativeIfFails:string}, dueeDiligenceChecklist:string[], negotiationLeverage:string[], implementationRisks:string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.01 Annual Review & Performance Template Generator ---
 app.post('/api/perf-review', requireAuth, async (req: AuthRequest, res) => {
   try {
