@@ -597,6 +597,127 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.17 Customer Success Playbook Generator ---
+const HEALTH_COLOR: Record<string,string> = { 'green':'text-green-400','yellow':'text-yellow-400','red':'text-red-400' };
+const SEV_COLOR: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-orange-800','Medium':'bg-yellow-800','Low':'bg-gray-700' };
+function CSPlaybookPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', customerSegments:'', contractValue:'', churnRate:'', npsScore:'', teamSize:'', currentChallenges:'', successMetrics:'', onboardingProcess:'', expansionGoals:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'health'|'journey'|'onboarding'|'qbr'|'churn'|'expansion'|'team'>('health');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/cs-playbook`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🎖️ Customer Success Playbook</h2>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {[['company','Company'],['product','Product'],['industry','Industry'],['contractValue','ACV / Contract Value'],['churnRate','Current Churn Rate'],['npsScore','NPS Score'],['teamSize','CS Team Size'],['expansionGoals','Expansion Goal']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} /></div>
+        ))}
+      </div>
+      {[['customerSegments','Customer Segments'],['currentChallenges','Current CS Challenges'],['successMetrics','Success Metrics'],['onboardingProcess','Current Onboarding Process']].map(([k,l])=>(
+        <div key={k} className="mb-2"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-teal-700 hover:bg-teal-600 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Building…':'Generate CS Playbook'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded p-4 mb-4"><p className="text-white font-bold mb-1">{result.playbookTitle}</p><p className="text-gray-300 text-sm">{result.executiveSummary}</p></div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['health','journey','onboarding','qbr','churn','expansion','team'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-teal-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='health' && result.healthScoreModel && (
+            <div className="space-y-2">
+              {result.healthScoreModel.scoringFormula && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Formula</p><p className="text-teal-300 text-sm font-mono">{result.healthScoreModel.scoringFormula}</p></div>}
+              {(result.healthScoreModel.metrics||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3 flex items-center justify-between">
+                  <div><p className="text-white text-sm">{m.metric}</p><p className="text-gray-400 text-xs">Weight: {m.weight}</p></div>
+                  <div className="flex gap-2 text-xs"><span className="text-green-400">✓ {m.greenThreshold}</span><span className="text-yellow-400">⚠ {m.yellowThreshold}</span><span className="text-red-400">✗ {m.redThreshold}</span></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='journey' && (
+            <div className="space-y-2">
+              {(result.customerJourney||[]).map((stage:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-3 mb-2"><span className="bg-teal-900 text-teal-200 text-xs px-2 py-0.5 rounded">{stage.stage}</span><span className="text-gray-400 text-xs">{stage.duration}</span></div>
+                  <div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-green-400 mb-1">CS Actions</p><ul>{(stage.csActions||[]).slice(0,3).map((a:string,j:number)=><li key={j} className="text-gray-300">• {a}</li>)}</ul></div><div><p className="text-blue-400 mb-1">Customer Milestones</p><ul>{(stage.customerMilestones||[]).slice(0,3).map((m:string,j:number)=><li key={j} className="text-gray-300">• {m}</li>)}</ul></div></div>
+                  {(stage.risksToWatch||[]).length>0 && <p className="text-red-300 text-xs mt-1">⚠ {stage.risksToWatch.join(', ')}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='onboarding' && result.onboardingPlaybook && (
+            <div className="space-y-2">
+              {(result.onboardingPlaybook.phases||[]).map((p:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3 border-l-4 border-teal-700">
+                  <div className="flex justify-between mb-2"><p className="text-white font-medium">{p.phase}</p><span className="text-gray-400 text-xs">Week {p.week}</span></div>
+                  <ul className="mb-2">{(p.objectives||[]).map((o:string,j:number)=><li key={j} className="text-teal-300 text-xs">✓ {o}</li>)}</ul>
+                  <div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-gray-400 mb-1">CS Owner</p><ul>{(p.ownerCS||[]).slice(0,2).map((a:string,j:number)=><li key={j} className="text-gray-300">• {a}</li>)}</ul></div><div><p className="text-gray-400 mb-1">Customer</p><ul>{(p.ownerCustomer||[]).slice(0,2).map((a:string,j:number)=><li key={j} className="text-gray-300">• {a}</li>)}</ul></div></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='qbr' && result.qbrFramework && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Frequency</p><p className="text-white">{result.qbrFramework.frequency}</p></div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Agenda</p><ul>{(result.qbrFramework.agenda||[]).map((a:string,i:number)=><li key={i} className="text-gray-300 text-xs">{i+1}. {a}</li>)}</ul></div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Talking Points</p><ul>{(result.qbrFramework.talkingPoints||[]).map((t:string,i:number)=><li key={i} className="text-teal-300 text-xs">• {t}</li>)}</ul></div>
+              {result.qbrFramework.followUpTemplate && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Follow-up Template</p><p className="text-gray-300 text-sm">{result.qbrFramework.followUpTemplate}</p></div>}
+            </div>
+          )}
+          {subtab==='churn' && result.churnPrevention && (
+            <div className="space-y-2">
+              <p className="text-gray-400 text-xs font-bold">Early Warning Signals</p>
+              {(result.churnPrevention.earlyWarningSignals||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-1"><p className="text-white text-sm">{s.signal}</p><span className={`${SEV_COLOR[s.severity]||'bg-gray-700'} text-white text-xs px-2 py-0.5 rounded`}>{s.severity}</span></div>
+                  <p className="text-yellow-300 text-xs mb-1">Action: {s.triggerAction}</p>
+                  {s.script && <p className="text-indigo-300 text-xs italic">"{s.script}"</p>}
+                </div>
+              ))}
+              <p className="text-gray-400 text-xs font-bold mt-3">Save Playbook</p>
+              {(result.churnPrevention.savePlaybook||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3"><p className="text-red-300 text-xs mb-1">{s.scenario}</p><p className="text-gray-300 text-xs mb-1">{s.approach}</p><p className="text-green-300 text-xs">Options: {(s.offerOptions||[]).join(', ')}</p></div>
+              ))}
+            </div>
+          )}
+          {subtab==='expansion' && result.expansionPlaybook && (
+            <div className="space-y-2">
+              <p className="text-gray-400 text-xs font-bold mb-2">Expansion Signals</p>
+              {(result.expansionPlaybook.signals||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-2 flex justify-between"><div><p className="text-white text-xs">{s.signal}</p><p className="text-gray-400 text-xs">Timing: {s.timing}</p></div><p className="text-teal-300 text-xs">{s.approach}</p></div>
+              ))}
+              <p className="text-gray-400 text-xs font-bold mt-3">Expansion Motions</p>
+              {(result.expansionPlaybook.motions||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3"><p className="text-white font-medium text-sm">{m.motion}</p><p className="text-gray-400 text-xs mb-1">Segment: {m.targetSegment}</p><p className="text-gray-300 text-xs mb-1">{m.pitch}</p><p className="text-green-300 text-xs">Expected Lift: {m.expectedLift}</p></div>
+              ))}
+            </div>
+          )}
+          {subtab==='team' && (
+            <div className="space-y-3">
+              {result.teamStructure && (result.teamStructure.roles||[]).map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3"><div className="flex justify-between mb-2"><p className="text-white font-medium">{r.role}</p><span className="text-teal-300 text-xs">Ratio: {r.ratio}</span></div><ul>{(r.responsibilities||[]).slice(0,4).map((resp:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {resp}</li>)}</ul></div>
+              ))}
+              {result.metrics && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Metrics ({result.metrics.reportingCadence})</p><div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-green-400 mb-1">Leading</p><ul>{(result.metrics.leading||[]).map((m:string,i:number)=><li key={i} className="text-gray-300">• {m}</li>)}</ul></div><div><p className="text-yellow-400 mb-1">Lagging</p><ul>{(result.metrics.lagging||[]).map((m:string,i:number)=><li key={i} className="text-gray-300">• {m}</li>)}</ul></div></div></div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.16 Pricing Strategy Optimizer ---
 const SUIT_COLOR: Record<string,string> = { 'Excellent':'text-green-400','Good':'text-blue-400','Fair':'text-yellow-400','Poor':'text-red-400' };
 function PricingStrategyPanel({ api }: { api: string }) {
@@ -8271,7 +8392,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8373,6 +8494,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'negotiationcoach', label: '🤝 Negotiation Coach' },
     { id: 'execcoaching', label: '🎯 Executive Coaching' },
     { id: 'pricingstrategy', label: '💲 Pricing Strategy' },
+    { id: 'csplaybook', label: '🎖️ CS Playbook' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -8530,7 +8652,6 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
         {tab === 'partnershipproposal' && <PartnershipProposalPanel api={api} />}
-        {tab === 'pricingstrategy' && <PricingStrategyPanel api={api} />}
         {tab === 'execsummary' && <ExecSummaryPanel api={api} />}
         {tab === 'swotanalysis' && <SWOTAnalysisPanel api={api} />}
         {tab === 'sopgen' && <SOPGenPanel api={api} />}

@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.17 Customer Success Playbook Generator ---
+app.post('/api/cs-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, customerSegments, contractValue, churnRate, npsScore, teamSize, currentChallenges, successMetrics, onboardingProcess, expansionGoals, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a world-class Customer Success leader. Create a comprehensive CS playbook.
+Company: ${company} | Product: ${product} | Industry: ${industry}
+Customer Segments: ${customerSegments} | ACV: ${contractValue}
+Churn Rate: ${churnRate} | NPS: ${npsScore}
+CS Team Size: ${teamSize}
+Current Challenges: ${currentChallenges}
+Success Metrics: ${successMetrics}
+Onboarding Process: ${onboardingProcess}
+Expansion Goals: ${expansionGoals}
+
+Return JSON: { playbookTitle, executiveSummary, healthScoreModel: { metrics: [{ metric, weight, greenThreshold, yellowThreshold, redThreshold }], scoringFormula }, customerJourney: [{ stage, duration, goals, csActions, customerMilestones, risksToWatch, exitCriteria }], onboardingPlaybook: { phases: [{ phase, week, objectives, activities, ownerCS, ownerCustomer, successCriteria }] }, qbrFramework: { frequency, agenda, preparationChecklist, talkingPoints, followUpTemplate }, churnPrevention: { earlyWarningSignals: [{ signal, severity, triggerAction, script }], savePlaybook: [{ scenario, approach, escalationPath, offerOptions }] }, expansionPlaybook: { signals: [{ signal, timing, approach }], motions: [{ motion, targetSegment, pitch, expectedLift }] }, escalationMatrix: [{ issue, severity, owner, sla, script }], metrics: { leading: string[], lagging: string[], reportingCadence }, teamStructure: { roles: [{ role, ratio, responsibilities }] }, toolStack, trainingPlan }`;
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.16 Pricing Strategy Optimizer ---
 app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, businessModel, currentPrice, costStructure, targetMargin, competitors, customerSegments, valueProposition, pricingGoal, marketPosition, revenueTarget, provider = 'anthropic' } = req.body;
