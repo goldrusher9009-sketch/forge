@@ -597,6 +597,71 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.29 Customer Success Playbook ---
+const CS_RISK_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400','Critical':'text-red-500' };
+const CS_SEV_BG: Record<string,string> = { 'P1':'bg-red-900/50','P2':'bg-orange-900/40','P3':'bg-yellow-900/30','P4':'bg-gray-700','Critical':'bg-red-900/60' };
+function CSPlaybookPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', customerSegments:'', avgContractValue:'', churnRate:'', npsScore:'', teamSize:'', currentTools:'', topChurnReasons:'', successMilestones:'', expansionGoals:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState('overview');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/cs-playbook`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">🎯 Customer Success Playbook</h2><p className="text-gray-400 text-sm mt-1">Onboarding, health scoring, churn prevention, expansion, QBR templates & escalation</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme SaaS')} {F('Product','product','CRM Platform')}
+            {F('Industry','industry','B2B SaaS')} {F('Customer Segments','customerSegments','SMB, Mid-market, Enterprise')}
+            {F('Avg Contract Value','avgContractValue','$12K ARR')} {F('Churn Rate','churnRate','8% annually')}
+            {F('NPS Score','npsScore','42')} {F('CS Team Size','teamSize','6 CSMs')}
+            {F('Current Tools','currentTools','Salesforce, Gainsight, Slack')} {F('Expansion Goals','expansionGoals','15% NRR from upsells')}
+            {F('Top Churn Reasons','topChurnReasons','Low adoption, budget cuts, competitor')} {F('Success Milestones','successMilestones','First value in 30 days, power user at 60')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Building CS playbook...' : 'Generate CS Playbook'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.playbookTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Playbook</button></div>
+          {result.csPhilosophy && <div className="bg-blue-900/30 border border-blue-700/50 rounded-xl p-4"><p className="text-blue-300 text-sm italic">"{result.csPhilosophy}"</p></div>}
+          <div className="flex gap-2 flex-wrap">{['overview','segments','onboarding','health','touchpoints','churn','expansion','escalation','metrics'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Segments */}
+          {view==='segments' && result.customerSegments?.length>0 && <div className="space-y-3">{result.customerSegments.map((s:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{s.segment}</p><span className={`text-xs font-bold ${CS_RISK_COLOR[s.riskLevel]||'text-gray-400'}`}>{s.riskLevel} Risk</span></div><div className="grid grid-cols-3 gap-2 text-xs text-gray-400"><div><p className="text-gray-500">CS Motion</p><p className="text-gray-300">{s.csMotion}</p></div><div><p className="text-gray-500">Touchpoints</p><p className="text-gray-300">{s.touchpointFrequency}</p></div><div><p className="text-gray-500">Metrics</p><p className="text-gray-300">{s.primaryMetrics}</p></div></div></div>)}</div>}
+          {/* Onboarding */}
+          {view==='onboarding' && result.onboardingPlaybook && <div className="space-y-3">{result.onboardingPlaybook.phases?.map((ph:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{ph.phase}</p><span className="text-blue-400 text-xs">{ph.duration}</span></div><p className="text-gray-400 text-xs mb-2">{ph.goals}</p><p className="text-gray-300 text-sm">{ph.activities}</p>{ph.redFlags && <p className="text-red-400 text-xs mt-1">⚠️ {ph.redFlags}</p>}</div>)}</div>}
+          {/* Health Scoring */}
+          {view==='health' && result.healthScoring && <div className="space-y-4"><div className="grid grid-cols-2 gap-3">{result.healthScoring.dimensions?.map((d:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-1"><p className="text-white font-medium">{d.name}</p><span className="text-yellow-400 text-xs font-bold">{d.weight}</span></div><p className="text-gray-400 text-xs">{d.signals}</p></div>)}</div><div className="space-y-2">{result.healthScoring.segmentation?.map((s:any,i:number)=><div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2 text-sm"><span className="text-gray-300">{s.score}</span><span className="font-bold text-white">{s.label}</span><span className="text-blue-300 text-xs">{s.action}</span></div>)}</div></div>}
+          {/* Touchpoints */}
+          {view==='touchpoints' && result.touchpointPlaybook?.length>0 && <div className="space-y-2">{result.touchpointPlaybook.map((t:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><p className="text-white text-sm font-medium">{t.trigger}</p><div className="flex gap-2 text-xs"><span className="text-blue-400">{t.channel}</span><span className="text-gray-500">{t.sla}</span></div></div><p className="text-gray-400 text-xs">{t.action}</p></div>)}</div>}
+          {/* Churn */}
+          {view==='churn' && <div className="space-y-4">{result.churnPrevention?.earlyWarnings?.length>0 && <div><p className="text-red-400 text-sm font-semibold mb-2">⚠️ Early Warning Signals</p><div className="space-y-2">{result.churnPrevention.earlyWarnings.map((w:any,i:number)=><div key={i} className="bg-gray-800 rounded-lg p-3"><div className="flex justify-between text-xs mb-1"><span className="text-white">{w.signal}</span><span className={CS_RISK_COLOR[w.severity]||'text-yellow-400'}>{w.severity}</span></div><p className="text-blue-300 text-xs">{w.intervention}</p></div>)}</div></div>}{result.churnPrevention?.savePlaybooks?.length>0 && <div><p className="text-yellow-400 text-sm font-semibold mb-2">🛟 Save Playbooks</p><div className="space-y-2">{result.churnPrevention.savePlaybooks.map((s:any,i:number)=><div key={i} className="bg-gray-800 rounded-lg p-3"><p className="text-white text-sm font-medium mb-1">{s.scenario}</p><p className="text-gray-300 text-xs">{s.approach}</p></div>)}</div></div>}</div>}
+          {/* Expansion */}
+          {view==='expansion' && result.expansionPlaybook && <div className="space-y-3">{result.expansionPlaybook.upsellMotions?.map((u:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-white font-semibold mb-1">{u.product}</p><p className="text-gray-400 text-xs mb-2">{u.idealCustomer}</p><p className="text-green-300 text-sm mb-1">{u.pitch}</p><p className="text-yellow-300 text-xs">{u.objections}</p></div>)}</div>}
+          {/* Escalation */}
+          {view==='escalation' && result.escalationMatrix?.length>0 && <div className="space-y-3">{result.escalationMatrix.map((e:any,i:number)=><div key={i} className={`${CS_SEV_BG[e.severity]||'bg-gray-800'} rounded-xl p-4`}><div className="flex justify-between items-center mb-2"><span className="text-white font-bold">{e.severity}</span><span className="text-gray-400 text-xs">SLA: {e.sla}</span></div><p className="text-gray-300 text-xs mb-1">{e.criteria}</p><p className="text-blue-300 text-xs">Owner: {e.responder}</p></div>)}</div>}
+          {/* Metrics */}
+          {view==='metrics' && result.csMetrics?.length>0 && <div className="grid grid-cols-2 gap-3">{result.csMetrics.map((m:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs">{m.metric}</p><p className="text-white text-lg font-bold mt-1">{m.target}</p><p className="text-gray-500 text-xs mt-0.5">{m.definition}</p></div>)}</div>}
+          {/* Overview = QBR */}
+          {view==='overview' && result.qbrTemplate && <div className="space-y-3"><p className="text-white font-semibold">📊 QBR Template</p><div className="grid grid-cols-2 gap-3"><div className="bg-gray-800 rounded-xl p-4"><p className="text-blue-400 text-xs mb-2">Agenda</p><p className="text-gray-300 text-sm">{result.qbrTemplate.agenda}</p></div><div className="bg-gray-800 rounded-xl p-4"><p className="text-green-400 text-xs mb-2">Metrics to Review</p><p className="text-gray-300 text-sm">{result.qbrTemplate.metricsToReview}</p></div><div className="bg-gray-800 rounded-xl p-4"><p className="text-yellow-400 text-xs mb-2">Goals to Set</p><p className="text-gray-300 text-sm">{result.qbrTemplate.goalsToSet}</p></div><div className="bg-gray-800 rounded-xl p-4"><p className="text-purple-400 text-xs mb-2">Follow-up Actions</p><p className="text-gray-300 text-sm">{result.qbrTemplate.followUpActions}</p></div></div></div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.28 Content Marketing Calendar ---
 const CHANNEL_BADGE: Record<string,string> = { 'LinkedIn':'bg-blue-700','Twitter':'bg-sky-700','Instagram':'bg-pink-700','Blog':'bg-green-700','Email':'bg-yellow-700','YouTube':'bg-red-700','TikTok':'bg-purple-700','Facebook':'bg-blue-800','Newsletter':'bg-orange-700' };
 function ContentCalendarPanel({ api }: { api: string }) {
@@ -9195,7 +9260,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9293,6 +9358,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'csplaybook2', label: '🎯 CS Playbook' },
     { id: 'contentcalendar', label: '📅 Content Calendar' },
     { id: 'competitiveintel', label: '🔍 Competitive Intel' },
     { id: 'financialmodeling', label: '💰 Financial Model' },
@@ -9458,6 +9524,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'csplaybook2' && <CSPlaybookPanel api={api} />}
         {tab === 'contentcalendar' && <ContentCalendarPanel api={api} />}
         {tab === 'competitiveintel' && <CompetitiveIntelPanel api={api} />}
         {tab === 'financialmodeling' && <FinancialModelingPanel api={api} />}

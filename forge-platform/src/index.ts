@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.29 Customer Success Playbook ---
+app.post('/api/cs-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, customerSegments, avgContractValue, churnRate, npsScore, teamSize, currentTools, topChurnReasons, successMilestones, expansionGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Customer Success expert. Generate a comprehensive CS playbook for:
+Company: ${company}, Product: ${product}, Industry: ${industry}
+Customer Segments: ${customerSegments}, Avg Contract Value: ${avgContractValue}
+Current Churn Rate: ${churnRate}, NPS Score: ${npsScore}
+Team Size: ${teamSize}, Tools: ${currentTools}
+Top Churn Reasons: ${topChurnReasons}, Success Milestones: ${successMilestones}
+Expansion Goals: ${expansionGoals}
+
+Return JSON: { playbookTitle, executiveSummary, csPhilosophy, customerSegments: [{ segment, characteristics, riskLevel, csMotion, touchpointFrequency, primaryMetrics }], onboardingPlaybook: { phases: [{ phase, duration, goals, activities, successCriteria, redFlags }], kickoffAgenda, firstValueMilestone }, healthScoring: { dimensions: [{ name, weight, signals, scoring }], segmentation: [{ score, label, action }] }, touchpointPlaybook: [{ trigger, action, channel, template, owner, sla }], churnPrevention: { earlyWarnings: [{ signal, severity, intervention, owner }], savePlaybooks: [{ scenario, approach, talkingPoints, nextSteps }] }, expansionPlaybook: { triggers: [{ signal, opportunity, approach, timing }], upsellMotions: [{ product, idealCustomer, pitch, objections }] }, qbrTemplate: { agenda, metricsToReview, goalsToSet, followUpActions }, escalationMatrix: [{ severity, criteria, responder, sla, resolution }], csMetrics: [{ metric, definition, target, measurement }], teamStructure: { roles: [{ title, responsibilities, metrics, toolsUsed }] }, toolingRecommendations: [{ tool, purpose, priority }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.28 Content Marketing Calendar ---
 app.post('/api/content-calendar', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, audience, channels, goals, brandVoice, contentPillars, frequency, campaignThemes, competitors, budget, teamSize, timeHorizon } = req.body;
