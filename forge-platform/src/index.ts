@@ -39500,6 +39500,87 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.37 AI Brand Architecture & Identity Engine ---
+app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, stage, currentBrand, competitors, targetAudience, brandGoals } = req.body;
+  const p = `You are a world-class brand strategist and identity architect. Create a comprehensive brand architecture and identity system for this company.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Stage: ${stage || 'Unknown'}
+Current Brand: ${currentBrand || 'None described'}
+Competitors: ${competitors || 'Unknown'}
+Target Audience: ${targetAudience || 'Unknown'}
+Brand Goals: ${brandGoals || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Brand Architecture & Identity Report for [company]",
+  "executiveSummary": "3-sentence brand assessment and vision",
+  "brandScore": <number 0-100>,
+  "brandStrength": "Nascent|Emerging|Established|Iconic",
+  "criticalGap": "most urgent brand gap",
+  "brandOpportunity": "biggest differentiation opportunity",
+  "brandPositioning": {
+    "coreEssence": "brand soul in 5 words",
+    "positioningStatement": "full positioning statement",
+    "valueProposition": "unique value prop",
+    "brandPromise": "what you commit to customers",
+    "differentiators": ["differentiator 1", "differentiator 2", "differentiator 3"]
+  },
+  "audienceArchetypes": [
+    { "name": "archetype name", "description": "who they are", "needs": "what they need", "messaging": "how to speak to them", "channels": ["channel1"] }
+  ],
+  "brandPersonality": {
+    "archetype": "Brand archetype (Hero/Sage/Creator etc)",
+    "traits": ["trait1", "trait2", "trait3", "trait4"],
+    "voice": "brand voice description",
+    "tone": "communication tone",
+    "vocabulary": ["key word 1", "key word 2", "key word 3"],
+    "avoidWords": ["avoid word 1", "avoid word 2"]
+  },
+  "visualIdentity": {
+    "colorStrategy": "color psychology approach",
+    "primaryPalette": "recommended primary colors",
+    "typographyApproach": "font personality guidance",
+    "imageryStyle": "photography and visual style",
+    "logoGuidance": "logo design direction"
+  },
+  "messagingHierarchy": [
+    { "level": "Tier 1/2/3", "message": "core message", "proof": "supporting evidence", "channel": "where to use" }
+  ],
+  "contentPillars": [
+    { "pillar": "pillar name", "purpose": "why this matters", "topics": ["topic1", "topic2"], "formats": ["format1"] }
+  ],
+  "competitivePositioning": {
+    "whitespace": "unclaimed positioning territory",
+    "defensibility": "why this position is hard to copy",
+    "risks": ["competitive risk 1", "competitive risk 2"]
+  },
+  "brandArchitecture": {
+    "model": "Branded House|House of Brands|Endorsed|Hybrid",
+    "rationale": "why this model",
+    "productNaming": "naming convention approach",
+    "subBrandGuidance": "when/how to create sub-brands"
+  },
+  "launchRoadmap": [
+    { "phase": "phase name", "timeline": "timeline", "focus": "focus area", "deliverables": ["deliverable1"] }
+  ],
+  "brandMetrics": ["metric 1", "metric 2", "metric 3", "metric 4"],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.36 AI Data Strategy & Analytics Intelligence Engine ---
 app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
