@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.53 AI Pricing Strategy & Revenue Optimization Engine ---
+app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, product, currentPrice, pricingModel, targetMarket, competitors, cogs, grossMargin, arpu, ltv, cac, revenueGoal, topSegments, willingnessToPay, valueMetric } = req.body;
+  const p = `You are an elite SaaS pricing strategist. Generate a comprehensive Pricing Strategy & Revenue Optimization report for: Company=${companyName}, Product=${product}, Current Price=${currentPrice}, Model=${pricingModel}, Market=${targetMarket}, Competitors=${competitors}, COGS=${cogs}, Gross Margin=${grossMargin}, ARPU=${arpu}, LTV=${ltv}, CAC=${cac}, Revenue Goal=${revenueGoal}, Top Segments=${topSegments}, Willingness to Pay=${willingnessToPay}, Value Metric=${valueMetric}.
+Return ONLY valid JSON: { "reportTitle": string, "executiveSummary": string, "pricingScore": number, "revenueOpportunity": string, "recommendedModel": string, "priceAnchor": string, "keyInsight": string, "pricingAnalysis": { "currentModelAssessment": string, "priceElasticity": string, "competitivePosition": string, "valueCapture": string, "optimizationGap": string }, "pricingTiers": [{ "tier": string, "price": string, "billingCycle": string, "targetSegment": string, "features": string[], "positioningStatement": string, "conversionTactics": string[], "expectedMix": string }], "valueMetricAnalysis": { "recommendedMetric": string, "rationale": string, "pricingFormula": string, "benchmarks": string[], "migrationPath": string }, "psychologicalPricing": { "anchoring": string, "decoy": string, "charm": string, "bundling": string, "urgency": string, "socialProof": string }, "revenueLevers": [{ "lever": string, "currentState": string, "opportunity": string, "action": string, "impact": string, "effort": "Low"|"Medium"|"High" }], "expansionRevenue": { "netRevenueRetention": string, "upsellPlaybook": string[], "crossSellPlaybook": string[], "addOnStrategy": string[], "annualPlanIncentive": string }, "competitivePositioning": { "vsCompetitorA": string, "differentiation": string[], "priceJustification": string, "winRateStrategy": string }, "pricingExperiments": [{ "experiment": string, "hypothesis": string, "metric": string, "duration": string, "expectedLift": string }], "implementationRoadmap": [{ "phase": string, "actions": string[], "timeline": string, "expectedRevImpact": string }], "quickWins": string[] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.52 AI Customer Success & Churn Prevention Engine ---
 app.post('/api/customer-success', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
