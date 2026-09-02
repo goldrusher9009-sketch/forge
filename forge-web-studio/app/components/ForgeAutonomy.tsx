@@ -597,6 +597,27 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.42 Pricing Strategy Engine ---
+const PRICING_MODEL_COLOR: Record<string,string> = { 'Freemium':'bg-blue-700','Flat Rate':'bg-purple-700','Usage-Based':'bg-orange-700','Tiered':'bg-green-700','Value-Based':'bg-pink-700','Hybrid':'bg-indigo-700' };
+function PricingEnginePanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', product:'', currentPrice:'', currentRevenue:'', targetMarket:'', customerSegments:'', willingness_to_pay:'', competitors:'', competitorPricing:'', costStructure:'', grossMargin:'', cac:'', ltv:'', churnRate:'', growthRate:'', pricingGoals:'', constraints:'' });
+  const [result, setResult] = useState<any>(null); const [loading, setLoading] = useState(false); const [error, setError] = useState('');
+  const run = async () => { setLoading(true); setError(''); try { const r = await fetch(`${api}/api/pricing-engine`, { method:'POST', headers:{'Content-Type':'application/json',...( (window as any).__forgeAuth ? {Authorization:`Bearer ${(window as any).__forgeAuth}`} : {})}, body: JSON.stringify(form) }); const d = await r.json(); if (!d.success) throw new Error(d.error); setResult(d); } catch(e:any){setError(e.message);} finally{setLoading(false);}};
+  return (<div className="p-4 space-y-4">
+    <h2 className="text-xl font-bold text-white">💰 Pricing Strategy Engine</h2>
+    <div className="grid grid-cols-2 gap-3">{Object.entries(form).map(([k,v])=>(<div key={k}><label className="text-xs text-gray-400 capitalize">{k.replace(/_/g,' ').replace(/([A-Z])/g,' $1')}</label><input className="w-full bg-gray-800 text-white rounded px-2 py-1 text-sm mt-0.5" value={v} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={k}/></div>))}</div>
+    <button onClick={run} disabled={loading} className="bg-blue-700 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm">{loading?'Generating...':'Build Pricing Strategy'}</button>
+    {error && <p className="text-red-400 text-sm">{error}</p>}
+    {result && (<div className="space-y-4">
+      <div className="bg-gray-800 rounded p-4"><div className="flex items-center gap-3 mb-2"><h3 className="text-lg font-bold text-white">{result.engineTitle}</h3><span className={`px-3 py-1 rounded-full text-xs text-white ${PRICING_MODEL_COLOR[result.recommendedModel]||'bg-gray-700'}`}>{result.recommendedModel}</span></div><p className="text-gray-300 text-sm">{result.executiveSummary}</p><p className="text-green-400 font-semibold mt-2">{result.pricingRecommendation}</p></div>
+      {result.pricingTiers?.length>0 && (<div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">Pricing Tiers</h4><div className="grid grid-cols-3 gap-3">{result.pricingTiers.map((t:any,i:number)=>(<div key={i} className="bg-gray-700 rounded p-3 border border-gray-600"><p className="text-white font-bold text-sm">{t.name}</p><p className="text-2xl font-bold text-blue-400 my-1">{t.price}</p><p className="text-gray-400 text-xs mb-2">{t.targetPersona}</p><p className="text-gray-300 text-xs italic">{t.positioning}</p></div>))}</div></div>)}
+      {result.unitEconomicsProjection?.length>0 && (<div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">Unit Economics Scenarios</h4><table className="w-full text-sm"><thead><tr className="text-gray-400 text-xs border-b border-gray-700"><th className="text-left p-2">Scenario</th><th className="text-left p-2">Price</th><th className="text-left p-2">Volume</th><th className="text-left p-2">Revenue</th><th className="text-left p-2">Gross Profit</th></tr></thead><tbody>{result.unitEconomicsProjection.map((u:any,i:number)=>(<tr key={i} className="border-b border-gray-700/50"><td className="p-2 text-white">{u.scenario}</td><td className="p-2 text-blue-400">{u.price}</td><td className="p-2 text-gray-300">{u.volume}</td><td className="p-2 text-green-400">{u.revenue}</td><td className="p-2 text-green-300">{u.grossProfit}</td></tr>))}</tbody></table></div>)}
+      {result.implementationRoadmap?.length>0 && (<div className="bg-gray-800 rounded p-4"><h4 className="text-white font-semibold mb-3">Implementation Roadmap</h4><div className="space-y-2">{result.implementationRoadmap.map((p:any,i:number)=>(<div key={i} className="bg-gray-700 rounded p-3"><div className="flex justify-between mb-1"><span className="text-white font-medium text-sm">{p.phase}</span><span className="text-gray-400 text-xs">{p.timeline}</span></div><p className="text-gray-300 text-xs">{p.actions}</p>{p.risks && <p className="text-yellow-400 text-xs mt-1">⚠ {p.risks}</p>}</div>))}</div></div>)}
+      {result.quickWins && <div className="bg-green-900/30 border border-green-700/30 rounded p-3"><h4 className="text-green-400 font-semibold text-sm mb-1">Quick Wins</h4><p className="text-gray-300 text-xs">{typeof result.quickWins==='string'?result.quickWins:JSON.stringify(result.quickWins)}</p></div>}
+    </div>)}
+  </div>);
+}
+
 // --- v9.41 Competitive Moat Analyzer ---
 const MOAT_RATING_COLOR: Record<string,string> = { 'Wide':'bg-green-700 text-green-100','Narrow':'bg-yellow-700 text-yellow-100','No Moat':'bg-red-700 text-red-100' };
 function CompetitiveMoatPanel({ api }: { api: string }) {
@@ -10230,7 +10251,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10328,6 +10349,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
@@ -10506,6 +10528,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}

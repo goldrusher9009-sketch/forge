@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.42 Pricing Strategy Engine ---
+app.post('/api/pricing-engine', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, product, currentPrice, currentRevenue, targetMarket, customerSegments, willingness_to_pay, competitors, competitorPricing, costStructure, grossMargin, cac, ltv, churnRate, growthRate, pricingGoals, constraints } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a pricing strategy expert. Build a comprehensive pricing strategy for: Company: ${company}, Industry: ${industry}, Product: ${product}, Current Price: ${currentPrice}, Current Revenue: ${currentRevenue}, Target Market: ${targetMarket}, Customer Segments: ${customerSegments}, Willingness to Pay: ${willingness_to_pay}, Competitors: ${competitors}, Competitor Pricing: ${competitorPricing}, Cost Structure: ${costStructure}, Gross Margin: ${grossMargin}, CAC: ${cac}, LTV: ${ltv}, Churn Rate: ${churnRate}, Growth Rate: ${growthRate}, Goals: ${pricingGoals}, Constraints: ${constraints}. Return JSON: { engineTitle, executiveSummary, pricingRecommendation, recommendedModel ("Freemium"/"Flat Rate"/"Usage-Based"/"Tiered"/"Value-Based"/"Hybrid"), pricePoints (array: {tier, price, billingCycle, targetSegment, features, expectedConversion}), valueMetrics (array: {metric, rationale, measurability}), competitiveBenchmark, willingnessToPayAnalysis, unitEconomicsProjection (array: {scenario, price, volume, revenue, grossProfit, paybackPeriod}), pricingTiers (array: {name, price, features, targetPersona, positioning}), discountingPolicy, trialAndFreemiumStrategy, priceIncreasePath, revenueImpactModel, implementationRoadmap (array: {phase, timeline, actions, risks}), psychologicalPricing, internationalPricing, quickWins }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.41 Competitive Moat Analyzer ---
 app.post('/api/competitive-moat', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, product, revenueModel, targetMarket, keyCompetitors, currentAdvantages, weaknesses, networkEffects, switchingCosts, brandStrength, dataAdvantage, regulatoryMoats, patentsIP, costStructure, grossMargin, nrr, churnRate, customerAcquisition, goals } = req.body;
