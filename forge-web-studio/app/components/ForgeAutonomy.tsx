@@ -597,6 +597,121 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.93 KPI Dashboard Builder ---
+const KPI_VIZ_ICON: Record<string,string> = { 'line chart':'📈', 'bar chart':'📊', 'gauge':'🎯', 'number':'🔢', 'pie chart':'🥧', 'table':'📋' };
+const KPI_CAT_COLOR: Record<string,string> = { financial:'text-green-400', growth:'text-blue-400', operational:'text-yellow-400', customer:'text-pink-400', product:'text-purple-400' };
+function KPIDashboardPanel({ api }: { api: string }) {
+  const [company, setCompany] = useState('');
+  const [department, setDepartment] = useState('');
+  const [goals, setGoals] = useState('');
+  const [audience, setAudience] = useState('');
+  const [currentMetrics, setCurrentMetrics] = useState('');
+  const [provider, setProvider] = useState('anthropic');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/kpi-dashboard`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify({ company, department, goals, audience, currentMetrics, provider }) });
+      const d = await r.json();
+      if (!r.ok) setError(d.error || 'Error');
+      else setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-lg font-bold text-white mb-3">📊 KPI Dashboard Builder</h2>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Company name" value={company} onChange={e=>setCompany(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Department (e.g. Marketing)" value={department} onChange={e=>setDepartment(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Goals (e.g. grow ARR, reduce churn)" value={goals} onChange={e=>setGoals(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Audience (e.g. exec team)" value={audience} onChange={e=>setAudience(e.target.value)} />
+        </div>
+        <textarea className="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-3" rows={2} placeholder="Current metrics tracked (optional)" value={currentMetrics} onChange={e=>setCurrentMetrics(e.target.value)} />
+        <div className="flex gap-2">
+          <select className="bg-gray-700 text-white rounded px-3 py-2 text-sm" value={provider} onChange={e=>setProvider(e.target.value)}>
+            {['anthropic','openai','gemini','groq'].map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          <button onClick={run} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+            {loading ? 'Building…' : 'Build Dashboard'}
+          </button>
+        </div>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <h3 className="text-white font-bold text-lg">{result.dashboardTitle}</h3>
+            <p className="text-gray-400 text-sm mt-1">{result.purpose}</p>
+            {result.northStarMetric && (
+              <div className="mt-3 bg-yellow-900/30 border border-yellow-700 rounded p-3">
+                <p className="text-yellow-400 font-semibold text-sm">⭐ North Star Metric</p>
+                <p className="text-white font-bold">{result.northStarMetric.metric}</p>
+                <p className="text-gray-300 text-sm">Target: {result.northStarMetric.currentTarget}</p>
+                <p className="text-gray-400 text-xs mt-1">{result.northStarMetric.why}</p>
+              </div>
+            )}
+          </div>
+          {(result.kpiCategories||[]).map((cat: any, ci: number) => (
+            <div key={ci} className="bg-gray-800 rounded-lg p-4">
+              <h4 className={`font-bold mb-3 ${KPI_CAT_COLOR[cat.category?.toLowerCase()] || 'text-blue-400'}`}>{cat.category}</h4>
+              <div className="space-y-2">
+                {(cat.kpis||[]).map((k: any, ki: number) => (
+                  <div key={ki} className="bg-gray-700 rounded p-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-white font-medium text-sm">{KPI_VIZ_ICON[k.visualType?.toLowerCase()]||'📌'} {k.name}</span>
+                        <p className="text-gray-400 text-xs mt-1">Formula: {k.formula}</p>
+                        <p className="text-gray-400 text-xs">Owner: {k.owner} · {k.frequency}</p>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-green-400 text-xs font-bold">Target: {k.target}</span>
+                        <p className="text-red-400 text-xs">🚩 {k.redFlag}</p>
+                      </div>
+                    </div>
+                    {k.benchmark && <p className="text-gray-500 text-xs mt-1">Benchmark: {k.benchmark}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+          {result.reviewCadence && (
+            <div className="bg-gray-800 rounded-lg p-4 grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-gray-400 text-xs font-semibold uppercase mb-2">Review Cadence</p>
+                <p className="text-white text-sm">{result.reviewCadence}</p>
+                {result.dataSourcesNeeded && (
+                  <div className="mt-3">
+                    <p className="text-gray-400 text-xs font-semibold uppercase mb-1">Data Sources Needed</p>
+                    <ul className="space-y-1">{(result.dataSourcesNeeded||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {s}</li>)}</ul>
+                  </div>
+                )}
+              </div>
+              <div>
+                {result.implementationSteps && (
+                  <>
+                    <p className="text-gray-400 text-xs font-semibold uppercase mb-2">Implementation Steps</p>
+                    <ol className="space-y-1">{(result.implementationSteps||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">{i+1}. {s}</li>)}</ol>
+                  </>
+                )}
+                {result.commonPitfalls && (
+                  <div className="mt-3">
+                    <p className="text-gray-400 text-xs font-semibold uppercase mb-1">Common Pitfalls</p>
+                    <ul className="space-y-1">{(result.commonPitfalls||[]).map((s:string,i:number)=><li key={i} className="text-yellow-400 text-xs">⚠️ {s}</li>)}</ul>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.92 Fundraising Strategy Generator ---
 function FundraisingStrategyPanel({ api }: { api: string }) {
   const [company, setCompany] = React.useState('');
@@ -5478,7 +5593,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -5556,6 +5671,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
     { id: 'fundraisingstrategy', label: '💸 Fundraising' },
+    { id: 'kpidashboard', label: '📊 KPI Dashboard' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -5685,6 +5801,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
         {tab === 'fundraisingstrategy' && <FundraisingStrategyPanel api={api} />}
+        {tab === 'kpidashboard' && <KPIDashboardPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
