@@ -39500,6 +39500,56 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.51 AI Product-Market Fit & Growth Engine ---
+app.post('/api/pmf-growth', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, product, currentUsers, retentionRate, npsScore, churnRate, growthRate, revenuePerUser, topUserSegment, mainComplaint, competitors, fundingStage } = req.body;
+  const p = `You are a world-class product growth expert and PMF specialist. Analyze product-market fit and create a growth strategy.
+
+Company: ${companyName}
+Product: ${product}
+Current Users/Customers: ${currentUsers}
+Retention Rate: ${retentionRate}
+NPS Score: ${npsScore}
+Churn Rate: ${churnRate}
+Monthly Growth Rate: ${growthRate}
+Revenue Per User: ${revenuePerUser}
+Top User Segment: ${topUserSegment}
+Main User Complaint: ${mainComplaint}
+Competitors: ${competitors}
+Funding Stage: ${fundingStage}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "PMF & Growth Analysis for [Company]",
+  "executiveSummary": "...",
+  "pmfScore": 0-100,
+  "pmfStatus": "Pre-PMF|Finding PMF|Early PMF|Strong PMF|Scale",
+  "growthScore": 0-100,
+  "biggestPMFGap": "...",
+  "topGrowthLever": "...",
+  "estimatedGrowthPotential": "X% in Y months",
+  "pmfSignals": { "retention": { "score": 0-100, "assessment": "...", "benchmark": "...", "action": "..." }, "nps": { "score": 0-100, "assessment": "...", "benchmark": "...", "action": "..." }, "organicGrowth": { "score": 0-100, "assessment": "...", "action": "..." }, "usageFrequency": { "score": 0-100, "assessment": "...", "action": "..." }, "willingnessToPay": { "score": 0-100, "assessment": "...", "action": "..." }, "coreFanBase": { "score": 0-100, "assessment": "...", "action": "..." } },
+  "userSegments": [ { "segment": "...", "size": "X%", "retention": "X%", "ltv": "$X", "nps": X, "coreJob": "...", "growthPotential": "High|Medium|Low", "strategy": "..." } ],
+  "retentionAnalysis": { "day1": "X%", "day7": "X%", "day30": "X%", "day90": "X%", "topDropoffPoint": "...", "topRetentionDriver": "...", "retentionPlaybook": [] },
+  "growthLoops": [ { "loopName": "...", "type": "Viral|Content|Paid|Product|Sales", "currentStrength": "Weak|Moderate|Strong", "mechanism": "...", "optimizationTactics": [], "expectedLift": "X%" } ],
+  "activationOptimization": { "currentActivationRate": "X%", "targetActivationRate": "X%", "ahamoment": "...", "timeToAha": "...", "topDropoffStep": "...", "experiments": [] },
+  "expansionRevenue": { "currentNRR": "X%", "targetNRR": "X%", "upsellOpportunity": "...", "crossSellOpportunity": "...", "expansionPlaybook": [] },
+  "competitivePosition": { "currentMoat": "...", "moatStrength": "Weak|Moderate|Strong|Fortress", "defensibilityPlan": "...", "switchingCost": "...", "networkEffects": "None|Weak|Moderate|Strong" },
+  "growthExperiments": [ { "hypothesis": "...", "metric": "...", "expectedLift": "X%", "effort": "Low|Medium|High", "confidence": "Low|Medium|High", "howToTest": "..." } ],
+  "quickWins": []
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!json) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.50 AI Organizational Design & Change Management Engine ---
 app.post('/api/org-design', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
