@@ -597,6 +597,113 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.70 AI Innovation Lab & R&D Portfolio Manager ---
+const INNOVATION_ARCHETYPE_COLOR: Record<string,string> = { 'Optimizer':'bg-gray-600','Fast Follower':'bg-blue-700','Innovator':'bg-purple-700','Disruptor':'bg-orange-700','Transformer':'bg-red-700' };
+const RADAR_RING_COLOR: Record<string,string> = { 'adopt':'bg-green-700','trial':'bg-blue-700','assess':'bg-yellow-700','hold':'bg-gray-600' };
+function InnovationLabPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ industry:'', companyStage:'', innovationFocus:'', currentCapabilities:'', budget:'', timeHorizon:'', competitorTrends:'', customerPainPoints:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/innovation-lab`, { method:'POST', headers:{'Content-Type':'application/json',...( (typeof window!=='undefined'&&(window as any).__forgeToken) ? {'Authorization':`Bearer ${(window as any).__forgeToken}`} : {})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error||'Error');
+      setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">🔬 AI Innovation Lab & R&D Portfolio Manager</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {([['industry','Industry','Financial Services'],['companyStage','Company Stage','Scale-up (Series B, $30M ARR)'],['innovationFocus','Innovation Focus Areas','AI/ML, embedded finance, open banking'],['currentCapabilities','Current Capabilities','Mobile banking, payments, ML fraud'],['budget','Annual R&D Budget','$2M'],['timeHorizon','Time Horizon','3 years'],['competitorTrends','Competitor Trends','Neo-banks expanding into wealth management'],['customerPainPoints','Customer Pain Points','Complex products, poor visibility, high fees']] as [string,string,string][]).map(([k,l,ph])=>(
+          <div key={k} className={k==='innovationFocus'||k==='currentCapabilities'||k==='competitorTrends'||k==='customerPainPoints'?'col-span-2':''}>
+            <label className="text-xs text-gray-400 block mb-1">{l}</label>
+            <input className="w-full bg-gray-700 text-white px-2 py-1.5 rounded text-sm" placeholder={ph} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded font-medium disabled:opacity-50">{loading?'Analyzing…':'Build Innovation Strategy'}</button>
+      {error && <div className="text-red-400 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-4 mt-2">
+          <div className="bg-gray-800 rounded p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-2 py-1 rounded text-xs font-bold text-white ${INNOVATION_ARCHETYPE_COLOR[result.innovationArchetype]||'bg-gray-600'}`}>{result.innovationArchetype}</span>
+              <span className="text-gray-400 text-sm">Readiness: <span className="text-white font-bold">{result.innovationReadinessScore}/100</span></span>
+            </div>
+            <h3 className="text-white font-bold text-lg">{result.labTitle}</h3>
+            <p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p>
+          </div>
+          {result.horizonPortfolio && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-purple-400 font-semibold mb-2">🌅 Horizon Portfolio</h4>
+              {[['H1 — Core (0-12mo)',result.horizonPortfolio.horizon1,'green'],['H2 — Adjacent (1-3yr)',result.horizonPortfolio.horizon2,'blue'],['H3 — Transformative (3-5yr)',result.horizonPortfolio.horizon3,'orange']].map(([label,items,color])=>(
+                <div key={label as string} className="mb-3">
+                  <div className={`text-${color}-400 text-xs font-medium mb-1`}>{label as string}</div>
+                  <div className="space-y-1">{(items as any[])?.slice(0,2).map((item:any,i:number)=>(
+                    <div key={i} className="bg-gray-700 rounded p-2">
+                      <div className="text-white text-sm font-medium">{item.initiative}</div>
+                      <div className="text-gray-400 text-xs mt-0.5">{item.description}</div>
+                      <div className="text-gray-500 text-xs mt-0.5">{item.budget} · {item.timeToMarket} · ROI: {item.expectedROI}</div>
+                    </div>
+                  ))}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.technologyRadar && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-blue-400 font-semibold mb-2">📡 Technology Radar</h4>
+              <div className="grid grid-cols-2 gap-2">{(['adopt','trial','assess','hold'] as string[]).map(ring=>(
+                <div key={ring} className="bg-gray-700 rounded p-2">
+                  <div className={`px-1.5 py-0.5 rounded text-xs font-bold inline-block mb-1 ${RADAR_RING_COLOR[ring]}`}>{ring.toUpperCase()}</div>
+                  <ul className="text-gray-300 text-xs space-y-0.5">{(result.technologyRadar[ring]||[]).slice(0,3).map((t:string,i:number)=><li key={i}>• {t}</li>)}</ul>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.buildBuyPartner?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-green-400 font-semibold mb-2">🏗️ Build / Buy / Partner</h4>
+              <div className="space-y-2">{result.buildBuyPartner.map((b:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white text-sm font-medium">{b.capability}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-bold ${b.recommendation==='Build'?'bg-blue-700':b.recommendation==='Buy'?'bg-green-700':b.recommendation==='Partner'?'bg-purple-700':'bg-gray-600'}`}>{b.recommendation}</span>
+                  </div>
+                  <div className="text-gray-400 text-xs">{b.rationale}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.budgetAllocation?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-yellow-400 font-semibold mb-2">💰 Budget Allocation</h4>
+              <div className="space-y-1">{result.budgetAllocation.map((b:any,i:number)=>(
+                <div key={i} className="flex items-center gap-2">
+                  <span className="text-gray-300 text-sm w-40 shrink-0">{b.category}</span>
+                  <div className="flex-1 bg-gray-700 rounded h-2"><div className="bg-violet-600 rounded h-2" style={{width:`${b.percentage}%`}}></div></div>
+                  <span className="text-gray-400 text-xs w-16 text-right">{b.percentage}% · {b.amount}</span>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-orange-400 font-semibold mb-2">⚡ Quick Wins</h4>
+              <ul className="list-disc list-inside text-gray-300 text-sm space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i}>{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.69 AI Regulatory Compliance & Risk Intelligence ---
 const COMPLIANCE_READINESS_COLOR: Record<string,string> = { 'Non-Compliant':'bg-red-800','Partially Compliant':'bg-orange-700','Mostly Compliant':'bg-yellow-700','Compliant':'bg-green-700','Certified':'bg-purple-700' };
 const COMPLIANCE_STATUS_COLOR: Record<string,string> = { 'Not Started':'bg-gray-600','In Progress':'bg-blue-700','Partially Met':'bg-yellow-700','Met':'bg-green-700','Certified':'bg-purple-700' };
@@ -11520,7 +11627,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -11608,6 +11715,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'innovationlab2', label: '🔬 Innovation Lab' },
     { id: 'complianceintel', label: '⚖️ Compliance' },
     { id: 'cxoptimizer', label: '🛤️ CX Optimizer' },
     { id: 'talentacq', label: '🎯 Talent Acq' },
@@ -11648,6 +11756,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'innovationlab2', label: '🔬 Innovation Lab' },
     { id: 'complianceintel', label: '⚖️ Compliance' },
     { id: 'cxoptimizer', label: '🛤️ CX Optimizer' },
     { id: 'talentacq', label: '🎯 Talent Acq' },
@@ -11828,6 +11937,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'innovationlab2' && <InnovationLabPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
@@ -11862,6 +11972,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'innovationlab2' && <InnovationLabPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
@@ -11879,6 +11990,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'innovationlab2' && <InnovationLabPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}

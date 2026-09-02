@@ -39500,6 +39500,47 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.70 AI Innovation Lab & R&D Portfolio Manager ---
+app.post('/api/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { industry, companyStage, innovationFocus, currentCapabilities, budget, timeHorizon, competitorTrends, customerPainPoints } = req.body;
+    const p = `You are an innovation strategy and R&D portfolio management expert. Generate a comprehensive innovation lab strategy and R&D portfolio plan.
+Industry: ${industry || 'Financial Services'}
+Company Stage: ${companyStage || 'Scale-up (Series B, $30M ARR)'}
+Innovation Focus: ${innovationFocus || 'AI/ML, embedded finance, open banking'}
+Current Capabilities: ${currentCapabilities || 'Mobile banking, payments, basic ML fraud detection'}
+Annual R&D Budget: ${budget || '$2M'}
+Time Horizon: ${timeHorizon || '3 years'}
+Competitor Trends: ${competitorTrends || 'Neo-banks expanding into wealth management, AI advisors'}
+Customer Pain Points: ${customerPainPoints || 'Complex investment products, poor financial visibility, high fees'}
+
+Return JSON only:
+{
+  "labTitle": "string",
+  "executiveSummary": "string",
+  "innovationReadinessScore": 0-100,
+  "innovationArchetype": "Optimizer|Fast Follower|Innovator|Disruptor|Transformer",
+  "horizonPortfolio": { "horizon1": [{ "initiative": "string", "description": "string", "budget": "string", "timeToMarket": "string", "expectedROI": "string" }], "horizon2": [{ "initiative": "string", "description": "string", "budget": "string", "timeToMarket": "string", "expectedROI": "string" }], "horizon3": [{ "initiative": "string", "description": "string", "budget": "string", "timeToMarket": "string", "expectedROI": "string" }] },
+  "technologyRadar": { "adopt": ["string"], "trial": ["string"], "assess": ["string"], "hold": ["string"] },
+  "innovationProcess": [{ "stage": "string", "activities": ["string"], "gatesCriteria": ["string"], "duration": "string" }],
+  "buildBuyPartner": [{ "capability": "string", "recommendation": "Build|Buy|Partner|Open Source", "rationale": "string", "vendors": ["string"], "timeline": "string" }],
+  "talentStrategy": { "keyRoles": ["string"], "skillGaps": ["string"], "trainingNeeds": ["string"], "cultureInitiatives": ["string"] },
+  "experimentFramework": { "testingApproach": "string", "successMetrics": ["string"], "failFastCriteria": ["string"], "pivotProtocol": "string" },
+  "ipStrategy": { "patentOpportunities": ["string"], "openSourceStrategy": "string", "dataAssets": ["string"] },
+  "budgetAllocation": [{ "category": "string", "percentage": 0, "amount": "string", "rationale": "string" }],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.69 AI Regulatory Compliance & Risk Intelligence ---
 app.post('/api/compliance-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
