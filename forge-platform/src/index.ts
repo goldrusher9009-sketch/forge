@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.77 AI Product-Market Fit Analyzer ---
+app.post('/api/pmf-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { product, targetCustomer, currentUsage, retentionData, customerFeedback, growthRate, revenueModel } = req.body;
+    const p = `You are a product-market fit expert. Analyze PMF for: Product: ${product}, Target Customer: ${targetCustomer}, Usage: ${currentUsage}, Retention: ${retentionData}, Feedback: ${customerFeedback}, Growth: ${growthRate}, Revenue Model: ${revenueModel}. Return JSON: { pmfTitle, executiveSummary, pmfScore (0-100), pmfStage ("No PMF"|"Searching"|"Early Signals"|"Approaching PMF"|"PMF Achieved"|"Scaling"), pmfSignals (array of {signal, status ("Green"|"Yellow"|"Red"), insight}), segmentAnalysis (array of {segment, pmfStrength, evidence, recommendation}), retentionAnalysis, engagementDepth, willingness ToPay, referralCoefficient, coreUserJourney, antiChurnLoop, pivotOptions (array of {pivotType, hypothesis, testMethod}), accelerationPlan, quickWins (array of strings) }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.76 AI Fundraising & Investor Relations Command ---
 app.post('/api/fundraising-command', requireAuth, async (req: AuthRequest, res) => {
   try {

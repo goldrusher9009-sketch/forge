@@ -597,6 +597,102 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.77 AI Product-Market Fit Analyzer ---
+const PMF_STAGE_COLOR: Record<string,string> = { 'No PMF':'bg-red-800','Searching':'bg-red-700','Early Signals':'bg-orange-700','Approaching PMF':'bg-yellow-700','PMF Achieved':'bg-green-700','Scaling':'bg-blue-700' };
+const SIGNAL_STATUS_COLOR: Record<string,string> = { 'Green':'bg-green-700','Yellow':'bg-yellow-700','Red':'bg-red-700' };
+function PMFAnalyzerPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ product:'', targetCustomer:'', currentUsage:'', retentionData:'', customerFeedback:'', growthRate:'', revenueModel:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/pmf-analyzer`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">🎯 Product-Market Fit Analyzer</h2>
+      <div className="grid grid-cols-1 gap-3">
+        {[['product','Product Description'],['targetCustomer','Target Customer (e.g. SMB finance teams)'],['currentUsage','Current Usage Patterns (e.g. DAU, weekly sessions)'],['retentionData','Retention Data (e.g. D7: 40%, D30: 20%)'],['customerFeedback','Customer Feedback Themes'],['growthRate','Growth Rate (e.g. 15% MoM, 150 customers)'],['revenueModel','Revenue Model (e.g. $99/mo SaaS)']].map(([k,ph])=>(
+          <input key={k} className="bg-gray-800 text-white rounded p-2 text-sm" placeholder={ph} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded text-sm font-semibold">{loading?'Analyzing...':'Analyze PMF'}</button>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {result && (
+        <div className="space-y-3 mt-4">
+          <div className="bg-gray-800 rounded p-3">
+            <h3 className="font-bold text-white text-lg">{result.pmfTitle}</h3>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <span className="bg-rose-700 text-white text-xs px-2 py-1 rounded">PMF Score: {result.pmfScore}/100</span>
+              {result.pmfStage && <span className={`${PMF_STAGE_COLOR[result.pmfStage]||'bg-gray-600'} text-white text-xs px-2 py-1 rounded`}>{result.pmfStage}</span>}
+            </div>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+          </div>
+          {result.pmfSignals?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <h4 className="font-semibold text-white mb-2">📊 PMF Signals</h4>
+              <div className="space-y-2">
+                {result.pmfSignals.map((s:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2 flex items-start gap-2">
+                    <span className={`${SIGNAL_STATUS_COLOR[s.status]||'bg-gray-600'} text-white text-xs px-2 py-0.5 rounded mt-0.5 shrink-0`}>{s.status}</span>
+                    <div>
+                      <p className="text-white text-sm font-medium">{s.signal}</p>
+                      <p className="text-gray-400 text-xs">{s.insight}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.segmentAnalysis?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <h4 className="font-semibold text-white mb-2">🔬 Segment Analysis</h4>
+              <div className="space-y-2">
+                {result.segmentAnalysis.map((s:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2">
+                    <div className="flex justify-between"><span className="text-white text-sm font-medium">{s.segment}</span><span className="text-gray-400 text-xs">{s.pmfStrength}</span></div>
+                    <p className="text-gray-300 text-xs mt-1">{s.evidence}</p>
+                    <p className="text-rose-400 text-xs">{s.recommendation}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.pivotOptions?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <h4 className="font-semibold text-white mb-2">🔄 Pivot Options</h4>
+              <div className="space-y-2">
+                {result.pivotOptions.map((p:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2">
+                    <p className="text-white text-sm font-medium">{p.pivotType}</p>
+                    <p className="text-gray-300 text-xs">Hypothesis: {p.hypothesis}</p>
+                    <p className="text-gray-400 text-xs">Test: {p.testMethod}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {[['retentionAnalysis','📈 Retention Analysis'],['engagementDepth','💡 Engagement Depth'],['willingnessToPay','💰 Willingness To Pay'],['referralCoefficient','🔗 Referral Coefficient'],['coreUserJourney','🗺️ Core User Journey'],['antiChurnLoop','🛡️ Anti-Churn Loop'],['accelerationPlan','🚀 Acceleration Plan']].map(([k,label])=> result[k] ? (
+            <div key={k} className="bg-gray-800 rounded p-3"><h4 className="font-semibold text-white mb-1">{label}</h4><p className="text-gray-300 text-sm">{result[k]}</p></div>
+          ) : null)}
+          {result.quickWins?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <h4 className="font-semibold text-white mb-2">⚡ Quick Wins</h4>
+              <ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-rose-400">→</span>{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.76 AI Fundraising & Investor Relations Command ---
 const FUNDING_STAGE_COLOR: Record<string,string> = { 'Bootstrapped':'bg-gray-600','Angel':'bg-yellow-700','Pre-Seed':'bg-orange-700','Seed':'bg-blue-700','Series A':'bg-purple-700','Series B':'bg-green-700','Growth':'bg-teal-700','Strategic':'bg-red-700' };
 function FundraisingCommandPanel({ api }: { api: string }) {
@@ -12114,7 +12210,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -12306,6 +12402,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'gtmplanner', label: '🚀 GTM Planner' },
     { id: 'csretention', label: '🎯 CS Retention' },
     { id: 'fundraisingcmd', label: '💎 Fundraising' },
+    { id: 'pmfanalyzer', label: '🎯 PMF Analyzer' },
   ];
 
   return (
@@ -12437,6 +12534,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
@@ -12478,6 +12576,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
@@ -12502,6 +12601,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
