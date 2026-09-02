@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.47 Supply Chain Risk Analyzer ---
+app.post('/api/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, product, supplierCount, supplierGeographies, criticalSuppliers, singleSourcedItems, inventoryTurnover, leadTimes, demandVariability, revenueAtRisk, currentRiskMitigation, regulatoryRequirements, esgRequirements, digitalMaturity, goals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a supply chain risk expert. Analyze and build a risk mitigation framework for: Company: ${company}, Industry: ${industry}, Product: ${product}, Supplier Count: ${supplierCount}, Supplier Geographies: ${supplierGeographies}, Critical Suppliers: ${criticalSuppliers}, Single-Sourced Items: ${singleSourcedItems}, Inventory Turnover: ${inventoryTurnover}, Lead Times: ${leadTimes}, Demand Variability: ${demandVariability}, Revenue at Risk: ${revenueAtRisk}, Current Mitigation: ${currentRiskMitigation}, Regulatory: ${regulatoryRequirements}, ESG: ${esgRequirements}, Digital Maturity: ${digitalMaturity}, Goals: ${goals}. Return JSON: { analyzerTitle, executiveSummary, riskScore (0-100), resilienceRating ("Fragile"/"Vulnerable"/"Resilient"/"Robust"), riskCategories (array: {category, riskLevel, description, financialImpact, probability, triggers}), supplierRiskMatrix (array: {supplier, criticality, geography, singleSource, riskFactors, mitigationStatus}), vulnerabilityMap (array: {node, type, vulnerability, businessImpact, mitigationOptions}), mitigationStrategies (array: {strategy, targetRisk, investment, timeline, complexity, expectedRiskReduction}), resilienceRoadmap (array: {phase, timeline, initiatives, investmentRequired, riskReduction}), esgRiskAssessment, regulatoryCompliance, digitalSupplyChain (array: {technology, useCase, benefit, investmentLevel}), scenarioPlanning (array: {scenario, probability, impact, response}), kpis (array: {metric, current, target, timeline}), quickWins }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.46 Digital Transformation Roadmap ---
 app.post('/api/digital-transform-roadmap', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, currentTechStack, digitalMaturity, budget, timeHorizon, businessGoals, painPoints, competitors, customerExperience, operationalChallenges, dataCapabilities, securityPosture, changeReadiness, leadership, transformationGoals } = req.body;
