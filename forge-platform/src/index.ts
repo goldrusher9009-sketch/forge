@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.96 AI Digital Transformation Roadmap Builder ---
+app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, companySize, currentTechStack, transformationGoal, budget, timeline, painPoints, digitalMaturity, keyStakeholders, constraints } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class digital transformation strategist. Build a comprehensive DX roadmap for: Company: ${companyName}, Industry: ${industry}, Size: ${companySize}, Current Tech: ${currentTechStack}, Goal: ${transformationGoal}, Budget: ${budget||'TBD'}, Timeline: ${timeline||'3 years'}, Pain Points: ${painPoints}, Digital Maturity: ${digitalMaturity||'Intermediate'}, Key Stakeholders: ${keyStakeholders||'C-Suite'}, Constraints: ${constraints||'None'}.
+Return ONLY valid JSON: { "roadmapTitle": string, "executiveSummary": string, "transformationScore": number (0-100 current maturity), "targetMaturityScore": number (0-100), "transformationVision": string, "maturityAssessment": { "currentState": string, "gaps": string[], "strengths": string[], "urgentActions": string[] }, "strategicPillars": [{ "pillar": string, "description": string, "priority": "Critical"|"High"|"Medium", "initiatives": string[] }], "phases": [{ "phase": string, "duration": string, "theme": string, "initiatives": [{ "initiative": string, "description": string, "owner": string, "budget": string, "dependencies": string[], "kpis": string[] }], "milestones": string[], "investmentLevel": string }], "technologyRoadmap": [{ "domain": string, "currentState": string, "targetState": string, "technologies": string[], "timeline": string, "priority": "Critical"|"High"|"Medium"|"Low" }], "changeManagement": { "approachSummary": string, "stakeholderMap": [{ "group": string, "impact": "High"|"Medium"|"Low", "resistance": "High"|"Medium"|"Low", "strategy": string }], "communicationPlan": string[], "trainingPlan": string[] }, "riskRegister": [{ "risk": string, "category": string, "probability": "High"|"Medium"|"Low", "impact": "High"|"Medium"|"Low", "mitigation": string }], "investmentSummary": { "totalEstimate": string, "phaseBreakdown": [{ "phase": string, "amount": string, "roiTimeline": string }], "expectedROI": string, "paybackPeriod": string }, "successMetrics": [{ "metric": string, "baseline": string, "target": string, "timeline": string }], "quickWins": string[] }`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = raw.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.95 AI Talent Acquisition & Recruiting Intelligence Engine ---
 app.post('/api/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
