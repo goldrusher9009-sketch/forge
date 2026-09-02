@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.57 AI Pricing Psychology Engine ---
+app.post('/api/pricing-psychology', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { product, currentPrice, targetMarket, competitors, businessModel } = req.body;
+    const p = `You are a behavioral economics and pricing psychology expert. Analyze pricing strategy for "${product}" at $${currentPrice||'unknown'}, targeting ${targetMarket||'general consumers'}, business model: ${businessModel||'unknown'}. Competitors: ${(competitors||[]).join(', ')||'unknown'}.
+Return ONLY valid JSON: { "engineTitle": string, "executiveSummary": string, "psychologyScore": number (0-100, pricing sophistication), "priceOptimality": "Optimal"|"Underpriced"|"Overpriced"|"Misaligned", "anchoringStrategy": { "anchorPrice": string, "anchorRationale": string, "decoyOptions": [{ "name": string, "price": string, "purpose": string }] }, "valuePerception": { "perceivedValue": string, "valueCommunication": string[], "valueGaps": string[] }, "cognitiveHeuristics": [{ "heuristic": string, "application": string, "implementation": string }], "pricingTiers": [{ "tier": string, "price": string, "features": string[], "targetPersona": string, "conversionTrigger": string }], "psychologicalPricing": { "charmPricing": string, "bundlingStrategy": string, "subscriptionOptimization": string, "urgencyTactics": string[] }, "priceElasticity": { "sensitivity": "High"|"Medium"|"Low", "elasticityFactors": string[], "resistancePoints": string[] }, "competitivePricing": { "positioningStrategy": string, "differentiationFactors": string[], "priceWar": string }, "revenueOptimization": { "upsellOpportunities": string[], "crossSellStrategies": string[], "expansionRevenue": string }, "testingPlan": [{ "test": string, "hypothesis": string, "metric": string, "duration": string }], "implementationRoadmap": string[], "quickWins": string[] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.56 Competitive Intelligence War Room ---
 app.post('/api/competitive-war-room', requireAuth, async (req: AuthRequest, res) => {
   try {

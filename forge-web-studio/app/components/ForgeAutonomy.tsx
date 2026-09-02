@@ -597,6 +597,57 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.57 AI Pricing Psychology Engine ---
+const PRICE_OPT_COLOR: Record<string,string> = { 'Optimal':'bg-green-700','Underpriced':'bg-blue-700','Overpriced':'bg-red-700','Misaligned':'bg-yellow-700' };
+const ELASTICITY_COLOR: Record<string,string> = { 'High':'bg-red-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
+function PricingPsychologyPanel({ api }: { api: string }) {
+  const [product, setProduct] = React.useState('');
+  const [currentPrice, setCurrentPrice] = React.useState('');
+  const [targetMarket, setTargetMarket] = React.useState('');
+  const [competitors, setCompetitors] = React.useState('');
+  const [businessModel, setBusinessModel] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<any>(null);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    if (!product.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/pricing-psychology`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ product, currentPrice, targetMarket, competitors: competitors.split(',').map(s=>s.trim()).filter(Boolean), businessModel }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-900 rounded-lg p-4 space-y-3">
+        <h2 className="text-xl font-bold text-white">🧠 AI Pricing Psychology Engine</h2>
+        <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" placeholder="Product/service name" value={product} onChange={e=>setProduct(e.target.value)} />
+        <div className="grid grid-cols-2 gap-2">
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Current price ($)" value={currentPrice} onChange={e=>setCurrentPrice(e.target.value)} />
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Target market" value={targetMarket} onChange={e=>setTargetMarket(e.target.value)} />
+        </div>
+        <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" placeholder="Competitors (comma-separated)" value={competitors} onChange={e=>setCompetitors(e.target.value)} />
+        <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" placeholder="Business model (SaaS, one-time, freemium...)" value={businessModel} onChange={e=>setBusinessModel(e.target.value)} />
+        <button onClick={run} disabled={loading || !product.trim()} className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded">{loading ? 'Analyzing...' : '🧠 Analyze Pricing Psychology'}</button>
+        {error && <div className="text-red-400 text-sm">{error}</div>}
+      </div>
+      {result && (
+        <div className="space-y-3">
+          <div className="bg-gray-800 rounded p-4"><div className="flex items-center gap-3 mb-2"><h3 className="text-lg font-bold text-white">{result.engineTitle}</h3><span className={`px-3 py-1 rounded-full text-xs text-white ${PRICE_OPT_COLOR[result.priceOptimality]||'bg-gray-700'}`}>{result.priceOptimality}</span><span className="text-2xl font-bold text-indigo-400">{result.psychologyScore}/100</span></div><p className="text-gray-300 text-sm">{result.executiveSummary}</p></div>
+          {result.pricingTiers?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">💎 Pricing Tiers</h4><div className="space-y-3">{result.pricingTiers.map((t:any,i:number)=><div key={i} className="bg-gray-900 rounded p-3"><div className="flex items-center justify-between mb-2"><span className="text-white font-semibold">{t.tier}</span><span className="text-indigo-400 font-bold text-lg">{t.price}</span></div><div className="text-gray-400 text-xs mb-1">Target: {t.targetPersona}</div><div className="text-green-400 text-xs mb-2">Trigger: {t.conversionTrigger}</div><div className="text-xs text-gray-300">{t.features?.join(' • ')}</div></div>)}</div></div>}
+          {result.anchoringStrategy && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">⚓ Anchoring Strategy</h4><div className="bg-gray-900 rounded p-3 mb-2"><div className="text-indigo-400 font-semibold mb-1">Anchor: {result.anchoringStrategy.anchorPrice}</div><div className="text-gray-300 text-xs">{result.anchoringStrategy.anchorRationale}</div></div>{result.anchoringStrategy.decoyOptions?.length > 0 && <div><div className="text-gray-400 text-xs font-semibold mb-1">Decoy Options</div><div className="space-y-1">{result.anchoringStrategy.decoyOptions.map((d:any,i:number)=><div key={i} className="text-xs text-gray-300">• <span className="text-yellow-400">{d.name}</span> @ {d.price} — {d.purpose}</div>)}</div></div>}</div>}
+          {result.cognitiveHeuristics?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">🎯 Cognitive Heuristics</h4><div className="space-y-2">{result.cognitiveHeuristics.map((h:any,i:number)=><div key={i} className="bg-gray-900 rounded p-2 text-sm"><div className="text-purple-400 font-semibold">{h.heuristic}</div><div className="text-gray-300 text-xs">{h.implementation}</div></div>)}</div></div>}
+          {result.priceElasticity && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-2">📈 Price Elasticity</h4><div className="flex items-center gap-2 mb-2"><span className={`px-2 py-0.5 rounded text-xs text-white ${ELASTICITY_COLOR[result.priceElasticity.sensitivity]||'bg-gray-700'}`}>{result.priceElasticity.sensitivity} Sensitivity</span></div><div className="text-xs text-gray-300">{result.priceElasticity.elasticityFactors?.map((f:string,i:number)=><div key={i}>• {f}</div>)}</div></div>}
+          {result.testingPlan?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">🧪 A/B Testing Plan</h4><div className="space-y-2">{result.testingPlan.map((t:any,i:number)=><div key={i} className="bg-gray-900 rounded p-2 text-xs"><div className="text-blue-400 font-semibold">{t.test}</div><div className="text-gray-300">{t.hypothesis}</div><div className="text-gray-500">Metric: {t.metric} • {t.duration}</div></div>)}</div></div>}
+          {result.quickWins?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-2">⚡ Quick Wins</h4>{result.quickWins.map((w:string,i:number)=><div key={i} className="text-green-400 text-sm">• {w}</div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.56 Competitive Intelligence War Room ---
 const MARKET_POS_COLOR: Record<string,string> = { 'Dominant':'bg-purple-700','Leader':'bg-blue-700','Challenger':'bg-yellow-700','Niche':'bg-gray-700' };
 const THREAT_COLOR: Record<string,string> = { 'Critical':'bg-red-700','High':'bg-orange-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
@@ -10635,7 +10686,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10723,6 +10774,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'pricingpsychology', label: '🧠 Pricing Psychology' },
     { id: 'competitivewarroom', label: '⚔️ War Room' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
     { id: 'financialmodeler', label: '📊 Financial Modeler' },
@@ -10750,6 +10802,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'pricingpsychology', label: '🧠 Pricing Psychology' },
     { id: 'competitivewarroom', label: '⚔️ War Room' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
     { id: 'accelerator', label: '🏗️ Accelerator Builder' },
@@ -10917,6 +10970,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'pricingpsychology' && <PricingPsychologyPanel api={api} />}
         {tab === 'competitivewarroom' && <CompetitiveWarRoomPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
         {tab === 'financialmodeler' && <FinancialModelerPanel api={api} />}
@@ -10944,6 +10998,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'pricingpsychology' && <PricingPsychologyPanel api={api} />}
         {tab === 'competitivewarroom' && <CompetitiveWarRoomPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
         {tab === 'accelerator' && <AcceleratorBuilderPanel api={api} />}
