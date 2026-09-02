@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.18 AI Data Strategy & Analytics Maturity Engine ---
+app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+  const { companySize, industry, currentDataStack, dataTeamSize, analyticsMaturity, keyDataSources, topDataProblems, decisionMakingStyle, dataGovernanceState, budgetRange } = req.body;
+  const p = `You are a chief data officer and analytics strategist. Generate a comprehensive data strategy report.
+Company: size=${companySize}, industry=${industry}, data team=${dataTeamSize}
+Current stack: ${currentDataStack}, maturity=${analyticsMaturity}
+Data sources: ${keyDataSources}, top problems=${topDataProblems}
+Decision making: ${decisionMakingStyle}, governance=${dataGovernanceState}, budget=${budgetRange}
+
+Return JSON: { reportTitle, executiveSummary, maturityScore (0-100), maturityLevel, primaryGap, dataVision: { north_star, three_year_goal, data_culture_target }, currentStateAssessment: { strengths[], weaknesses[], technical_debt[], quick_risks[] }, modernDataStack: { ingestion_layer[], storage_layer[], transformation_layer[], serving_layer[], orchestration[], observability[] }, dataGovernance: { data_catalog_strategy, quality_framework, privacy_compliance[], ownership_model, glossary_priorities[] }, analyticsRoadmap: [{ initiative, priority, effort, impact, timeline, owner, dependencies[] }] (10 items), selfServeStrategy: { target_users[], tooling[], enablement_program, data_literacy_plan }, mlAiReadiness: { foundation_checklist[], first_ml_use_cases[], feature_store_approach, model_ops_maturity }, kpiFramework: { north_star_metric, team_kpis: [{ team, kpi, target }], data_team_kpis[] }, teamStructure: { current_gaps[], recommended_hires[], squad_model, center_of_excellence }, metrics: [{ kpi, current, target, measurement }] (8 metrics), implementationRoadmap: [{ phase, timeline, initiatives[], success_criteria[], budget_allocation }] (4 phases), quickWins: [] (5 items) }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    res.json(json ? JSON.parse(json) : { error: 'Parse failed', raw: text });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.17 AI Enterprise Sales & Account-Based Marketing Engine ---
 app.post('/api/enterprise-sales', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
