@@ -39500,6 +39500,84 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.38 AI Supply Chain & Procurement Intelligence Engine ---
+app.post('/api/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, revenue, supplyChainSize, currentChallenges, suppliers, geographies, goals } = req.body;
+  const p = `You are a world-class supply chain strategist and procurement expert. Create a comprehensive supply chain intelligence and optimization report.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Revenue: ${revenue || 'Unknown'}
+Supply Chain Size: ${supplyChainSize || 'Unknown'}
+Current Challenges: ${currentChallenges || 'Unknown'}
+Suppliers: ${suppliers || 'Unknown'}
+Geographies: ${geographies || 'Unknown'}
+Goals: ${goals || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Supply Chain Intelligence Report for [company]",
+  "executiveSummary": "3-sentence supply chain assessment",
+  "supplyChainScore": <number 0-100>,
+  "maturityLevel": "Reactive|Functional|Integrated|Adaptive|Orchestrated",
+  "criticalRisk": "most urgent supply chain risk",
+  "primaryOpportunity": "biggest cost/efficiency opportunity",
+  "estimatedSavings": "estimated annual savings potential",
+  "supplyChainAudit": {
+    "strengths": ["strength 1", "strength 2"],
+    "vulnerabilities": ["vulnerability 1", "vulnerability 2"],
+    "singlePointsOfFailure": ["SPOF 1", "SPOF 2"],
+    "complianceGaps": ["gap 1", "gap 2"]
+  },
+  "supplierStrategy": [
+    { "tier": "Tier 1/2/3", "count": "number or estimate", "concentration": "High/Medium/Low risk", "action": "strategic action", "kpis": ["kpi1"] }
+  ],
+  "procurementOptimization": [
+    { "category": "spend category", "currentSpend": "estimate", "savingsOpportunity": "% or $", "strategy": "negotiation/consolidation/etc", "timeline": "timeline" }
+  ],
+  "riskMitigation": [
+    { "risk": "risk name", "severity": "Critical/High/Medium/Low", "likelihood": "High/Medium/Low", "mitigation": "mitigation strategy", "contingency": "backup plan" }
+  ],
+  "digitizationRoadmap": [
+    { "technology": "technology name", "useCase": "specific use case", "roi": "expected ROI", "timeline": "implementation timeline", "priority": "High/Medium/Low" }
+  ],
+  "sustainabilityStrategy": {
+    "carbonFootprint": "assessment",
+    "circularEconomy": "opportunities",
+    "supplierEsg": "ESG requirements approach",
+    "certifications": ["certification 1", "certification 2"]
+  },
+  "inventoryOptimization": {
+    "currentState": "inventory assessment",
+    "targetModel": "JIT/VMI/Hybrid/etc",
+    "safetyStockStrategy": "approach",
+    "demandForecastingMethod": "method",
+    "estimatedInventoryReduction": "% reduction potential"
+  },
+  "logisticsStrategy": {
+    "networkDesign": "optimization approach",
+    "carrierStrategy": "carrier management approach",
+    "lastMile": "last-mile strategy",
+    "warehouseStrategy": "warehouse optimization"
+  },
+  "implementationPlan": [
+    { "phase": "phase name", "timeline": "timeline", "initiatives": ["initiative 1"], "investment": "cost estimate", "savings": "savings target" }
+  ],
+  "metrics": ["KPI 1", "KPI 2", "KPI 3", "KPI 4"],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.37 AI Brand Architecture & Identity Engine ---
 app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
