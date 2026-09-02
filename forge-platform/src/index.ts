@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.66 Instagram Caption Writer ---
+app.post('/api/ig-caption', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { description, niche, tone, cta, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write 3 Instagram caption variations for this post.
+Post description: ${description}
+Niche: ${niche || 'lifestyle'}
+Tone: ${tone || 'engaging and authentic'}
+CTA: ${cta || 'encourage comments'}
+Each caption should have: hook line, story/value, CTA, and 20-30 relevant hashtags. Return JSON: { captions: [{ caption: string, hashtags: string[] }] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.65 Twitter/X Thread Optimizer ---
 app.post('/api/thread-optimize', requireAuth, async (req: AuthRequest, res) => {
   try {
