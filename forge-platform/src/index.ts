@@ -39500,6 +39500,47 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.68 AI Customer Experience & Journey Optimizer ---
+app.post('/api/cx-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { businessType, customerSegment, currentPainPoints, channels, avgOrderValue, churnRate, npsScore, industry } = req.body;
+    const p = `You are a customer experience and journey optimization expert. Generate a comprehensive CX strategy and journey optimization plan.
+Business Type: ${businessType || 'B2B SaaS'}
+Customer Segment: ${customerSegment || 'Mid-market companies (100-1000 employees)'}
+Current Pain Points: ${currentPainPoints || 'Long onboarding, poor support response times, confusing UI'}
+Active Channels: ${channels || 'Web app, email, in-app chat, Slack'}
+Average Order Value: ${avgOrderValue || '$2,400/year'}
+Current Churn Rate: ${churnRate || '8% annually'}
+NPS Score: ${npsScore || '32'}
+Industry: ${industry || 'Project Management Software'}
+
+Return JSON only:
+{
+  "optimizerTitle": "string",
+  "executiveSummary": "string",
+  "cxMaturityScore": 0-100,
+  "cxMaturityLevel": "Basic|Developing|Defined|Advanced|World-Class",
+  "journeyStages": [{ "stage": "string", "customerGoal": "string", "currentExperience": "string", "painPoints": ["string"], "emotionalState": "Frustrated|Neutral|Satisfied|Delighted", "opportunityScore": 0-100, "improvements": ["string"] }],
+  "momentsThatMatter": [{ "moment": "string", "impact": "High|Medium|Low", "currentState": "string", "idealState": "string", "quickFix": "string" }],
+  "channelStrategy": [{ "channel": "string", "role": "string", "currentEffectiveness": 0-100, "improvements": ["string"] }],
+  "personalizationOpportunities": [{ "segment": "string", "trigger": "string", "personalizedExperience": "string", "expectedImpact": "string" }],
+  "churnPreventionPlaybook": [{ "riskSignal": "string", "intervention": "string", "timing": "string", "owner": "string" }],
+  "npsImprovementPlan": { "currentNPS": 0, "targetNPS": 0, "detractorFixes": ["string"], "passiveActivators": ["string"], "promoterAmplifiers": ["string"] },
+  "metricsFramework": [{ "metric": "string", "currentValue": "string", "target": "string", "owner": "string" }],
+  "implementationRoadmap": [{ "quarter": "string", "initiatives": ["string"], "expectedImpact": "string" }],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.67 AI Talent Acquisition & Recruitment Intelligence ---
 app.post('/api/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
   try {
