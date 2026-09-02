@@ -39192,6 +39192,29 @@ Use scores 1-10 for each criterion. Calculate total as sum of scores.`;
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.48 Risk Analyzer — identify and score risks for any plan or project
+app.post('/api/risk-analyze', requireAuth, async (req: any, res: any) => {
+  try {
+    const { plan } = req.body;
+    if (!plan || plan.trim().length < 20) return res.status(400).json({ error: 'plan description required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a risk management expert. Analyze the risks for this plan: "${plan.slice(0,2000)}"
+
+Return ONLY JSON:
+{"risk_level":"low"|"medium"|"high"|"critical","risk_score":65,"summary":"2-sentence risk overview","risks":[{"id":1,"category":"Financial"|"Operational"|"Technical"|"Legal"|"Market"|"People","title":"Risk title","description":"brief description","probability":"low"|"medium"|"high","impact":"low"|"medium"|"high","severity_score":7,"mitigation":"concrete mitigation strategy"},{"id":2,"category":"Operational","title":"Risk 2","description":"desc","probability":"medium","impact":"high","severity_score":8,"mitigation":"mitigation"}],"top_risk":"the single biggest risk in one sentence","quick_wins":["immediate action to reduce risk","another quick win"],"contingency":"If things go wrong, here is the contingency plan in 2 sentences"}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, plan: plan.slice(0, 200), ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

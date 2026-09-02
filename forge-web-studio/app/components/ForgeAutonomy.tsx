@@ -597,6 +597,94 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.48 Risk Analyzer ---
+function RiskAnalyzerPanel({ api }: { api: Api }) {
+  const [plan, setPlan] = useState('');
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  const analyze = async () => {
+    if (!plan.trim()) return;
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api.base}/api/risk-analyze`, {
+        method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      setResult(d);
+    } catch(e: any) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const levelColor: Record<string, string> = { low: '#22c55e', medium: '#f59e0b', high: '#ef4444', critical: '#7c3aed' };
+  const impactColor: Record<string, string> = { low: '#22c55e', medium: '#f59e0b', high: '#ef4444' };
+
+  return (
+    <div>
+      <h3 style={{ color: '#e2e8f0', marginBottom: 8 }}>⚠️ Risk Analyzer</h3>
+      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Identify and score risks for any plan, project, or initiative.</p>
+      <textarea value={plan} onChange={e => setPlan(e.target.value)}
+        placeholder="Describe your plan or project..." rows={4}
+        style={{ width: '100%', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: 10, fontSize: 13, resize: 'vertical', boxSizing: 'border-box' }} />
+      <button onClick={analyze} disabled={loading || !plan.trim()}
+        style={{ marginTop: 8, background: '#ef4444', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Analyzing...' : 'Analyze Risks'}
+      </button>
+      {err && <p style={{ color: '#f87171', marginTop: 8 }}>{err}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div style={{ background: '#1e293b', borderRadius: 8, padding: '10px 16px', border: `2px solid ${levelColor[result.risk_level] || '#94a3b8'}` }}>
+              <div style={{ color: '#94a3b8', fontSize: 11 }}>RISK LEVEL</div>
+              <div style={{ color: levelColor[result.risk_level] || '#e2e8f0', fontWeight: 700, fontSize: 18, textTransform: 'uppercase' }}>{result.risk_level}</div>
+            </div>
+            <div style={{ background: '#1e293b', borderRadius: 8, padding: '10px 16px' }}>
+              <div style={{ color: '#94a3b8', fontSize: 11 }}>RISK SCORE</div>
+              <div style={{ color: '#e2e8f0', fontWeight: 700, fontSize: 18 }}>{result.risk_score}/100</div>
+            </div>
+          </div>
+          <p style={{ color: '#cbd5e1', fontSize: 13, marginBottom: 12, background: '#1e293b', padding: 10, borderRadius: 6 }}>{result.summary}</p>
+          {result.top_risk && <div style={{ background: '#2d1b1b', border: '1px solid #7f1d1d', borderRadius: 6, padding: 10, marginBottom: 12, color: '#fca5a5', fontSize: 13 }}>🔴 <strong>Top Risk:</strong> {result.top_risk}</div>}
+          {result.risks && result.risks.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <h4 style={{ color: '#e2e8f0', marginBottom: 8 }}>Risk Register</h4>
+              {result.risks.map((r: any) => (
+                <div key={r.id} style={{ background: '#1e293b', borderRadius: 6, padding: 10, marginBottom: 8, borderLeft: `3px solid ${impactColor[r.impact] || '#94a3b8'}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ color: '#e2e8f0', fontWeight: 600 }}>{r.title}</span>
+                    <span style={{ color: '#94a3b8', fontSize: 11 }}>{r.category} · Score: {r.severity_score}/10</span>
+                  </div>
+                  <p style={{ color: '#94a3b8', fontSize: 12, margin: '2px 0' }}>{r.description}</p>
+                  <div style={{ display: 'flex', gap: 8, fontSize: 11, marginTop: 4 }}>
+                    <span style={{ color: impactColor[r.probability] }}>Prob: {r.probability}</span>
+                    <span style={{ color: impactColor[r.impact] }}>Impact: {r.impact}</span>
+                  </div>
+                  <p style={{ color: '#64748b', fontSize: 11, marginTop: 4 }}>🛡️ {r.mitigation}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.quick_wins && result.quick_wins.length > 0 && (
+            <div style={{ background: '#1e2d1e', border: '1px solid #166534', borderRadius: 6, padding: 10, marginBottom: 12 }}>
+              <h4 style={{ color: '#86efac', marginBottom: 6, fontSize: 13 }}>⚡ Quick Wins</h4>
+              {result.quick_wins.map((w: string, i: number) => <p key={i} style={{ color: '#a7f3d0', fontSize: 12, margin: '2px 0' }}>• {w}</p>)}
+            </div>
+          )}
+          {result.contingency && (
+            <div style={{ background: '#1e293b', borderRadius: 6, padding: 10, borderLeft: '3px solid #6366f1' }}>
+              <h4 style={{ color: '#a5b4fc', marginBottom: 4, fontSize: 13 }}>🆘 Contingency Plan</h4>
+              <p style={{ color: '#94a3b8', fontSize: 12 }}>{result.contingency}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.47 Decision Matrix ---
 function DecisionMatrixPanel({ api }: { api: Api }) {
   const [decision, setDecision] = useState('');
@@ -2431,7 +2519,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2473,6 +2561,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'validate', label: '🚀 Validate' },
     { id: 'writecoach', label: '✍️ Coach' },
     { id: 'decision', label: '⚖️ Decide' },
+    { id: 'risk', label: '⚠️ Risks' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2557,6 +2646,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'validate' && <IdeaValidatorPanel api={api} />}
         {tab === 'writecoach' && <WritingCoachPanel api={api} />}
         {tab === 'decision' && <DecisionMatrixPanel api={api} />}
+        {tab === 'risk' && <RiskAnalyzerPanel api={api} />}
       </div>
     </div>
   );
