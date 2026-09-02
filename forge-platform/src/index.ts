@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.22 Sales Forecasting & Pipeline Analysis ---
+app.post('/api/sales-forecasting', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, currentArr, pipelineValue, avgDealSize, salesCycle, winRate, teamSize, quota, forecastPeriod, topDeals, lostReasons, marketConditions } = req.body;
+  const userId = req.user!.id;
+  const anthropicKey = await getUserKey(userId, 'anthropic', true);
+  const openaiKey = await getUserKey(userId, 'openai', true);
+  const key = anthropicKey || openaiKey;
+  const provider = anthropicKey ? 'anthropic' : 'openai';
+  if (!key) return res.status(402).json({ error: 'API key required' });
+  const p = `You are a revenue operations expert. Build a comprehensive sales forecast and pipeline analysis.
+Company: ${company||'B2B SaaS'} | Industry: ${industry||'Technology'} | Current ARR: ${currentArr||'Unknown'}
+Pipeline Value: ${pipelineValue||'Unknown'} | Avg Deal Size: ${avgDealSize||'Unknown'} | Sales Cycle: ${salesCycle||'90 days'}
+Win Rate: ${winRate||'20%'} | Team Size: ${teamSize||'5 reps'} | Quota: ${quota||'Unknown'} | Forecast Period: ${forecastPeriod||'Q1 2024'}
+Top Deals: ${topDeals||'Not specified'} | Lost Reasons: ${lostReasons||'Not specified'} | Market: ${marketConditions||'Stable'}
+Return ONLY valid JSON: { reportTitle, executiveSummary, forecastSummary: { commit, bestCase, mostLikely, pipelineCoverage }, quarterlyBreakdown: [{ month, commit, pipeline, expectedClose }], pipelineAnalysis: { totalDeals, byStage: [{ stage, count, value, conversionRate }], avgAge, stalledDeals }, topDeals: [{ name, value, stage, probability, nextStep, risk }], winLossAnalysis: { winRate, topWinReasons: [string], topLossReasons: [string], competitorWinRate: [{ competitor, rate }] }, repPerformance: [{ rep, quota, pipeline, forecast, paceToQuota }], leadIndicators: [{ metric, current, target, trend }], risks: [{ risk, impact, probability, mitigation }], opportunities: [{ opportunity, value, timeline }], recommendations: [{ priority, action, owner, timeline, expectedImpact }], forecastMethodology }`;
+  try {
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.21 Product Launch Playbook ---
 app.post('/api/product-launch', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, targetAudience, uniqueValue, competitors, launchDate, budget, channels, currentStage, geography, pricingModel, teamSize } = req.body;

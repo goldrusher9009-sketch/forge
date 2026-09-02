@@ -597,6 +597,75 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.22 Sales Forecasting & Pipeline Analysis ---
+const TREND_COLOR: Record<string,string> = { 'Up':'text-green-400','Down':'text-red-400','Stable':'text-yellow-400','Increasing':'text-green-400','Decreasing':'text-red-400' };
+function SalesForecastingPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', currentArr:'', pipelineValue:'', avgDealSize:'', salesCycle:'', winRate:'', teamSize:'', quota:'', forecastPeriod:'', topDeals:'', lostReasons:'', marketConditions:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState('pipeline');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/sales-forecasting`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">📈 Sales Forecasting & Pipeline Analysis</h2><p className="text-gray-400 text-sm mt-1">Revenue forecast, pipeline health, win/loss analysis, and rep performance</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme SaaS')} {F('Industry','industry','B2B SaaS / FinTech...')}
+            {F('Current ARR','currentArr','$2M')} {F('Pipeline Value','pipelineValue','$3.5M')}
+            {F('Avg Deal Size','avgDealSize','$25K')} {F('Sales Cycle','salesCycle','90 days')}
+            {F('Win Rate','winRate','22%')} {F('Team Size','teamSize','6 AEs')}
+            {F('Quota (per rep)','quota','$500K')} {F('Forecast Period','forecastPeriod','Q1 2024')}
+            {F('Top Deals','topDeals','Acme $200K, Beta Corp $150K...')} {F('Lost Deal Reasons','lostReasons','Price, competitor, timing')}
+            {F('Market Conditions','marketConditions','Tightening budgets, high competition')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Building forecast...' : 'Generate Sales Forecast'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.reportTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Forecast</button></div>
+          {/* Forecast Summary */}
+          {result.forecastSummary && <div className="grid grid-cols-4 gap-3">
+            {[['Commit',result.forecastSummary.commit,'bg-blue-900/40'],['Most Likely',result.forecastSummary.mostLikely,'bg-green-900/40'],['Best Case',result.forecastSummary.bestCase,'bg-purple-900/40'],['Coverage',result.forecastSummary.pipelineCoverage,'bg-gray-700']].map(([l,v,bg])=>(
+              <div key={l as string} className={`${bg} rounded-xl p-4`}><p className="text-gray-400 text-xs">{l}</p><p className="text-white text-xl font-bold mt-1">{v}</p></div>
+            ))}
+          </div>}
+          {/* View Nav */}
+          <div className="flex gap-2 flex-wrap">{['pipeline','deals','winloss','reps','indicators','risks','actions'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Pipeline by Stage */}
+          {view==='pipeline' && result.pipelineAnalysis?.byStage?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Pipeline by Stage — {result.pipelineAnalysis.totalDeals} deals</h4><div className="space-y-2">{result.pipelineAnalysis.byStage.map((s:any,i:number)=><div key={i}><div className="flex justify-between text-sm mb-1"><span className="text-gray-300">{s.stage}</span><div className="flex gap-4 text-xs"><span className="text-gray-400">{s.count} deals</span><span className="text-white font-medium">{s.value}</span><span className="text-green-400">{s.conversionRate}</span></div></div></div>)}</div>{result.pipelineAnalysis.stalledDeals && <p className="text-yellow-400 text-xs mt-3">⚠ Stalled: {result.pipelineAnalysis.stalledDeals}</p>}</div>}
+          {/* Monthly Breakdown */}
+          {view==='pipeline' && result.quarterlyBreakdown?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Quarterly Breakdown</h4><div className="space-y-2">{result.quarterlyBreakdown.map((m:any,i:number)=><div key={i} className="flex items-center justify-between bg-gray-700/50 rounded-lg px-3 py-2"><span className="text-gray-300 text-sm">{m.month}</span><div className="flex gap-4 text-xs"><span className="text-blue-300">Commit: {m.commit}</span><span className="text-gray-400">Pipeline: {m.pipeline}</span><span className="text-green-400">Close: {m.expectedClose}</span></div></div>)}</div></div>}
+          {/* Top Deals */}
+          {view==='deals' && result.topDeals?.length>0 && <div className="space-y-3">{result.topDeals.map((d:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center justify-between mb-2"><p className="text-white font-semibold">{d.name}</p><div className="flex gap-3 text-sm"><span className="text-green-400 font-bold">{d.value}</span><span className="text-blue-300">{d.probability}</span></div></div><div className="flex gap-4 text-xs text-gray-400 mb-2"><span>{d.stage}</span><span>Risk: {d.risk}</span></div><p className="text-gray-300 text-xs">Next: {d.nextStep}</p></div>)}</div>}
+          {/* Win/Loss */}
+          {view==='winloss' && result.winLossAnalysis && <div className="space-y-4"><div className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs mb-1">Win Rate</p><p className="text-white text-2xl font-bold">{result.winLossAnalysis.winRate}</p></div><div className="grid grid-cols-2 gap-4"><div className="bg-gray-800 rounded-xl p-4"><h4 className="text-green-400 font-semibold mb-2">Why We Win</h4><ul className="space-y-1">{(result.winLossAnalysis.topWinReasons||[]).map((r:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">✓</span>{r}</li>)}</ul></div><div className="bg-gray-800 rounded-xl p-4"><h4 className="text-red-400 font-semibold mb-2">Why We Lose</h4><ul className="space-y-1">{(result.winLossAnalysis.topLossReasons||[]).map((r:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-red-400">✗</span>{r}</li>)}</ul></div></div>{result.winLossAnalysis.competitorWinRate?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Competitor Win Rates</h4><div className="space-y-2">{result.winLossAnalysis.competitorWinRate.map((c:any,i:number)=><div key={i} className="flex justify-between text-sm"><span className="text-gray-300">{c.competitor}</span><span className="text-orange-400">{c.rate}</span></div>)}</div></div>}</div>}
+          {/* Reps */}
+          {view==='reps' && result.repPerformance?.length>0 && <div className="space-y-2">{result.repPerformance.map((r:any,i:number)=><div key={i} className="flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3"><p className="text-white font-medium w-32">{r.rep}</p><div className="flex gap-6 text-xs"><div><p className="text-gray-400">Quota</p><p className="text-white">{r.quota}</p></div><div><p className="text-gray-400">Pipeline</p><p className="text-white">{r.pipeline}</p></div><div><p className="text-gray-400">Forecast</p><p className="text-white">{r.forecast}</p></div><div><p className="text-gray-400">Pace</p><p className="text-green-400 font-semibold">{r.paceToQuota}</p></div></div></div>)}</div>}
+          {/* Lead Indicators */}
+          {view==='indicators' && result.leadIndicators?.length>0 && <div className="grid grid-cols-2 gap-3">{result.leadIndicators.map((m:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs">{m.metric}</p><p className="text-white text-lg font-bold mt-1">{m.current}</p><div className="flex justify-between mt-1"><span className="text-gray-500 text-xs">Target: {m.target}</span><span className={`text-xs ${TREND_COLOR[m.trend]||'text-gray-400'}`}>{m.trend}</span></div></div>)}</div>}
+          {/* Risks */}
+          {view==='risks' && result.risks?.length>0 && <div className="space-y-2">{result.risks.map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between mb-1"><p className="text-white text-sm font-medium">{r.risk}</p><div className="flex gap-2 text-xs"><span className="text-orange-400">{r.probability}</span><span className="text-red-400">{r.impact}</span></div></div><p className="text-gray-400 text-xs">{r.mitigation}</p></div>)}</div>}
+          {/* Actions */}
+          {view==='actions' && result.recommendations?.length>0 && <div className="space-y-3">{result.recommendations.map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center gap-2 mb-1"><span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded">{r.priority}</span><p className="text-white text-sm font-medium">{r.action}</p></div><div className="flex gap-4 text-xs text-gray-400"><span>Owner: {r.owner}</span><span>Timeline: {r.timeline}</span></div><p className="text-green-400 text-xs mt-1">{r.expectedImpact}</p></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.21 Product Launch Playbook ---
 const CHANNEL_COLOR: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-red-400' };
 function ProductLaunchPanel({ api }: { api: string }) {
@@ -8744,7 +8813,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8842,6 +8911,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'salesforecasting', label: '📈 Sales Forecast' },
     { id: 'productlaunch', label: '🚀 Product Launch' },
     { id: 'marketsizing', label: '📊 Market Sizing' },
     { id: 'innovationsprint', label: '💡 Innovation Sprint' },
@@ -9000,6 +9070,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'salesforecasting' && <SalesForecastingPanel api={api} />}
         {tab === 'productlaunch' && <ProductLaunchPanel api={api} />}
         {tab === 'marketsizing' && <MarketSizingPanel api={api} />}
         {tab === 'innovationsprint' && <InnovationSprintPanel api={api} />}
