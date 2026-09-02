@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.65 Twitter/X Thread Optimizer ---
+app.post('/api/thread-optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { content, goal, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Optimize this content into a high-engagement Twitter/X thread.
+Goal: ${goal || 'maximize engagement and shares'}.
+Content: ${content}
+Output as numbered tweets (1/, 2/, etc.), each under 280 chars. Include hooks, cliffhangers between tweets, and a strong CTA in the last tweet. Add relevant emojis. Return JSON: { tweets: string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.64 YouTube Description Writer ---
 app.post('/api/yt-description', requireAuth, async (req: AuthRequest, res) => {
   try {

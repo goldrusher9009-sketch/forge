@@ -597,6 +597,36 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.65 Twitter/X Thread Optimizer ---
+function ThreadOptimizerPanel({ api }: { api: string }) {
+  const [content, setContent] = React.useState('');
+  const [goal, setGoal] = React.useState('maximize engagement');
+  const [tweets, setTweets] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setTweets([]);
+    try {
+      const r = await fetch(`${api}/api/thread-optimize`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ content, goal }) });
+      const d = await r.json();
+      setTweets(d.tweets || [d.error || 'Error']);
+    } catch(e: any) { setTweets([e.message]); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>🐦 Twitter/X Thread Optimizer</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
+        <textarea placeholder="Paste your content or draft thread" value={content} onChange={e => setContent(e.target.value)} rows={5} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff', resize: 'vertical' }} />
+        <input placeholder="Goal (e.g. maximize engagement, drive traffic)" value={goal} onChange={e => setGoal(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <button onClick={run} disabled={loading || !content} style={{ padding: '10px 20px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Optimizing...' : 'Optimize Thread'}</button>
+      </div>
+      {tweets.length > 0 && <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {tweets.map((tw, i) => <div key={i} style={{ padding: 14, background: '#1a1a1a', borderRadius: 8, color: '#e2e8f0', borderLeft: '3px solid #7c3aed' }}><span style={{ color: '#7c3aed', fontWeight: 700 }}>{i+1}/</span> {tw}</div>)}
+      </div>}
+    </div>
+  );
+}
+
 // --- v8.64 YouTube Description Writer ---
 function YTDescriptionPanel({ api }: { api: string }) {
   const [title, setTitle] = React.useState('');
@@ -3816,7 +3846,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3875,6 +3905,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'podscript', label: '🎙️ Podcast' },
     { id: 'vidscript', label: '🎬 Video Script' },
     { id: 'ytdesc', label: '📺 YT Description' },
+    { id: 'threadopt', label: '🐦 Thread Optimizer' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3976,6 +4007,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'podscript' && <PodcastScriptPanel api={api} />}
         {tab === 'vidscript' && <VideoScriptPanel api={api} />}
         {tab === 'ytdesc' && <YTDescriptionPanel api={api} />}
+        {tab === 'threadopt' && <ThreadOptimizerPanel api={api} />}
       </div>
     </div>
   );
