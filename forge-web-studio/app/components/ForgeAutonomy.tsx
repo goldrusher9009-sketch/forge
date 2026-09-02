@@ -597,6 +597,135 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.01 Annual Performance Review Generator ---
+const RATING_COLOR: Record<string,string> = { 'Exceptional':'text-yellow-400','Exceeds Expectations':'text-green-400','Meets Expectations':'text-blue-400','Needs Improvement':'text-red-400' };
+const GOAL_STATUS_COLOR: Record<string,string> = { 'Achieved':'text-green-400','Partially Achieved':'text-yellow-400','Not Achieved':'text-red-400' };
+function PerfReviewPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ employeeName:'', role:'', department:'', reviewPeriod:'2026', managerName:'', keyResponsibilities:'', goals:'', achievements:'', challenges:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'competencies'|'goals'|'strengths'|'development'|'next'>('overview');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/perf-review`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  const subtabs = ['overview','competencies','goals','strengths','development','next'] as const;
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">⭐ Annual Performance Review Generator</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['employeeName','Employee Name'],['role','Role/Title'],['department','Department'],['reviewPeriod','Review Period'],['managerName','Manager Name']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+        <div><label className="text-xs text-gray-400">Provider</label><select className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      </div>
+      {[['keyResponsibilities','Key Responsibilities'],['goals','Goals Set for Period'],['achievements','Key Achievements'],['challenges','Challenges Faced']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Generating…':'Generate Review'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <p className="text-white font-bold text-base">{result.reviewTitle}</p>
+                <p className="text-gray-400 text-sm">{form.employeeName} · {form.role} · {form.reviewPeriod}</p>
+              </div>
+              <span className={`text-sm font-bold px-3 py-1 rounded-full bg-gray-700 ${RATING_COLOR[result.overallRating]||'text-white'}`}>{result.overallRating}</span>
+            </div>
+            <p className="text-gray-300 text-sm mt-3">{result.overallRatingJustification}</p>
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {subtabs.map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs capitalize ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s==='next'?'Next Year':s}</button>)}
+          </div>
+          {subtab==='overview' && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-1">Manager Narrative</p><p className="text-gray-200 text-sm whitespace-pre-line">{result.managerNarrative}</p></div>
+              {result.compensationNote && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-1">Compensation Note</p><p className="text-gray-200 text-sm">{result.compensationNote}</p></div>}
+              <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Self-Assessment Prompts for Employee</p><ul className="space-y-1">{(result.employeeSelfAssessmentPrompts||[]).map((q:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {q}</li>)}</ul></div>
+              {result.careerDevelopment && <div className="bg-gray-800 rounded p-3 grid grid-cols-3 gap-3">{[['Short-Term Path',result.careerDevelopment.shortTermPath],['Long-Term Path',result.careerDevelopment.longTermPath],['Stretch Assignment',result.careerDevelopment.stretchAssignment]].map(([l,v])=><div key={l}><p className="text-xs text-gray-400 mb-1">{l}</p><p className="text-gray-200 text-xs">{v}</p></div>)}</div>}
+            </div>
+          )}
+          {subtab==='competencies' && (
+            <div className="space-y-2">
+              {(result.competencyRatings||[]).map((c:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-white text-sm font-medium">{c.competency}</p>
+                    <div className="flex gap-1">{[1,2,3,4,5].map(n=><span key={n} className={`w-4 h-4 rounded-full text-xs flex items-center justify-center ${n<=c.rating?'bg-indigo-500':'bg-gray-600'}`} />)}</div>
+                  </div>
+                  <p className="text-gray-300 text-xs mb-1"><span className="text-gray-400">Evidence: </span>{c.evidence}</p>
+                  {c.developmentNote && <p className="text-blue-300 text-xs">💡 {c.developmentNote}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='goals' && (
+            <div className="space-y-2">
+              {(result.goalAssessment||[]).map((g:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-white text-sm">{g.goal}</p>
+                    <span className={`text-xs font-medium ${GOAL_STATUS_COLOR[g.status]||'text-gray-400'}`}>{g.status}</span>
+                  </div>
+                  <p className="text-gray-300 text-xs mb-1"><span className="text-gray-400">Evidence: </span>{g.evidence}</p>
+                  <p className="text-gray-300 text-xs"><span className="text-gray-400">Impact: </span>{g.impact}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='strengths' && (
+            <div className="space-y-2">
+              {(result.keyStrengths||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-green-400 font-medium text-sm mb-1">✓ {s.strength}</p>
+                  <p className="text-gray-300 text-xs mb-1"><span className="text-gray-400">Example: </span>{s.example}</p>
+                  <p className="text-gray-300 text-xs"><span className="text-gray-400">Business Impact: </span>{s.businessImpact}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='development' && (
+            <div className="space-y-2">
+              {(result.developmentAreas||[]).map((d:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-yellow-400 font-medium text-sm mb-2">⚠ {d.area}</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-300 mb-2">
+                    <div><span className="text-gray-400">Current: </span>{d.currentState}</div>
+                    <div><span className="text-gray-400">Target: </span>{d.targetState}</div>
+                  </div>
+                  <p className="text-gray-300 text-xs"><span className="text-gray-400">Action Plan: </span>{d.actionPlan}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='next' && (
+            <div className="space-y-2">
+              {(result.nextYearGoals||[]).map((g:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-white font-medium text-sm mb-1">{g.goal}</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-300">
+                    <div><span className="text-gray-400">Metric: </span>{g.metric}</div>
+                    <div><span className="text-gray-400">Timeline: </span>{g.timeline}</div>
+                    <div><span className="text-gray-400">Support: </span>{g.support}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.00 Agency Proposal Generator ---
 function AgencyProposalPanel({ api }: { api: string }) {
   const [agencyName, setAgencyName] = useState('');
@@ -6422,7 +6551,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6508,6 +6637,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentstrategy', label: '🎯 Talent Strategy' },
     { id: 'journeymap', label: '🗺️ Journey Map' },
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
+    { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -6645,6 +6775,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'talentstrategy' && <TalentStrategyPanel api={api} />}
         {tab === 'journeymap' && <JourneyMapPanel api={api} />}
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
+        {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

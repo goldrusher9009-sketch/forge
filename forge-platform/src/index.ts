@@ -39500,6 +39500,32 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.01 Annual Review & Performance Template Generator ---
+app.post('/api/perf-review', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { employeeName, role, department, reviewPeriod, managerName, keyResponsibilities, goals, achievements, challenges, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a comprehensive annual performance review for ${employeeName || 'the employee'}.
+Role: ${role || 'not specified'}
+Department: ${department || 'not specified'}
+Review period: ${reviewPeriod || '2026'}
+Manager: ${managerName || 'Manager'}
+Key responsibilities: ${keyResponsibilities || 'not specified'}
+Goals set: ${goals || 'not specified'}
+Achievements: ${achievements || 'not specified'}
+Challenges: ${challenges || 'not specified'}
+Return JSON: { reviewTitle: string, overallRating:'Exceptional'|'Exceeds Expectations'|'Meets Expectations'|'Needs Improvement', overallRatingJustification:string, competencyRatings:[{competency:string,rating:1|2|3|4|5,evidence:string,developmentNote:string}], goalAssessment:[{goal:string,status:'Achieved'|'Partially Achieved'|'Not Achieved',evidence:string,impact:string}], keyStrengths:[{strength:string,example:string,businessImpact:string}], developmentAreas:[{area:string,currentState:string,targetState:string,actionPlan:string}], nextYearGoals:[{goal:string,metric:string,timeline:string,support:string}], careerDevelopment:{shortTermPath:string,longTermPath:string,stretchAssignment:string}, compensationNote:string, managerNarrative:string, employeeSelfAssessmentPrompts:string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.00 Agency Proposal Generator ---
 app.post('/api/agency-proposal', requireAuth, async (req: AuthRequest, res) => {
   try {
