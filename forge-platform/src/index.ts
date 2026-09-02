@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.55 AI Innovation Lab & Moonshot Generator ---
+app.post('/api/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, currentProducts, coreCompetencies, targetMarkets, budget, timeline, riskTolerance, competitors, emergingTechnologies, customerPainPoints, strategicGoals, teamStrengths, constraints, previousAttempts } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class innovation strategist, futurist, and venture builder. Generate breakthrough innovation ideas and a structured innovation lab program.
+Company: ${company}, Industry: ${industry}, Current Products: ${currentProducts}, Core Competencies: ${coreCompetencies}, Target Markets: ${targetMarkets}, Budget: ${budget}, Timeline: ${timeline}, Risk Tolerance: ${riskTolerance}, Competitors: ${competitors}, Emerging Technologies: ${emergingTechnologies}, Customer Pain Points: ${customerPainPoints}, Strategic Goals: ${strategicGoals}, Team Strengths: ${teamStrengths}, Constraints: ${constraints}, Previous Attempts: ${previousAttempts}.
+Return JSON: { labTitle, executiveSummary, innovationScore (0-100), innovationReadiness ("Pioneer"/"Fast Follower"/"Adapter"/"Laggard"), horizons: [{ horizon ("H1 Core"/"H2 Adjacent"/"H3 Transformational"), ideas: [{ ideaName, oneLiner, problemSolved, targetCustomer, revenueModel, estimatedMarket, feasibilityScore (0-10), impactScore (0-10), timeToMarket, investmentRequired, keyRisks: string[], unfairAdvantage, mvpConcept }] }], moonshotIdeas: [{ ideaName, vision10x, whyNow, enablers: string[], disruption, requiredBreakthroughs: string[], pathToReality }], trendSurfing: [{ trend, signal, opportunity, firstMoverAdvantage, howToCapture }], innovationPortfolio: { coreInnovation: string[], adjacentInnovation: string[], transformationalInnovation: string[], recommendedAllocation }, labProgram: { sprintStructure: [{ sprintName, duration, objective, activities: string[], deliverable, successCriteria }], innovationProcess: [{ stage, duration, description, gate }], teamStructure: [{ role, responsibilities: string[], skills: string[] }] }, experiments: [{ hypothesis, experiment, successMetric, budget, timeline, expectedLearning }], competitorInnovation: [{ competitor, innovationThrust, threat, counterMove }], innovationKPIs: [{ kpi, definition, target, frequency }], quickWins: [{ idea, effort, impact, timeline }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.54 Financial Modeling & Scenario Planner ---
 app.post('/api/financial-modeler', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, currentRevenue, revenueGrowth, grossMargin, operatingExpenses, ebitda, cashOnHand, burnRate, headcount, capex, debtLevel, fundingStage, useOfFunds, revenueModel, customerCount, arpu, churnRate, marketSize, competitorRevenues, strategicGoals, timeHorizon } = req.body;
