@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.70 AI Organizational Design & Workforce Planning Engine ---
+app.post('/api/org-design', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, stage, currentHeadcount, currentStructure, revenueTarget, growthRate, topChallenges, keyRoles, attritionRate, hiringBudget, remotePolicy, geographies, strategicPriorities, techStack, competitorBenchmarks } = req.body;
+    const p = `You are a world-class organizational design consultant and chief people officer. Design a comprehensive org design & workforce plan for:
+Company: ${companyName}
+Industry: ${industry}
+Stage: ${stage}
+Headcount: ${currentHeadcount}
+Current Structure: ${currentStructure}
+Revenue Target: ${revenueTarget}
+Growth Rate: ${growthRate}
+Top Challenges: ${topChallenges}
+Key Roles: ${keyRoles}
+Attrition Rate: ${attritionRate}
+Hiring Budget: ${hiringBudget}
+Remote Policy: ${remotePolicy}
+Geographies: ${geographies}
+Strategic Priorities: ${strategicPriorities}
+Tech Stack: ${techStack}
+Competitor Benchmarks: ${competitorBenchmarks}
+
+Return JSON: { reportTitle, executiveSummary, orgHealthScore (0-100), orgMaturityLevel ("High-Performance"|"Scaling"|"Developing"|"Foundational"), headcountEfficiencyRating, revPerEmployee, orgDesignRecommendation: { recommendedStructure, rationale, keyPrinciples: [], designPatterns: [], spanOfControl, layerCount, decisionRights: [{ decision, owner, consulted: [], informed: [] }] }, teamStructures: [{ teamName, purpose, currentSize, recommendedSize, reportingTo, keyResponsibilities: [], criticalSkills: [], headcountDelta, priority ("Critical"|"High"|"Medium") }], hiringPlan: { totalHires, totalBudget, phased: [{ quarter, hires: [{ role, level, team, rationale, salary, priority }], cumulativeHeadcount }] }, criticalRoles: [{ role, whyCritical, hiringTimeline, internalVsExternal, keyAttributes: [], compensationRange, riskIfUnfilled }], workforceOptimization: { redundanciesIdentified: [], skillGaps: [], retrainingOpportunities: [], automationCandidates: [], organizationalDebt: [] }, cultureAndEngagement: { currentChallenges: [], recommendations: [], rituals: [], recognitionPrograms: [], psychologicalSafetyActions: [] }, performanceFramework: { okrCadence, reviewFrequency, ratingScale, promotionCriteria: [], pipProcess: [], highPotentialProgram: [] }, compensationStrategy: { philosophy, bandingApproach, equityProgram, bonusStructure, benchmarkingSources: [] }, talentDevelopment: { learningBudgetPerEmployee, keyPrograms: [], successionPlanning: [], leadershipPipeline: [], mentorshipProgram: [] }, implementationRoadmap: [{ phase, timeline, actions: [], investment, successMetrics: [] }], quickWins: [] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.69 AI Customer Experience & Journey Orchestration Engine ---
 app.post('/api/cx-journey', requireAuth, async (req: AuthRequest, res) => {
   try {
