@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.46 Digital Transformation Roadmap ---
+app.post('/api/digital-transform-roadmap', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, currentTechStack, digitalMaturity, budget, timeHorizon, businessGoals, painPoints, competitors, customerExperience, operationalChallenges, dataCapabilities, securityPosture, changeReadiness, leadership, transformationGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a digital transformation expert. Build a comprehensive transformation roadmap for: Company: ${company}, Industry: ${industry}, Size: ${companySize}, Current Tech Stack: ${currentTechStack}, Digital Maturity: ${digitalMaturity}, Budget: ${budget}, Time Horizon: ${timeHorizon}, Business Goals: ${businessGoals}, Pain Points: ${painPoints}, Competitors: ${competitors}, Customer Experience: ${customerExperience}, Operational Challenges: ${operationalChallenges}, Data Capabilities: ${dataCapabilities}, Security Posture: ${securityPosture}, Change Readiness: ${changeReadiness}, Leadership: ${leadership}, Goals: ${transformationGoals}. Return JSON: { roadmapTitle, executiveSummary, maturityScore (0-100), currentStateAssessment, futureStateVision, transformationThemes (array: {theme, description, priority, investment, impact}), roadmapPhases (array: {phase, timeline, initiatives (array: {name, description, investment, risk, dependencies}), keyMilestones, successMetrics}), technologyArchitecture (array: {domain, currentState, targetState, gap, recommendation}), dataStrategy, cloudStrategy, customerExperienceTransformation, operationalExcellence, aiAndAutomation (array: {useCase, impact, complexity, timeline, roi}), changeManagement (array: {workstream, activities, timeline, owner}), governanceModel, riskRegister (array: {risk, impact, mitigation}), investmentSummary, roiProjection, quickWins (array: {initiative, impact, effort, timeline}) }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.45 Customer Success Playbook Builder ---
 app.post('/api/cs-playbook-builder', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, customerSegments, arr, nrr, churnRate, nps, csTeamSize, csToolStack, onboardingTime, timeToValue, supportVolume, expansionRevenue, keyChurnReasons, topCustomerGoals, csGoals } = req.body;
