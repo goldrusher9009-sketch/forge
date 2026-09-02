@@ -39500,6 +39500,84 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.73 AI Crisis Management & Business Continuity Engine ---
+app.post('/api/crisis-management', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, industry, crisisType, crisisSeverity, affectedStakeholders, currentStatus, timelineStart, employeesAffected, revenueAtRisk, reputationImpact, regulatoryExposure, mediaAttention, geographies, existingPlans, keyAssets, dependencies, competitors, crisisLeader } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const p = `You are a world-class crisis management and business continuity expert. Analyze this crisis and build a comprehensive response and continuity plan.
+
+Company: ${companyName}, Industry: ${industry}, Crisis Type: ${crisisType}, Severity: ${crisisSeverity}
+Affected Stakeholders: ${affectedStakeholders}, Current Status: ${currentStatus}, Timeline Start: ${timelineStart}
+Employees Affected: ${employeesAffected}, Revenue at Risk: ${revenueAtRisk}, Reputation Impact: ${reputationImpact}
+Regulatory Exposure: ${regulatoryExposure}, Media Attention: ${mediaAttention}, Geographies: ${geographies}
+Existing Plans: ${existingPlans}, Key Assets: ${keyAssets}, Dependencies: ${dependencies}
+Competitors: ${competitors}, Crisis Leader: ${crisisLeader}
+
+Return ONLY valid JSON (no markdown):
+{
+  "crisisTitle": "string",
+  "executiveSummary": "string",
+  "crisisSeverityScore": 0-100,
+  "crisisPhase": "Acute|Developing|Stabilizing|Recovery",
+  "estimatedDuration": "string",
+  "totalExposure": "string",
+  "immediateResponse": {
+    "first24Hours": [{"action": "string", "owner": "string", "priority": "Critical|High|Medium", "deadline": "string", "rationale": "string"}],
+    "communicationBlackout": "string",
+    "warRoomSetup": {"location": "string", "team": ["string"], "meetingCadence": "string", "tools": ["string"]},
+    "legalHold": ["string"],
+    "evidencePreservation": ["string"]
+  },
+  "stakeholderCommunication": {
+    "internalCommunications": [{"audience": "string", "message": "string", "channel": "string", "timing": "string", "tone": "string"}],
+    "externalCommunications": [{"audience": "string", "keyMessages": ["string"], "channel": "string", "timing": "string", "spokesperson": "string"}],
+    "mediaStrategy": {"approach": "string", "keyMessages": ["string"], "thingsToAvoid": ["string"], "pressStatement": "string"},
+    "regulatoryNotifications": [{"regulator": "string", "deadline": "string", "requiredInfo": ["string"]}],
+    "socialMediaProtocol": "string"
+  },
+  "businessContinuity": {
+    "criticalFunctions": [{"function": "string", "rto": "string", "rpo": "string", "alternativeProcess": "string", "owner": "string"}],
+    "workforceManagement": {"immediateActions": ["string"], "remoteWorkProtocol": "string", "backfillStrategy": "string", "mentalHealthSupport": ["string"]},
+    "technologyRecovery": {"priorityOrder": ["string"], "backupSystems": ["string"], "vendorEscalations": ["string"], "dataProtection": ["string"]},
+    "facilityAlternatives": ["string"],
+    "supplyChainWorkarounds": ["string"],
+    "customerServiceContinuity": ["string"]
+  },
+  "riskContainment": {
+    "spreadPrevention": ["string"],
+    "financialFirewall": ["string"],
+    "reputationalProtection": ["string"],
+    "legalRiskMitigation": ["string"],
+    "regulatoryComplianceActions": ["string"],
+    "insuranceClaims": {"trigger": "string", "coverageAreas": ["string"], "documentationNeeded": ["string"]}
+  },
+  "recoveryPlan": {
+    "phases": [{"phase": "string", "timeline": "string", "objectives": ["string"], "successMetrics": ["string"], "resources": "string"}],
+    "reputationRebuild": ["string"],
+    "customerRetention": ["string"],
+    "employeeRetention": ["string"],
+    "financialRecovery": {"timeline": "string", "initiatives": ["string"], "costRecovery": "string"}
+  },
+  "lessonsAndResilience": {
+    "rootCausePreliminary": ["string"],
+    "controlGaps": ["string"],
+    "preventionMeasures": ["string"],
+    "drillsToConduct": ["string"],
+    "planUpdates": ["string"]
+  },
+  "crisisScorecard": [{"metric": "string", "current": "string", "target": "string", "owner": "string", "reviewFrequency": "string"}],
+  "quickWins": ["string"]
+}`;
+    const t = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    let data: any;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.72 AI ESG & Sustainability Strategy Engine ---
 app.post('/api/esg-strategy', requireAuth, async (req: AuthRequest, res) => {
   try {
