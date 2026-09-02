@@ -597,6 +597,62 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.80 A/B Test Copy Generator ---
+function ABCopyPanel({ api }: { api: string }) {
+  const [element, setElement] = React.useState('Headline');
+  const [context, setContext] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [goal, setGoal] = React.useState('');
+  const [variants, setVariants] = React.useState('3');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult(null);
+    const r = await fetch(`${api}/api/ab-copy`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ element, context, audience, goal, variants }) });
+    const d = await r.json(); setResult(d); setLoading(false);
+  };
+  const VARIANT_COLORS = ['#7c3aed','#0ea5e9','#10b981','#f59e0b','#ef4444'];
+  return (
+    <div style={{ padding: 24, maxWidth: 700 }}>
+      <h2>🧪 A/B Test Copy Generator</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <select value={element} onChange={e => setElement(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['Headline','Subheadline','CTA Button','Email Subject','Ad Copy','Value Proposition','Pricing Page','Onboarding Message'].map(el => <option key={el}>{el}</option>)}
+        </select>
+        <select value={variants} onChange={e => setVariants(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['2','3','4','5'].map(n => <option key={n} value={n}>{n} variants</option>)}
+        </select>
+      </div>
+      <input placeholder="Product / page context" value={context} onChange={e => setContext(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <input placeholder="Target audience" value={audience} onChange={e => setAudience(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <input placeholder="Conversion goal" value={goal} onChange={e => setGoal(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <button onClick={run} disabled={loading || !context} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Generating...' : 'Generate Variants'}</button>
+      {result && !result.error && (
+        <div style={{ marginTop: 20 }}>
+          {result.metric && <div style={{ background: '#1e2a1e', borderRadius: 6, padding: 8, marginBottom: 12, fontSize: 13, color: '#4ade80' }}>📊 Recommended metric: {result.metric}</div>}
+          {(result.variants || []).map((v: any, i: number) => (
+            <div key={i} style={{ border: `1px solid ${VARIANT_COLORS[i % VARIANT_COLORS.length]}33`, borderRadius: 10, padding: 14, marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontWeight: 700, color: VARIANT_COLORS[i % VARIANT_COLORS.length] }}>{v.label || `Variant ${String.fromCharCode(65+i)}`}</span>
+                <span style={{ fontSize: 11, color: '#64748b' }}>{v.angle}</span>
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 600, color: '#e2e8f0', marginBottom: 6, background: '#16162a', borderRadius: 6, padding: '8px 12px' }}>{v.copy}</div>
+              <div style={{ fontSize: 12, color: '#94a3b8' }}>💡 {v.hypothesis}</div>
+            </div>
+          ))}
+          {result.testingTips?.length > 0 && (
+            <div style={{ background: '#1e1e2e', borderRadius: 8, padding: 12 }}>
+              <div style={{ color: '#a78bfa', fontWeight: 600, marginBottom: 6, fontSize: 13 }}>Testing Tips</div>
+              {result.testingTips.map((tip: string, i: number) => <div key={i} style={{ color: '#94a3b8', fontSize: 12, marginBottom: 3 }}>• {tip}</div>)}
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <p style={{ color: '#f87171', marginTop: 12 }}>{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v8.79 Customer Persona Builder ---
 function PersonaBuilderPanel({ api }: { api: string }) {
   const [product, setProduct] = React.useState('');
@@ -4429,7 +4485,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4503,6 +4559,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'grantproposal', label: '🏛️ Grant Proposal' },
     { id: 'productroadmap', label: '🗺️ Product Roadmap' },
     { id: 'personabuilder', label: '👤 Persona Builder' },
+    { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4619,6 +4676,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'grantproposal' && <GrantProposalPanel api={api} />}
         {tab === 'productroadmap' && <ProductRoadmapPanel api={api} />}
         {tab === 'personabuilder' && <PersonaBuilderPanel api={api} />}
+        {tab === 'abcopy' && <ABCopyPanel api={api} />}
       </div>
     </div>
   );

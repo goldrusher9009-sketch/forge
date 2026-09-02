@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.80 A/B Test Copy Generator ---
+app.post('/api/ab-copy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { element, context, audience, goal, variants, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Generate ${variants || 3} A/B test variants for the following copy element.
+Element type: ${element || 'headline'}
+Context/product: ${context || 'not specified'}
+Target audience: ${audience || 'general'}
+Goal: ${goal || 'maximize conversions'}
+For each variant provide: the copy text, the angle/hypothesis behind it, and what makes it unique.
+Return JSON: { variants: [{ label: string, copy: string, hypothesis: string, angle: string }], testingTips: string[], metric: string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.79 Customer Persona Builder ---
 app.post('/api/persona-builder', requireAuth, async (req: AuthRequest, res) => {
   try {
