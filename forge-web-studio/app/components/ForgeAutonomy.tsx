@@ -597,6 +597,108 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.67 AI Talent Acquisition & Recruitment Intelligence ---
+const MARKET_AVAIL_COLOR: Record<string,string> = { 'Abundant':'bg-green-700','Moderate':'bg-blue-700','Scarce':'bg-orange-700','Extremely Scarce':'bg-red-700' };
+const COMP_RATING_COLOR: Record<string,string> = { 'Below Market':'bg-red-700','At Market':'bg-yellow-700','Above Market':'bg-green-700','Top of Market':'bg-purple-700' };
+function TalentAcquisitionPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ roleTitle:'', department:'', seniority:'', industry:'', companySize:'', location:'', salaryRange:'', mustHaveSkills:'', niceToHaveSkills:'', cultureFit:'', urgency:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/talent-acquisition`, { method:'POST', headers:{'Content-Type':'application/json',...( (typeof window!=='undefined'&&(window as any).__forgeToken) ? {'Authorization':`Bearer ${(window as any).__forgeToken}`} : {})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error||'Error');
+      setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">🎯 AI Talent Acquisition & Recruitment Intelligence</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {([['roleTitle','Role Title','Senior Product Manager'],['department','Department','Product'],['seniority','Seniority Level','Senior (7+ years)'],['industry','Industry','SaaS / Technology'],['companySize','Company Size','200-500 employees'],['location','Location','Remote-first, US timezones'],['salaryRange','Salary Range','$150k-$180k + equity'],['urgency','Urgency','High — needed in 45 days'],['mustHaveSkills','Must-Have Skills','Product strategy, data analysis'],['niceToHaveSkills','Nice-to-Have Skills','B2B SaaS, SQL, Figma'],['cultureFit','Culture Fit Markers','Collaborative, bias to action']] as [string,string,string][]).map(([k,l,ph])=>(
+          <div key={k} className={k==='mustHaveSkills'||k==='niceToHaveSkills'||k==='cultureFit'?'col-span-2':''}>
+            <label className="text-xs text-gray-400 block mb-1">{l}</label>
+            <input className="w-full bg-gray-700 text-white px-2 py-1.5 rounded text-sm" placeholder={ph} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded font-medium disabled:opacity-50">{loading?'Analyzing…':'Generate Recruitment Plan'}</button>
+      {error && <div className="text-red-400 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-4 mt-2">
+          <div className="bg-gray-800 rounded p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-2 py-1 rounded text-xs font-bold text-white ${MARKET_AVAIL_COLOR[result.marketAvailability]||'bg-gray-600'}`}>{result.marketAvailability}</span>
+              <span className="text-gray-400 text-sm">Hiring Difficulty: <span className="text-white font-bold">{result.hiringDifficultyScore}/100</span></span>
+            </div>
+            <h3 className="text-white font-bold text-lg">{result.recruitmentTitle}</h3>
+            <p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p>
+          </div>
+          {result.idealCandidateProfile && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-blue-400 font-semibold mb-2">🧑‍💼 Ideal Candidate Profile</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-gray-700 rounded p-2"><div className="text-green-400 text-xs font-medium mb-1">Must Haves</div><ul className="list-disc list-inside text-gray-300 text-xs space-y-0.5">{result.idealCandidateProfile.mustHaves?.map((x:string,i:number)=><li key={i}>{x}</li>)}</ul></div>
+                <div className="bg-gray-700 rounded p-2"><div className="text-yellow-400 text-xs font-medium mb-1">Red Flags</div><ul className="list-disc list-inside text-gray-300 text-xs space-y-0.5">{result.idealCandidateProfile.redFlags?.map((x:string,i:number)=><li key={i}>{x}</li>)}</ul></div>
+              </div>
+            </div>
+          )}
+          {result.sourcingStrategy?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-purple-400 font-semibold mb-2">📡 Sourcing Strategy</h4>
+              <div className="space-y-2">{result.sourcingStrategy.map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white font-medium text-sm">{s.channel}</span>
+                    <span className="text-gray-400 text-xs">{s.cost} cost · {s.timeToResults}</span>
+                  </div>
+                  <div className="text-gray-400 text-xs">{s.approach}</div>
+                  <div className="text-teal-400 text-xs mt-0.5">Expected: {s.expectedYield}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.compensationBenchmark && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-green-400 font-semibold mb-2">💰 Compensation Benchmark</h4>
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                {[['P25',result.compensationBenchmark.marketP25],['P50 (Median)',result.compensationBenchmark.marketP50],['P75',result.compensationBenchmark.marketP75],['Total Comp Range',result.compensationBenchmark.totalCompRange]].map(([l,v])=>(
+                  <div key={l} className="bg-gray-700 rounded p-2"><div className="text-gray-400 text-xs">{l}</div><div className="text-white text-sm font-medium">{v}</div></div>
+                ))}
+              </div>
+              <span className={`px-2 py-1 rounded text-xs font-bold text-white ${COMP_RATING_COLOR[result.compensationBenchmark.competitivenessRating]||'bg-gray-600'}`}>{result.compensationBenchmark.competitivenessRating}</span>
+            </div>
+          )}
+          {result.interviewProcess?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-orange-400 font-semibold mb-2">🎤 Interview Process</h4>
+              <div className="space-y-2">{result.interviewProcess.map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-medium text-sm">{s.stage}</span>
+                    <span className="text-gray-400 text-xs">· {s.format} · {s.duration}</span>
+                  </div>
+                  {s.sampleQuestions?.length>0 && <div className="text-gray-400 text-xs mt-1">Sample: "{s.sampleQuestions[0]}"</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-yellow-400 font-semibold mb-2">⚡ Quick Wins</h4>
+              <ul className="list-disc list-inside text-gray-300 text-sm space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i}>{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.66 AI Crisis Management & Business Continuity Command ---
 const CRISIS_PHASE_COLOR: Record<string,string> = { 'Detection':'bg-red-800','Containment':'bg-orange-700','Eradication':'bg-yellow-700','Recovery':'bg-blue-700','Post-Incident':'bg-green-700' };
 const PRIORITY_BADGE: Record<string,string> = { 'Critical':'bg-red-700','High':'bg-orange-700','Medium':'bg-yellow-700' };
@@ -11209,7 +11311,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -11297,6 +11399,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'talentacq', label: '🎯 Talent Acq' },
     { id: 'crisiscommand', label: '🚨 Crisis Command' },
     { id: 'execcoaching', label: '👔 Exec Coaching' },
     { id: 'productlaunchcmd', label: '🚀 Launch Command' },
@@ -11334,6 +11437,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'talentacq', label: '🎯 Talent Acq' },
     { id: 'crisiscommand', label: '🚨 Crisis Command' },
     { id: 'execcoaching', label: '👔 Exec Coaching' },
     { id: 'productlaunchcmd', label: '🚀 Launch Command' },
@@ -11511,6 +11615,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
@@ -11542,6 +11647,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
@@ -11556,6 +11662,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}

@@ -39500,6 +39500,51 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.67 AI Talent Acquisition & Recruitment Intelligence ---
+app.post('/api/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { roleTitle, department, seniority, industry, companySize, location, salaryRange, mustHaveSkills, niceToHaveSkills, cultureFit, urgency } = req.body;
+    const p = `You are a talent acquisition and recruitment intelligence expert. Generate a comprehensive recruitment strategy and candidate intelligence plan.
+Role Title: ${roleTitle || 'Senior Product Manager'}
+Department: ${department || 'Product'}
+Seniority: ${seniority || 'Senior (7+ years)'}
+Industry: ${industry || 'SaaS / Technology'}
+Company Size: ${companySize || '200-500 employees'}
+Location: ${location || 'Remote-first, US timezones'}
+Salary Range: ${salaryRange || '$150k-$180k + equity'}
+Must-Have Skills: ${mustHaveSkills || 'Product strategy, data analysis, stakeholder management'}
+Nice-to-Have: ${niceToHaveSkills || 'B2B SaaS experience, SQL, Figma'}
+Culture Fit: ${cultureFit || 'Collaborative, bias to action, data-driven'}
+Urgency: ${urgency || 'High — needed in 45 days'}
+
+Return JSON only:
+{
+  "recruitmentTitle": "string",
+  "executiveSummary": "string",
+  "hiringDifficultyScore": 0-100,
+  "marketAvailability": "Abundant|Moderate|Scarce|Extremely Scarce",
+  "idealCandidateProfile": { "mustHaves": ["string"], "niceToHaves": ["string"], "redFlags": ["string"], "culturalFitMarkers": ["string"] },
+  "sourcingStrategy": [{ "channel": "string", "approach": "string", "expectedYield": "string", "timeToResults": "string", "cost": "Low|Medium|High" }],
+  "jobDescriptionTemplate": { "hook": "string", "roleOverview": "string", "keyResponsibilities": ["string"], "requirements": ["string"], "benefits": ["string"], "callToAction": "string" },
+  "interviewProcess": [{ "stage": "string", "format": "string", "duration": "string", "assessedCompetencies": ["string"], "sampleQuestions": ["string"] }],
+  "compensationBenchmark": { "marketP25": "string", "marketP50": "string", "marketP75": "string", "equityBenchmark": "string", "totalCompRange": "string", "competitivenessRating": "Below Market|At Market|Above Market|Top of Market" },
+  "candidatePersonas": [{ "persona": "string", "background": "string", "motivations": ["string"], "outreachApproach": "string" }],
+  "offerStrategy": { "negotiationPoints": ["string"], "dealbreakers": ["string"], "closingTactics": ["string"] },
+  "hiringTimeline": [{ "week": "string", "activities": ["string"], "milestones": ["string"] }],
+  "diversityStrategy": ["string"],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.66 AI Crisis Management & Business Continuity Command ---
 app.post('/api/crisis-command', requireAuth, async (req: AuthRequest, res) => {
   try {
