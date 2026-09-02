@@ -39500,6 +39500,81 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.41 AI Digital Transformation & Technology Modernization Engine ---
+app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, revenue, currentTechStack, painPoints, budget, timeline, goals } = req.body;
+  const p = `You are a world-class digital transformation strategist and enterprise architect. Create a comprehensive digital transformation and technology modernization roadmap.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Revenue: ${revenue || 'Unknown'}
+Current Tech Stack: ${currentTechStack || 'Unknown'}
+Pain Points: ${painPoints || 'Unknown'}
+Transformation Budget: ${budget || 'Unknown'}
+Timeline: ${timeline || 'Unknown'}
+Goals: ${goals || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Digital Transformation Roadmap for [company]",
+  "executiveSummary": "3-sentence digital maturity assessment and transformation vision",
+  "digitalScore": <number 0-100>,
+  "maturityLevel": "Digitizing|Integrating|Transforming|Innovating|Leading",
+  "criticalLegacy": "most urgent technical debt to address",
+  "transformationROI": "estimated 3-year ROI from transformation",
+  "biggestRisk": "most critical transformation risk",
+  "digitalAudit": {
+    "infrastructure": { "score": <0-100>, "currentState": "assessment", "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "applications": { "score": <0-100>, "currentState": "assessment", "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "data": { "score": <0-100>, "currentState": "assessment", "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "processAutomation": { "score": <0-100>, "currentState": "assessment", "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "customerExperience": { "score": <0-100>, "currentState": "assessment", "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "aiAdoption": { "score": <0-100>, "currentState": "assessment", "gaps": ["gap 1"], "priority": "High/Medium/Low" }
+  },
+  "modernizationPillars": [
+    { "pillar": "pillar name", "currentState": "legacy state", "targetState": "modern state", "keyTechnologies": ["tech 1", "tech 2"], "timeline": "timeline", "investment": "cost estimate", "roi": "expected return" }
+  ],
+  "cloudStrategy": {
+    "model": "Public/Private/Hybrid/Multi-Cloud",
+    "provider": "AWS/Azure/GCP recommendation",
+    "migrationApproach": "Lift & Shift/Re-platform/Re-architect",
+    "timeline": "migration timeline",
+    "costReduction": "expected cost reduction"
+  },
+  "aiMlRoadmap": [
+    { "useCase": "AI/ML use case", "businessValue": "value description", "complexity": "High/Medium/Low", "timeline": "implementation timeline", "technology": "specific AI technology" }
+  ],
+  "automationOpportunities": [
+    { "process": "process to automate", "currentCost": "time/cost estimate", "automationTool": "recommended tool", "roi": "ROI estimate", "timeline": "timeline" }
+  ],
+  "changeManagement": {
+    "resistanceAreas": ["area 1", "area 2"],
+    "changeChampions": "champion strategy",
+    "trainingPlan": "reskilling approach",
+    "communicationStrategy": "communication plan",
+    "successMetrics": ["metric 1", "metric 2"]
+  },
+  "vendorStrategy": [
+    { "category": "tech category", "buildVsBuy": "Build/Buy/Partner", "recommendation": "specific recommendation", "rationale": "why" }
+  ],
+  "implementationRoadmap": [
+    { "phase": "phase name", "timeline": "timeline", "theme": "transformation theme", "initiatives": ["initiative 1", "initiative 2"], "investment": "cost estimate", "expectedOutcome": "measurable outcome" }
+  ],
+  "kpis": ["KPI 1", "KPI 2", "KPI 3", "KPI 4"],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.40 AI ESG & Sustainability Strategy Engine ---
 app.post('/api/esg-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
