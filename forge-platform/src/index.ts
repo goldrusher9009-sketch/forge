@@ -39500,6 +39500,44 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.82 AI Strategic Partnership Builder ---
+app.post('/api/partnership-builder', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, industry, partnershipGoal, targetPartnerType, currentAssets, constraints } = req.body;
+    const p = `You are a strategic partnership expert. Design a comprehensive partnership strategy and outreach plan.
+Company: ${company || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Partnership Goal: ${partnershipGoal || 'Unknown'}
+Target Partner Type: ${targetPartnerType || 'Unknown'}
+Current Assets: ${currentAssets || 'Unknown'}
+Constraints: ${constraints || 'None'}
+Return ONLY valid JSON:
+{
+  "partnershipTitle": "string",
+  "executiveSummary": "string",
+  "partnershipReadinessScore": 0-100,
+  "partnershipType": "Technology|Distribution|Co-Marketing|OEM|Reseller|Strategic Alliance|Joint Venture|White Label",
+  "idealPartnerProfile": {"size": "string", "stage": "string", "geography": "string", "capabilities": ["string"], "customerBase": "string"},
+  "targetPartnerShortlist": [{"partnerName": "string", "rationale": "string", "synergyScore": 0-100, "approachStrategy": "string", "keyContact": "string"}],
+  "valueProposition": "string",
+  "partnerIncentiveStructure": "string",
+  "negotiationFramework": [{"term": "string", "ourPosition": "string", "flexibility": "High|Medium|Low", "rationale": "string"}],
+  "outreachSequence": [{"step": number, "action": "string", "channel": "string", "message": "string", "timing": "string"}],
+  "partnershipAgreementChecklist": ["string"],
+  "successMetrics": [{"metric": "string", "target": "string", "timeline": "string"}],
+  "riskFactors": [{"risk": "string", "mitigation": "string"}],
+  "integrationRoadmap": "string",
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.81 AI Crisis Communication Command Center ---
 app.post('/api/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
   try {
