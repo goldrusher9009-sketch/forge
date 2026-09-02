@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.84 SOP Generator ---
+app.post('/api/sop-gen', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { processName, department, goal, roles, frequency, tools, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a detailed Standard Operating Procedure (SOP) for: ${processName || 'the process'}.
+Department: ${department || 'Operations'}
+Goal/purpose: ${goal || 'ensure consistency and quality'}
+Roles involved: ${roles || 'team members'}
+Frequency: ${frequency || 'as needed'}
+Tools/systems used: ${tools || 'standard tools'}
+Return JSON: { title: string, version: string, owner: string, purpose: string, scope: string, definitions: [{term:string,definition:string}], steps: [{stepNumber:number,title:string,instructions:string[],responsible:string,inputs:string,outputs:string,checkpoints:string[]}], kpis: string[], revisionHistory: string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.83 Competitor Battle Card Generator ---
 app.post('/api/battle-card', requireAuth, async (req: AuthRequest, res) => {
   try {

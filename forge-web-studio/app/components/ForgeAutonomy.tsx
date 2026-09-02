@@ -597,6 +597,67 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.84 SOP Generator ---
+function SOPGenPanel({ api }: { api: string }) {
+  const [processName, setProcessName] = React.useState('');
+  const [department, setDepartment] = React.useState('');
+  const [goal, setGoal] = React.useState('');
+  const [roles, setRoles] = React.useState('');
+  const [frequency, setFrequency] = React.useState('');
+  const [tools, setTools] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/sop-gen`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ processName, department, goal, roles, frequency, tools }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div style={{ padding: 24, maxWidth: 900 }}>
+      <h2 style={{ marginBottom: 4 }}>📋 SOP Generator</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Generate a detailed Standard Operating Procedure for any business process.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[['Process Name', processName, setProcessName, 'e.g. Customer Onboarding'], ['Department', department, setDepartment, 'e.g. Sales'], ['Goal / Purpose', goal, setGoal, 'e.g. Ensure consistent onboarding experience'], ['Roles Involved', roles, setRoles, 'e.g. Account Manager, IT, Finance'], ['Frequency', frequency, setFrequency, 'e.g. Weekly, As needed'], ['Tools / Systems', tools, setTools, 'e.g. Salesforce, Slack, Jira']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading || !processName} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Generating...' : 'Generate SOP'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ background: '#1a1a2e', borderRadius: 10, padding: 20, marginBottom: 16 }}>
+            <h3 style={{ margin: '0 0 8px' }}>{result.title}</h3>
+            <div style={{ color: '#888', fontSize: 13 }}>Version: {result.version} | Owner: {result.owner}</div>
+            <p style={{ color: '#ccc', marginTop: 8 }}><strong>Purpose:</strong> {result.purpose}</p>
+            <p style={{ color: '#ccc' }}><strong>Scope:</strong> {result.scope}</p>
+            {result.definitions?.length > 0 && <div style={{ marginTop: 8 }}><strong>Definitions:</strong> {result.definitions.map((d: any) => <span key={d.term} style={{ marginRight: 16, color: '#aaa', fontSize: 13 }}><em>{d.term}:</em> {d.definition}</span>)}</div>}
+          </div>
+          <h4 style={{ color: '#7c3aed', marginBottom: 12 }}>Steps</h4>
+          {result.steps?.map((s: any) => (
+            <div key={s.stepNumber} style={{ background: '#111827', borderRadius: 8, padding: 16, marginBottom: 12, borderLeft: '3px solid #7c3aed' }}>
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>Step {s.stepNumber}: {s.title}</div>
+              <div style={{ fontSize: 12, color: '#888', marginBottom: 8 }}>Responsible: {s.responsible} | Input: {s.inputs} | Output: {s.outputs}</div>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>{s.instructions?.map((ins: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 13, marginBottom: 4 }}>{ins}</li>)}</ul>
+              {s.checkpoints?.length > 0 && <div style={{ marginTop: 8, color: '#facc15', fontSize: 12 }}>✓ {s.checkpoints.join(' ✓ ')}</div>}
+            </div>
+          ))}
+          {result.kpis?.length > 0 && <div style={{ marginTop: 16 }}><strong>KPIs:</strong> <span style={{ color: '#34d399', fontSize: 13 }}>{result.kpis.join(', ')}</span></div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.83 Competitor Battle Card Generator ---
 function BattleCardPanel({ api }: { api: string }) {
   const [ourProduct, setOurProduct] = React.useState('');
@@ -4677,7 +4738,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4754,6 +4815,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'sopgen', label: '📋 SOP Generator' },
     { id: 'battlecard', label: '⚔️ Battle Card' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
@@ -4874,6 +4936,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'sopgen' && <SOPGenPanel api={api} />}
         {tab === 'battlecard' && <BattleCardPanel api={api} />}
       </div>
     </div>
