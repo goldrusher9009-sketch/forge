@@ -597,6 +597,124 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.99 Customer Journey Map Generator ---
+const EMOTION_BG: Record<string,string> = { Positive:'bg-green-900/40 border-green-700', Neutral:'bg-gray-700 border-gray-600', Negative:'bg-red-900/40 border-red-700' };
+const MOMENT_COLOR: Record<string,string> = { Peak:'text-green-400', Pain:'text-red-400', Critical:'text-yellow-400' };
+function JourneyMapPanel({ api }: { api: string }) {
+  const [product, setProduct] = useState('');
+  const [persona, setPersona] = useState('');
+  const [personaGoal, setPersonaGoal] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [touchpoints, setTouchpoints] = useState('');
+  const [painPoints, setPainPoints] = useState('');
+  const [provider, setProvider] = useState('anthropic');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [activeStage, setActiveStage] = useState(0);
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/journey-map`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify({ product, persona, personaGoal, industry, touchpoints, painPoints, provider }) });
+      const d = await r.json();
+      if (!r.ok) setError(d.error || 'Error');
+      else setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-lg font-bold text-white mb-3">🗺️ Customer Journey Map</h2>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Product / service name" value={product} onChange={e=>setProduct(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Customer persona (e.g. marketing manager)" value={persona} onChange={e=>setPersona(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Persona goal" value={personaGoal} onChange={e=>setPersonaGoal(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Industry" value={industry} onChange={e=>setIndustry(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Known touchpoints" value={touchpoints} onChange={e=>setTouchpoints(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Known pain points" value={painPoints} onChange={e=>setPainPoints(e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          <select className="bg-gray-700 text-white rounded px-3 py-2 text-sm" value={provider} onChange={e=>setProvider(e.target.value)}>
+            {['anthropic','openai','gemini','groq'].map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          <button onClick={run} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+            {loading ? 'Mapping…' : 'Generate Map'}
+          </button>
+        </div>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          {result.persona && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h3 className="text-white font-bold">{result.mapTitle}</h3>
+              <div className="mt-3 bg-gray-700 rounded p-3 flex justify-between items-start">
+                <div><p className="text-teal-400 font-semibold">{result.persona.name}</p><p className="text-gray-400 text-xs">{result.persona.role}</p><p className="text-gray-400 text-xs mt-1">Tech: {result.persona.techSavviness}</p></div>
+                <div className="text-right"><p className="text-gray-400 text-xs">Goals: {result.persona.goals?.join(', ')}</p><p className="text-red-400 text-xs mt-1">Frustrations: {result.persona.frustrations?.join(', ')}</p></div>
+              </div>
+            </div>
+          )}
+          {result.stages && (
+            <>
+              <div className="flex gap-2 flex-wrap">
+                {result.stages.map((s:any,i:number)=>(
+                  <button key={i} onClick={()=>setActiveStage(i)} className={`px-3 py-1 rounded text-xs font-medium flex items-center gap-1 ${activeStage===i?'bg-teal-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>
+                    {s.emotions?.emoji} {s.stage}
+                  </button>
+                ))}
+              </div>
+              {result.stages[activeStage] && (() => {
+                const s = result.stages[activeStage];
+                return (
+                  <div className="space-y-3">
+                    <div className={`border rounded-lg p-4 ${EMOTION_BG[s.emotions?.overall]||'bg-gray-800 border-gray-600'}`}>
+                      <div className="flex justify-between items-start">
+                        <div><p className="text-white font-semibold">{s.stage}</p><p className="text-gray-400 text-xs">{s.stageGoal} · {s.duration}</p></div>
+                        <span className="text-2xl">{s.emotions?.emoji}</span>
+                      </div>
+                      <p className="text-gray-300 text-sm mt-2">{s.emotions?.description}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gray-800 rounded p-3"><p className="text-blue-400 text-xs font-semibold mb-1">Actions</p><ul className="space-y-0.5">{(s.actions||[]).map((a:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {a}</li>)}</ul></div>
+                      <div className="bg-gray-800 rounded p-3"><p className="text-purple-400 text-xs font-semibold mb-1">Touchpoints</p><ul className="space-y-0.5">{(s.touchpoints||[]).map((t:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {t}</li>)}</ul></div>
+                      <div className="bg-gray-800 rounded p-3"><p className="text-red-400 text-xs font-semibold mb-1">Pain Points</p><ul className="space-y-0.5">{(s.painPoints||[]).map((p:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {p}</li>)}</ul></div>
+                      <div className="bg-gray-800 rounded p-3"><p className="text-green-400 text-xs font-semibold mb-1">Opportunities</p><ul className="space-y-0.5">{(s.opportunities||[]).map((o:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {o}</li>)}</ul></div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          )}
+          {result.moments?.length > 0 && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h4 className="text-white font-semibold mb-3">⚡ Key Moments</h4>
+              <div className="space-y-2">{result.moments.map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3">
+                  <div className="flex justify-between"><span className="text-white text-sm font-medium">{m.moment}</span><span className={`text-xs font-bold ${MOMENT_COLOR[m.type]||'text-gray-400'}`}>{m.type}</span></div>
+                  <p className="text-gray-400 text-xs mt-1">{m.description}</p>
+                  <p className="text-blue-400 text-xs mt-1">→ {m.recommendation}</p>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.implementationPriorities?.length > 0 && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h4 className="text-white font-semibold mb-3">🎯 Implementation Priorities</h4>
+              <div className="space-y-2">{result.implementationPriorities.map((p:any,i:number)=>(
+                <div key={i} className="flex justify-between bg-gray-700 rounded px-3 py-2">
+                  <div><span className="text-white text-sm">{p.priority}</span><span className="text-gray-400 text-xs ml-2">({p.stage})</span></div>
+                  <div className="flex gap-2 text-xs"><span className="text-yellow-400">Effort: {p.effort}</span><span className="text-green-400">Impact: {p.impact}</span></div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.98 Talent Acquisition Strategy Generator ---
 const HIRE_PRIORITY_COLOR: Record<string,string> = { Critical:'text-red-400', High:'text-orange-400', Medium:'text-yellow-400' };
 function TalentStrategyPanel({ api }: { api: string }) {
@@ -6185,7 +6303,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6269,6 +6387,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'boardagenda', label: '🏛️ Board Agenda' },
     { id: 'launchchecklist', label: '🚀 Launch Checklist' },
     { id: 'talentstrategy', label: '🎯 Talent Strategy' },
+    { id: 'journeymap', label: '🗺️ Journey Map' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -6404,6 +6523,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'boardagenda' && <BoardAgendaPanel api={api} />}
         {tab === 'launchchecklist' && <LaunchChecklistPanel api={api} />}
         {tab === 'talentstrategy' && <TalentStrategyPanel api={api} />}
+        {tab === 'journeymap' && <JourneyMapPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.99 Customer Journey Map Generator ---
+app.post('/api/journey-map', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, persona, personaGoal, industry, touchpoints, painPoints, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a detailed customer journey map for "${product || 'the product'}".
+Customer persona: ${persona || 'typical user'}
+Persona goal: ${personaGoal || 'solve their problem'}
+Industry: ${industry || 'technology'}
+Known touchpoints: ${touchpoints || 'website, sales, onboarding, support'}
+Known pain points: ${painPoints || 'not specified'}
+Return JSON: { mapTitle: string, persona:{name:string,role:string,goals:string[],frustrations:string[],techSavviness:string}, stages:[{stage:string,stageGoal:string,duration:string,actions:string[],touchpoints:string[],thoughts:string[],emotions:{overall:'Positive'|'Neutral'|'Negative',description:string,emoji:string},painPoints:string[],opportunities:string[],metrics:string[]}], moments:[{moment:string,type:'Peak'|'Pain'|'Critical',description:string,impact:string,recommendation:string}], overallExperience:{satisfactionScore:number,npsImpact:string,topImprovements:string[]}, implementationPriorities:[{priority:string,stage:string,effort:'Low'|'Medium'|'High',impact:'Low'|'Medium'|'High',owner:string}] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.98 Talent Acquisition Strategy Generator ---
 app.post('/api/talent-strategy', requireAuth, async (req: AuthRequest, res) => {
   try {
