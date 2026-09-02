@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.21 Product Launch Playbook ---
+app.post('/api/product-launch', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, targetAudience, uniqueValue, competitors, launchDate, budget, channels, currentStage, geography, pricingModel, teamSize } = req.body;
+  const userId = req.user!.id;
+  const anthropicKey = await getUserKey(userId, 'anthropic', true);
+  const openaiKey = await getUserKey(userId, 'openai', true);
+  const key = anthropicKey || openaiKey;
+  const provider = anthropicKey ? 'anthropic' : 'openai';
+  if (!key) return res.status(402).json({ error: 'API key required' });
+  const p = `You are a world-class product launch strategist. Create a comprehensive product launch playbook.
+Company: ${company||'Startup'} | Product: ${product||'SaaS Product'} | Industry: ${industry||'Technology'}
+Target Audience: ${targetAudience||'SMBs'} | Unique Value: ${uniqueValue||'Not specified'} | Competitors: ${competitors||'Not specified'}
+Launch Date: ${launchDate||'TBD'} | Budget: ${budget||'Not specified'} | Channels: ${channels||'Digital'}
+Current Stage: ${currentStage||'Beta'} | Geography: ${geography||'North America'} | Pricing: ${pricingModel||'Subscription'} | Team: ${teamSize||'Not specified'}
+Return ONLY valid JSON: { playbookTitle, executiveSummary, launchStrategy, timeline: [{ week, phase, tasks: [string], owner, deliverables }], messagingFramework: { tagline, elevator pitch, keyMessages: [string], proofPoints: [string] }, audienceSegments: [{ segment, size, painPoint, message, channel }], channelStrategy: [{ channel, tactics: [string], budget, expectedReach, kpi }], prLaunchPlan: { pressRelease, mediaList: [string], embargoDates, talkingPoints: [string] }, contentPlan: [{ week, content, channel, goal }], partnershipOpportunities: [{ partner, type, value }], successMetrics: [{ metric, target, timeline }], riskMitigation: [{ risk, likelihood, impact, mitigation }], budgetBreakdown: [{ category, amount, percentage }], postLaunchPlan: { day30, day60, day90 }, launchChecklist: [{ category, items: [string] }] }`;
+  try {
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4500 });
+    const text = typeof result === 'string' ? result : result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.20 Market Sizing & TAM Analysis ---
 app.post('/api/market-sizing', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, product, targetMarket, geography, customerSegments, competitors, pricingModel, currentRevenue, growthRate, timeHorizon } = req.body;

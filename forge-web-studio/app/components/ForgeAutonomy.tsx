@@ -597,6 +597,70 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.21 Product Launch Playbook ---
+const CHANNEL_COLOR: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-red-400' };
+function ProductLaunchPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', targetAudience:'', uniqueValue:'', competitors:'', launchDate:'', budget:'', channels:'', currentStage:'', geography:'', pricingModel:'', teamSize:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [activeSection, setActiveSection] = useState('timeline');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/product-launch`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  const sections = ['timeline','messaging','channels','content','metrics','risks','budget'];
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">🚀 Product Launch Playbook</h2><p className="text-gray-400 text-sm mt-1">Full go-to-market launch strategy with timeline, messaging, and channel plan</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme Inc')} {F('Product Name','product','Acme Analytics 2.0')}
+            {F('Industry','industry','SaaS / FinTech...')} {F('Target Audience','targetAudience','CTOs at mid-market B2B SaaS')}
+            {F('Unique Value Proposition','uniqueValue','10x faster reporting')} {F('Key Competitors','competitors','Tableau, Looker...')}
+            {F('Target Launch Date','launchDate','2024-Q2')} {F('Marketing Budget','budget','$50K')}
+            {F('Channels','channels','Email, LinkedIn, Product Hunt')} {F('Current Stage','currentStage','Beta / MVP / GA')}
+            {F('Geography','geography','North America')} {F('Pricing Model','pricingModel','$99/mo subscription')}
+            {F('Team Size','teamSize','5 engineers, 2 marketers')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Building playbook...' : 'Generate Launch Playbook'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.playbookTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p><p className="text-blue-300 text-sm mt-1 italic">{result.launchStrategy}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Playbook</button></div>
+          {/* Messaging */}
+          {result.messagingFramework && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Messaging Framework</h4><div className="bg-blue-900/40 rounded-lg p-3 mb-3"><p className="text-blue-200 text-lg font-bold">"{result.messagingFramework.tagline}"</p><p className="text-gray-300 text-sm mt-1">{result.messagingFramework.elevatorPitch || result.messagingFramework['elevator pitch']}</p></div><div className="grid grid-cols-2 gap-3"><div><p className="text-gray-400 text-xs mb-2">Key Messages</p><ul className="space-y-1">{(result.messagingFramework.keyMessages||[]).map((m:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-blue-400">→</span>{m}</li>)}</ul></div><div><p className="text-gray-400 text-xs mb-2">Proof Points</p><ul className="space-y-1">{(result.messagingFramework.proofPoints||[]).map((m:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">✓</span>{m}</li>)}</ul></div></div></div>}
+          {/* Section Nav */}
+          <div className="flex gap-2 flex-wrap">{sections.map(s=><button key={s} onClick={()=>setActiveSection(s)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${activeSection===s?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s}</button>)}</div>
+          {/* Timeline */}
+          {activeSection==='timeline' && result.timeline?.length>0 && <div className="space-y-2">{result.timeline.map((w:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center gap-3 mb-2"><span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded">{w.week}</span><span className="text-white font-medium">{w.phase}</span><span className="text-gray-400 text-xs ml-auto">{w.owner}</span></div><ul className="grid grid-cols-2 gap-1">{(w.tasks||[]).map((t:string,j:number)=><li key={j} className="text-gray-300 text-xs flex gap-1"><span className="text-blue-400">·</span>{t}</li>)}</ul></div>)}</div>}
+          {/* Channels */}
+          {activeSection==='channels' && result.channelStrategy?.length>0 && <div className="space-y-3">{result.channelStrategy.map((c:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center justify-between mb-2"><p className="text-white font-semibold">{c.channel}</p><div className="flex gap-3 text-xs"><span className="text-gray-400">{c.budget}</span><span className="text-gray-400">{c.expectedReach}</span></div></div><ul className="grid grid-cols-2 gap-1">{(c.tactics||[]).map((t:string,j:number)=><li key={j} className="text-gray-300 text-xs flex gap-1"><span className="text-purple-400">·</span>{t}</li>)}</ul><p className="text-blue-300 text-xs mt-2">KPI: {c.kpi}</p></div>)}</div>}
+          {/* Content */}
+          {activeSection==='content' && result.contentPlan?.length>0 && <div className="space-y-2">{result.contentPlan.map((c:any,i:number)=><div key={i} className="flex items-start gap-3 bg-gray-800 rounded-lg px-4 py-3"><span className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded shrink-0">{c.week}</span><div className="flex-1"><p className="text-white text-sm">{c.content}</p><div className="flex gap-3 mt-1"><span className="text-purple-300 text-xs">{c.channel}</span><span className="text-gray-400 text-xs">{c.goal}</span></div></div></div>)}</div>}
+          {/* Metrics */}
+          {activeSection==='metrics' && result.successMetrics?.length>0 && <div className="grid grid-cols-2 gap-3">{result.successMetrics.map((m:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs">{m.metric}</p><p className="text-white text-xl font-bold mt-1">{m.target}</p><p className="text-gray-500 text-xs mt-1">{m.timeline}</p></div>)}</div>}
+          {/* Risks */}
+          {activeSection==='risks' && result.riskMitigation?.length>0 && <div className="space-y-2">{result.riskMitigation.map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center justify-between mb-1"><p className="text-white text-sm font-medium">{r.risk}</p><div className="flex gap-2 text-xs"><span className="text-orange-400">{r.likelihood}</span><span className="text-red-400">{r.impact}</span></div></div><p className="text-gray-400 text-xs">{r.mitigation}</p></div>)}</div>}
+          {/* Budget */}
+          {activeSection==='budget' && result.budgetBreakdown?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Budget Breakdown</h4><div className="space-y-2">{result.budgetBreakdown.map((b:any,i:number)=><div key={i}><div className="flex justify-between text-sm mb-1"><span className="text-gray-300">{b.category}</span><div className="flex gap-3"><span className="text-white font-medium">{b.amount}</span><span className="text-gray-400">{b.percentage}</span></div></div><div className="h-2 bg-gray-700 rounded-full overflow-hidden"><div className="h-full bg-blue-500 rounded-full" style={{width:b.percentage}}/></div></div>)}</div></div>}
+          {/* Post-launch */}
+          {result.postLaunchPlan && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Post-Launch Plan</h4><div className="grid grid-cols-3 gap-3">{['day30','day60','day90'].map(d=><div key={d} className="bg-gray-700/50 rounded-lg p-3"><p className="text-blue-300 text-xs mb-1">{d}</p><p className="text-gray-300 text-xs">{result.postLaunchPlan[d]}</p></div>)}</div></div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.20 Market Sizing & TAM Analysis ---
 const ATTRACT_COLOR: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-red-400','Very High':'text-emerald-400' };
 const SCENARIO_COLOR: Record<string,string> = { 'Conservative':'text-blue-400','Realistic':'text-green-400','Optimistic':'text-purple-400' };
@@ -8680,7 +8744,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8778,6 +8842,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'productlaunch', label: '🚀 Product Launch' },
     { id: 'marketsizing', label: '📊 Market Sizing' },
     { id: 'innovationsprint', label: '💡 Innovation Sprint' },
     { id: 'negotiationcoach', label: '🤝 Negotiation Coach' },
@@ -8935,6 +9000,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'productlaunch' && <ProductLaunchPanel api={api} />}
         {tab === 'marketsizing' && <MarketSizingPanel api={api} />}
         {tab === 'innovationsprint' && <InnovationSprintPanel api={api} />}
         {tab === 'negotiationcoach' && <NegotiationCoachPanel api={api} />}
