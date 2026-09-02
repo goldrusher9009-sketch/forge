@@ -597,6 +597,92 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.88 Partnership Proposal Generator ---
+function PartnershipProposalPanel({ api }: { api: string }) {
+  const [ourCompany, setOurCompany] = React.useState('');
+  const [partnerCompany, setPartnerCompany] = React.useState('');
+  const [partnershipType, setPartnershipType] = React.useState('strategic alliance');
+  const [ourValue, setOurValue] = React.useState('');
+  const [theirValue, setTheirValue] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [terms, setTerms] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/partnership-proposal`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ ourCompany, partnerCompany, partnershipType, ourValue, theirValue, goals, terms }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div style={{ padding: 24, maxWidth: 900 }}>
+      <h2 style={{ marginBottom: 4 }}>🤝 Partnership Proposal Generator</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Generate a professional partnership proposal to send to potential partners.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[['Our Company', ourCompany, setOurCompany, 'e.g. Forge AI'], ['Partner Company', partnerCompany, setPartnerCompany, 'e.g. Salesforce'], ['Partnership Type', partnershipType, setPartnershipType, 'strategic alliance / reseller / technology / co-marketing'], ['What We Bring', ourValue, setOurValue, 'e.g. AI platform, 10k users, API'], ['What We Seek', theirValue, setTheirValue, 'e.g. distribution, CRM integration'], ['Goals', goals, setGoals, 'e.g. 2x revenue in 12 months'], ['Proposed Terms', terms, setTerms, 'e.g. rev share 20%, co-branding']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading || !ourCompany || !partnerCompany} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Writing...' : 'Generate Proposal'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ background: '#1a1a2e', borderRadius: 10, padding: 20, marginBottom: 16 }}>
+            <div style={{ color: '#888', fontSize: 12, marginBottom: 4 }}>Subject</div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 12 }}>{result.subject}</div>
+            <div style={{ color: '#888', fontSize: 12, marginBottom: 4 }}>Executive Summary</div>
+            <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.executiveSummary}</p>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div style={{ background: '#111827', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontWeight: 600, color: '#34d399', marginBottom: 8 }}>💡 Partnership Vision</div>
+              <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.partnershipVision}</p>
+            </div>
+            <div style={{ background: '#111827', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontWeight: 600, color: '#60a5fa', marginBottom: 8 }}>🏗️ Proposed Structure</div>
+              <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.proposedStructure}</p>
+            </div>
+          </div>
+          <div style={{ background: '#111827', borderRadius: 8, padding: 14, marginBottom: 16 }}>
+            <div style={{ fontWeight: 600, color: '#facc15', marginBottom: 8 }}>⚖️ Mutual Benefits</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+              {result.mutualBenefits?.map((b: any, i: number) => (
+                <div key={i} style={{ background: '#1a1a2e', borderRadius: 6, padding: 10 }}>
+                  <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 700, marginBottom: 4 }}>{b.party}</div>
+                  <div style={{ color: '#ccc', fontSize: 12 }}>{b.benefit}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            <div style={{ background: '#1a1a2e', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontWeight: 600, color: '#34d399', marginBottom: 8, fontSize: 13 }}>📋 Key Terms</div>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>{result.keyTerms?.map((t: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 12, marginBottom: 4 }}>{t}</li>)}</ul>
+            </div>
+            <div style={{ background: '#1a1a2e', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontWeight: 600, color: '#60a5fa', marginBottom: 8, fontSize: 13 }}>📊 Success Metrics</div>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>{result.successMetrics?.map((m: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 12, marginBottom: 4 }}>{m}</li>)}</ul>
+            </div>
+            <div style={{ background: '#1a1a2e', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontWeight: 600, color: '#facc15', marginBottom: 8, fontSize: 13 }}>➡️ Next Steps</div>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>{result.nextSteps?.map((s: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 12, marginBottom: 4 }}>{s}</li>)}</ul>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.87 Pricing Strategy Generator ---
 function PricingStrategyPanel({ api }: { api: string }) {
   const [productName, setProductName] = React.useState('');
@@ -4962,7 +5048,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -5039,6 +5125,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'partnershipproposal', label: '🤝 Partnership Proposal' },
     { id: 'pricingstrategy', label: '💰 Pricing Strategy' },
     { id: 'execsummary', label: '📄 Exec Summary' },
     { id: 'swotanalysis', label: '🔷 SWOT Analysis' },
@@ -5163,6 +5250,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'partnershipproposal' && <PartnershipProposalPanel api={api} />}
         {tab === 'pricingstrategy' && <PricingStrategyPanel api={api} />}
         {tab === 'execsummary' && <ExecSummaryPanel api={api} />}
         {tab === 'swotanalysis' && <SWOTAnalysisPanel api={api} />}

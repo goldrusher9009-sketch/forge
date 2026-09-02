@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.88 Partnership Proposal Generator ---
+app.post('/api/partnership-proposal', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { ourCompany, partnerCompany, partnershipType, ourValue, theirValue, goals, terms, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a professional partnership proposal from ${ourCompany || 'our company'} to ${partnerCompany || 'the partner'}.
+Partnership type: ${partnershipType || 'strategic alliance'}
+What we bring: ${ourValue || 'our strengths'}
+What we seek from them: ${theirValue || 'their capabilities'}
+Goals: ${goals || 'mutual growth'}
+Proposed terms: ${terms || 'to be negotiated'}
+Return JSON: { subject: string, executiveSummary: string, companyOverview: string, partnershipVision: string, mutualBenefits: [{party:string,benefit:string}], proposedStructure: string, keyTerms: string[], milestones: [{phase:string,timeline:string,deliverables:string[]}], successMetrics: string[], nextSteps: string[], closingStatement: string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.87 Pricing Strategy Generator ---
 app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
   try {
