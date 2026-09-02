@@ -39500,6 +39500,23 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.27 AI Digital Transformation & Change Management Engine ---
+app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { industry, companySize, currentTechStack, transformationGoals, budget, timeline, changeReadiness, painPoints, competitivePressure } = req.body;
+  const p = `You are a digital transformation and change management expert. Build a comprehensive transformation roadmap.
+Company: Industry=${industry}, Size=${companySize}, Tech=${currentTechStack}, Goals=${transformationGoals}, Budget=${budget}, Timeline=${timeline}, Readiness=${changeReadiness}, Pain=${painPoints}, Pressure=${competitivePressure}
+Return JSON: { reportTitle, executiveSummary, transformationScore (0-100), readinessLevel, primaryOpportunity, currentStateAssessment: { digitalMaturity, technologyGaps[], processInefficiencies[], culturalBarriers[], dataCapabilities }, targetStateVision: { architecture, capabilities[], businessOutcomes[], competitivePosition }, transformationRoadmap: [ { phase, name, duration, initiatives[], investment, outcomes[], kpis[] } ], changeManagement: { sponsorshipModel, communicationPlan, trainingStrategy, resistanceManagement, cultureChange, successMetrics[] }, technologyStrategy: { coreplatforms[], cloudStrategy, dataStrategy, aiMlRoadmap, securityFramework, integrationArchitecture }, workforcImpact: { rolesAffected, upskilling[], newRoles[], changeAgents, adoptionStrategy }, riskMitigation: [ { risk, likelihood, impact, mitigation, owner } ], businessCase: { investment, expectedROI, paybackPeriod, npv, strategicValue }, metrics: [ { name, baseline, target, timeline, owner } ], quickWins: [ { win, effort, impact, timeline } ] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'No JSON' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.26 AI Supply Chain Resilience & Risk Engine ---
 app.post('/api/supply-chain-resilience', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
