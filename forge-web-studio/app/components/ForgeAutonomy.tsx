@@ -597,6 +597,73 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.81 Pitch Deck Outline Generator ---
+function PitchDeckPanel({ api }: { api: string }) {
+  const [company, setCompany] = React.useState('');
+  const [problem, setProblem] = React.useState('');
+  const [solution, setSolution] = React.useState('');
+  const [market, setMarket] = React.useState('');
+  const [traction, setTraction] = React.useState('');
+  const [team, setTeam] = React.useState('');
+  const [ask, setAsk] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [activeSlide, setActiveSlide] = React.useState(0);
+  const run = async () => {
+    setLoading(true); setResult(null); setActiveSlide(0);
+    const r = await fetch(`${api}/api/pitch-deck`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ company, problem, solution, market, traction, team, ask }) });
+    const d = await r.json(); setResult(d); setLoading(false);
+  };
+  const slides = result?.slides || [];
+  const slide = slides[activeSlide];
+  return (
+    <div style={{ padding: 24, maxWidth: 800 }}>
+      <h2>📊 Pitch Deck Outline Generator</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Company name" value={company} onChange={e => setCompany(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Funding ask (e.g. $2M seed)" value={ask} onChange={e => setAsk(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Market size" value={market} onChange={e => setMarket(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Traction / metrics" value={traction} onChange={e => setTraction(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      </div>
+      <textarea placeholder="Problem you solve" value={problem} onChange={e => setProblem(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <textarea placeholder="Your solution" value={solution} onChange={e => setSolution(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <input placeholder="Team background" value={team} onChange={e => setTeam(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <button onClick={run} disabled={loading || !company} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Building...' : 'Generate Pitch Deck'}</button>
+      {result?.storyArc && <div style={{ marginTop: 12, background: '#1e2a1e', borderRadius: 6, padding: 10, color: '#4ade80', fontSize: 13 }}>📖 Story Arc: {result.storyArc}</div>}
+      {slides.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
+            {slides.map((_: any, i: number) => (
+              <button key={i} onClick={() => setActiveSlide(i)} style={{ padding: '4px 10px', borderRadius: 6, background: activeSlide===i ? '#7c3aed' : '#1e1e2e', color: '#fff', border: '1px solid #333', cursor: 'pointer', fontSize: 12 }}>{i+1}</button>
+            ))}
+          </div>
+          {slide && (
+            <div style={{ background: '#1e1e2e', borderRadius: 10, padding: 18 }}>
+              <div style={{ color: '#a78bfa', fontWeight: 700, fontSize: 16, marginBottom: 4 }}>Slide {slide.slideNumber}: {slide.title}</div>
+              <div style={{ color: '#94a3b8', fontSize: 13, fontStyle: 'italic', marginBottom: 10 }}>{slide.keyMessage}</div>
+              <div style={{ marginBottom: 10 }}>{(slide.content || []).map((c: string, i: number) => <div key={i} style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 3 }}>• {c}</div>)}</div>
+              <div style={{ background: '#16162a', borderRadius: 6, padding: 8, marginBottom: 8 }}><span style={{ color: '#64748b', fontSize: 11 }}>🎤 Speaker notes: </span><span style={{ color: '#94a3b8', fontSize: 12 }}>{slide.speakerNotes}</span></div>
+              <div style={{ color: '#f59e0b', fontSize: 11 }}>🎨 {slide.designTip}</div>
+            </div>
+          )}
+          {result.investorFAQs?.length > 0 && (
+            <div style={{ marginTop: 12, background: '#1e1e2e', borderRadius: 8, padding: 12 }}>
+              <div style={{ color: '#a78bfa', fontWeight: 600, marginBottom: 8 }}>Investor FAQs</div>
+              {result.investorFAQs.map((faq: any, i: number) => (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 600 }}>Q: {faq.q}</div>
+                  <div style={{ color: '#94a3b8', fontSize: 12 }}>A: {faq.a}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <p style={{ color: '#f87171', marginTop: 12 }}>{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v8.80 A/B Test Copy Generator ---
 function ABCopyPanel({ api }: { api: string }) {
   const [element, setElement] = React.useState('Headline');
@@ -4485,7 +4552,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4560,6 +4627,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'productroadmap', label: '🗺️ Product Roadmap' },
     { id: 'personabuilder', label: '👤 Persona Builder' },
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
+    { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4677,6 +4745,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'productroadmap' && <ProductRoadmapPanel api={api} />}
         {tab === 'personabuilder' && <PersonaBuilderPanel api={api} />}
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
+        {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
       </div>
     </div>
   );

@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.81 Pitch Deck Outline Generator ---
+app.post('/api/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, problem, solution, market, traction, team, ask, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a compelling investor pitch deck outline for:
+Company: ${company || 'our startup'}
+Problem: ${problem || 'not specified'}
+Solution: ${solution || 'not specified'}
+Market size: ${market || 'not specified'}
+Traction: ${traction || 'early stage'}
+Team: ${team || 'experienced founders'}
+Ask: ${ask || 'seeking seed funding'}
+Return JSON: { slides: [{ slideNumber: number, title: string, keyMessage: string, content: string[], speakerNotes: string, designTip: string }], storyArc: string, investorFAQs: [{ q: string, a: string }] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.80 A/B Test Copy Generator ---
 app.post('/api/ab-copy', requireAuth, async (req: AuthRequest, res) => {
   try {
