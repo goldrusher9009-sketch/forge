@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.24 AI Talent Intelligence & People Analytics Engine ---
+app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { companyStage, headcount, growthRate, topRoles, attritionRate, hiringChallenges, compensationBenchmark, cultureDescription, geographyStrategy, hrTechStack } = req.body;
+  const p = `You are a world-class Chief People Officer and talent strategist. Build a comprehensive Talent Intelligence & People Analytics report.
+Stage: ${companyStage}, Headcount: ${headcount}, Growth rate: ${growthRate}, Key roles: ${topRoles}, Attrition: ${attritionRate}, Hiring challenges: ${hiringChallenges}, Comp benchmark: ${compensationBenchmark}, Culture: ${cultureDescription}, Geography: ${geographyStrategy}, HR tech: ${hrTechStack}
+
+Return JSON:
+- reportTitle (string)
+- executiveSummary (string)
+- talentHealthScore (number 0-100)
+- criticalRisk (string)
+- talentStrategy (object: north_star string, talent_brand string, three_year_vision string, hiring_philosophy string)
+- workforceAnalytics (object: current_state string, growth_scenarios string[], capacity_gaps string[], flight_risk_indicators string[], high_performer_profile string)
+- recruitingEngine (object: talent_acquisition_model string, sourcing_channels string[], employer_branding string, interview_process string, offer_strategy string, diversity_inclusion string)
+- compensationStrategy (object: philosophy string, bands_framework string, equity_strategy string, variable_comp string, total_rewards string, benchmarking_approach string)
+- retentionPlaybook (object: engagement_drivers string[], recognition_programs string[], career_pathing string, manager_effectiveness string, stay_interviews string)
+- learningDevelopment (object: learning_strategy string, critical_skills string[], leadership_pipeline string, upskilling_programs string[], external_education string)
+- cultureOS (object: values_activation string, rituals string[], feedback_loops string, psychological_safety string, dei_strategy string)
+- hrTechRoadmap (object: current_gaps string[], recommended_stack string[], ai_in_hr string, data_strategy string)
+- metrics (array of objects: kpi string, benchmark string, current string, target string)
+- thirtyDayActions (array of strings)
+- quickWins (array of 5 strings)`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0] || '{}';
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.23 AI Innovation & R&D Portfolio Strategy Engine ---
 app.post('/api/innovation-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
