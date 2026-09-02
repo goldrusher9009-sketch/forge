@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.54 AI Brand Strategy & Identity Engine ---
+app.post('/api/brand-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, product, industry, targetAudience, currentTagline, brandValues, competitors, uniqueAdvantage, brandPersonality, pricePoint, geographies } = req.body;
+  const p = `You are an elite brand strategist. Generate a comprehensive Brand Strategy & Identity report for: Company=${companyName}, Product=${product}, Industry=${industry}, Target Audience=${targetAudience}, Current Tagline=${currentTagline}, Brand Values=${brandValues}, Competitors=${competitors}, Unique Advantage=${uniqueAdvantage}, Brand Personality=${brandPersonality}, Price Point=${pricePoint}, Geographies=${geographies}.
+Return ONLY valid JSON: { "reportTitle": string, "executiveSummary": string, "brandScore": number, "brandArchetype": string, "coreEssence": string, "brandPromise": string, "positioningStatement": string, "brandAudit": { "strengths": string[], "weaknesses": string[], "opportunities": string[], "threats": string[], "gapAnalysis": string }, "brandIdentity": { "personality": [{ "trait": string, "description": string, "inAction": string }], "voiceTone": { "primary": string, "dos": string[], "donts": string[] }, "visualDirection": { "colorPalette": string, "typography": string, "imagery": string, "logoGuidance": string }, "brandStory": string }, "messagingFramework": { "headline": string, "subheadline": string, "elevatorPitch": string, "taglineOptions": string[], "keyMessages": [{ "audience": string, "message": string, "proof": string }], "objectionHandling": [{ "objection": string, "response": string }] }, "competitivePositioning": { "whitespace": string, "differentiators": string[], "categoryDesign": string, "competitorContrast": [{ "competitor": string, "theyAre": string, "youAre": string }] }, "brandChannels": [{ "channel": string, "strategy": string, "contentTypes": string[], "tone": string, "kpis": string[] }], "brandActivation": [{ "initiative": string, "objective": string, "tactics": string[], "timeline": string, "expectedImpact": string }], "measurementFramework": { "brandAwareness": string, "brandEquity": string, "nps": string, "shareOfVoice": string, "sentimentTracking": string }, "quickWins": string[] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.53 AI Pricing Strategy & Revenue Optimization Engine ---
 app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
