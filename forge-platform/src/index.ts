@@ -39500,6 +39500,48 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.62 AI Brand Audit & Identity Analyzer ---
+app.post('/api/brand-audit', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { company, industry, targetAudience, currentBranding, competitors, brandValues, channels } = req.body;
+    const p = `You are a brand strategy and identity expert. Generate a comprehensive brand audit and identity analysis.
+Company: ${company || 'Our Company'}
+Industry: ${industry || 'Technology'}
+Target Audience: ${targetAudience || 'B2B professionals'}
+Current Branding: ${currentBranding || 'Basic website and social presence'}
+Competitors: ${competitors || 'Major industry players'}
+Brand Values: ${brandValues || 'Innovation, trust, quality'}
+Channels: ${channels || 'Website, LinkedIn, email'}
+
+Return JSON only:
+{
+  "auditTitle": "string",
+  "executiveSummary": "string",
+  "brandHealthScore": 0-100,
+  "brandMaturity": "Nascent|Developing|Established|Strong|Iconic",
+  "brandIdentity": { "currentPositioning": "string", "perceivedStrengths": ["string"], "perceivedWeaknesses": ["string"], "differentiators": ["string"] },
+  "audienceAlignment": [{ "segment": "string", "alignmentScore": 0-100, "resonatingMessages": ["string"], "gaps": ["string"] }],
+  "competitiveBrandLandscape": [{ "competitor": "string", "brandStrength": "Strong|Moderate|Weak", "positioning": "string", "ourAdvantage": "string" }],
+  "visualIdentityAudit": { "consistency": "Consistent|Inconsistent|Mixed", "strengths": ["string"], "improvements": ["string"], "recommendations": ["string"] },
+  "messagingAudit": { "clarity": 0-100, "consistency": 0-100, "keyMessages": ["string"], "messagingGaps": ["string"], "toneRecommendations": ["string"] },
+  "channelPresence": [{ "channel": "string", "effectiveness": 0-100, "strengths": ["string"], "improvements": ["string"] }],
+  "brandArchitecture": { "currentStructure": "string", "recommendation": "string", "rationale": "string" },
+  "reputationAnalysis": { "sentimentScore": 0-100, "trustFactors": ["string"], "riskFactors": ["string"], "mitigations": ["string"] },
+  "rebrandingOpportunities": [{ "opportunity": "string", "impact": "High|Medium|Low", "effort": "High|Medium|Low", "recommendation": "string" }],
+  "brandRoadmap": [{ "phase": "string", "initiatives": ["string"], "timeline": "string", "expectedOutcome": "string" }],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.61 AI Workforce Planning & Skills Gap Analyzer ---
 app.post('/api/workforce-planner', requireAuth, async (req: AuthRequest, res) => {
   try {
