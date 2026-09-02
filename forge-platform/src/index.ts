@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.13 AI Investor Relations & Capital Strategy Engine ---
+app.post('/api/investor-relations', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+  const { companyStage, industry, annualRevenue, growthRate, burnRate, runway, lastRoundDetails, targetRaiseAmount, targetRaiseType, investorTargets } = req.body;
+  const p = `You are a top-tier investor relations advisor. Generate a comprehensive IR & capital strategy report.
+Company: stage=${companyStage}, industry=${industry}, ARR=${annualRevenue}, growth=${growthRate}
+Financials: burn=${burnRate}, runway=${runway}
+Previous round: ${lastRoundDetails}
+Target raise: ${targetRaiseAmount} (${targetRaiseType}), target investors=${investorTargets}
+
+Return JSON: { reportTitle, executiveSummary, fundabilityScore (0-100), capitalStrategyGrade, optimalRaiseWindow, narrativeStrategy: { headline, elevator_pitch, founding_story, why_now, market_thesis }, financialNarrative: { arr_story, growth_trajectory, unit_economics, path_to_profitability, burn_efficiency }, investorTargeting: [{ tier, investorType, targetFirms: [{ name, partner, thesis_fit, recent_investments[], approach }], outreachSequence, expectedConversionRate }] (3 tiers), pitchDeckOutline: [{ slide, title, key_points[], proof_points[] }] (12 slides), dueDiligencePrep: { data_room_checklist[], common_questions: [{ question, answer_framework }], red_flags_to_address[] }, valuationStrategy: { methodology, comparable_cos[], target_range, negotiation_anchors[], dilution_targets }, termSheetGuide: { favorable_terms[], watch_out_for[], non_negotiables[], investor_friendly_traps[] }, irCalendar: [{ month, activities[], milestones[] }] (6 months), metrics: [{ metric, current, target, why_it_matters }] (10 metrics), quickWins: [] (5 items) }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    res.json(json ? JSON.parse(json) : { error: 'Parse failed', raw: text });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.12 AI Strategic Partnerships & Alliance Intelligence Engine ---
 app.post('/api/partnership-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
