@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.04 AI Brand Architecture & Strategy Builder ---
+app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, currentBrands, targetAudiences, marketPosition, competitors, brandChallenges, growthGoals, budget, existingAssets, geographicScope } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class brand strategist and CMO. Build a comprehensive brand architecture and strategy for ${companyName} in the ${industry} industry.
+Current brands: ${currentBrands}. Target audiences: ${targetAudiences}. Market position: ${marketPosition}. Competitors: ${competitors}. Brand challenges: ${brandChallenges}. Growth goals: ${growthGoals}. Budget: ${budget}. Existing assets: ${existingAssets}. Geographic scope: ${geographicScope}.
+Return ONLY valid JSON:
+{
+  "strategyTitle": "string",
+  "executiveSummary": "string",
+  "brandStrengthScore": 0-100,
+  "architectureModel": "Monolithic|Endorsed|Pluralistic|Hybrid",
+  "brandPurpose": {"why": "string", "vision": "string", "mission": "string", "values": ["string"]},
+  "brandIdentity": {"positioning": "string", "personality": ["string"], "voice": "string", "tone": ["string"], "keyMessages": ["string"]},
+  "brandArchitecture": [{"brand": "string", "role": "string", "audience": "string", "positioning": "string", "relationship": "string"}],
+  "audienceProfiles": [{"segment": "string", "demographics": "string", "psychographics": "string", "brandPerception": "string", "messaging": ["string"]}],
+  "competitiveDifferentiation": {"uniquePositioning": "string", "ownable": ["string"], "competitive": ["string"], "parity": ["string"]},
+  "visualIdentityGuidelines": {"colorStrategy": "string", "typographyDirection": "string", "imageryStyle": "string", "logoUsage": "string", "dosDonts": ["string"]},
+  "contentStrategy": {"pillars": ["string"], "formats": ["string"], "channels": ["string"], "cadence": "string"},
+  "brandActivation": [{"initiative": "string", "objective": "string", "channels": ["string"], "budget": "string", "timeline": "string"}],
+  "brandMetrics": [{"metric": "string", "baseline": "string", "target": "string", "measurement": "string"}],
+  "brandGovernance": {"guidelines": ["string"], "approvalProcess": "string", "trainingPlan": "string", "brandPolicing": "string"},
+  "roadmap": [{"phase": "string", "timeframe": "string", "milestones": ["string"], "investment": "string"}],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.03 AI Workforce Planning & People Analytics Engine ---
 app.post('/api/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;

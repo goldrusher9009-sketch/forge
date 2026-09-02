@@ -597,6 +597,213 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v10.04 AI Brand Architecture & Strategy Builder ---
+const ARCH_MODEL_COLOR: Record<string,string> = { 'Monolithic':'bg-blue-700','Endorsed':'bg-green-700','Pluralistic':'bg-purple-700','Hybrid':'bg-yellow-700' };
+function BrandArchitecturePanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ companyName:'', industry:'', currentBrands:'', targetAudiences:'', marketPosition:'', competitors:'', brandChallenges:'', growthGoals:'', budget:'', existingAssets:'', geographicScope:'National' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeSection, setActiveSection] = React.useState('identity');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/brand-architecture`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const sections = [
+    { id:'identity', label:'Identity' }, { id:'architecture', label:'Architecture' }, { id:'audiences', label:'Audiences' },
+    { id:'activation', label:'Activation' }, { id:'governance', label:'Governance' }
+  ];
+  return (
+    <div className="p-4 space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-xl font-bold text-white mb-1">🏷️ Brand Architecture & Strategy Builder</h2>
+        <p className="text-gray-400 text-sm mb-4">AI-powered brand strategy, architecture design & activation planning</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[['companyName','Company Name'],['industry','Industry'],['currentBrands','Current Brands/Products'],['targetAudiences','Target Audiences'],['marketPosition','Current Market Position'],['competitors','Key Competitors'],['brandChallenges','Brand Challenges'],['growthGoals','Growth Goals'],['budget','Brand Budget'],['existingAssets','Existing Brand Assets']].map(([k,label]) => (
+            <div key={k} className={k==='brandChallenges'||k==='growthGoals'?'col-span-2':''}>
+              <label className="text-gray-400 text-xs">{label}</label>
+              <input className="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={label} />
+            </div>
+          ))}
+          <div>
+            <label className="text-gray-400 text-xs">Geographic Scope</label>
+            <select className="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mt-1" value={form.geographicScope} onChange={e=>setForm(f=>({...f,geographicScope:e.target.value}))}>
+              {['Local','Regional','National','International','Global'].map(v=><option key={v}>{v}</option>)}
+            </select>
+          </div>
+        </div>
+        <button onClick={run} disabled={loading||!form.companyName||!form.industry} className="mt-4 bg-pink-600 hover:bg-pink-500 disabled:bg-gray-600 text-white px-6 py-2 rounded font-medium text-sm w-full">
+          {loading ? '⚡ Building Brand Strategy...' : '🏷️ Build Brand Architecture'}
+        </button>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <div className="flex justify-between items-start mb-2">
+              <div>
+                <h3 className="text-white font-bold text-lg">{result.strategyTitle}</h3>
+                <p className="text-gray-400 text-sm mt-1">{result.executiveSummary}</p>
+              </div>
+              <div className="text-center ml-4 flex flex-col gap-2">
+                <div><div className="text-3xl font-bold text-pink-400">{result.brandStrengthScore}</div><div className="text-gray-400 text-xs">Brand Score</div></div>
+                {result.architectureModel && <span className={`px-2 py-1 rounded text-xs text-white ${ARCH_MODEL_COLOR[result.architectureModel]||'bg-gray-700'}`}>{result.architectureModel}</span>}
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {sections.map(s=><button key={s.id} onClick={()=>setActiveSection(s.id)} className={`px-3 py-1 rounded text-sm font-medium ${activeSection===s.id?'bg-pink-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.label}</button>)}
+          </div>
+          {activeSection==='identity' && (
+            <div className="space-y-3">
+              {result.brandPurpose && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">💫 Brand Purpose</h4>
+                  <div className="space-y-2">
+                    <div><span className="text-pink-400 text-xs">WHY: </span><span className="text-gray-300 text-sm">{result.brandPurpose.why}</span></div>
+                    <div><span className="text-blue-400 text-xs">VISION: </span><span className="text-gray-300 text-sm">{result.brandPurpose.vision}</span></div>
+                    <div><span className="text-green-400 text-xs">MISSION: </span><span className="text-gray-300 text-sm">{result.brandPurpose.mission}</span></div>
+                    {result.brandPurpose.values && <div><div className="text-purple-400 text-xs mb-1">VALUES</div><div className="flex gap-2 flex-wrap">{result.brandPurpose.values.map((v:string,i:number)=><span key={i} className="bg-purple-900 text-purple-300 px-2 py-1 rounded text-xs">{v}</span>)}</div></div>}
+                  </div>
+                </div>
+              )}
+              {result.brandIdentity && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">🎨 Brand Identity</h4>
+                  <p className="text-gray-300 text-sm mb-3">{result.brandIdentity.positioning}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><div className="text-blue-400 text-xs mb-1">Personality</div>{result.brandIdentity.personality?.map((p:string,i:number)=><span key={i} className="inline-block bg-blue-900 text-blue-300 px-2 py-1 rounded text-xs mr-1 mb-1">{p}</span>)}</div>
+                    <div><div className="text-yellow-400 text-xs mb-1">Tone</div>{result.brandIdentity.tone?.map((t:string,i:number)=><span key={i} className="inline-block bg-yellow-900 text-yellow-300 px-2 py-1 rounded text-xs mr-1 mb-1">{t}</span>)}</div>
+                  </div>
+                  {result.brandIdentity.keyMessages && <div className="mt-3"><div className="text-green-400 text-xs mb-1">Key Messages</div>{result.brandIdentity.keyMessages.map((m:string,i:number)=><div key={i} className="text-gray-300 text-sm">• {m}</div>)}</div>}
+                </div>
+              )}
+              {result.competitiveDifferentiation && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">⚡ Differentiation</h4>
+                  <p className="text-gray-300 text-sm mb-3">{result.competitiveDifferentiation.uniquePositioning}</p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div><div className="text-green-400 text-xs mb-1">Ownable</div>{result.competitiveDifferentiation.ownable?.map((o:string,i:number)=><div key={i} className="text-gray-300 text-xs">✓ {o}</div>)}</div>
+                    <div><div className="text-yellow-400 text-xs mb-1">Competitive</div>{result.competitiveDifferentiation.competitive?.map((c:string,i:number)=><div key={i} className="text-gray-300 text-xs">~ {c}</div>)}</div>
+                    <div><div className="text-gray-400 text-xs mb-1">Parity</div>{result.competitiveDifferentiation.parity?.map((p:string,i:number)=><div key={i} className="text-gray-300 text-xs">= {p}</div>)}</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {activeSection==='architecture' && result.brandArchitecture && (
+            <div className="space-y-3">
+              {result.brandArchitecture.map((b:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded-lg p-4 border-l-4 border-pink-500">
+                  <div className="flex justify-between items-center mb-2">
+                    <h4 className="text-white font-bold">{b.brand}</h4>
+                    <span className="bg-pink-900 text-pink-300 px-2 py-1 rounded text-xs">{b.role}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><span className="text-gray-400">Audience: </span><span className="text-gray-300">{b.audience}</span></div>
+                    <div><span className="text-gray-400">Position: </span><span className="text-gray-300">{b.positioning}</span></div>
+                    <div><span className="text-gray-400">Relationship: </span><span className="text-gray-300">{b.relationship}</span></div>
+                  </div>
+                </div>
+              ))}
+              {result.visualIdentityGuidelines && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">🎨 Visual Identity Guidelines</h4>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div><div className="text-pink-400 text-xs mb-1">Color Strategy</div><p className="text-gray-300 text-sm">{result.visualIdentityGuidelines.colorStrategy}</p></div>
+                    <div><div className="text-blue-400 text-xs mb-1">Typography</div><p className="text-gray-300 text-sm">{result.visualIdentityGuidelines.typographyDirection}</p></div>
+                    <div><div className="text-green-400 text-xs mb-1">Imagery Style</div><p className="text-gray-300 text-sm">{result.visualIdentityGuidelines.imageryStyle}</p></div>
+                    <div><div className="text-yellow-400 text-xs mb-1">Logo Usage</div><p className="text-gray-300 text-sm">{result.visualIdentityGuidelines.logoUsage}</p></div>
+                  </div>
+                  {result.visualIdentityGuidelines.dosDonts && <div><div className="text-red-400 text-xs mb-1">Dos & Don'ts</div>{result.visualIdentityGuidelines.dosDonts.map((d:string,i:number)=><div key={i} className="text-gray-300 text-xs">• {d}</div>)}</div>}
+                </div>
+              )}
+            </div>
+          )}
+          {activeSection==='audiences' && result.audienceProfiles && (
+            <div className="space-y-3">
+              {result.audienceProfiles.map((aud:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-bold mb-2">{aud.segment}</h4>
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div><div className="text-blue-400 text-xs mb-1">Demographics</div><p className="text-gray-300 text-sm">{aud.demographics}</p></div>
+                    <div><div className="text-purple-400 text-xs mb-1">Psychographics</div><p className="text-gray-300 text-sm">{aud.psychographics}</p></div>
+                  </div>
+                  <div className="mb-2"><div className="text-yellow-400 text-xs mb-1">Brand Perception</div><p className="text-gray-300 text-sm">{aud.brandPerception}</p></div>
+                  <div><div className="text-green-400 text-xs mb-1">Messaging</div>{aud.messaging?.map((m:string,j:number)=><div key={j} className="text-gray-300 text-xs">• {m}</div>)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='activation' && (
+            <div className="space-y-3">
+              {result.brandActivation && result.brandActivation.map((act:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="text-white font-semibold">{act.initiative}</h4>
+                    <span className="text-green-400 text-sm">{act.budget}</span>
+                  </div>
+                  <p className="text-gray-400 text-sm mb-2">{act.objective}</p>
+                  <div className="flex gap-4 text-xs text-gray-400 mb-2">
+                    <span>📅 {act.timeline}</span>
+                  </div>
+                  <div className="flex gap-2 flex-wrap">{act.channels?.map((c:string,j:number)=><span key={j} className="bg-pink-900 text-pink-300 px-2 py-1 rounded text-xs">{c}</span>)}</div>
+                </div>
+              ))}
+              {result.contentStrategy && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">📝 Content Strategy</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><div className="text-blue-400 text-xs mb-1">Pillars</div>{result.contentStrategy.pillars?.map((p:string,i:number)=><div key={i} className="text-gray-300 text-xs">• {p}</div>)}</div>
+                    <div><div className="text-green-400 text-xs mb-1">Channels</div>{result.contentStrategy.channels?.map((c:string,i:number)=><div key={i} className="text-gray-300 text-xs">• {c}</div>)}</div>
+                  </div>
+                  {result.contentStrategy.cadence && <p className="text-gray-400 text-xs mt-2">Cadence: {result.contentStrategy.cadence}</p>}
+                </div>
+              )}
+            </div>
+          )}
+          {activeSection==='governance' && (
+            <div className="space-y-3">
+              {result.brandGovernance && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">📋 Brand Governance</h4>
+                  <div className="space-y-3">
+                    <div><div className="text-blue-400 text-xs mb-1">Guidelines</div>{result.brandGovernance.guidelines?.map((g:string,i:number)=><div key={i} className="text-gray-300 text-sm">• {g}</div>)}</div>
+                    <div><div className="text-yellow-400 text-xs mb-1">Approval Process</div><p className="text-gray-300 text-sm">{result.brandGovernance.approvalProcess}</p></div>
+                    <div><div className="text-green-400 text-xs mb-1">Training Plan</div><p className="text-gray-300 text-sm">{result.brandGovernance.trainingPlan}</p></div>
+                  </div>
+                </div>
+              )}
+              {result.brandMetrics && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">📊 Brand Metrics</h4>
+                  {result.brandMetrics.map((m:any,i:number)=>(
+                    <div key={i} className="bg-gray-700 rounded p-3 mb-2">
+                      <div className="text-white text-sm font-medium mb-1">{m.metric}</div>
+                      <div className="flex gap-4 text-xs"><span className="text-yellow-400">Baseline: {m.baseline}</span><span className="text-green-400">Target: {m.target}</span><span className="text-blue-400">Measure: {m.measurement}</span></div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {result.quickWins && (
+                <div className="bg-gray-800 rounded-lg p-4">
+                  <h4 className="text-white font-semibold mb-3">⚡ Quick Wins</h4>
+                  {result.quickWins.map((w:string,i:number)=><div key={i} className="bg-green-900/30 border border-green-700 rounded p-2 text-green-300 text-sm mb-2">✓ {w}</div>)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v10.03 AI Workforce Planning & People Analytics Engine ---
 const URGENCY_COLOR: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-red-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
 const APPROACH_COLOR: Record<string,string> = { 'Hire':'bg-blue-700','Develop':'bg-green-700','Outsource':'bg-yellow-700','Automate':'bg-purple-700' };
@@ -15047,7 +15254,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -15134,6 +15341,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
     { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
@@ -15189,6 +15397,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'changemgmtplan', label: '🔄 Change Management' },
     { id: 'territoryplan', label: '🗺️ Territory Plan' },
     { id: 'maintegration', label: '🤝 M&A Integration' },
+    { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
     { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
@@ -15230,6 +15439,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
     { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
@@ -15289,6 +15499,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
     { id: 'cxoptimizer2', label: '💎 CX Optimizer' },
@@ -15432,6 +15643,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15469,6 +15681,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15497,6 +15710,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15538,6 +15752,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'changemgmtplan' && <ChangeMgmtPlanPanel api={api} />}
         {tab === 'territoryplan' && <TerritoryPlanPanel api={api} />}
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15559,6 +15774,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15587,6 +15803,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15628,6 +15845,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15656,6 +15874,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
@@ -15693,6 +15912,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
         {tab === 'cxoptimizer2' && <CXOptimizerPanel api={api} />}
