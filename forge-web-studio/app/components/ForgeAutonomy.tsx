@@ -597,6 +597,66 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.82 Onboarding Email Sequence Generator ---
+function OnboardingSequencePanel({ api }: { api: string }) {
+  const [product, setProduct] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [goal, setGoal] = React.useState('');
+  const [emailCount, setEmailCount] = React.useState('5');
+  const [tone, setTone] = React.useState('Friendly');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [activeEmail, setActiveEmail] = React.useState(0);
+  const run = async () => {
+    setLoading(true); setResult(null); setActiveEmail(0);
+    const r = await fetch(`${api}/api/onboarding-sequence`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ product, audience, goal, emailCount, tone }) });
+    const d = await r.json(); setResult(d); setLoading(false);
+  };
+  const emails = result?.emails || [];
+  const email = emails[activeEmail];
+  const copy = () => email && navigator.clipboard.writeText(`Subject: ${email.subject}\n\n${email.body}\n\nCTA: ${email.cta}`);
+  return (
+    <div style={{ padding: 24, maxWidth: 720 }}>
+      <h2>📧 Onboarding Email Sequence</h2>
+      <input placeholder="Product / service name" value={product} onChange={e => setProduct(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <input placeholder="Target audience (e.g. new SaaS users)" value={audience} onChange={e => setAudience(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <input placeholder="Sequence goal (e.g. drive first purchase)" value={goal} onChange={e => setGoal(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <select value={emailCount} onChange={e => setEmailCount(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['3','4','5','6','7'].map(n => <option key={n} value={n}>{n} emails</option>)}
+        </select>
+        <select value={tone} onChange={e => setTone(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['Friendly','Professional','Conversational','Exciting','Nurturing'].map(t => <option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <button onClick={run} disabled={loading || !product} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Writing...' : 'Generate Sequence'}</button>
+      {result?.overallStrategy && <div style={{ marginTop: 10, background: '#1e2a1e', borderRadius: 6, padding: 8, color: '#4ade80', fontSize: 12 }}>Strategy: {result.overallStrategy}</div>}
+      {emails.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+            {emails.map((em: any, i: number) => (
+              <button key={i} onClick={() => setActiveEmail(i)} style={{ padding: '4px 10px', borderRadius: 6, background: activeEmail===i ? '#7c3aed' : '#1e1e2e', color: '#fff', border: '1px solid #333', cursor: 'pointer', fontSize: 12 }}>Day {em.day}</button>
+            ))}
+          </div>
+          {email && (
+            <div style={{ background: '#1e1e2e', borderRadius: 10, padding: 16 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ color: '#a78bfa', fontWeight: 700 }}>Day {email.day} — {email.goal}</span>
+                <button onClick={copy} style={{ padding: '3px 10px', borderRadius: 5, background: '#374151', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 11 }}>Copy</button>
+              </div>
+              <div style={{ color: '#facc15', fontWeight: 600, marginBottom: 2 }}>Subject: {email.subject}</div>
+              <div style={{ color: '#64748b', fontSize: 12, marginBottom: 8 }}>Preview: {email.preview}</div>
+              <pre style={{ color: '#e2e8f0', fontSize: 13, whiteSpace: 'pre-wrap', background: '#16162a', borderRadius: 6, padding: 12, marginBottom: 8 }}>{email.body}</pre>
+              <div style={{ background: '#1e2a1e', borderRadius: 6, padding: 8 }}><span style={{ color: '#4ade80', fontWeight: 600 }}>CTA: </span><span style={{ color: '#e2e8f0', fontSize: 13 }}>{email.cta}</span></div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <p style={{ color: '#f87171', marginTop: 12 }}>{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v8.81 Pitch Deck Outline Generator ---
 function PitchDeckPanel({ api }: { api: string }) {
   const [company, setCompany] = React.useState('');
@@ -4552,7 +4612,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4628,6 +4688,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'personabuilder', label: '👤 Persona Builder' },
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
+    { id: 'onboardingseq', label: '📧 Onboarding Emails' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4746,6 +4807,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'personabuilder' && <PersonaBuilderPanel api={api} />}
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
+        {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
       </div>
     </div>
   );

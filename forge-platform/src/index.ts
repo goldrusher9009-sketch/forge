@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.82 Onboarding Email Sequence Generator ---
+app.post('/api/onboarding-sequence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, audience, goal, emailCount, tone, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a ${emailCount || 5}-email onboarding sequence for: ${product || 'our product'}.
+Target audience: ${audience || 'new users'}
+Goal: ${goal || 'activate users and drive first value'}
+Tone: ${tone || 'friendly and helpful'}
+Return JSON: { emails: [{ day: number, subject: string, preview: string, body: string, cta: string, goal: string }], overallStrategy: string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.81 Pitch Deck Outline Generator ---
 app.post('/api/pitch-deck', requireAuth, async (req: AuthRequest, res) => {
   try {
