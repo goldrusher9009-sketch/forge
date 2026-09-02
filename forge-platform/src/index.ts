@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.00 AI Competitive Intelligence Command Center ---
+app.post('/api/competitive-intel', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, competitors, targetMarkets, productLines, currentPosition, keyDifferentiators, threatLevel, analysisDepth, strategicGoals } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class competitive intelligence analyst. Produce a comprehensive competitive intelligence report for ${companyName} in the ${industry} industry.
+Competitors: ${competitors}. Target markets: ${targetMarkets}. Product lines: ${productLines}. Current market position: ${currentPosition}. Key differentiators: ${keyDifferentiators}. Threat level: ${threatLevel}. Strategic goals: ${strategicGoals}.
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "competitiveStrengthScore": 0-100,
+  "marketPositionRating": "Dominant|Strong|Competitive|Challenged|Vulnerable",
+  "competitorProfiles": [{"competitor": "string", "marketShare": "string", "strengths": ["string"], "weaknesses": ["string"], "strategy": "string", "threatLevel": "Critical|High|Medium|Low", "recentMoves": ["string"]}],
+  "competitiveLandscapeMap": {"leaders": ["string"], "challengers": ["string"], "niche": ["string"], "emerging": ["string"]},
+  "swotAnalysis": {"strengths": ["string"], "weaknesses": ["string"], "opportunities": ["string"], "threats": ["string"]},
+  "battlecards": [{"competitor": "string", "winAgainst": ["string"], "loseAgainst": ["string"], "keyMessages": ["string"], "objectionHandlers": [{"objection": "string", "response": "string"}]}],
+  "marketIntelligence": {"trends": ["string"], "disruptions": ["string"], "whitespace": ["string"], "pricingDynamics": "string"},
+  "movesByCompetitor": [{"competitor": "string", "move": "string", "impact": "string", "ourResponse": "string"}],
+  "winLossAnalysis": {"winFactors": ["string"], "lossFactors": ["string"], "dealPatterns": "string", "recommendations": ["string"]},
+  "intelligenceGaps": [{"gap": "string", "priority": "Critical|High|Medium", "collectionMethod": "string"}],
+  "strategicOptions": [{"option": "string", "rationale": "string", "effort": "Low|Medium|High", "impact": "Low|Medium|High", "timeframe": "string"}],
+  "earlyWarningSignals": ["string"],
+  "roadmap": [{"phase": "string", "timeframe": "string", "actions": ["string"], "expectedOutcome": "string"}],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.99 AI Supply Chain Risk & Resilience Analyzer ---
 app.post('/api/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
