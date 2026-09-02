@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.74 AI Market Expansion & Go-To-Market Planner ---
+app.post('/api/gtm-planner', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { product, currentMarket, targetMarket, budget, timeline, competitiveContext, teamSize } = req.body;
+    const p = `You are a go-to-market strategy expert. Create GTM plan for: Product: ${product}, Current Market: ${currentMarket}, Target Market: ${targetMarket}, Budget: ${budget}, Timeline: ${timeline}, Competitive Context: ${competitiveContext}, Team Size: ${teamSize}. Return JSON: { gtmTitle, executiveSummary, marketReadinessScore (0-100), gtmMotion ("Product-Led"|"Sales-Led"|"Marketing-Led"|"Channel-Led"|"Community-Led"), targetSegments (array of {segment, size, icp, painPoints, entryStrategy}), messagingFramework, channelMix (array of {channel, priority, budget, expectedROI}), salesPlaybook, partnershipStrategy, launchSequence (array of {week, milestone, owner, kpi}), successMetrics, riskMitigation, competitiveCountermoves, quickWins (array of strings) }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.73 AI Organizational Culture & Transformation ---
 app.post('/api/culture-transform', requireAuth, async (req: AuthRequest, res) => {
   try {
