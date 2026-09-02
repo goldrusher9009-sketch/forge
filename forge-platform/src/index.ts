@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.98 Talent Acquisition Strategy Generator ---
+app.post('/api/talent-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, industry, rolesNeeded, timeline, budget, currentTeamSize, remotePolicy, competitorEmployers, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a talent acquisition strategy for ${company || 'the company'}.
+Industry: ${industry || 'technology'}
+Roles needed: ${rolesNeeded || 'engineers, product managers, designers'}
+Timeline: ${timeline || '6 months'}
+Budget: ${budget || 'not specified'}
+Current team size: ${currentTeamSize || '50 people'}
+Remote policy: ${remotePolicy || 'hybrid'}
+Competitor employers: ${competitorEmployers || 'not specified'}
+Return JSON: { strategyTitle: string, executiveSummary: string, hiringPlan:[{role:string,level:string,quantity:number,targetStartDate:string,priority:'Critical'|'High'|'Medium',keySkills:string[],salaryRange:string,sourcingChannels:string[]}], employerBrandingStrategy:{valueProposition:string,differentiators:string[],contentPillars:string[],channelStrategy:string}, sourcingChannels:[{channel:string,bestFor:string,estimatedCostPerHire:string,timeToHire:string,tactics:string[]}], interviewProcess:[{stage:string,duration:string,participants:string,evaluationCriteria:string,tools:string}], diversityInclusion:{goals:string[],initiatives:string[],biasReductionTactics:string[]}, retentionIntegration:{onboardingHighlights:string[],firstYearMilestones:string[],retentionRisks:string[]}, budgetBreakdown:[{category:string,estimatedCost:string,notes:string}], successMetrics:[{metric:string,target:string,timeline:string}] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.97 Product Launch Checklist Generator ---
 app.post('/api/launch-checklist', requireAuth, async (req: AuthRequest, res) => {
   try {

@@ -597,6 +597,118 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.98 Talent Acquisition Strategy Generator ---
+const HIRE_PRIORITY_COLOR: Record<string,string> = { Critical:'text-red-400', High:'text-orange-400', Medium:'text-yellow-400' };
+function TalentStrategyPanel({ api }: { api: string }) {
+  const [company, setCompany] = useState('');
+  const [industry, setIndustry] = useState('');
+  const [rolesNeeded, setRolesNeeded] = useState('');
+  const [timeline, setTimeline] = useState('6 months');
+  const [budget, setBudget] = useState('');
+  const [currentTeamSize, setCurrentTeamSize] = useState('');
+  const [remotePolicy, setRemotePolicy] = useState('hybrid');
+  const [competitorEmployers, setCompetitorEmployers] = useState('');
+  const [provider, setProvider] = useState('anthropic');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [activeSection, setActiveSection] = useState<'hiring'|'branding'|'sourcing'|'dei'|'budget'>('hiring');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/talent-strategy`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify({ company, industry, rolesNeeded, timeline, budget, currentTeamSize, remotePolicy, competitorEmployers, provider }) });
+      const d = await r.json();
+      if (!r.ok) setError(d.error || 'Error');
+      else setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-lg font-bold text-white mb-3">🎯 Talent Acquisition Strategy</h2>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Company name" value={company} onChange={e=>setCompany(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Industry" value={industry} onChange={e=>setIndustry(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Roles needed (e.g. engineers, PMs)" value={rolesNeeded} onChange={e=>setRolesNeeded(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Timeline" value={timeline} onChange={e=>setTimeline(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Budget" value={budget} onChange={e=>setBudget(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Current team size" value={currentTeamSize} onChange={e=>setCurrentTeamSize(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Remote policy (remote/hybrid/onsite)" value={remotePolicy} onChange={e=>setRemotePolicy(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Competitor employers" value={competitorEmployers} onChange={e=>setCompetitorEmployers(e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          <select className="bg-gray-700 text-white rounded px-3 py-2 text-sm" value={provider} onChange={e=>setProvider(e.target.value)}>
+            {['anthropic','openai','gemini','groq'].map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          <button onClick={run} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+            {loading ? 'Generating…' : 'Generate Strategy'}
+          </button>
+        </div>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <h3 className="text-white font-bold text-lg">{result.strategyTitle}</h3>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+            <div className="flex gap-2 mt-3 flex-wrap">
+              {(['hiring','branding','sourcing','dei','budget'] as const).map(s=>(
+                <button key={s} onClick={()=>setActiveSection(s)} className={`px-3 py-1 rounded text-xs font-medium ${activeSection===s?'bg-purple-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>
+              ))}
+            </div>
+          </div>
+          {activeSection==='hiring' && result.hiringPlan && (
+            <div className="space-y-3">
+              {result.hiringPlan.map((role:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded-lg p-4">
+                  <div className="flex justify-between items-start">
+                    <div><span className="text-white font-semibold">{role.role}</span><span className="text-gray-400 text-sm ml-2">({role.level})</span></div>
+                    <div className="flex gap-2 items-center"><span className="text-gray-400 text-xs">×{role.quantity}</span><span className={`text-xs font-bold ${HIRE_PRIORITY_COLOR[role.priority]||'text-gray-400'}`}>{role.priority}</span></div>
+                  </div>
+                  <p className="text-gray-400 text-xs mt-1">Start: {role.targetStartDate} · Salary: {role.salaryRange}</p>
+                  <p className="text-gray-400 text-xs mt-1">Skills: {role.keySkills?.join(', ')}</p>
+                  <p className="text-blue-400 text-xs mt-1">Channels: {role.sourcingChannels?.join(', ')}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='branding' && result.employerBrandingStrategy && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              <div><p className="text-yellow-400 text-xs font-semibold">Value Proposition</p><p className="text-white text-sm mt-1">{result.employerBrandingStrategy.valueProposition}</p></div>
+              <div><p className="text-blue-400 text-xs font-semibold">Differentiators</p><ul className="mt-1 space-y-1">{(result.employerBrandingStrategy.differentiators||[]).map((d:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {d}</li>)}</ul></div>
+              <div><p className="text-purple-400 text-xs font-semibold">Content Pillars</p><div className="flex flex-wrap gap-1 mt-1">{(result.employerBrandingStrategy.contentPillars||[]).map((p:string,i:number)=><span key={i} className="bg-purple-900/40 text-purple-300 text-xs px-2 py-0.5 rounded">{p}</span>)}</div></div>
+              <div><p className="text-green-400 text-xs font-semibold">Channel Strategy</p><p className="text-gray-300 text-sm mt-1">{result.employerBrandingStrategy.channelStrategy}</p></div>
+            </div>
+          )}
+          {activeSection==='sourcing' && result.sourcingChannels && (
+            <div className="space-y-3">{result.sourcingChannels.map((ch:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded-lg p-4">
+                <div className="flex justify-between"><span className="text-white font-medium">{ch.channel}</span><span className="text-gray-400 text-xs">{ch.timeToHire} · {ch.estimatedCostPerHire}</span></div>
+                <p className="text-blue-400 text-xs mt-1">Best for: {ch.bestFor}</p>
+                <ul className="mt-1 space-y-0.5">{(ch.tactics||[]).map((t:string,ti:number)=><li key={ti} className="text-gray-400 text-xs">• {t}</li>)}</ul>
+              </div>
+            ))}</div>
+          )}
+          {activeSection==='dei' && result.diversityInclusion && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              <div><p className="text-pink-400 text-xs font-semibold">Goals</p><ul className="mt-1 space-y-1">{(result.diversityInclusion.goals||[]).map((g:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {g}</li>)}</ul></div>
+              <div><p className="text-blue-400 text-xs font-semibold">Initiatives</p><ul className="mt-1 space-y-1">{(result.diversityInclusion.initiatives||[]).map((g:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {g}</li>)}</ul></div>
+              <div><p className="text-yellow-400 text-xs font-semibold">Bias Reduction</p><ul className="mt-1 space-y-1">{(result.diversityInclusion.biasReductionTactics||[]).map((g:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {g}</li>)}</ul></div>
+            </div>
+          )}
+          {activeSection==='budget' && result.budgetBreakdown && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <table className="w-full text-xs"><thead><tr className="text-gray-400 border-b border-gray-600"><th className="text-left py-1">Category</th><th className="text-right py-1">Est. Cost</th><th className="text-left py-1 pl-3">Notes</th></tr></thead>
+              <tbody>{result.budgetBreakdown.map((b:any,i:number)=><tr key={i} className="border-b border-gray-700"><td className="text-white py-1.5">{b.category}</td><td className="text-green-400 text-right py-1.5">{b.estimatedCost}</td><td className="text-gray-400 py-1.5 pl-3">{b.notes}</td></tr>)}</tbody></table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.97 Product Launch Checklist Generator ---
 const PRIORITY_DOT: Record<string,string> = { Critical:'bg-red-500', High:'bg-orange-400', Medium:'bg-yellow-400', Low:'bg-green-400' };
 function LaunchChecklistPanel({ api }: { api: string }) {
@@ -6073,7 +6185,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6156,6 +6268,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'crisiscomms', label: '🚨 Crisis Comms' },
     { id: 'boardagenda', label: '🏛️ Board Agenda' },
     { id: 'launchchecklist', label: '🚀 Launch Checklist' },
+    { id: 'talentstrategy', label: '🎯 Talent Strategy' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -6290,6 +6403,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
         {tab === 'boardagenda' && <BoardAgendaPanel api={api} />}
         {tab === 'launchchecklist' && <LaunchChecklistPanel api={api} />}
+        {tab === 'talentstrategy' && <TalentStrategyPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
