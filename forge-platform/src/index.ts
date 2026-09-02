@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.70 Testimonial Request Writer ---
+app.post('/api/testimonial-req', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { customerName, product, outcome, platform, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write 3 variations of a testimonial request email to ${customerName || 'a customer'}.
+Product/service: ${product || 'our product'}
+Known outcome/result: ${outcome || 'positive experience'}
+Target platform for testimonial: ${platform || 'Google Reviews / LinkedIn'}
+Each variation: different tone (warm/direct/casual). Include: thank you, specific reference to their result, simple ask, link placeholder, 3 guiding questions to help them write it. Keep under 150 words each. Return JSON: { emails: [{ tone: string, subject: string, body: string }] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.69 FAQ Generator ---
 app.post('/api/faq-gen', requireAuth, async (req: AuthRequest, res) => {
   try {

@@ -597,6 +597,45 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.70 Testimonial Request Writer ---
+function TestimonialReqPanel({ api }: { api: string }) {
+  const [customerName, setCustomerName] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [outcome, setOutcome] = React.useState('');
+  const [platform, setPlatform] = React.useState('Google Reviews');
+  const [emails, setEmails] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setEmails([]);
+    try {
+      const r = await fetch(`${api}/api/testimonial-req`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ customerName, product, outcome, platform }) });
+      const d = await r.json();
+      setEmails(d.emails || []);
+    } catch(e: any) { setEmails([{ tone: 'error', subject: '', body: e.message }]); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>⭐ Testimonial Request Writer</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
+        <input placeholder="Customer name" value={customerName} onChange={e => setCustomerName(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Product or service" value={product} onChange={e => setProduct(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Known outcome or result they achieved" value={outcome} onChange={e => setOutcome(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <select value={platform} onChange={e => setPlatform(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['Google Reviews','LinkedIn','G2','Trustpilot','Capterra','Website testimonial'].map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <button onClick={run} disabled={loading || !product} style={{ padding: '10px 20px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Writing...' : 'Generate Emails'}</button>
+      </div>
+      {emails.map((e, i) => (
+        <div key={i} style={{ marginTop: 16, padding: 16, background: '#1a1a1a', borderRadius: 8 }}>
+          <p style={{ color: '#a78bfa', fontWeight: 700, marginBottom: 4 }}>Tone: {e.tone} | Subject: {e.subject}</p>
+          <pre style={{ color: '#e2e8f0', whiteSpace: 'pre-wrap', margin: 0 }}>{e.body}</pre>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // --- v8.69 FAQ Generator ---
 function FAQGenPanel({ api }: { api: string }) {
   const [topic, setTopic] = React.useState('');
@@ -3986,7 +4025,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4050,6 +4089,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'linkedinpost', label: '💼 LinkedIn Post' },
     { id: 'pressrelease', label: '📰 Press Release' },
     { id: 'faqgen', label: '❓ FAQ Generator' },
+    { id: 'testimonialreq', label: '⭐ Testimonial Request' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4156,6 +4196,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'linkedinpost' && <LinkedInPostPanel api={api} />}
         {tab === 'pressrelease' && <PressReleasePanel api={api} />}
         {tab === 'faqgen' && <FAQGenPanel api={api} />}
+        {tab === 'testimonialreq' && <TestimonialReqPanel api={api} />}
       </div>
     </div>
   );
