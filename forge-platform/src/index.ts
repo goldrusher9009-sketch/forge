@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.48 ESG & Sustainability Report Builder ---
+app.post('/api/esg-report-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, reportingYear, revenue, employees, energyConsumption, ghgEmissions, waterUsage, wasteGenerated, renewableEnergyPct, diversityMetrics, safetyIncidents, communityInvestment, boardComposition, executivePay, supplyChainStandards, certifications, frameworks, goals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are an ESG reporting expert. Build a comprehensive ESG report for: Company: ${company}, Industry: ${industry}, Size: ${companySize}, Year: ${reportingYear}, Revenue: ${revenue}, Employees: ${employees}, Energy Consumption: ${energyConsumption}, GHG Emissions: ${ghgEmissions}, Water Usage: ${waterUsage}, Waste Generated: ${wasteGenerated}, Renewable Energy %: ${renewableEnergyPct}, Diversity Metrics: ${diversityMetrics}, Safety Incidents: ${safetyIncidents}, Community Investment: ${communityInvestment}, Board Composition: ${boardComposition}, Executive Pay: ${executivePay}, Supply Chain Standards: ${supplyChainStandards}, Certifications: ${certifications}, Frameworks: ${frameworks}, Goals: ${goals}. Return JSON: { reportTitle, executiveSummary, esgScore (0-100), esgRating ("Leader"/"Advanced"/"Developing"/"Beginning"), environmentalSection (array: {topic, metric, performance, benchmark, trend, target}), socialSection (array: {topic, metric, performance, benchmark, trend, target}), governanceSection (array: {topic, metric, performance, benchmark, trend, target}), materialityMatrix (array: {issue, stakeholderImpact, businessImpact, priority}), climateStrategy, biodiversityImpact, circularEconomy, dei (Diversity Equity Inclusion analysis), humanRights, communityImpact, governanceStructure, supplierStandards, frameworkAlignment (array: {framework, alignmentLevel, gaps}), improvementRoadmap (array: {area, initiative, timeline, investment, expectedImpact}), stakeholderEngagement, disclosureRecommendations }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.47 Supply Chain Risk Analyzer ---
 app.post('/api/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, product, supplierCount, supplierGeographies, criticalSuppliers, singleSourcedItems, inventoryTurnover, leadTimes, demandVariability, revenueAtRisk, currentRiskMitigation, regulatoryRequirements, esgRequirements, digitalMaturity, goals } = req.body;
