@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.21 AI Go-to-Market Launch Command Center ---
+app.post('/api/gtm-launch', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { productName, productCategory, targetMarket, launchTimeline, primaryICP, keyDifferentiators, pricingModel, currentTraction, launchBudget, successMetrics } = req.body;
+  const p = `You are a world-class GTM strategist. Build a comprehensive Go-to-Market Launch Command Center report.
+Product: ${productName}, Category: ${productCategory}, Market: ${targetMarket}, Timeline: ${launchTimeline}, ICP: ${primaryICP}, Differentiators: ${keyDifferentiators}, Pricing: ${pricingModel}, Traction: ${currentTraction}, Budget: ${launchBudget}, Success: ${successMetrics}
+
+Return JSON:
+- reportTitle (string)
+- executiveSummary (string)
+- launchReadinessScore (number 0-100)
+- launchRiskLevel (string: "High"|"Medium"|"Low")
+- primaryGrowthMotion (string)
+- marketStrategy (object: tam string, sam string, som string, market_timing string, beachhead_segment string)
+- icpDefinition (object: firmographics string, technographics string, psychographics string, buying_triggers string[], disqualifiers string[])
+- messagingFramework (object: category_design string, hero_message string, value_pillars string[], proof_points string[], objection_handlers string[])
+- channelStrategy (array of objects: channel string, priority string, tactics string[], budget_allocation string, expected_cac string)
+- salesMotion (object: motion_type string, sales_cycle string, deal_structure string, champion_profile string, multi_threading string, demo_strategy string)
+- launchSequence (array of objects: phase string, week string, activities string[], owners string[], success_criteria string)
+- contentEngine (object: thought_leadership string, seo_strategy string, social_playbook string, pr_strategy string, case_study_plan string)
+- partnerStrategy (object: channel_partners string, tech_partners string, integration_strategy string, co_sell_motions string[])
+- metrics (array of objects: kpi string, week4_target string, week12_target string, week24_target string)
+- warRoom (object: launch_risks string[], mitigation_plans string[], go_nogo_criteria string[])
+- quickWins (array of 5 strings)`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0] || '{}';
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.20 AI Brand Architecture & Identity Strategy Engine ---
 app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
