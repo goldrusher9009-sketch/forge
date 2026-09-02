@@ -39500,6 +39500,75 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.45 AI Innovation & R&D Strategy Engine ---
+app.post('/api/innovation-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, currentProducts, rdBudget, teamSize, competitors, marketTrends, innovationGoals, timeHorizon } = req.body;
+  const p = `You are a world-class Chief Innovation Officer and R&D strategist. Create a comprehensive innovation and R&D strategy report.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Current Products/Services: ${currentProducts || 'Unknown'}
+R&D Budget: ${rdBudget || 'Unknown'}
+R&D Team Size: ${teamSize || 'Unknown'}
+Competitors: ${competitors || 'Unknown'}
+Market Trends: ${marketTrends || 'Unknown'}
+Innovation Goals: ${innovationGoals || 'Unknown'}
+Time Horizon: ${timeHorizon || '3 years'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Innovation & R&D Strategy for [company]",
+  "executiveSummary": "3-sentence innovation landscape assessment and strategic direction",
+  "innovationScore": <number 0-100>,
+  "innovationMaturity": "Ad-Hoc|Defined|Managed|Optimized|Leading",
+  "biggestInnovationGap": "most critical innovation capability gap",
+  "highestPotentialBet": "highest-upside innovation opportunity",
+  "estimatedROI": "3-year R&D ROI estimate",
+  "innovationAudit": {
+    "coreInnovation": { "score": <0-100>, "status": "assessment", "gap": "gap identified" },
+    "adjacentInnovation": { "score": <0-100>, "status": "assessment", "gap": "gap identified" },
+    "disruptiveInnovation": { "score": <0-100>, "status": "assessment", "gap": "gap identified" },
+    "processInnovation": { "score": <0-100>, "status": "assessment", "gap": "gap identified" },
+    "openInnovation": { "score": <0-100>, "status": "assessment", "gap": "gap identified" }
+  },
+  "innovationPortfolio": [
+    { "initiative": "initiative name", "type": "Core/Adjacent/Disruptive", "timeHorizon": "0-1yr/1-3yr/3-5yr+", "investmentLevel": "High/Medium/Low", "expectedReturn": "return estimate", "riskLevel": "High/Medium/Low", "strategicFit": "why it fits", "nextMilestone": "first key milestone" }
+  ],
+  "emergingTechRadar": [
+    { "technology": "technology name", "relevance": "High/Medium/Low", "adoptionTimeline": "timeline", "competitiveImplication": "what it means", "recommendedAction": "Watch/Pilot/Scale/Avoid" }
+  ],
+  "rdRoadmap": [
+    { "year": "Year 1/2/3", "theme": "innovation theme", "keyInitiatives": ["initiative 1", "initiative 2"], "budget": "budget allocation", "headcount": "team size", "expectedDeliverable": "main output" }
+  ],
+  "openInnovationStrategy": {
+    "partnerships": ["partnership type 1", "partnership type 2"],
+    "acquisitionTargets": "M&A innovation strategy",
+    "ecosystemPlay": "platform/ecosystem strategy",
+    "ventureBets": "corporate venture approach"
+  },
+  "innovationCulture": {
+    "currentChallenges": ["challenge 1", "challenge 2"],
+    "programRecommendations": ["program 1", "program 2"],
+    "metricsToTrack": ["metric 1", "metric 2"],
+    "leadershipActions": "what leadership must do"
+  },
+  "competitiveIntelligence": [
+    { "competitor": "competitor name", "innovationStrength": "their edge", "rdInvestment": "estimated R&D spend", "recentMoves": "latest innovation moves", "yourResponse": "strategic response" }
+  ],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.44 AI Customer Experience & Journey Optimization Engine ---
 app.post('/api/cx-optimization', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
