@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.95 AI Talent Acquisition & Recruiting Intelligence Engine ---
+app.post('/api/talent-acquisition', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, role, seniority, department, teamSize, budget, location, remotePolicy, keySkills, niceToHave, companyStage, urgency, hiringChallenges } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class talent acquisition strategist and people analytics expert. Build a comprehensive recruiting intelligence plan for: Company: ${companyName}, Role: ${role}, Seniority: ${seniority}, Department: ${department}, Team Size: ${teamSize}, Budget: ${budget||'Competitive'}, Location: ${location}, Remote Policy: ${remotePolicy||'Hybrid'}, Key Skills: ${keySkills}, Nice-to-Have: ${niceToHave||'N/A'}, Stage: ${companyStage||'Growth'}, Urgency: ${urgency||'Standard'}, Challenges: ${hiringChallenges||'None specified'}.
+Return ONLY valid JSON: { "recruitingTitle": string, "executiveSummary": string, "talentMarketScore": number (0-100 availability), "competitionLevel": "Low"|"Medium"|"High"|"Hyper-Competitive", "idealCandidateProfile": { "mustHave": string[], "niceToHave": string[], "redFlags": string[], "compensationRange": string, "equityRange": string }, "sourcingStrategy": [{ "channel": string, "priority": "Primary"|"Secondary"|"Tertiary", "expectedYield": string, "cost": string, "tactics": string[] }], "jobDescriptionFramework": { "titleVariants": string[], "openingHook": string, "keyResponsibilities": string[], "sellingPoints": string[], "whatToAvoid": string[] }, "interviewProcess": [{ "stage": string, "format": string, "duration": string, "evaluates": string[], "scorecardDimensions": string[] }], "assessmentFramework": { "technicalAssessment": string, "cultureAssessment": string, "leadershipAssessment": string, "redFlagQuestions": string[] }, "compensationStrategy": { "base": string, "equity": string, "bonus": string, "benefits": string[], "negotiationGuidance": string }, "candidateExperience": [{ "touchpoint": string, "bestPractice": string, "commonMistake": string }], "talentBrandingTactics": string[], "diversityStrategy": string[], "metrics": [{ "metric": string, "target": string, "benchmark": string }], "timelineProjection": [{ "week": string, "milestone": string, "activity": string }], "quickWins": string[] }`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = raw.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.94 AI Partnership & Alliance Strategy Builder ---
 app.post('/api/partnership-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
