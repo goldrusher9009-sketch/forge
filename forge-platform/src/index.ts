@@ -39500,6 +39500,46 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.85 AI Customer Experience Optimizer ---
+app.post('/api/cx-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, industry, currentNPS, currentCSAT, churnRate, supportTicketsPerMonth, avgResolutionTime, topComplaints } = req.body;
+    const p = `You are a CX strategy expert. Build a comprehensive customer experience optimization plan.
+Company: ${company || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Current NPS: ${currentNPS || 'Unknown'}
+Current CSAT: ${currentCSAT || 'Unknown'}
+Churn Rate: ${churnRate || 'Unknown'}
+Monthly Support Tickets: ${supportTicketsPerMonth || 'Unknown'}
+Avg Resolution Time: ${avgResolutionTime || 'Unknown'}
+Top Complaints: ${topComplaints || 'Unknown'}
+Return ONLY valid JSON:
+{
+  "cxTitle": "string",
+  "executiveSummary": "string",
+  "cxHealthScore": 0-100,
+  "cxMaturityLevel": "Reactive|Aware|Structured|Proactive|Differentiated",
+  "npsProjection": "string",
+  "journeyMap": [{"stage": "string", "touchpoints": ["string"], "painPoints": ["string"], "emotionalState": "Excited|Satisfied|Neutral|Frustrated|Angry", "opportunities": ["string"]}],
+  "momentOfTruth": [{"moment": "string", "currentExperience": "string", "idealExperience": "string", "impact": "High|Medium|Low"}],
+  "voiceOfCustomerInsights": "string",
+  "supportOptimization": {"deflectionOpportunities": ["string"], "automationCandidates": ["string"], "escalationProtocol": "string"},
+  "proactiveEngagementPlan": ["string"],
+  "loyaltyProgramDesign": "string",
+  "cxTechStack": [{"tool": "string", "purpose": "string", "priority": "Critical|High|Medium"}],
+  "teamStructureRecommendation": "string",
+  "npsImprovementRoadmap": [{"initiative": "string", "npsImpact": "string", "timeline": "string", "effort": "Low|Medium|High"}],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.84 AI Revenue Operations Command Center ---
 app.post('/api/revops-command', requireAuth, async (req: AuthRequest, res) => {
   try {
