@@ -39500,6 +39500,48 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.60 AI Market Entry Strategy Engine ---
+app.post('/api/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { company, targetMarket, product, currentRevenue, budget, timeline, competitors } = req.body;
+    const p = `You are a market entry strategy expert. Generate a comprehensive market entry strategy.
+Company: ${company || 'Our Company'}
+Target Market: ${targetMarket || 'North American SMB market'}
+Product/Service: ${product || 'SaaS platform'}
+Current Revenue: ${currentRevenue || 'Early stage'}
+Budget: ${budget || '$500K'}
+Timeline: ${timeline || '12 months'}
+Competitors: ${competitors || 'Established players'}
+
+Return JSON only:
+{
+  "strategyTitle": "string",
+  "executiveSummary": "string",
+  "marketReadinessScore": 0-100,
+  "entryViability": "High Confidence|Moderate Risk|High Risk|Not Recommended",
+  "marketSizing": { "tam": "string", "sam": "string", "som": "string", "growthRate": "string", "rationale": "string" },
+  "entryModes": [{ "mode": "string", "description": "string", "pros": ["string"], "cons": ["string"], "recommended": true|false }],
+  "competitiveLandscape": [{ "competitor": "string", "marketShare": "string", "strengths": ["string"], "weaknesses": ["string"], "ourAdvantage": "string" }],
+  "customerSegments": [{ "segment": "string", "size": "string", "pain": "string", "willingnessToPay": "string", "priority": "Primary|Secondary|Tertiary" }],
+  "goToMarketStrategy": { "phase1": "string", "phase2": "string", "phase3": "string", "channels": ["string"], "partnerships": ["string"] },
+  "pricingStrategy": { "model": "string", "entryPrice": "string", "rationale": "string", "competitorComparison": "string" },
+  "riskAssessment": [{ "risk": "string", "likelihood": "High|Medium|Low", "impact": "High|Medium|Low", "mitigation": "string" }],
+  "milestones": [{ "milestone": "string", "timeline": "string", "successMetric": "string", "owner": "string" }],
+  "budgetAllocation": [{ "category": "string", "amount": "string", "percentage": "string", "rationale": "string" }],
+  "regulatoryConsiderations": ["string"],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.59 AI Board Meeting Prep & Director Intelligence ---
 app.post('/api/board-prep', requireAuth, async (req: AuthRequest, res) => {
   try {
