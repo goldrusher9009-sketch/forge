@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.36 Product-Led Growth Strategy ---
+app.post('/api/plg-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, currentModel, targetUsers, freeTrialExists, onboardingFlow, activationMetric, timeToValue, viralLoops, expansionRevenue, nrr, churnRate, cac, ltv, competitors, plgGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Product-Led Growth (PLG) expert and SaaS growth strategist. Generate a comprehensive PLG Strategy for:
+Company: ${company}, Product: ${product}, Industry: ${industry}
+Current Model: ${currentModel}, Target Users: ${targetUsers}
+Free Trial: ${freeTrialExists}, Onboarding Flow: ${onboardingFlow}
+Activation Metric: ${activationMetric}, Time to Value: ${timeToValue}
+Viral Loops: ${viralLoops}, Expansion Revenue: ${expansionRevenue}
+NRR: ${nrr}, Churn: ${churnRate}, CAC: ${cac}, LTV: ${ltv}
+Competitors: ${competitors}, PLG Goals: ${plgGoals}
+
+Return JSON: { strategyTitle, executiveSummary, plgReadinessScore, plgModel: { type, rationale, keyPrinciples }, freeTrialDesign: { model, duration, limitations, conversionTriggers, upsellMoments }, onboardingOptimization: { currentGaps, proposedFlow: [{ step, action, goal, successMetric, dropoffRisk }], activationPlaybook }, viralGrowthMechanics: [{ mechanic, description, viralCoefficient, implementation, timeline }], expansionRevenue: { strategies: [{ strategy, segment, trigger, expectedUplift }], nrrTarget, expansionPlaybook }, productAnalytics: { northStarMetric, activationFunnel: [{ stage, metric, benchmark, target }], leadIndicators }, pricingStrategy: { model, tiers: [{ name, price, features, targetUser, conversionRate }], packagingPrinciples }, communityAndContent: { communityStrategy, contentTypes, selfServeResources }, salesMotion: { model, productQualifiedLeadCriteria, handoffProcess, closingPlaybook }, implementationRoadmap: { phases: [{ phase, name, duration, initiatives, expectedOutcomes }] }, successMetrics: [{ metric, current, target, timeline }], quickWins: [{ win, effort, impact }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.35 Customer Journey Orchestration ---
 app.post('/api/journey-orchestration', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, product, customerSegments, currentChannels, touchpoints, painPoints, conversionGoals, avgDealCycle, churnRate, nps, techStack, budget, teamSize } = req.body;

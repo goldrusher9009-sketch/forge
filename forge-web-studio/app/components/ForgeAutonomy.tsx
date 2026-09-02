@@ -597,6 +597,100 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.36 Product-Led Growth Strategy ---
+const PLG_SCORE_COLOR = (s: number) => s >= 80 ? 'text-green-400' : s >= 60 ? 'text-yellow-400' : s >= 40 ? 'text-orange-400' : 'text-red-400';
+function PLGStrategyPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', currentModel:'', targetUsers:'', freeTrialExists:'', onboardingFlow:'', activationMetric:'', timeToValue:'', viralLoops:'', expansionRevenue:'', nrr:'', churnRate:'', cac:'', ltv:'', competitors:'', plgGoals:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const sf = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try { const r = await fetch(`${api}/api/plg-strategy`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e) { setResult({ error: String(e) }); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">🚀 Product-Led Growth Strategy Engine</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {[['company','Company'],['product','Product Name'],['industry','Industry'],['currentModel','Current GTM Model (sales-led/hybrid)'],['targetUsers','Target Users'],['freeTrialExists','Free Trial Exists? (yes/no/freemium)'],['onboardingFlow','Current Onboarding Flow'],['activationMetric','Activation Metric (e.g. first project created)'],['timeToValue','Time to Value (e.g. 5 minutes)'],['viralLoops','Existing Viral Loops'],['expansionRevenue','Expansion Revenue %'],['nrr','NRR %'],['churnRate','Churn Rate'],['cac','CAC ($)'],['ltv','LTV ($)'],['competitors','Key Competitors'],['plgGoals','PLG Goals']].map(([k,label]) => (
+          <div key={k} className={k==='plgGoals'||k==='onboardingFlow'?'col-span-2':''}>
+            <label className="text-xs text-gray-400">{label}</label>
+            {k==='plgGoals'||k==='onboardingFlow' ? <textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm h-16" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} /> : <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} />}
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Generating...' : 'Generate PLG Strategy'}</button>
+      {result && !result.error && (
+        <div className="space-y-4 mt-4">
+          <div className="bg-gray-800 rounded-xl p-4 border border-indigo-500/30">
+            <div className="flex items-center gap-4">
+              <div><h3 className="text-lg font-bold text-indigo-400">{result.strategyTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div>
+              {result.plgReadinessScore !== undefined && <div className="shrink-0 text-center"><div className={`text-4xl font-black ${PLG_SCORE_COLOR(result.plgReadinessScore)}`}>{result.plgReadinessScore}</div><div className="text-xs text-gray-400">PLG Readiness</div></div>}
+            </div>
+          </div>
+          {result.freeTrialDesign && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Free Trial Design</h4>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                <div className="bg-gray-700 rounded p-2 text-xs"><div className="text-gray-400">Model</div><div className="text-indigo-300">{result.freeTrialDesign.model}</div></div>
+                <div className="bg-gray-700 rounded p-2 text-xs"><div className="text-gray-400">Duration</div><div className="text-indigo-300">{result.freeTrialDesign.duration}</div></div>
+                <div className="bg-gray-700 rounded p-2 text-xs"><div className="text-gray-400">Limitations</div><div className="text-yellow-300">{result.freeTrialDesign.limitations}</div></div>
+              </div>
+              {result.freeTrialDesign.conversionTriggers && <div className="text-xs"><span className="text-gray-400">Conversion Triggers: </span><span className="text-green-400">{Array.isArray(result.freeTrialDesign.conversionTriggers)?result.freeTrialDesign.conversionTriggers.join(' • '):result.freeTrialDesign.conversionTriggers}</span></div>}
+            </div>
+          )}
+          {result.viralGrowthMechanics && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Viral Growth Mechanics</h4>
+              <div className="grid grid-cols-2 gap-2">{result.viralGrowthMechanics.map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3">
+                  <div className="text-indigo-300 font-semibold text-sm">{m.mechanic}</div>
+                  <div className="text-gray-300 text-xs mt-1">{m.description}</div>
+                  {m.viralCoefficient && <div className="text-green-400 text-xs mt-1">k={m.viralCoefficient}</div>}
+                  <div className="text-gray-500 text-xs">{m.timeline}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.pricingStrategy?.tiers && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Pricing Tiers</h4>
+              <div className="grid grid-cols-3 gap-2">{result.pricingStrategy.tiers.map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3 text-center">
+                  <div className="text-white font-bold">{t.name}</div>
+                  <div className="text-indigo-400 text-xl font-black">{t.price}</div>
+                  <div className="text-xs text-gray-400 mt-1">{t.targetUser}</div>
+                  <div className="text-xs text-green-400 mt-1">Conv: {t.conversionRate}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.onboardingOptimization?.proposedFlow && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Optimized Onboarding Flow</h4>
+              <div className="space-y-1">{result.onboardingOptimization.proposedFlow.map((s:any,i:number)=>(
+                <div key={i} className="flex items-start gap-2 text-xs bg-gray-700 rounded p-2">
+                  <span className="bg-indigo-700 text-white rounded-full w-5 h-5 flex items-center justify-center shrink-0 font-bold">{i+1}</span>
+                  <div><span className="text-white font-semibold">{s.step}: </span><span className="text-gray-300">{s.action}</span><div className="text-green-400 mt-0.5">✓ {s.successMetric}</div></div>
+                  {s.dropoffRisk && <span className="text-red-400 ml-auto shrink-0">⚠ {s.dropoffRisk}</span>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.successMetrics && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Success Metrics</h4>
+              <div className="grid grid-cols-3 gap-2">{result.successMetrics.map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 text-xs"><div className="text-gray-300 font-semibold">{m.metric}</div><div className="flex justify-between mt-1"><span className="text-yellow-400">{m.current}</span><span className="text-green-400">{m.target}</span></div><div className="text-gray-500">{m.timeline}</div></div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+    </div>
+  );
+}
 // --- v9.35 Customer Journey Orchestration ---
 const JOURNEY_EMOTION: Record<string,string> = { 'Excited':'text-yellow-400','Happy':'text-green-400','Neutral':'text-gray-400','Confused':'text-orange-400','Frustrated':'text-red-400','Anxious':'text-orange-400','Delighted':'text-emerald-400','Disappointed':'text-red-400' };
 function JourneyOrchestrationPanel({ api }: { api: string }) {
@@ -9746,7 +9840,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9844,6 +9938,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'plgstrategy', label: '🚀 PLG Strategy' },
     { id: 'journeyorch', label: '🗺️ Journey Orchestration' },
     { id: 'aiethics', label: '⚖️ AI Ethics Framework' },
     { id: 'datastrategy', label: '📊 Data Strategy' },
@@ -10016,6 +10111,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'plgstrategy' && <PLGStrategyPanel api={api} />}
         {tab === 'journeyorch' && <JourneyOrchestrationPanel api={api} />}
         {tab === 'aiethics' && <AIEthicsPanel api={api} />}
         {tab === 'datastrategy' && <DataStrategyPanel api={api} />}
