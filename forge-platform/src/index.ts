@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.32 PRD Generator ---
+app.post('/api/prd-generator', requireAuth, async (req: AuthRequest, res) => {
+  const { productName, company, industry, problemStatement, targetUsers, userStories, currentSolution, proposedSolution, outOfScope, successMetrics, technicalConstraints, timeline, stakeholders, priority } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a senior product manager. Generate a comprehensive Product Requirements Document (PRD) for:
+Product: ${productName}, Company: ${company}, Industry: ${industry}
+Problem: ${problemStatement}, Target Users: ${targetUsers}
+User Stories: ${userStories}, Current Solution: ${currentSolution}
+Proposed Solution: ${proposedSolution}, Out of Scope: ${outOfScope}
+Success Metrics: ${successMetrics}, Technical Constraints: ${technicalConstraints}
+Timeline: ${timeline}, Stakeholders: ${stakeholders}, Priority: ${priority}
+
+Return JSON: { prdTitle, version, lastUpdated, executiveSummary, problemStatement: { description, evidence, impact, rootCauses }, goals: { primary, secondary, nonGoals }, userPersonas: [{ name, description, painPoints, goals, techSavviness }], userStories: [{ id, asA, iWantTo, soThat, acceptanceCriteria, priority, storyPoints }], functionalRequirements: [{ id, feature, description, priority, userStory, acceptanceCriteria, edgeCases }], nonFunctionalRequirements: [{ category, requirement, metric, priority }], technicalArchitecture: { overview, components, dataModel, integrations, securityConsiderations }, uxRequirements: { principles, keyScreens: [{ screen, purpose, keyElements, interactions }], accessibilityRequirements }, releaseStrategy: { phases: [{ phase, scope, duration, successCriteria }], mvpDefinition }, successMetrics: [{ metric, baseline, target, measurement, owner }], riskRegister: [{ risk, probability, impact, mitigation, owner }], openQuestions: [{ question, owner, dueDate, impact }], dependencies: [{ dependency, team, status, dueDate }], appendix: { glossary, references } }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.31 Investor Relations & Fundraising ---
 app.post('/api/fundraising-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, stage, currentArr, growthRate, burnRate, runway, teamSize, productDescription, marketSize, competitors, previousFunding, useOfFunds, targetRaise, targetInvestors, geography } = req.body;

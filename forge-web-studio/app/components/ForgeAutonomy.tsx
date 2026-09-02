@@ -597,6 +597,77 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.32 PRD Generator ---
+const PRIORITY_COLOR: Record<string,string> = { 'P0':'text-red-400','P1':'text-orange-400','P2':'text-yellow-400','P3':'text-gray-400','Must Have':'text-red-400','Should Have':'text-orange-400','Could Have':'text-yellow-400','Nice to Have':'text-gray-400','High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400' };
+function PRDGeneratorPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ productName:'', company:'', industry:'', problemStatement:'', targetUsers:'', userStories:'', currentSolution:'', proposedSolution:'', outOfScope:'', successMetrics:'', technicalConstraints:'', timeline:'', stakeholders:'', priority:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState('overview');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/prd-generator`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  const TA = (label:string, k:keyof typeof form, ph:string='') => (
+    <div className="col-span-2"><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <textarea className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" rows={2} placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">📋 PRD Generator</h2><p className="text-gray-400 text-sm mt-1">Full product requirements doc: personas, user stories, features, tech specs, metrics & risks</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Product Name','productName','AI Dashboard 2.0')} {F('Company','company','Acme Inc')}
+            {F('Industry','industry','B2B SaaS')} {F('Target Users','targetUsers','Product managers, engineers')}
+            {F('Timeline','timeline','Q1 2025 MVP, Q2 Full release')} {F('Priority','priority','High')}
+            {F('Stakeholders','stakeholders','Product, Eng, Design, Sales')} {F('Technical Constraints','technicalConstraints','React frontend, Node API, Postgres')}
+            {TA('Problem Statement','problemStatement','Users struggle to...')}
+            {TA('Proposed Solution','proposedSolution','We will build...')}
+            {TA('User Stories (key ones)','userStories','As a PM, I want to... As an engineer, I want to...')}
+            {TA('Current Solution / Workaround','currentSolution','Currently users use spreadsheets...')}
+            {TA('Out of Scope','outOfScope','Mobile app, offline mode...')}
+            {TA('Success Metrics','successMetrics','30% reduction in time-to-insight, NPS +10')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Generating PRD...' : 'Generate PRD'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.prdTitle}</h3><p className="text-gray-400 text-xs">v{result.version} · {result.lastUpdated}</p><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New PRD</button></div>
+          <div className="flex gap-2 flex-wrap">{['overview','personas','stories','features','technical','ux','release','metrics','risks'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Overview = problem */}
+          {view==='overview' && result.problemStatement && <div className="space-y-3"><div className="bg-red-900/20 rounded-xl p-4"><p className="text-red-400 text-xs mb-1">Problem</p><p className="text-gray-300 text-sm">{result.problemStatement.description}</p>{result.problemStatement.evidence && <p className="text-gray-400 text-xs mt-2">Evidence: {result.problemStatement.evidence}</p>}</div>{result.goals && <div className="grid grid-cols-2 gap-3"><div className="bg-green-900/20 rounded-xl p-4"><p className="text-green-400 text-xs mb-1">Primary Goals</p><p className="text-gray-300 text-sm">{result.goals.primary}</p></div><div className="bg-gray-800 rounded-xl p-4"><p className="text-yellow-400 text-xs mb-1">Non-Goals</p><p className="text-gray-300 text-sm">{result.goals.nonGoals}</p></div></div>}</div>}
+          {/* Personas */}
+          {view==='personas' && result.userPersonas?.length>0 && <div className="grid grid-cols-2 gap-3">{result.userPersonas.map((p:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-white font-semibold mb-1">{p.name}</p><p className="text-gray-400 text-xs mb-2">{p.description}</p><p className="text-red-300 text-xs mb-1">Pain: {p.painPoints}</p><p className="text-green-300 text-xs">Goal: {p.goals}</p></div>)}</div>}
+          {/* User Stories */}
+          {view==='stories' && result.userStories?.length>0 && <div className="space-y-2">{result.userStories.map((s:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><p className="text-gray-400 text-xs">{s.id}</p><div className="flex gap-2 text-xs"><span className={PRIORITY_COLOR[s.priority]||'text-gray-400'}>{s.priority}</span><span className="text-gray-500">{s.storyPoints} pts</span></div></div><p className="text-white text-sm">As a <span className="text-blue-300">{s.asA}</span>, I want to <span className="text-green-300">{s.iWantTo}</span>, so that <span className="text-yellow-300">{s.soThat}</span></p><p className="text-gray-400 text-xs mt-1">✓ {s.acceptanceCriteria}</p></div>)}</div>}
+          {/* Features */}
+          {view==='features' && result.functionalRequirements?.length>0 && <div className="space-y-2">{result.functionalRequirements.map((f:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><p className="text-white font-medium text-sm">{f.feature}</p><span className={`text-xs ${PRIORITY_COLOR[f.priority]||'text-gray-400'}`}>{f.priority}</span></div><p className="text-gray-400 text-xs mb-1">{f.description}</p><p className="text-blue-300 text-xs">✓ {f.acceptanceCriteria}</p>{f.edgeCases && <p className="text-yellow-300 text-xs">⚠️ {f.edgeCases}</p>}</div>)}</div>}
+          {/* Technical */}
+          {view==='technical' && result.technicalArchitecture && <div className="space-y-3"><div className="bg-gray-800 rounded-xl p-4"><p className="text-blue-400 text-xs mb-2">Architecture Overview</p><p className="text-gray-300 text-sm">{result.technicalArchitecture.overview}</p></div>{result.technicalArchitecture.components && <div className="bg-gray-800 rounded-xl p-4"><p className="text-green-400 text-xs mb-2">Components</p><p className="text-gray-300 text-sm">{result.technicalArchitecture.components}</p></div>}{result.technicalArchitecture.securityConsiderations && <div className="bg-red-900/20 rounded-xl p-4"><p className="text-red-400 text-xs mb-2">Security</p><p className="text-gray-300 text-sm">{result.technicalArchitecture.securityConsiderations}</p></div>}</div>}
+          {/* UX */}
+          {view==='ux' && result.uxRequirements && <div className="space-y-3"><div className="bg-gray-800 rounded-xl p-4"><p className="text-purple-400 text-xs mb-2">Design Principles</p><p className="text-gray-300 text-sm">{result.uxRequirements.principles}</p></div>{result.uxRequirements.keyScreens?.map((s:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3"><p className="text-white font-medium text-sm">{s.screen}</p><p className="text-gray-400 text-xs">{s.purpose}</p><p className="text-blue-300 text-xs">{s.keyElements}</p></div>)}</div>}
+          {/* Release */}
+          {view==='release' && result.releaseStrategy && <div className="space-y-3">{result.releaseStrategy.mvpDefinition && <div className="bg-green-900/20 rounded-xl p-4"><p className="text-green-400 text-xs mb-1">MVP Definition</p><p className="text-gray-300 text-sm">{result.releaseStrategy.mvpDefinition}</p></div>}{result.releaseStrategy.phases?.map((ph:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{ph.phase}</p><span className="text-blue-400 text-xs">{ph.duration}</span></div><p className="text-gray-300 text-sm mb-1">{ph.scope}</p><p className="text-green-300 text-xs">✓ {ph.successCriteria}</p></div>)}</div>}
+          {/* Metrics */}
+          {view==='metrics' && result.successMetrics?.length>0 && <div className="space-y-2">{result.successMetrics.map((m:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3 flex items-center justify-between"><div><p className="text-white text-sm font-medium">{m.metric}</p><p className="text-gray-400 text-xs">{m.measurement} · {m.owner}</p></div><div className="text-right text-xs"><p className="text-gray-500">baseline: {m.baseline}</p><p className="text-green-400 font-bold">target: {m.target}</p></div></div>)}</div>}
+          {/* Risks */}
+          {view==='risks' && result.riskRegister?.length>0 && <div className="space-y-2">{result.riskRegister.map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><p className="text-white text-sm font-medium">{r.risk}</p><div className="flex gap-2 text-xs"><span className="text-red-400">{r.probability}</span><span className="text-orange-400">{r.impact}</span></div></div><p className="text-blue-300 text-xs">Mitigation: {r.mitigation}</p></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.31 Investor Relations & Fundraising ---
 const READINESS_COLOR = (score: string) => { const n = parseInt(score); if (n>=80) return 'text-green-400'; if (n>=60) return 'text-yellow-400'; return 'text-red-400'; };
 function FundraisingStrategyPanel({ api }: { api: string }) {
@@ -9382,7 +9453,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9480,6 +9551,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'prdgenerator', label: '📋 PRD Generator' },
     { id: 'fundraisingstrat', label: '💎 Fundraising Strategy' },
     { id: 'partnershipstrat', label: '🤝 Partnership Strategy' },
     { id: 'csplaybook2', label: '🎯 CS Playbook' },
@@ -9648,6 +9720,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'prdgenerator' && <PRDGeneratorPanel api={api} />}
         {tab === 'fundraisingstrat' && <FundraisingStrategyPanel api={api} />}
         {tab === 'partnershipstrat' && <PartnershipStrategyPanel api={api} />}
         {tab === 'csplaybook2' && <CSPlaybookPanel api={api} />}
