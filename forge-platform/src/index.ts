@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.79 Customer Persona Builder ---
+app.post('/api/persona-builder', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, industry, targetMarket, painPoints, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create 3 detailed customer personas for: ${product || 'our product'}.
+Industry: ${industry || 'general'}
+Target market: ${targetMarket || 'broad market'}
+Known pain points: ${painPoints || 'not specified'}
+Return JSON: { personas: [{ name: string, age: string, role: string, income: string, goals: string[], frustrations: string[], behaviors: string[], preferredChannels: string[], buyingTriggers: string[], quote: string, photoDescription: string }] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.78 Product Roadmap Generator ---
 app.post('/api/product-roadmap', requireAuth, async (req: AuthRequest, res) => {
   try {
