@@ -39500,6 +39500,48 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.60 AI Market Expansion & Internationalization Engine ---
+app.post('/api/market-expansion', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, currentMarkets, targetMarkets, productDescription, currentRevenue, expansionBudget, teamSize, currentLanguages, regulatoryExperience, expansionTimeline, competitiveAdvantage, topChallenges } = req.body;
+    const p = `You are a global market expansion and internationalization strategist. Build a comprehensive market expansion playbook.
+
+Company: ${companyName}, Industry: ${industry}
+Current Markets: ${currentMarkets}, Target Markets: ${targetMarkets}
+Product: ${productDescription}, Revenue: ${currentRevenue}
+Budget: ${expansionBudget}, Team: ${teamSize}, Languages: ${currentLanguages}
+Regulatory Experience: ${regulatoryExperience}, Timeline: ${expansionTimeline}
+Competitive Advantage: ${competitiveAdvantage}, Challenges: ${topChallenges}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "Market Expansion Playbook for [Company]",
+  "executiveSummary": "2-3 sentence overview",
+  "expansionReadinessScore": 0-100,
+  "expansionReadinessStatus": "Ready|Nearly Ready|Needs Preparation|Not Ready",
+  "totalAddressableMarket": "string",
+  "priorityExpansionMarket": "string",
+  "estimatedTimeToRevenue": "string",
+  "marketPrioritization": [{ "market": "string", "attractivenessScore": 0-100, "fitScore": 0-100, "marketSize": "string", "competition": "Low|Medium|High", "regulatoryComplexity": "Low|Medium|High", "entryBarriers": ["string"], "opportunities": ["string"], "recommendation": "string", "entryStrategy": "string" }],
+  "goToMarketPlaybook": { "phasing": [{ "phase": "string", "duration": "string", "markets": ["string"], "objectives": ["string"], "budget": "string", "kpis": ["string"] }], "channelStrategy": [{ "channel": "string", "markets": ["string"], "rationale": "string", "investmentLevel": "string" }], "partnershipStrategy": [{ "partnerType": "string", "markets": ["string"], "criteria": ["string"], "approach": "string" }] },
+  "localizationRequirements": { "productLocalization": [{ "market": "string", "changes": ["string"], "effort": "string", "cost": "string" }], "contentLocalization": ["string"], "uiuxAdaptations": ["string"], "languagePriority": ["string"] },
+  "regulatoryLandscape": [{ "market": "string", "keyRegulations": ["string"], "licenses": ["string"], "complianceTimeline": "string", "estimatedCost": "string", "riskLevel": "Low|Medium|High" }],
+  "pricingLocalization": [{ "market": "string", "pricingStrategy": "string", "pricePoint": "string", "paymentMethods": ["string"], "currencyConsiderations": "string" }],
+  "culturalIntelligence": [{ "market": "string", "businessCulture": "string", "communicationStyle": "string", "decisionMaking": "string", "doList": ["string"], "dontList": ["string"] }],
+  "teamExpansionPlan": { "hiringPriorities": [{ "role": "string", "market": "string", "timeline": "string", "localVsRemote": "string" }], "legalEntityStrategy": "string", "hrConsiderations": ["string"] },
+  "successMetrics": [{ "metric": "string", "year1Target": "string", "year2Target": "string", "year3Target": "string" }],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Failed to parse response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.59 AI Supply Chain & Operations Engine ---
 app.post('/api/supply-chain', requireAuth, async (req: AuthRequest, res) => {
   try {
