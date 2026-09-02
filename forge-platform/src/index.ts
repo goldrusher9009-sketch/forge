@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.55 AI Partnership & Business Development Engine ---
+app.post('/api/partnership-dev', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, product, industry, currentRevenue, targetPartnerTypes, geographies, competitiveAdvantage, existingPartners, partnershipGoal, bdTeamSize, dealSize } = req.body;
+  const p = `You are an elite Business Development strategist. Generate a comprehensive Partnership & BD report for: Company=${companyName}, Product=${product}, Industry=${industry}, Revenue=${currentRevenue}, Target Partner Types=${targetPartnerTypes}, Geographies=${geographies}, Competitive Advantage=${competitiveAdvantage}, Existing Partners=${existingPartners}, Goal=${partnershipGoal}, BD Team=${bdTeamSize}, Deal Size=${dealSize}.
+Return ONLY valid JSON: { "reportTitle": string, "executiveSummary": string, "bdScore": number, "revenueFromPartnerships": string, "topPartnershipType": string, "timeToFirstDeal": string, "keyInsight": string, "partnershipLandscape": { "marketOpportunity": string, "partnerEcosystem": string, "whitespace": string, "risks": string[] }, "idealPartnerProfiles": [{ "partnerType": string, "targetCompanies": string[], "whyTheyWin": string, "mutualValue": string, "revenueModel": string, "successMetrics": string[], "priorityScore": number }], "outreachPlaybook": { "researchPhase": string[], "warmIntroStrategy": string, "coldOutreachScript": string, "followUpCadence": string[], "negotiationTips": string[] }, "dealStructures": [{ "structure": string, "useCase": string, "revenueShare": string, "termLength": string, "keyTerms": string[], "redFlags": string[] }], "partnerEnablement": { "onboardingPlan": string[], "enablementMaterials": string[], "coMarketingIdeas": string[], "successReviews": string, "escalationPath": string }, "bdPipeline": { "stage1": string, "stage2": string, "stage3": string, "stage4": string, "targetPipelineSize": string, "conversionBenchmarks": string }, "alliances": [{ "allianceType": string, "targetPartner": string, "rationale": string, "approach": string, "expectedOutcome": string }], "quickWins": string[] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.54 AI Brand Strategy & Identity Engine ---
 app.post('/api/brand-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
