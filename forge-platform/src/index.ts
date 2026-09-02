@@ -39500,6 +39500,23 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.67 LinkedIn Post Generator ---
+app.post('/api/linkedin-post', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { topic, angle, industry, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a high-performing LinkedIn post about "${topic}".
+Angle: ${angle || 'thought leadership'}
+Industry: ${industry || 'tech/business'}
+Format: Hook (1 bold line), Story or insight (3-5 short paragraphs), Key takeaway, CTA question to drive comments. Use line breaks for readability. Professional but human tone. 150-300 words. Include 5 hashtags at end.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1200 });
+    res.json({ success: true, post: (r.content || '').trim() });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.66 Instagram Caption Writer ---
 app.post('/api/ig-caption', requireAuth, async (req: AuthRequest, res) => {
   try {
