@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.12 AI Strategic Partnerships & Alliance Intelligence Engine ---
+app.post('/api/partnership-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+  const { companyStage, industry, targetMarkets, currentPartners, partnershipGoals, resourcesAvailable, competitorAlliances, revenueModel, technicalCapabilities, geographies } = req.body;
+  const p = `You are a strategic partnerships expert. Generate a comprehensive partnership intelligence report.
+Company: stage=${companyStage}, industry=${industry}, markets=${targetMarkets}, current partners=${currentPartners}
+Goals: ${partnershipGoals}, resources=${resourcesAvailable}, competitor alliances=${competitorAlliances}
+Revenue model: ${revenueModel}, tech capabilities=${technicalCapabilities}, geographies=${geographies}
+
+Return JSON: { reportTitle, executiveSummary, partnershipScore (0-100), primaryGrowthVector, partnershipFramework: { strategic_rationale, value_exchange_model, partner_selection_criteria[] }, partnerCategories: [{ category, rationale, targetPartners: [{ name, fit_score, opportunity, approach }], dealStructure, successMetrics }] (5 categories), channelPartnerStrategy: { overview, tiering, enablement, incentives }, technologyAlliances: { priority_integrations[], platform_strategy, api_ecosystem }, goToMarketPartnerships: { co_sell_playbook, joint_marketing, pipeline_sharing }, investorPartners: { strategic_value, target_vcs[], synergies }, negotiationPlaybooks: [{ partner_type, leverage_points[], common_pitfalls[], term_priorities[] }] (4 entries), partnershipOps: { team_structure, tracking_tools, qbr_template, health_metrics[] }, metrics: [{ kpi, target, measurement }] (8 metrics), roadmap: [{ phase, timeline, focus, partnerships[], expected_outcome }] (4 phases), quickWins: [] (5 items) }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    res.json(json ? JSON.parse(json) : { error: 'Parse failed', raw: text });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.11 AI Legal Intelligence & Contract Management Engine ---
 app.post('/api/legal-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
