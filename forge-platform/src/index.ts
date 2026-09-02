@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.52 Customer Journey Orchestrator ---
+app.post('/api/journey-orchestrator', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, customerSegments, currentChannels, avgOrderValue, customerLifecycle, touchpoints, painPoints, conversionGoals, retentionGoals, nps, churnRate, cltv, dataAvailability, techStack, competitors, budget } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a customer experience and journey orchestration expert. Design a comprehensive customer journey orchestration strategy.
+Company: ${company}, Product: ${product}, Industry: ${industry}, Customer Segments: ${customerSegments}, Current Channels: ${currentChannels}, AOV: ${avgOrderValue}, Customer Lifecycle: ${customerLifecycle}, Touchpoints: ${touchpoints}, Pain Points: ${painPoints}, Conversion Goals: ${conversionGoals}, Retention Goals: ${retentionGoals}, NPS: ${nps}, Churn Rate: ${churnRate}, CLTV: ${cltv}, Data Availability: ${dataAvailability}, Tech Stack: ${techStack}, Competitors: ${competitors}, Budget: ${budget}.
+Return JSON: { orchestratorTitle, executiveSummary, cxScore (0-100), maturityLevel ("Reactive"/"Proactive"/"Predictive"/"Orchestrated"), customerSegments: [{segment, size, value, currentJourney, frictionPoints, opportunityScore}], journeyMaps: [{segment, stageName, customerGoal, touchpoints: string[], emotions: string[], painPoints: string[], opportunities: string[], metrics: string[]}], orchestrationFlows: [{flowName, trigger, segment, channels: string[], sequence: [{step, channel, content, timing, personalization, successMetric}], expectedOutcome}], personalizationEngine: {dataSignals: [{signal, source, use}], personalizationLevels: [{level, description, implementation, examples: string[]}], aiPersonalization: [{useCase, algorithm, expectedLift}]}, omnichannel: {channelStrategy: [{channel, role, integration, kpis: string[]}], crossChannelJourneys: [{from, to, bridgeMechanism, messageConsistency}], attributionModel}, momentMarketing: [{moment, trigger, response, channel, expectedEngagement}], retentionJourneys: [{segment, trigger, sequence: string[], exitCondition, expectedRetention}], winbackJourneys: [{segment, churnSignal, winbackSequence: string[], offerStrategy, expectedRecovery}], cxTechnology: {requiredStack: [{tool, purpose, priority}], integrations: [{from, to, dataFlow}], dataStrategy}, experimentationPlan: [{hypothesis, test, metric, expectedLift, timeline}], implementationRoadmap: [{phase, duration, initiatives: string[], kpis: string[]}], quickWins: [{action, impact, effort, timeline}] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.51 AI Talent Intelligence ---
 app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, headcount, hiringPlan, openRoles, keyDepartments, attritionRate, timeToHire, costPerHire, offerAcceptRate, topCompetitors, salaryBenchmark, remotePolicy, diversityGoals, talentBrand, techStack, culture, painPoints } = req.body;
