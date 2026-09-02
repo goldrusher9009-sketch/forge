@@ -597,6 +597,95 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.61 Ad Copy Generator ---
+function AdCopyPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ product: '', audience: '', goal: 'conversions', platforms: 'Google, Facebook/Instagram, LinkedIn' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [plat, setPlat] = useState('google');
+  const submit = async () => {
+    if (!form.product.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api.base}/api/ad-copy`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d); setPlat('google');
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  const platTabs = [{ id: 'google', label: '🔍 Google' }, { id: 'facebook', label: '📘 Facebook' }, { id: 'instagram', label: '📸 Instagram' }, { id: 'linkedin', label: '💼 LinkedIn' }];
+  const ads = result?.ads;
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>💰 Ad Copy Generator</h3>
+      <input placeholder="Product / service *" value={form.product} onChange={e => setForm(f => ({ ...f, product: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Target audience" value={form.audience} onChange={e => setForm(f => ({ ...f, audience: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Campaign goal" value={form.goal} onChange={e => setForm(f => ({ ...f, goal: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      </div>
+      <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+        {loading ? 'Generating...' : 'Generate Ad Copy'}
+      </button>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && ads && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            {platTabs.map(p => (
+              <button key={p.id} onClick={() => setPlat(p.id)} style={{ padding: '4px 10px', background: plat === p.id ? '#7c3aed' : '#1a1a2e', border: `1px solid ${plat === p.id ? '#7c3aed' : '#333'}`, borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+                {p.label}
+              </button>
+            ))}
+          </div>
+          {plat === 'google' && ads.google && (
+            <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>GOOGLE ADS</div>
+              <div style={{ fontSize: 13, color: '#4ade80', marginBottom: 2 }}>H1: {ads.google.headline_1}</div>
+              <div style={{ fontSize: 13, color: '#4ade80', marginBottom: 2 }}>H2: {ads.google.headline_2}</div>
+              <div style={{ fontSize: 13, color: '#4ade80', marginBottom: 8 }}>H3: {ads.google.headline_3}</div>
+              <div style={{ fontSize: 12, marginBottom: 2 }}>D1: {ads.google.description_1}</div>
+              <div style={{ fontSize: 12, marginBottom: 8 }}>D2: {ads.google.description_2}</div>
+              <div style={{ fontSize: 11, color: '#888' }}>URL: {ads.google.display_url}</div>
+            </div>
+          )}
+          {plat === 'facebook' && ads.facebook && (
+            <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>FACEBOOK ADS</div>
+              <div style={{ fontSize: 13, marginBottom: 8, lineHeight: 1.6 }}>{ads.facebook.primary_text}</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{ads.facebook.headline}</div>
+              <div style={{ fontSize: 12, color: '#aaa', marginBottom: 8 }}>{ads.facebook.description}</div>
+              <div style={{ padding: '4px 12px', background: '#1d9bf0', borderRadius: 4, display: 'inline-block', fontSize: 12 }}>{ads.facebook.cta}</div>
+            </div>
+          )}
+          {plat === 'instagram' && ads.instagram && (
+            <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>INSTAGRAM ADS</div>
+              <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 8 }}>{ads.instagram.caption}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8, color: '#fff', background: '#333', padding: '6px 10px', borderRadius: 4 }}>Story: {ads.instagram.story_text}</div>
+              <div style={{ fontSize: 12, color: '#e1306c' }}>{(ads.instagram.hashtags || []).map((h: string) => `#${h}`).join(' ')}</div>
+            </div>
+          )}
+          {plat === 'linkedin' && ads.linkedin && (
+            <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 8 }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 8 }}>LINKEDIN ADS</div>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{ads.linkedin.headline}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.6, marginBottom: 8 }}>{ads.linkedin.intro_text}</div>
+              <div style={{ padding: '4px 12px', background: '#0077b5', borderRadius: 4, display: 'inline-block', fontSize: 12 }}>{ads.linkedin.cta}</div>
+            </div>
+          )}
+          {result.hooks && (
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 6 }}>HOOK VARIANTS</div>
+              {result.hooks.map((h: string, i: number) => <div key={i} style={{ fontSize: 12, padding: '4px 0', borderBottom: '1px solid #1a1a2e' }}>🪝 {h}</div>)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.60 Landing Page Copy Generator ---
 function LandingCopyPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ product: '', audience: '', value_prop: '', tone: 'confident and clear' });
@@ -3559,7 +3648,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3614,6 +3703,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'newsletter', label: '📧 Newsletter' },
     { id: 'coldemail', label: '🎯 Cold Email' },
     { id: 'landingcopy', label: '🚀 Landing Copy' },
+    { id: 'adcopy', label: '💰 Ad Copy' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3711,6 +3801,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'newsletter' && <NewsletterPanel api={api} />}
         {tab === 'coldemail' && <ColdEmailPanel api={api} />}
         {tab === 'landingcopy' && <LandingCopyPanel api={api} />}
+        {tab === 'adcopy' && <AdCopyPanel api={api} />}
       </div>
     </div>
   );

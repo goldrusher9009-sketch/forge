@@ -39458,6 +39458,27 @@ app.post('/api/landing-copy', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.61 Ad Copy Generator — generate ad copy for multiple platforms
+app.post('/api/ad-copy', requireAuth, async (req: any, res: any) => {
+  try {
+    const { product, audience, goal, platforms } = req.body;
+    if (!product || product.trim().length < 3) return res.status(400).json({ error: 'product required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const plats = platforms || 'Google, Facebook/Instagram, LinkedIn';
+    const p = `You are a paid advertising expert. Write high-converting ad copy for multiple platforms.\nProduct: ${product}\nTarget audience: ${audience || 'general consumers'}\nCampaign goal: ${goal || 'conversions'}\nPlatforms: ${plats}\n\nReturn ONLY JSON:\n{"product":"${product}","ads":{"google":{"headline_1":"30 char headline","headline_2":"30 char headline","headline_3":"30 char headline","description_1":"90 char description","description_2":"90 char description","display_url":"yoursite.com/offer"},"facebook":{"primary_text":"Main ad copy (125 chars ideal)","headline":"Ad headline","description":"News feed description","cta":"Learn More"},"instagram":{"caption":"Engaging caption with hashtags","story_text":"Short story/reel text (under 10 words)","hashtags":["tag1","tag2","tag3"]},"linkedin":{"headline":"LinkedIn ad headline","intro_text":"150 char intro","cta":"Download"}},"hooks":["Hook variant 1","Hook variant 2","Hook variant 3"],"value_props":["Value prop 1","Value prop 2","Value prop 3"],"urgency_phrases":["Urgency phrase 1","Urgency phrase 2"]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1200 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
