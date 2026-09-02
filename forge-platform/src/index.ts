@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.78 Product Roadmap Generator ---
+app.post('/api/product-roadmap', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { productName, vision, currentState, goals, timeframe, audience, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a product roadmap for: ${productName || 'our product'}.
+Vision: ${vision || 'not specified'}
+Current state: ${currentState || 'early stage'}
+Goals: ${goals || 'grow users and revenue'}
+Timeframe: ${timeframe || 'Q1-Q4'}
+Target audience: ${audience || 'general users'}
+Return JSON: { quarters: [{ name: string, theme: string, features: [{ name: string, description: string, priority: 'P0'|'P1'|'P2', effort: 'S'|'M'|'L', impact: 'High'|'Medium'|'Low' }], milestone: string }], risks: string[], successMetrics: string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.77 Grant Proposal Writer ---
 app.post('/api/grant-proposal', requireAuth, async (req: AuthRequest, res) => {
   try {

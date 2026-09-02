@@ -597,6 +597,61 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.78 Product Roadmap Generator ---
+const PRIORITY_COLOR: Record<string,string> = { P0: '#f87171', P1: '#facc15', P2: '#4ade80' };
+const EFFORT_LABEL: Record<string,string> = { S: 'Small', M: 'Medium', L: 'Large' };
+function ProductRoadmapPanel({ api }: { api: string }) {
+  const [productName, setProductName] = React.useState('');
+  const [vision, setVision] = React.useState('');
+  const [currentState, setCurrentState] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [timeframe, setTimeframe] = React.useState('Q1-Q4 2025');
+  const [audience, setAudience] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult(null);
+    const r = await fetch(`${api}/api/product-roadmap`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ productName, vision, currentState, goals, timeframe, audience }) });
+    const d = await r.json(); setResult(d); setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24, maxWidth: 800 }}>
+      <h2>🗺️ Product Roadmap Generator</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Product name" value={productName} onChange={e => setProductName(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Target audience" value={audience} onChange={e => setAudience(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Timeframe (e.g. Q1-Q4 2025)" value={timeframe} onChange={e => setTimeframe(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Goals" value={goals} onChange={e => setGoals(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      </div>
+      <textarea placeholder="Product vision" value={vision} onChange={e => setVision(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <textarea placeholder="Current state / what exists today" value={currentState} onChange={e => setCurrentState(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <button onClick={run} disabled={loading || !productName} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Generating...' : 'Generate Roadmap'}</button>
+      {result && !result.error && (
+        <div style={{ marginTop: 20 }}>
+          {(result.quarters || []).map((q: any, i: number) => (
+            <div key={i} style={{ background: '#1e1e2e', borderRadius: 8, padding: 14, marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontWeight: 700, color: '#a78bfa' }}>{q.name}: {q.theme}</span>
+                <span style={{ fontSize: 12, color: '#4ade80' }}>🏁 {q.milestone}</span>
+              </div>
+              {(q.features || []).map((f: any, j: number) => (
+                <div key={j} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6, paddingLeft: 8 }}>
+                  <span style={{ background: PRIORITY_COLOR[f.priority] || '#64748b', color: '#000', borderRadius: 4, padding: '1px 6px', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{f.priority}</span>
+                  <span style={{ color: '#e2e8f0', fontSize: 13 }}><b>{f.name}</b> — {f.description}</span>
+                  <span style={{ color: '#94a3b8', fontSize: 11, flexShrink: 0 }}>{EFFORT_LABEL[f.effort] || f.effort} · {f.impact}</span>
+                </div>
+              ))}
+            </div>
+          ))}
+          {result.successMetrics?.length > 0 && <div style={{ background: '#1e2a1e', borderRadius: 8, padding: 12, marginBottom: 8 }}><b style={{ color: '#4ade80' }}>Success Metrics:</b> {result.successMetrics.join(' · ')}</div>}
+          {result.risks?.length > 0 && <div style={{ background: '#2a1e1e', borderRadius: 8, padding: 12 }}><b style={{ color: '#f87171' }}>Risks:</b> {result.risks.join(' · ')}</div>}
+        </div>
+      )}
+      {result?.error && <p style={{ color: '#f87171', marginTop: 12 }}>{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v8.77 Grant Proposal Writer ---
 function GrantProposalPanel({ api }: { api: string }) {
   const [orgName, setOrgName] = React.useState('');
@@ -4314,7 +4369,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4386,6 +4441,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'blogoutline', label: '📝 Blog Outline' },
     { id: 'salesproposal', label: '💼 Sales Proposal' },
     { id: 'grantproposal', label: '🏛️ Grant Proposal' },
+    { id: 'productroadmap', label: '🗺️ Product Roadmap' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4500,6 +4556,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'blogoutline' && <BlogOutlinePanel api={api} />}
         {tab === 'salesproposal' && <SalesProposalPanel api={api} />}
         {tab === 'grantproposal' && <GrantProposalPanel api={api} />}
+        {tab === 'productroadmap' && <ProductRoadmapPanel api={api} />}
       </div>
     </div>
   );
