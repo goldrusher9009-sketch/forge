@@ -597,6 +597,99 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.35 Customer Journey Orchestration ---
+const JOURNEY_EMOTION: Record<string,string> = { 'Excited':'text-yellow-400','Happy':'text-green-400','Neutral':'text-gray-400','Confused':'text-orange-400','Frustrated':'text-red-400','Anxious':'text-orange-400','Delighted':'text-emerald-400','Disappointed':'text-red-400' };
+function JourneyOrchestrationPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', product:'', customerSegments:'', currentChannels:'', touchpoints:'', painPoints:'', conversionGoals:'', avgDealCycle:'', churnRate:'', nps:'', techStack:'', budget:'', teamSize:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const sf = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try { const r = await fetch(`${api}/api/journey-orchestration`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e) { setResult({ error: String(e) }); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">🗺️ Customer Journey Orchestration Engine</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {[['company','Company'],['industry','Industry'],['product','Product/Service'],['customerSegments','Customer Segments'],['currentChannels','Current Channels'],['touchpoints','Key Touchpoints'],['painPoints','Customer Pain Points'],['conversionGoals','Conversion Goals'],['avgDealCycle','Avg Deal Cycle'],['churnRate','Churn Rate'],['nps','NPS Score'],['techStack','Tech Stack'],['budget','Budget'],['teamSize','Team Size']].map(([k,label]) => (
+          <div key={k} className={k==='painPoints'||k==='conversionGoals'?'col-span-2':''}>
+            <label className="text-xs text-gray-400">{label}</label>
+            {k==='painPoints'||k==='conversionGoals' ? <textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm h-16" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} /> : <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} />}
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Generating...' : 'Generate Journey Orchestration'}</button>
+      {result && !result.error && (
+        <div className="space-y-4 mt-4">
+          <div className="bg-gray-800 rounded-xl p-4 border border-teal-500/30">
+            <h3 className="text-lg font-bold text-teal-400">{result.orchestrationTitle}</h3>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+          </div>
+          {result.journeyStages && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-3">Journey Stages</h4>
+              <div className="space-y-3">{result.journeyStages.map((s:any,i:number)=>(
+                <div key={i} className="border border-gray-600 rounded p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-teal-700 text-white text-xs px-2 py-0.5 rounded">{i+1}</span>
+                    <span className="text-white font-semibold">{s.name}</span>
+                    <span className={`text-xs ml-2 ${JOURNEY_EMOTION[s.emotion]||'text-gray-400'}`}>😊 {s.emotion}</span>
+                    <span className="text-gray-400 text-xs ml-auto">{s.customerGoal}</span>
+                  </div>
+                  {s.touchpoints && <div className="grid grid-cols-3 gap-1">{s.touchpoints.map((t:any,j:number)=>(
+                    <div key={j} className="bg-gray-700 rounded p-1 text-xs"><span className="text-teal-300">{t.channel}</span><div className="text-gray-400 truncate">{t.message}</div></div>
+                  ))}</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.orchestrationPlaybooks && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Orchestration Playbooks</h4>
+              <div className="space-y-2">{result.orchestrationPlaybooks.map((pb:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3 text-sm">
+                  <div className="flex gap-2 mb-1"><span className="text-yellow-400 font-semibold">⚡ {pb.trigger}</span><span className="text-gray-500 text-xs">→ {pb.segment}</span></div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><span className="text-gray-400">Channel: </span><span className="text-teal-300">{pb.channel}</span></div>
+                    <div><span className="text-gray-400">Timing: </span><span className="text-blue-300">{pb.timing}</span></div>
+                    <div><span className="text-gray-400">Next: </span><span className="text-green-300">{pb.nextAction}</span></div>
+                  </div>
+                  {pb.message && <div className="text-gray-300 text-xs mt-1 italic">"{pb.message}"</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Quick Wins</h4>
+              <div className="grid grid-cols-2 gap-2">{result.quickWins.map((w:any,i:number)=>(
+                <div key={i} className="bg-green-900/30 border border-green-700/40 rounded p-2 text-xs">
+                  <div className="text-green-300 font-semibold">{w.win}</div>
+                  <div className="flex gap-3 mt-1"><span className="text-gray-400">Effort: <span className="text-yellow-400">{w.effort}</span></span><span className="text-gray-400">Impact: <span className="text-green-400">{w.impact}</span></span></div>
+                  <div className="text-gray-500 mt-0.5">{w.timeline}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.automationOpportunities && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Automation Opportunities</h4>
+              <div className="space-y-1">{result.automationOpportunities.map((a:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 text-xs flex gap-3">
+                  <span className="text-teal-300 shrink-0">🤖 {a.opportunity}</span>
+                  <span className="text-gray-400 shrink-0">Trigger: {a.trigger}</span>
+                  <span className="text-green-400 ml-auto shrink-0">{a.expectedImpact}</span>
+                </div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+    </div>
+  );
+}
 // --- v9.34 AI Ethics & Responsible AI Framework ---
 const ETHICS_RISK_COLOR: Record<string,string> = { 'Critical':'text-red-500','High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400','Minimal':'text-emerald-400' };
 const ETHICS_PHASE_BG: Record<string,string> = { '1':'bg-blue-900/40','2':'bg-purple-900/40','3':'bg-green-900/40','4':'bg-orange-900/40' };
@@ -9653,7 +9746,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9751,6 +9844,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'journeyorch', label: '🗺️ Journey Orchestration' },
     { id: 'aiethics', label: '⚖️ AI Ethics Framework' },
     { id: 'datastrategy', label: '📊 Data Strategy' },
     { id: 'prdgenerator', label: '📋 PRD Generator' },
@@ -9922,6 +10016,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'journeyorch' && <JourneyOrchestrationPanel api={api} />}
         {tab === 'aiethics' && <AIEthicsPanel api={api} />}
         {tab === 'datastrategy' && <DataStrategyPanel api={api} />}
         {tab === 'prdgenerator' && <PRDGeneratorPanel api={api} />}

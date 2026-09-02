@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.35 Customer Journey Orchestration ---
+app.post('/api/journey-orchestration', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, product, customerSegments, currentChannels, touchpoints, painPoints, conversionGoals, avgDealCycle, churnRate, nps, techStack, budget, teamSize } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Chief Customer Experience Officer and journey orchestration expert. Generate a comprehensive Customer Journey Orchestration plan for:
+Company: ${company}, Industry: ${industry}, Product: ${product}
+Customer Segments: ${customerSegments}, Current Channels: ${currentChannels}
+Touchpoints: ${touchpoints}, Pain Points: ${painPoints}
+Conversion Goals: ${conversionGoals}, Avg Deal Cycle: ${avgDealCycle}
+Churn Rate: ${churnRate}, NPS: ${nps}, Tech Stack: ${techStack}
+Budget: ${budget}, Team Size: ${teamSize}
+
+Return JSON: { orchestrationTitle, executiveSummary, currentStateAudit: { gaps, opportunities, criticalMoments }, customerSegments: [{ segment, size, persona, goals, painPoints, channels, ltv }], journeyStages: [{ stage, name, customerGoal, emotion, touchpoints: [{ channel, message, timing, owner }], successMetrics, kpis }], orchestrationPlaybooks: [{ trigger, segment, channel, message, timing, nextAction, fallback }], channelStrategy: [{ channel, role, priority, contentTypes, frequency, kpis }], personalizationEngine: { dataSignals, segmentationRules, contentVariants, testingFramework }, automationOpportunities: [{ opportunity, trigger, action, expectedImpact, toolRequired }], contentCalendar: [{ week, stage, segment, channel, content, goal }], techStackRecommendations: [{ tool, category, useCase, priority, cost }], metricsFramework: { northStarMetric, stageMetrics: [{ stage, metric, target, measurement }] }, implementationRoadmap: { phases: [{ phase, name, duration, initiatives, expectedOutcomes }] }, quickWins: [{ win, effort, impact, timeline }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.34 AI Ethics & Responsible AI Framework ---
 app.post('/api/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, aiUseCases, dataTypes, affectedStakeholders, regulatoryJurisdictions, riskTolerance, existingPolicies, teamSize, deploymentContext, ethicsGoals } = req.body;
