@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.34 AI Ethics & Responsible AI Framework ---
+app.post('/api/ai-ethics', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, aiUseCases, dataTypes, affectedStakeholders, regulatoryJurisdictions, riskTolerance, existingPolicies, teamSize, deploymentContext, ethicsGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Chief AI Ethics Officer and responsible AI expert. Generate a comprehensive AI Ethics & Responsible AI Framework for:
+Company: ${company}, Industry: ${industry}
+AI Use Cases: ${aiUseCases}, Data Types: ${dataTypes}
+Affected Stakeholders: ${affectedStakeholders}, Jurisdictions: ${regulatoryJurisdictions}
+Risk Tolerance: ${riskTolerance}, Existing Policies: ${existingPolicies}
+Team Size: ${teamSize}, Deployment Context: ${deploymentContext}
+Ethics Goals: ${ethicsGoals}
+
+Return JSON: { frameworkTitle, executiveSummary, ethicsPrinciples: [{ principle, definition, rationale, implications }], riskAssessment: { useCaseRisks: [{ useCase, riskLevel, biasRisks, privacyRisks, safetyRisks, mitigations }] }, governanceStructure: { roles: [{ role, responsibilities, reportingLine }], committees, escalationPaths }, dataGovernance: { principles, dataLineage, consentFramework, retentionPolicies }, fairnessFramework: { definitions, metrics, testingApproach, monitoringPlan }, transparencyRequirements: { explainabilityLevel, documentationRequirements, auditTrails, publicDisclosures }, regulatoryCompliance: [{ regulation, jurisdiction, requirements, gaps, remediationPlan }], implementationRoadmap: { phases: [{ phase, name, duration, actions: [{ action, owner, timeline, priority }] }] }, modelLifecycle: { developmentChecklist, deploymentGates, monitoringRequirements, retirementCriteria }, incidentResponse: { severityLevels, responsePlaybooks, communicationTemplates }, trainingPlan: { audiences: [{ audience, topics, frequency, format }] }, metricsAndKPIs: [{ metric, definition, target, measurement }], vendorAIGovernance: { assessmentFramework, contractualRequirements, ongoingMonitoring }, stakeholderEngagement: { internalComms, externalComms, feedbackMechanisms } }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.33 Data Strategy & Analytics Roadmap ---
 app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, currentDataSources, currentTools, dataTeamSize, maturityLevel, businessGoals, painPoints, budget, timeHorizon, keyDecisionMakers } = req.body;

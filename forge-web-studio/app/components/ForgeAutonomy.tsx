@@ -597,6 +597,104 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.34 AI Ethics & Responsible AI Framework ---
+const ETHICS_RISK_COLOR: Record<string,string> = { 'Critical':'text-red-500','High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400','Minimal':'text-emerald-400' };
+const ETHICS_PHASE_BG: Record<string,string> = { '1':'bg-blue-900/40','2':'bg-purple-900/40','3':'bg-green-900/40','4':'bg-orange-900/40' };
+function AIEthicsPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', aiUseCases:'', dataTypes:'', affectedStakeholders:'', regulatoryJurisdictions:'', riskTolerance:'', existingPolicies:'', teamSize:'', deploymentContext:'', ethicsGoals:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const sf = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try { const r = await fetch(`${api}/api/ai-ethics`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e) { setResult({ error: String(e) }); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">⚖️ AI Ethics & Responsible AI Framework</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {[['company','Company Name'],['industry','Industry'],['aiUseCases','AI Use Cases (comma-sep)'],['dataTypes','Data Types Used'],['affectedStakeholders','Affected Stakeholders'],['regulatoryJurisdictions','Regulatory Jurisdictions (GDPR, CCPA, etc.)'],['riskTolerance','Risk Tolerance (Low/Medium/High)'],['existingPolicies','Existing Policies'],['teamSize','AI Team Size'],['deploymentContext','Deployment Context'],['ethicsGoals','Ethics Goals']].map(([k,label]) => (
+          <div key={k} className={k==='aiUseCases'||k==='ethicsGoals'?'col-span-2':''}>
+            <label className="text-xs text-gray-400">{label}</label>
+            {k==='aiUseCases'||k==='ethicsGoals' ? <textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm h-16" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} /> : <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} />}
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Generating...' : 'Generate AI Ethics Framework'}</button>
+      {result && !result.error && (
+        <div className="space-y-4 mt-4">
+          <div className="bg-gray-800 rounded-xl p-4 border border-violet-500/30">
+            <h3 className="text-lg font-bold text-violet-400">{result.frameworkTitle}</h3>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+          </div>
+          {result.ethicsPrinciples && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Ethics Principles</h4>
+              <div className="grid grid-cols-2 gap-2">{result.ethicsPrinciples.map((p:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3">
+                  <div className="text-violet-300 font-semibold text-sm">{p.principle}</div>
+                  <div className="text-gray-300 text-xs mt-1">{p.definition}</div>
+                  <div className="text-gray-400 text-xs mt-1 italic">{p.rationale}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.riskAssessment?.useCaseRisks && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Use Case Risk Assessment</h4>
+              <div className="space-y-2">{result.riskAssessment.useCaseRisks.map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3">
+                  <div className="flex items-center gap-2 mb-2"><span className="text-white text-sm font-semibold">{r.useCase}</span><span className={`text-xs font-bold ${ETHICS_RISK_COLOR[r.riskLevel]||'text-gray-300'}`}>{r.riskLevel} Risk</span></div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><span className="text-gray-400">Bias: </span><span className="text-yellow-400">{r.biasRisks}</span></div>
+                    <div><span className="text-gray-400">Privacy: </span><span className="text-orange-400">{r.privacyRisks}</span></div>
+                    <div><span className="text-gray-400">Safety: </span><span className="text-red-400">{r.safetyRisks}</span></div>
+                  </div>
+                  {r.mitigations && <div className="text-green-400 text-xs mt-2">✓ {Array.isArray(r.mitigations)?r.mitigations.join(' • '):r.mitigations}</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.regulatoryCompliance && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Regulatory Compliance</h4>
+              <div className="space-y-2">{result.regulatoryCompliance.map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3 text-sm">
+                  <div className="flex gap-2 mb-1"><span className="text-violet-300 font-bold">{r.regulation}</span><span className="text-gray-400 text-xs">{r.jurisdiction}</span></div>
+                  <div className="text-gray-300 text-xs">{r.requirements}</div>
+                  {r.gaps && <div className="text-yellow-400 text-xs mt-1">⚠ Gaps: {r.gaps}</div>}
+                  {r.remediationPlan && <div className="text-green-400 text-xs mt-1">→ {r.remediationPlan}</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.implementationRoadmap?.phases && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-3">Implementation Roadmap</h4>
+              <div className="space-y-3">{result.implementationRoadmap.phases.map((ph:any,i:number)=>(
+                <div key={i} className={`rounded p-3 ${ETHICS_PHASE_BG[String(ph.phase)]||'bg-gray-700'}`}>
+                  <div className="flex items-center gap-2 mb-2"><span className="text-white font-semibold">Phase {ph.phase}: {ph.name}</span><span className="text-gray-400 text-xs ml-auto">{ph.duration}</span></div>
+                  <div className="space-y-1">{(ph.actions||[]).map((a:any,j:number)=>(
+                    <div key={j} className="text-xs flex gap-2"><span className={`shrink-0 ${ETHICS_RISK_COLOR[a.priority]||'text-gray-400'}`}>[{a.priority}]</span><span className="text-gray-300">{a.action}</span><span className="text-gray-500 ml-auto">{a.timeline}</span></div>
+                  ))}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.metricsAndKPIs && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Ethics KPIs</h4>
+              <div className="grid grid-cols-2 gap-2">{result.metricsAndKPIs.map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 text-xs"><div className="text-violet-300 font-semibold">{m.metric}</div><div className="text-gray-400 mt-1">{m.definition}</div><div className="text-green-400 mt-1">Target: {m.target}</div></div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+    </div>
+  );
+}
 // --- v9.33 Data Strategy & Analytics Roadmap ---
 const DATA_MATURITY_COLOR: Record<string,string> = { 'Level 1':'text-red-400','Level 2':'text-orange-400','Level 3':'text-yellow-400','Level 4':'text-green-400','Level 5':'text-emerald-400','Reactive':'text-red-400','Descriptive':'text-orange-400','Predictive':'text-yellow-400','Prescriptive':'text-green-400','Cognitive':'text-emerald-400','Low':'text-red-400','Medium':'text-yellow-400','High':'text-green-400','Critical':'text-red-400' };
 function DataStrategyPanel({ api }: { api: string }) {
@@ -9555,7 +9653,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9653,6 +9751,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'aiethics', label: '⚖️ AI Ethics Framework' },
     { id: 'datastrategy', label: '📊 Data Strategy' },
     { id: 'prdgenerator', label: '📋 PRD Generator' },
     { id: 'fundraisingstrat', label: '💎 Fundraising Strategy' },
@@ -9823,6 +9922,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'aiethics' && <AIEthicsPanel api={api} />}
         {tab === 'datastrategy' && <DataStrategyPanel api={api} />}
         {tab === 'prdgenerator' && <PRDGeneratorPanel api={api} />}
         {tab === 'fundraisingstrat' && <FundraisingStrategyPanel api={api} />}
