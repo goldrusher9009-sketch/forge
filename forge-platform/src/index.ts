@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.63 AI Sales Intelligence & Revenue Engine ---
+app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, productType, averageDealSize, salesCycleLength, currentARR, targetARR, teamSize, quota, winRate, pipelineCoverage, topCompetitors, idealCustomerProfile, currentChallenges, salesMotion, geographicMarkets, currentStack } = req.body;
+    const p = `You are a sales strategy expert. Generate a comprehensive sales intelligence & revenue acceleration report.
+Company: ${companyName}, Industry: ${industry}, Product: ${productType}
+Avg Deal Size: ${averageDealSize}, Sales Cycle: ${salesCycleLength}
+Current ARR: ${currentARR}, Target ARR: ${targetARR}, Team Size: ${teamSize}
+Quota: ${quota}, Win Rate: ${winRate}, Pipeline Coverage: ${pipelineCoverage}
+Top Competitors: ${topCompetitors}, ICP: ${idealCustomerProfile}
+Challenges: ${currentChallenges}, Sales Motion: ${salesMotion}
+Markets: ${geographicMarkets}, Current Stack: ${currentStack}
+
+Return JSON: { reportTitle, executiveSummary, salesHealthScore (0-100), salesHealthStatus ("Excellent"/"Good"/"At Risk"/"Critical"), revenueGap, winRateBenchmark, pipelineHealthScore, icpDefinition { firmographics:{revenue,employees,industry:[],geography:[]}, technographics:[], psychographics:[], buyingSignals:[], negativePersistenceMarkers:[] }, prospectingStrategy { accountTiers:[{tier,criteria:[],approachStrategy,expectedDealSize,salesCycle}], sourceChannels:[{channel,expectedConversionRate,costPerLead,bestFor}], outreachSequences:[{sequenceName,target,steps:[{day,channel,template,goal}]}] }, salesProcess { stages:[{stage,exitCriteria:[],keyActivities:[],commonStalls:[],interventions:[]}], dealScoringModel:{factors:[{factor,weight,scoringGuide}]}, discoveryFramework:{keyQuestions:[],challengesToUncover:[],impactCalculation}, negotiationPlaybook:{anchoringStrategy,concessionSequence:[],walkawayPoints:[],closingTechniques:[]} }, competitiveBattlecards:[{competitor,theirStrengths:[],theirWeaknesses:[],ourAdvantages:[],objectionHandlers:[{objection,response}],whenWeWin,whenWeLose}], revenueAcceleration { quickWins:[{action,expectedImpact,effort,timeline}], pipelineVelocityTactics:[], expansionStrategy:{landAndExpandMotion,expansionTriggers:[],crossSellPlaybook:[]}, forecastAccuracy:{currentIssues:[],improvementTactics:[]} }, teamOptimization { hiringPlan:[{role,priority,expectedRampTime,targetRamp}], ramping:{milestones:[{week,targets:[]}]}, coachingCadence, performanceManagement:{kpis:[],pipRampTriggers:[]} }, techStackRecommendations:[{tool,category,useCase,priority}], quickWins:[] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid AI response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.62 AI Brand Architecture & Positioning Engine ---
 app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
   try {
