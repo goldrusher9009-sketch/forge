@@ -39500,6 +39500,81 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.40 AI ESG & Sustainability Strategy Engine ---
+app.post('/api/esg-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, revenue, employees, currentInitiatives, stakeholders, regulatoryContext, goals } = req.body;
+  const p = `You are a world-class ESG strategist and sustainability expert. Create a comprehensive ESG strategy and sustainability roadmap.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Revenue: ${revenue || 'Unknown'}
+Employees: ${employees || 'Unknown'}
+Current Initiatives: ${currentInitiatives || 'None described'}
+Key Stakeholders: ${stakeholders || 'Unknown'}
+Regulatory Context: ${regulatoryContext || 'Unknown'}
+Goals: ${goals || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "ESG & Sustainability Strategy Report for [company]",
+  "executiveSummary": "3-sentence ESG posture and opportunity assessment",
+  "esgScore": <number 0-100>,
+  "maturityLevel": "Reactive|Developing|Systematic|Integrated|Leading",
+  "criticalGap": "most urgent ESG gap",
+  "primaryOpportunity": "biggest ESG value creation opportunity",
+  "estimatedImpact": "estimated annual value impact from ESG leadership",
+  "materialityAssessment": [
+    { "topic": "ESG topic", "pillar": "E/S/G", "stakeholderImportance": "High/Medium/Low", "businessImpact": "High/Medium/Low", "currentPerformance": "assessment", "priority": "Critical/High/Medium/Low" }
+  ],
+  "environmentalStrategy": {
+    "carbonFootprint": "current state assessment",
+    "netZeroTarget": "recommended target year",
+    "reductionPathway": ["initiative 1", "initiative 2", "initiative 3"],
+    "renewableEnergy": "strategy",
+    "circularEconomy": "approach",
+    "biodiversity": "impact and strategy",
+    "waterManagement": "strategy"
+  },
+  "socialStrategy": {
+    "dei": "diversity equity inclusion approach",
+    "humanCapital": "workforce development strategy",
+    "supplyChainLabor": "labor standards approach",
+    "communityImpact": "community investment strategy",
+    "customerWellbeing": "customer health/safety approach",
+    "humanRights": "human rights policy"
+  },
+  "governanceStrategy": {
+    "boardComposition": "board diversity and expertise recommendations",
+    "executiveCompensation": "ESG-linked comp approach",
+    "ethicsCompliance": "ethics program recommendations",
+    "stakeholderEngagement": "engagement approach",
+    "transparency": "disclosure and reporting approach",
+    "riskManagement": "ESG risk framework"
+  },
+  "reportingFramework": [
+    { "framework": "GRI/SASB/TCFD/UN SDG/CDP/etc", "relevance": "why this matters", "requiredDisclosures": ["disclosure 1"], "timeline": "when to implement", "effort": "High/Medium/Low" }
+  ],
+  "stakeholderStrategy": [
+    { "stakeholder": "stakeholder group", "esgConcerns": ["concern 1"], "engagementApproach": "how to engage", "keyActions": ["action 1"] }
+  ],
+  "implementationRoadmap": [
+    { "phase": "phase name", "timeline": "timeline", "focus": "E/S/G focus", "initiatives": ["initiative 1"], "investment": "cost estimate", "expectedOutcome": "outcome" }
+  ],
+  "esgMetrics": ["KPI 1", "KPI 2", "KPI 3", "KPI 4", "KPI 5"],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.39 AI Cybersecurity & Zero Trust Architecture Engine ---
 app.post('/api/cybersecurity', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
