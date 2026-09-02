@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.69 FAQ Generator ---
+app.post('/api/faq-gen', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { topic, audience, count, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Generate ${count || 10} frequently asked questions with detailed answers about "${topic}".
+Target audience: ${audience || 'general public'}
+Format each as: Q: [question]\nA: [comprehensive answer, 2-4 sentences]
+Cover beginner questions, common concerns, and practical how-tos. Return JSON: { faqs: [{ q: string, a: string }] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.68 Press Release Writer ---
 app.post('/api/press-release', requireAuth, async (req: AuthRequest, res) => {
   try {

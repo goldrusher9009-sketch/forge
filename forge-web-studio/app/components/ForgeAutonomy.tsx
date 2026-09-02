@@ -597,6 +597,43 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.69 FAQ Generator ---
+function FAQGenPanel({ api }: { api: string }) {
+  const [topic, setTopic] = React.useState('');
+  const [audience, setAudience] = React.useState('general public');
+  const [count, setCount] = React.useState('10');
+  const [faqs, setFaqs] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setFaqs([]);
+    try {
+      const r = await fetch(`${api}/api/faq-gen`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ topic, audience, count }) });
+      const d = await r.json();
+      setFaqs(d.faqs || []);
+    } catch(e: any) { setFaqs([{ q: e.message, a: '' }]); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>❓ FAQ Generator</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
+        <input placeholder="Topic or product" value={topic} onChange={e => setTopic(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Target audience" value={audience} onChange={e => setAudience(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <select value={count} onChange={e => setCount(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['5','10','15','20'].map(n => <option key={n} value={n}>{n} FAQs</option>)}
+        </select>
+        <button onClick={run} disabled={loading || !topic} style={{ padding: '10px 20px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Generating...' : 'Generate FAQs'}</button>
+      </div>
+      {faqs.map((f, i) => (
+        <div key={i} style={{ marginTop: 14, padding: 14, background: '#1a1a1a', borderRadius: 8 }}>
+          <p style={{ color: '#a78bfa', fontWeight: 700, marginBottom: 6 }}>Q: {f.q}</p>
+          <p style={{ color: '#e2e8f0' }}>A: {f.a}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // --- v8.68 Press Release Writer ---
 function PressReleasePanel({ api }: { api: string }) {
   const [headline, setHeadline] = React.useState('');
@@ -3949,7 +3986,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4012,6 +4049,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'igcaption', label: '📸 IG Caption' },
     { id: 'linkedinpost', label: '💼 LinkedIn Post' },
     { id: 'pressrelease', label: '📰 Press Release' },
+    { id: 'faqgen', label: '❓ FAQ Generator' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4117,6 +4155,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'igcaption' && <IGCaptionPanel api={api} />}
         {tab === 'linkedinpost' && <LinkedInPostPanel api={api} />}
         {tab === 'pressrelease' && <PressReleasePanel api={api} />}
+        {tab === 'faqgen' && <FAQGenPanel api={api} />}
       </div>
     </div>
   );
