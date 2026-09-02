@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.72 AI ESG & Sustainability Strategy Engine ---
+app.post('/api/esg-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, companySize, revenue, currentEsgScore, reportingFrameworks, emissionsData, supplyChainScope, diversityMetrics, governanceStructure, investorPressure, regulatoryRequirements, competitors, esgGoals, budget, timeline } = req.body;
+    const p = `You are a world-class ESG strategist and sustainability consultant. Create a comprehensive ESG & Sustainability Strategy for:
+Company: ${companyName}
+Industry: ${industry}
+Size: ${companySize}
+Revenue: ${revenue}
+Current ESG Score: ${currentEsgScore}
+Reporting Frameworks: ${reportingFrameworks}
+Emissions Data: ${emissionsData}
+Supply Chain Scope: ${supplyChainScope}
+Diversity Metrics: ${diversityMetrics}
+Governance Structure: ${governanceStructure}
+Investor Pressure: ${investorPressure}
+Regulatory Requirements: ${regulatoryRequirements}
+Competitors: ${competitors}
+ESG Goals: ${esgGoals}
+Budget: ${budget}
+Timeline: ${timeline}
+
+Return JSON: { reportTitle, executiveSummary, esgHealthScore (0-100), esgMaturityLevel ("Leader"|"Advanced"|"Developing"|"Laggard"), estimatedRatingImprovement, businessValueAtStake, materialityAssessment: { topics: [{ topic, stakeholderImportance ("High"|"Medium"|"Low"), businessImpact ("High"|"Medium"|"Low"), currentPerformance, targetPerformance, priority }] }, environmentalStrategy: { climateTargets: { netZeroTarget, scope1Target, scope2Target, scope3Target, interimMilestones: [] }, carbonReductionInitiatives: [{ initiative, estimatedReduction, investment, timeline, co2eReduction }], biodiversityActions: [], circularEconomyOpportunities: [], waterStewardship: [], wasteReduction: [] }, socialStrategy: { diversityTargets: [{ metric, current, target, timeline, actions: [] }], humanRightsFramework: [], supplyChainStandards: [], communityEngagement: [], employeeWellbeing: [], livingWageCommitment: string }, governanceStrategy: { boardDiversityTargets: [], executiveCompensationAlignment: [], antiCorruptionMeasures: [], taxTransparency: string, lobbyingDisclosure: string, whistleblowerProtection: [] }, reportingAndDisclosure: { frameworks: [{ framework, currentStatus, gapAnalysis: [], implementation: [] }], disclosureMateriality: [], investorEngagementPlan: [], ratingAgencyStrategy: [{ agency, currentScore, targetScore, keyActions: [] }] }, supplyChainESG: { riskHotspots: [], suppliersToEngage: [], auditProgram: [], preferredSourcingStandards: [] }, esgBusinessCase: { revenueOpportunities: [], costSavings: [], riskMitigation: [], accessToCapital: [], talentAttraction: [] }, implementationRoadmap: [{ phase, timeline, initiatives: [], investment, kpis: [], owner }], quickWins: [] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.71 AI Digital Transformation & Technology Strategy Engine ---
 app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
   try {
