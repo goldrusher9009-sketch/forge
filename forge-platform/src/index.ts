@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.25 Workforce Planning & Org Design ---
+app.post('/api/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, currentHeadcount, revenueTarget, growthStage, currentRoles, skillGaps, attritionRate, hiringBudget, timeHorizon, strategicPriorities, teamStructure } = req.body;
+  const userId = req.user!.id;
+  const anthropicKey = await getUserKey(userId, 'anthropic', true);
+  const openaiKey = await getUserKey(userId, 'openai', true);
+  const key = anthropicKey || openaiKey;
+  const provider = anthropicKey ? 'anthropic' : 'openai';
+  if (!key) return res.status(402).json({ error: 'API key required' });
+  const p = `You are a talent strategy and org design expert. Create a comprehensive workforce plan.
+Company: ${company||'B2B SaaS'} | Industry: ${industry||'Technology'} | Headcount: ${currentHeadcount||'50'}
+Revenue Target: ${revenueTarget||'$10M ARR'} | Growth Stage: ${growthStage||'Series A'} | Time Horizon: ${timeHorizon||'12 months'}
+Current Roles: ${currentRoles||'Engineering, Sales, CS'} | Skill Gaps: ${skillGaps||'Not specified'}
+Attrition Rate: ${attritionRate||'15%'} | Hiring Budget: ${hiringBudget||'Not specified'}
+Strategic Priorities: ${strategicPriorities||'Product expansion, Enterprise sales'} | Structure: ${teamStructure||'Functional'}
+Return ONLY valid JSON: { planTitle, executiveSummary, currentState: { headcount, departments: [{ name, count, gap }], keyRisks: [string] }, futureState: { targetHeadcount, newDepartments: [string], orgStructure }, hiringPlan: [{ role, department, priority, timeline, salaryRange, rationale }], skillGapAnalysis: [{ skill, currentLevel, targetLevel, bridgeStrategy }], retentionRisks: [{ role, riskLevel, factors: [string], mitigation }], successorPlan: [{ criticalRole, currentHolder, successor, readiness }], orgDesignOptions: [{ model, pros: [string], cons: [string], bestFor }], capacityModel: [{ quarter, headcount, cost, milestone }], diversityGoals: [{ metric, current, target, initiative }], compensationBands: [{ level, range, equity }], implementationRoadmap: [{ phase, actions: [string], timeline, owner }] }`;
+  try {
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.24 Brand Audit Report ---
 app.post('/api/brand-audit', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, targetAudience, currentTagline, brandValues, competitors, channels, foundedYear, recentFeedback, brandGoals, geography } = req.body;
