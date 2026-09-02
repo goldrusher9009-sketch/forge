@@ -597,6 +597,57 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.75 Blog Outline Generator ---
+function BlogOutlinePanel({ api }: { api: string }) {
+  const [topic, setTopic] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [keywords, setKeywords] = React.useState('');
+  const [tone, setTone] = React.useState('Informative');
+  const [length, setLength] = React.useState('1500 words');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult(null);
+    const r = await fetch(`${api}/api/blog-outline`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ topic, audience, keywords, tone, length }) });
+    const d = await r.json(); setResult(d); setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24, maxWidth: 700 }}>
+      <h2>📝 Blog Outline Generator</h2>
+      <input placeholder="Blog topic" value={topic} onChange={e => setTopic(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <input placeholder="Target audience" value={audience} onChange={e => setAudience(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <input placeholder="Keywords (comma-separated)" value={keywords} onChange={e => setKeywords(e.target.value)} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <select value={tone} onChange={e => setTone(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['Informative','Conversational','Professional','Persuasive','Humorous'].map(t => <option key={t}>{t}</option>)}
+        </select>
+        <select value={length} onChange={e => setLength(e.target.value)} style={{ flex: 1, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['800 words','1500 words','2500 words','4000 words'].map(l => <option key={l}>{l}</option>)}
+        </select>
+      </div>
+      <button onClick={run} disabled={loading || !topic} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Generating...' : 'Generate Outline'}</button>
+      {result && !result.error && (
+        <div style={{ marginTop: 20 }}>
+          <h3 style={{ color: '#a78bfa' }}>{result.title}</h3>
+          <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 4 }}>{result.metaDescription}</p>
+          <p style={{ color: '#64748b', fontSize: 12, marginBottom: 16 }}>Est. read time: {result.estimatedReadTime}</p>
+          {(result.sections || []).map((s: any, i: number) => (
+            <div key={i} style={{ background: '#1e1e2e', borderRadius: 8, padding: 12, marginBottom: 10 }}>
+              <div style={{ fontWeight: 700, color: '#e2e8f0', marginBottom: 6 }}>H2: {s.heading} <span style={{ color: '#64748b', fontSize: 12, fontWeight: 400 }}>~{s.wordCount} words</span></div>
+              {(s.subheadings || []).map((sub: string, j: number) => <div key={j} style={{ color: '#94a3b8', fontSize: 13, marginLeft: 12, marginBottom: 2 }}>• H3: {sub}</div>)}
+              {(s.keyPoints || []).map((kp: string, j: number) => <div key={j} style={{ color: '#64748b', fontSize: 12, marginLeft: 12 }}>→ {kp}</div>)}
+            </div>
+          ))}
+          <div style={{ background: '#1e2a1e', borderRadius: 8, padding: 12 }}>
+            <span style={{ color: '#4ade80', fontWeight: 600 }}>CTA: </span><span style={{ color: '#e2e8f0' }}>{result.callToAction}</span>
+          </div>
+        </div>
+      )}
+      {result?.error && <p style={{ color: '#f87171', marginTop: 12 }}>{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v8.74 Social Media Audit ---
 function SocialAuditPanel({ api }: { api: string }) {
   const [handle, setHandle] = React.useState('');
@@ -4172,7 +4223,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4241,6 +4292,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'whitepaper', label: '📄 White Paper' },
     { id: 'webinarscript', label: '🎤 Webinar Script' },
     { id: 'socialaudit', label: '📊 Social Audit' },
+    { id: 'blogoutline', label: '📝 Blog Outline' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4352,6 +4404,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'whitepaper' && <WhitePaperPanel api={api} />}
         {tab === 'webinarscript' && <WebinarScriptPanel api={api} />}
         {tab === 'socialaudit' && <SocialAuditPanel api={api} />}
+        {tab === 'blogoutline' && <BlogOutlinePanel api={api} />}
       </div>
     </div>
   );

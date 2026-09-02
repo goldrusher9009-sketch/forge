@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.75 Blog Outline Generator ---
+app.post('/api/blog-outline', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { topic, audience, keywords, tone, length, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a detailed blog post outline for the topic: "${topic || 'AI in business'}".
+Target audience: ${audience || 'general professionals'}
+Keywords to include: ${keywords || 'none specified'}
+Tone: ${tone || 'informative and engaging'}
+Target length: ${length || '1500 words'}
+Return JSON: { title: string, metaDescription: string, sections: [{ heading: string, subheadings: string[], keyPoints: string[], wordCount: number }], callToAction: string, estimatedReadTime: string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.74 Social Media Audit ---
 app.post('/api/social-audit', requireAuth, async (req: AuthRequest, res) => {
   try {
