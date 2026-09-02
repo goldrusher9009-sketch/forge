@@ -39295,6 +39295,26 @@ app.post('/api/api-docs', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.53 Changelog Generator — generate changelogs from commit messages or feature lists
+app.post('/api/changelog', requireAuth, async (req: any, res: any) => {
+  try {
+    const { commits, version, product } = req.body;
+    if (!commits || commits.trim().length < 10) return res.status(400).json({ error: 'commits or changes required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a technical writer. Generate a polished changelog from these commits/changes:\nProduct: ${product||'App'}\nVersion: ${version||'1.0.0'}\nChanges: ${commits.slice(0,1500)}\n\nReturn ONLY JSON:\n{"version":"${version||'1.0.0'}","release_date":"${new Date().toISOString().split('T')[0]}","product":"${product||'App'}","summary":"One sentence release summary","highlights":["Top highlight 1","Top highlight 2"],"sections":{"added":[{"title":"Feature name","description":"What it does and why it matters"}],"improved":[{"title":"Improvement","description":"What changed"}],"fixed":[{"title":"Bug fix","description":"What was fixed"}],"removed":[]},"breaking_changes":[],"upgrade_notes":"Any notes for upgrading","markdown":"# Changelog\\n\\n## v${version||'1.0.0'} - ${new Date().toISOString().split('T')[0]}\\n\\n### Added\\n- Feature here\\n\\n### Fixed\\n- Fix here"}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

@@ -597,6 +597,105 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.53 Changelog Generator ---
+function ChangelogPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ commits: '', version: '', product: '' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [showMd, setShowMd] = useState(false);
+
+  const generate = async () => {
+    if (!form.commits.trim()) return;
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api.base}/api/changelog`, {
+        method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      setResult(d);
+    } catch(e: any) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const copy = (text: string) => navigator.clipboard.writeText(text).catch(() => {});
+
+  return (
+    <div>
+      <h3 style={{ color: '#e2e8f0', marginBottom: 8 }}>📝 Changelog Generator</h3>
+      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Generate polished changelogs from commit messages or feature lists.</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <input value={form.product} onChange={e => setForm(f => ({...f, product: e.target.value}))} placeholder="Product name"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+        <input value={form.version} onChange={e => setForm(f => ({...f, version: e.target.value}))} placeholder="Version (e.g. 2.1.0)"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+      </div>
+      <textarea value={form.commits} onChange={e => setForm(f => ({...f, commits: e.target.value}))}
+        placeholder="Paste commit messages or feature list, e.g.:\nfeat: add dark mode\nfix: login crash on iOS\nchore: upgrade dependencies\nfeat: new dashboard analytics" rows={5}
+        style={{ width: '100%', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: 10, fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+      <button onClick={generate} disabled={loading || !form.commits.trim()}
+        style={{ background: '#475569', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Generating...' : 'Generate Changelog'}
+      </button>
+      {err && <p style={{ color: '#f87171', marginTop: 8 }}>{err}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ background: '#1e293b', borderRadius: 8, padding: 12, marginBottom: 12, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h4 style={{ color: '#e2e8f0' }}>{result.product} v{result.version} <span style={{ color: '#64748b', fontSize: 12 }}>· {result.release_date}</span></h4>
+              <p style={{ color: '#94a3b8', fontSize: 13 }}>{result.summary}</p>
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setShowMd(!showMd)} style={{ background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>
+                {showMd ? 'Preview' : 'Markdown'}
+              </button>
+              {result.markdown && <button onClick={() => copy(result.markdown)} style={{ background: '#334155', color: '#e2e8f0', border: 'none', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', fontSize: 12 }}>Copy</button>}
+            </div>
+          </div>
+          {showMd ? (
+            <pre style={{ background: '#0f172a', color: '#e2e8f0', borderRadius: 6, padding: 12, fontSize: 12, overflow: 'auto', maxHeight: 400 }}>{result.markdown}</pre>
+          ) : (
+            <>
+              {result.highlights?.length > 0 && (
+                <div style={{ background: '#1a2744', border: '1px solid #1d4ed8', borderRadius: 6, padding: 10, marginBottom: 10 }}>
+                  <div style={{ color: '#93c5fd', fontSize: 12, marginBottom: 6 }}>⭐ Highlights</div>
+                  {result.highlights.map((h: string, i: number) => <p key={i} style={{ color: '#bfdbfe', fontSize: 13, margin: '2px 0' }}>• {h}</p>)}
+                </div>
+              )}
+              {['added', 'improved', 'fixed', 'removed'].map(section => {
+                const items = result.sections?.[section];
+                if (!items?.length) return null;
+                const colors: Record<string,string> = { added: '#22c55e', improved: '#3b82f6', fixed: '#f59e0b', removed: '#ef4444' };
+                const icons: Record<string,string> = { added: '✨', improved: '⚡', fixed: '🐛', removed: '🗑️' };
+                return (
+                  <div key={section} style={{ marginBottom: 10 }}>
+                    <div style={{ color: colors[section], fontSize: 12, fontWeight: 700, marginBottom: 6, textTransform: 'uppercase' }}>{icons[section]} {section}</div>
+                    {items.map((item: any, i: number) => (
+                      <div key={i} style={{ background: '#1e293b', borderRadius: 4, padding: '6px 10px', marginBottom: 4, borderLeft: `2px solid ${colors[section]}` }}>
+                        <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 600 }}>{item.title}</div>
+                        <div style={{ color: '#94a3b8', fontSize: 12 }}>{item.description}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+              {result.breaking_changes?.length > 0 && (
+                <div style={{ background: '#2d1b1b', border: '1px solid #7f1d1d', borderRadius: 6, padding: 10, marginBottom: 8 }}>
+                  <div style={{ color: '#fca5a5', fontSize: 12, fontWeight: 700, marginBottom: 4 }}>⚠️ Breaking Changes</div>
+                  {result.breaking_changes.map((b: string, i: number) => <p key={i} style={{ color: '#f87171', fontSize: 12 }}>• {b}</p>)}
+                </div>
+              )}
+              {result.upgrade_notes && <p style={{ color: '#64748b', fontSize: 12 }}>📦 Upgrade notes: {result.upgrade_notes}</p>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.52 API Docs Generator ---
 function ApiDocsPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ title: '', baseUrl: '', endpoints: '' });
@@ -2912,7 +3011,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2959,6 +3058,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'okr', label: '🎯 OKRs' },
     { id: 'userstories', label: '📋 Stories' },
     { id: 'apidocs', label: '📖 API Docs' },
+    { id: 'changelog', label: '📝 Changelog' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3048,6 +3148,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'okr' && <OKRPanel api={api} />}
         {tab === 'userstories' && <UserStoriesPanel api={api} />}
         {tab === 'apidocs' && <ApiDocsPanel api={api} />}
+        {tab === 'changelog' && <ChangelogPanel api={api} />}
       </div>
     </div>
   );
