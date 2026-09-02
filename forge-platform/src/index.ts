@@ -39500,6 +39500,49 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.64 AI Product Launch Command Center ---
+app.post('/api/product-launch-command', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { productName, company, targetMarket, launchDate, budget, competitors, keyFeatures, currentStage } = req.body;
+    const p = `You are a product launch strategy expert. Generate a comprehensive product launch command center plan.
+Product: ${productName || 'New Product'}
+Company: ${company || 'Our Company'}
+Target Market: ${targetMarket || 'B2B SaaS companies'}
+Launch Date: ${launchDate || 'Q2 2026'}
+Budget: ${budget || '$100K'}
+Competitors: ${competitors || 'Established players'}
+Key Features: ${keyFeatures || 'AI-powered, easy integration, enterprise-grade'}
+Current Stage: ${currentStage || 'Beta testing'}
+
+Return JSON only:
+{
+  "launchTitle": "string",
+  "executiveSummary": "string",
+  "launchReadinessScore": 0-100,
+  "launchRisk": "Low|Moderate|High|Critical",
+  "launchStrategy": { "positioning": "string", "uniqueValueProp": "string", "targetPersonas": ["string"], "messagingHierarchy": ["string"] },
+  "prelaunchChecklist": [{ "category": "string", "items": [{ "task": "string", "status": "Complete|In Progress|Not Started", "owner": "string", "dueDate": "string" }] }],
+  "goToMarketPlan": [{ "phase": "string", "duration": "string", "activities": ["string"], "goals": ["string"], "budget": "string" }],
+  "channelStrategy": [{ "channel": "string", "priority": "Primary|Secondary|Tertiary", "tactics": ["string"], "expectedReach": "string", "budget": "string" }],
+  "contentCalendar": [{ "week": "string", "theme": "string", "content": ["string"], "channels": ["string"] }],
+  "prStrategy": { "angles": ["string"], "targetPublications": ["string"], "pressReleaseTiming": "string", "keyMessages": ["string"] },
+  "successMetrics": [{ "metric": "string", "baseline": "string", "target": "string", "timeline": "string" }],
+  "riskMitigation": [{ "risk": "string", "probability": "High|Medium|Low", "contingency": "string" }],
+  "budgetBreakdown": [{ "category": "string", "amount": "string", "percentage": "string" }],
+  "postLaunchPlan": { "week1": "string", "month1": "string", "quarter1": "string", "pivotTriggers": ["string"] },
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.63 AI Sales Forecasting & Pipeline Intelligence ---
 app.post('/api/sales-forecast', requireAuth, async (req: AuthRequest, res) => {
   try {
