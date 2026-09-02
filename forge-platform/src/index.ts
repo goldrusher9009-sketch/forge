@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.20 Market Sizing & TAM Analysis ---
+app.post('/api/market-sizing', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, product, targetMarket, geography, customerSegments, competitors, pricingModel, currentRevenue, growthRate, timeHorizon } = req.body;
+  const userId = req.user!.id;
+  const anthropicKey = await getUserKey(userId, 'anthropic', true);
+  const openaiKey = await getUserKey(userId, 'openai', true);
+  const key = anthropicKey || openaiKey;
+  const provider = anthropicKey ? 'anthropic' : 'openai';
+  if (!key) return res.status(402).json({ error: 'API key required' });
+  const p = `You are a top-tier market research analyst. Produce a rigorous market sizing and TAM/SAM/SOM report.
+Company: ${company||'Startup'} | Industry: ${industry||'Technology'} | Product: ${product||'SaaS'}
+Target Market: ${targetMarket||'SMBs'} | Geography: ${geography||'North America'} | Segments: ${customerSegments||'Not specified'}
+Competitors: ${competitors||'Not specified'} | Pricing: ${pricingModel||'Subscription'} | Current Revenue: ${currentRevenue||'Pre-revenue'}
+Growth Rate: ${growthRate||'Unknown'} | Time Horizon: ${timeHorizon||'5 years'}
+Return ONLY valid JSON: { reportTitle, executiveSummary, tamAnalysis: { size, methodology, keyAssumptions, sources }, samAnalysis: { size, rationale, targetability }, somAnalysis: { year1, year3, year5, captureStrategy }, marketSegments: [{ name, size, growth, attractiveness, yourFit }], competitiveLandscape: { totalPlayers, marketConcentration, topCompetitors: [{ name, share, strengths }] }, growthDrivers: [string], barriers: [{ type, description, mitigation }], customerPersonas: [{ name, description, size, willingnessToPay }], revenueScenarios: [{ label, revenue, share, assumptions }], marketShare: { realistic, optimistic, conservative }, keyAssumptions: [string], dataQuality: { rating, gaps, recommendations }, strategicRecommendations: [{ priority, action, rationale }] }`;
+  try {
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.19 Due Diligence Report Generator ---
 app.post('/api/due-diligence', requireAuth, async (req: AuthRequest, res) => {
   const { targetCompany, acquirer, dealType, industry, targetRevenue, targetEbitda, employeeCount, foundedYear, businessModel, keyProducts, topCustomers, keyRisks, growthRate, debtLevel, requestedValuation, ddFocus, provider = 'anthropic' } = req.body;

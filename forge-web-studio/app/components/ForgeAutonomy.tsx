@@ -597,6 +597,75 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.20 Market Sizing & TAM Analysis ---
+const ATTRACT_COLOR: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-red-400','Very High':'text-emerald-400' };
+const SCENARIO_COLOR: Record<string,string> = { 'Conservative':'text-blue-400','Realistic':'text-green-400','Optimistic':'text-purple-400' };
+function MarketSizingPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', product:'', targetMarket:'', geography:'', customerSegments:'', competitors:'', pricingModel:'', currentRevenue:'', growthRate:'', timeHorizon:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/market-sizing`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">📊 Market Sizing & TAM Analysis</h2><p className="text-gray-400 text-sm mt-1">TAM / SAM / SOM breakdown with competitive landscape and revenue scenarios</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme Inc')} {F('Industry','industry','SaaS / FinTech / Healthcare...')}
+            {F('Product / Service','product','B2B analytics platform')} {F('Target Market','targetMarket','SMBs, Enterprise, Consumers...')}
+            {F('Geography','geography','North America / Global...')} {F('Customer Segments','customerSegments','CFOs, HR teams, Developers...')}
+            {F('Key Competitors','competitors','Salesforce, HubSpot...')} {F('Pricing Model','pricingModel','Subscription / Usage / Freemium...')}
+            {F('Current Revenue','currentRevenue','Pre-revenue / $500K ARR...')} {F('Historical Growth Rate','growthRate','30% YoY / Unknown')}
+            {F('Time Horizon','timeHorizon','5 years')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Analyzing market...' : 'Generate Market Sizing Report'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.reportTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Analysis</button></div>
+          {/* TAM / SAM / SOM */}
+          <div className="grid grid-cols-3 gap-4">
+            {[['TAM','tamAnalysis','bg-blue-900/40'],['SAM','samAnalysis','bg-purple-900/40'],['SOM','somAnalysis','bg-green-900/40']].map(([label,key,bg])=>(
+              <div key={label} className={`${bg} rounded-xl p-4`}>
+                <p className="text-gray-400 text-xs mb-1">{label}</p>
+                <p className="text-white text-xl font-bold">{result[key]?.size || result[key]?.year3 || '—'}</p>
+                <p className="text-gray-300 text-xs mt-2">{result[key]?.rationale || result[key]?.methodology || result[key]?.captureStrategy || ''}</p>
+              </div>
+            ))}
+          </div>
+          {/* Market Segments */}
+          {result.marketSegments?.length > 0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Market Segments</h4><div className="space-y-2">{result.marketSegments.map((s:any,i:number)=><div key={i} className="flex items-center justify-between bg-gray-700/50 rounded-lg px-3 py-2"><div><p className="text-white text-sm font-medium">{s.name}</p><p className="text-gray-400 text-xs">{s.size} · {s.growth} growth</p></div><div className="flex gap-3 text-xs"><span className={ATTRACT_COLOR[s.attractiveness]||'text-gray-400'}>{s.attractiveness}</span><span className="text-blue-300">{s.yourFit}</span></div></div>)}</div></div>}
+          {/* Revenue Scenarios */}
+          {result.revenueScenarios?.length > 0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Revenue Scenarios</h4><div className="grid grid-cols-3 gap-3">{result.revenueScenarios.map((s:any,i:number)=><div key={i} className="bg-gray-700/50 rounded-lg p-3"><p className={`text-sm font-semibold ${SCENARIO_COLOR[s.label]||'text-white'}`}>{s.label}</p><p className="text-white text-lg font-bold mt-1">{s.revenue}</p><p className="text-gray-400 text-xs mt-1">{s.share} market share</p><p className="text-gray-500 text-xs mt-1">{s.assumptions}</p></div>)}</div></div>}
+          {/* Competitive Landscape */}
+          {result.competitiveLandscape && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Competitive Landscape — {result.competitiveLandscape.marketConcentration}</h4><div className="space-y-2">{(result.competitiveLandscape.topCompetitors||[]).map((c:any,i:number)=><div key={i} className="flex items-center gap-3 bg-gray-700/40 rounded-lg px-3 py-2"><span className="text-gray-400 text-xs w-4">{i+1}</span><div className="flex-1"><p className="text-white text-sm">{c.name}</p><p className="text-gray-400 text-xs">{c.strengths}</p></div><span className="text-blue-300 text-sm font-semibold">{c.share}</span></div>)}</div></div>}
+          {/* Growth Drivers & Barriers */}
+          <div className="grid grid-cols-2 gap-4">
+            {result.growthDrivers?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Growth Drivers</h4><ul className="space-y-1">{result.growthDrivers.map((d:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">↑</span>{d}</li>)}</ul></div>}
+            {result.barriers?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Barriers</h4><ul className="space-y-2">{result.barriers.map((b:any,i:number)=><li key={i}><p className="text-gray-300 text-sm">{b.type}: {b.description}</p><p className="text-gray-500 text-xs">{b.mitigation}</p></li>)}</ul></div>}
+          </div>
+          {/* Recommendations */}
+          {result.strategicRecommendations?.length > 0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Strategic Recommendations</h4><div className="space-y-3">{result.strategicRecommendations.map((r:any,i:number)=><div key={i} className="bg-blue-900/30 rounded-lg p-3"><div className="flex items-center gap-2 mb-1"><span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded">{r.priority}</span><p className="text-white text-sm font-medium">{r.action}</p></div><p className="text-gray-400 text-xs">{r.rationale}</p></div>)}</div></div>}
+          {/* Data Quality */}
+          {result.dataQuality && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-2">Data Quality: <span className="text-yellow-400">{result.dataQuality.rating}</span></h4><p className="text-gray-400 text-xs">{result.dataQuality.gaps}</p><p className="text-gray-500 text-xs mt-1">{result.dataQuality.recommendations}</p></div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.19 Due Diligence Report Generator ---
 const DD_SEV: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400','Low':'text-green-400' };
 const DD_STATUS: Record<string,string> = { 'Clean':'bg-green-800','Flagged':'bg-red-800','In Progress':'bg-yellow-800','Pending':'bg-gray-700' };
@@ -8611,7 +8680,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8709,6 +8778,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'marketsizing', label: '📊 Market Sizing' },
     { id: 'innovationsprint', label: '💡 Innovation Sprint' },
     { id: 'negotiationcoach', label: '🤝 Negotiation Coach' },
     { id: 'execcoaching', label: '🎯 Executive Coaching' },
@@ -8865,6 +8935,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'marketsizing' && <MarketSizingPanel api={api} />}
         {tab === 'innovationsprint' && <InnovationSprintPanel api={api} />}
         {tab === 'negotiationcoach' && <NegotiationCoachPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
