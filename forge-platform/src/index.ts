@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.73 AI Organizational Culture & Transformation ---
+app.post('/api/culture-transform', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { companySize, industry, currentCulture, desiredCulture, transformationGoal, keyChallenge, timeframe } = req.body;
+    const p = `You are an organizational transformation expert. Analyze culture for: Company Size: ${companySize}, Industry: ${industry}, Current Culture: ${currentCulture}, Desired Culture: ${desiredCulture}, Goal: ${transformationGoal}, Challenge: ${keyChallenge}, Timeframe: ${timeframe}. Return JSON: { transformTitle, executiveSummary, cultureHealthScore (0-100), transformationComplexity ("Low"|"Medium"|"High"|"Very High"), currentCultureArchetype ("Hierarchical"|"Clan"|"Adhocracy"|"Market"|"Innovative"|"Bureaucratic"), targetCultureArchetype (same options), cultureGapAnalysis, leadershipAlignment, changeResistanceMap (array of {stakeholderGroup, resistanceLevel, concerns, engagementStrategy}), communicationPlan, ritualDesign, symbolsAndNarratives, measurementFramework, quickWins (array of strings), phaseRoadmap (array of {phase, duration, focus, keyActions}) }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.72 AI Pricing Intelligence & Revenue Optimization ---
 app.post('/api/pricing-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
