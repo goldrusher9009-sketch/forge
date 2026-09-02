@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.33 Data Strategy & Analytics Roadmap ---
+app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, currentDataSources, currentTools, dataTeamSize, maturityLevel, businessGoals, painPoints, budget, timeHorizon, keyDecisionMakers } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Chief Data Officer and analytics strategy expert. Generate a comprehensive data strategy and analytics roadmap for:
+Company: ${company}, Industry: ${industry}, Size: ${companySize}
+Current Data Sources: ${currentDataSources}, Tools: ${currentTools}
+Data Team Size: ${dataTeamSize}, Maturity Level: ${maturityLevel}
+Business Goals: ${businessGoals}, Pain Points: ${painPoints}
+Budget: ${budget}, Time Horizon: ${timeHorizon}
+Key Decision Makers: ${keyDecisionMakers}
+
+Return JSON: { strategyTitle, executiveSummary, currentStateAssessment: { maturityScore, strengths, gaps, quickWins }, vision: { northStar, keyPrinciples, dataCulture }, dataArchitecture: { currentState, targetState, components: [{ layer, currentTool, recommendedTool, rationale, cost }] }, analyticsCapabilities: [{ capability, currentLevel, targetLevel, priority, timeline, owner }], kpiFramework: [{ domain, kpis: [{ name, definition, formula, target, owner }] }], dataGovernance: { policies: [{ policy, description, owner, timeline }], dataQualityDimensions, stewardship }, implementationRoadmap: { phases: [{ phase, name, duration, initiatives: [{ name, description, outcome, effort, cost }], milestones }] }, teamAndSkills: { currentGaps, hiringPlan: [{ role, priority, skills }], training: [{ skill, audience, approach }] }, toolingRecommendations: [{ category, current, recommended, rationale, priority, cost }], successMetrics: [{ metric, current, target, timeline }], investmentSummary: { totalBudget, breakdown: [{ category, amount, roi }] }, changeManagement: { stakeholders, communicationPlan, trainingPlan, adoptionMetrics } }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.32 PRD Generator ---
 app.post('/api/prd-generator', requireAuth, async (req: AuthRequest, res) => {
   const { productName, company, industry, problemStatement, targetUsers, userStories, currentSolution, proposedSolution, outOfScope, successMetrics, technicalConstraints, timeline, stakeholders, priority } = req.body;
