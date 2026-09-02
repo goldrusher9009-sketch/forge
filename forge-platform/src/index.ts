@@ -39500,6 +39500,76 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.08 AI Operations Excellence & Process Optimization Engine ---
+app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { orgDescription, industryType, teamSize, currentChallenges, keyProcesses, techStack, complianceRequirements, growthStage } = req.body;
+  const p = `You are a world-class operations excellence consultant with expertise in lean, six sigma, and digital transformation. Analyze this organization and generate a comprehensive operations optimization plan.
+
+Organization: ${orgDescription || 'B2B SaaS company'}
+Industry: ${industryType || 'Technology'}
+Team Size: ${teamSize || '50-200'}
+Challenges: ${currentChallenges || 'scaling operations, efficiency gaps'}
+Key Processes: ${keyProcesses || 'sales, delivery, support, finance'}
+Tech Stack: ${techStack || 'standard SaaS tools'}
+Compliance: ${complianceRequirements || 'SOC2, GDPR'}
+Growth Stage: ${growthStage || 'scale-up'}
+
+Return a JSON object with this exact structure:
+{
+  "planTitle": "string",
+  "executiveSummary": "string",
+  "opsMaturityScore": number 0-100,
+  "efficiencyGrade": "A|B|C|D|F",
+  "operationalHealth": {
+    "strengths": ["string"],
+    "criticalGaps": ["string"],
+    "quickestWins": ["string"],
+    "transformationPriority": "string"
+  },
+  "processAudit": [
+    { "process": "string", "currentState": "string", "painPoints": ["string"], "efficiency": number 0-100, "automationPotential": "High|Medium|Low", "priority": "Critical|High|Medium|Low" }
+  ],
+  "automationOpportunities": [
+    { "opportunity": "string", "process": "string", "tool": "string", "timeSavingsHours": number, "implementationEffort": "Low|Medium|High", "roi": "string", "complexity": "string" }
+  ],
+  "opsPlaybooks": [
+    { "playbook": "string", "scope": "string", "steps": ["string"], "kpis": ["string"], "owner": "string", "frequency": "string" }
+  ],
+  "technologyRoadmap": [
+    { "tool": "string", "category": "string", "purpose": "string", "priority": "string", "estimatedCost": "string", "integrations": ["string"] }
+  ],
+  "teamStructure": {
+    "currentGaps": ["string"],
+    "recommendedHires": [{ "role": "string", "priority": "string", "impact": "string" }],
+    "restructuringOpportunities": ["string"],
+    "crossFunctionalInitiatives": ["string"]
+  },
+  "complianceRoadmap": [
+    { "requirement": "string", "currentStatus": "string", "gapAnalysis": "string", "remediationSteps": ["string"], "deadline": "string" }
+  ],
+  "costOptimization": [
+    { "area": "string", "currentSpend": "string", "optimizationStrategy": "string", "projectedSavings": "string", "timeframe": "string" }
+  ],
+  "kpiFramework": [
+    { "kpi": "string", "category": "string", "currentBaseline": "string", "target": "string", "measurement": "string", "frequency": "string" }
+  ],
+  "implementationRoadmap": [
+    { "phase": "string", "timeframe": "string", "initiatives": ["string"], "resources": "string", "expectedOutcome": "string" }
+  ],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.07 AI Sales Intelligence & Revenue Acceleration Engine ---
 app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
