@@ -597,6 +597,108 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.50 OKR Generator ---
+function OKRPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ goal: '', timeframe: 'Q1 2025', team: '' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [expanded, setExpanded] = useState<number|null>(0);
+
+  const generate = async () => {
+    if (!form.goal.trim()) return;
+    setLoading(true); setErr(''); setResult(null); setExpanded(0);
+    try {
+      const r = await fetch(`${api.base}/api/okr-generate`, {
+        method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      setResult(d);
+    } catch(e: any) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const confColor = (c: number) => c >= 70 ? '#22c55e' : c >= 40 ? '#f59e0b' : '#ef4444';
+
+  return (
+    <div>
+      <h3 style={{ color: '#e2e8f0', marginBottom: 8 }}>🎯 OKR Generator</h3>
+      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Generate Objectives and Key Results for any goal.</p>
+      <textarea value={form.goal} onChange={e => setForm(f => ({...f, goal: e.target.value}))}
+        placeholder="Describe your high-level goal..." rows={3}
+        style={{ width: '100%', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: 10, fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <input value={form.timeframe} onChange={e => setForm(f => ({...f, timeframe: e.target.value}))} placeholder="Timeframe (Q1 2025)"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+        <input value={form.team} onChange={e => setForm(f => ({...f, team: e.target.value}))} placeholder="Team (optional)"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+      </div>
+      <button onClick={generate} disabled={loading || !form.goal.trim()}
+        style={{ background: '#0891b2', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Generating...' : 'Generate OKRs'}
+      </button>
+      {err && <p style={{ color: '#f87171', marginTop: 8 }}>{err}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          {result.north_star && (
+            <div style={{ background: '#0c4a6e', border: '1px solid #0369a1', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+              <div style={{ color: '#7dd3fc', fontSize: 11 }}>⭐ NORTH STAR METRIC</div>
+              <p style={{ color: '#e0f2fe', fontWeight: 600, fontSize: 14, marginTop: 4 }}>{result.north_star}</p>
+            </div>
+          )}
+          {result.objectives?.map((obj: any, i: number) => (
+            <div key={i} style={{ background: '#1e293b', borderRadius: 8, marginBottom: 10, overflow: 'hidden' }}>
+              <div onClick={() => setExpanded(expanded === i ? null : i)}
+                style={{ padding: '10px 14px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ color: '#0891b2', fontSize: 11, fontWeight: 700 }}>O{obj.id} · {obj.owner}</span>
+                  <p style={{ color: '#e2e8f0', fontWeight: 600, margin: '2px 0 0' }}>{obj.objective}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ color: confColor(obj.confidence), fontSize: 12, fontWeight: 700 }}>{obj.confidence}%</div>
+                  <div style={{ color: '#64748b', fontSize: 10 }}>confidence</div>
+                </div>
+              </div>
+              {expanded === i && (
+                <div style={{ padding: '0 14px 14px', borderTop: '1px solid #334155' }}>
+                  {obj.key_results?.map((kr: any) => (
+                    <div key={kr.id} style={{ marginTop: 10, background: '#0f172a', borderRadius: 6, padding: 10, borderLeft: '3px solid #0891b2' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ color: '#38bdf8', fontSize: 11, fontWeight: 600 }}>KR {kr.id}</span>
+                        <span style={{ color: '#64748b', fontSize: 11 }}>{kr.metric}</span>
+                      </div>
+                      <p style={{ color: '#e2e8f0', fontSize: 13 }}>{kr.kr}</p>
+                      <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 11 }}>
+                        <span style={{ color: '#94a3b8' }}>From: <strong style={{ color: '#f87171' }}>{kr.baseline}</strong></span>
+                        <span style={{ color: '#94a3b8' }}>→ To: <strong style={{ color: '#22c55e' }}>{kr.target}</strong></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+          {result.initiatives && (
+            <div style={{ background: '#1e293b', borderRadius: 6, padding: 10, marginBottom: 8 }}>
+              <div style={{ color: '#94a3b8', fontSize: 12, marginBottom: 6 }}>⚡ Key Initiatives</div>
+              {result.initiatives.map((ini: string, i: number) => <p key={i} style={{ color: '#e2e8f0', fontSize: 12, margin: '2px 0' }}>• {ini}</p>)}
+            </div>
+          )}
+          {result.anti_goals && (
+            <div style={{ background: '#1e293b', borderRadius: 6, padding: 10 }}>
+              <div style={{ color: '#f59e0b', fontSize: 12, marginBottom: 6 }}>🚫 Anti-Goals (what we won't do)</div>
+              {result.anti_goals.map((ag: string, i: number) => <p key={i} style={{ color: '#94a3b8', fontSize: 12, margin: '2px 0' }}>• {ag}</p>)}
+              {result.check_in_cadence && <p style={{ color: '#64748b', fontSize: 11, marginTop: 8 }}>📅 Check-in: {result.check_in_cadence}</p>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.49 Pitch Deck Builder ---
 function PitchDeckPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ startup: '', problem: '', solution: '', market: '', traction: '', ask: '' });
@@ -2607,7 +2709,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2651,6 +2753,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'decision', label: '⚖️ Decide' },
     { id: 'risk', label: '⚠️ Risks' },
     { id: 'pitch', label: '🚀 Pitch Deck' },
+    { id: 'okr', label: '🎯 OKRs' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2737,6 +2840,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'decision' && <DecisionMatrixPanel api={api} />}
         {tab === 'risk' && <RiskAnalyzerPanel api={api} />}
         {tab === 'pitch' && <PitchDeckPanel api={api} />}
+        {tab === 'okr' && <OKRPanel api={api} />}
       </div>
     </div>
   );

@@ -39235,6 +39235,26 @@ app.post('/api/pitch-deck', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.50 OKR Generator — generate Objectives and Key Results for any goal
+app.post('/api/okr-generate', requireAuth, async (req: any, res: any) => {
+  try {
+    const { goal, timeframe, team } = req.body;
+    if (!goal || goal.trim().length < 10) return res.status(400).json({ error: 'goal required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are an OKR expert. Generate OKRs for: "${goal.slice(0,500)}"\nTimeframe: ${timeframe||'Q1'}, Team: ${team||'not specified'}\n\nReturn ONLY JSON:\n{"objectives":[{"id":1,"objective":"Ambitious qualitative goal statement","key_results":[{"id":"1.1","kr":"Specific measurable result","baseline":"current state","target":"desired state","metric":"unit of measurement"},{"id":"1.2","kr":"Another KR","baseline":"0","target":"100","metric":"count"}],"confidence":75,"owner":"suggested owner role"},{"id":2,"objective":"Second objective","key_results":[{"id":"2.1","kr":"KR for obj 2","baseline":"current","target":"goal","metric":"metric"}],"confidence":60,"owner":"role"}],"north_star":"The single most important metric","initiatives":["key initiative to drive OKRs","another initiative"],"anti_goals":["what we are NOT trying to do","another non-goal"],"check_in_cadence":"recommended cadence for OKR reviews"}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1200 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, goal: goal.slice(0,200), timeframe: timeframe||'Q1', ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
