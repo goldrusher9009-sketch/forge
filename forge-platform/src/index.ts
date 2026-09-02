@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.39 Corporate Innovation Lab Designer ---
+app.post('/api/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, innovationBudget, currentInitiatives, leadership, strategicGoals, innovationChallenges, techFocus, partnershipModel, successMetrics, timeHorizon, labType } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Corporate Innovation strategist and lab design expert. Generate a comprehensive Corporate Innovation Lab design for:
+Company: ${company}, Industry: ${industry}, Size: ${companySize}
+Budget: ${innovationBudget}, Lab Type: ${labType}
+Current Initiatives: ${currentInitiatives}, Leadership: ${leadership}
+Strategic Goals: ${strategicGoals}, Challenges: ${innovationChallenges}
+Tech Focus: ${techFocus}, Partnership Model: ${partnershipModel}
+Success Metrics: ${successMetrics}, Time Horizon: ${timeHorizon}
+
+Return JSON: { labTitle, executiveSummary, innovationThesis, labDesign: { model, structure, location, teamSize, reportingLine, mandate }, innovationPortfolio: { horizons: [{ horizon, name, focus, budget, timescale, riskLevel, expectedReturn }], balanceRationale }, operatingModel: { ideationProcess: [{ stage, name, description, tools, duration, output }], gatingCriteria: [{ gate, criteria, stakeholders, decisionTimeline }] }, teamStructure: { roles: [{ role, count, skills, source }], culture, hiringStrategy }, startupEngagement: { model, ventureClientApproach, pilotFramework, acquisitionCriteria, ecosystemPartnerships }, technologyRadar: { emerging: [{ tech, relevance, timeline, action }] }, kpiFramework: [{ category, metrics: [{ name, target, measurement }] }], governanceModel: { board, reportingCadence, decisionRights, budgetProcess }, implementationRoadmap: { phases: [{ phase, name, duration, milestones, budget }] }, showcaseProgram: { internalSharing, externalVisibility, demoEvents }, innovationCulture: { programs, incentives, training, recognition } }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.38 Startup Ecosystem & Accelerator Builder ---
 app.post('/api/accelerator-builder', requireAuth, async (req: AuthRequest, res) => {
   const { organizationName, type, focus, targetStartupStage, cohortSize, programDuration, fundingOffered, mentorNetwork, partnerEcosystem, successMetrics, geographicFocus, applicationProcess, alumni, goals } = req.body;

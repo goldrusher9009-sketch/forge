@@ -597,6 +597,95 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.39 Corporate Innovation Lab Designer ---
+const HORIZON_BG: Record<string,string> = { '1':'bg-blue-900/40','2':'bg-purple-900/40','3':'bg-orange-900/40','H1':'bg-blue-900/40','H2':'bg-purple-900/40','H3':'bg-orange-900/40' };
+function InnovationLabPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', companySize:'', innovationBudget:'', currentInitiatives:'', leadership:'', strategicGoals:'', innovationChallenges:'', techFocus:'', partnershipModel:'', successMetrics:'', timeHorizon:'', labType:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const sf = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try { const r = await fetch(`${api}/api/innovation-lab`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e) { setResult({ error: String(e) }); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">🔬 Corporate Innovation Lab Designer</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {[['company','Company'],['industry','Industry'],['companySize','Company Size'],['innovationBudget','Innovation Budget'],['labType','Lab Type (internal/external/hybrid/venture-studio)'],['currentInitiatives','Current Innovation Initiatives'],['leadership','Innovation Leadership'],['strategicGoals','Strategic Goals'],['innovationChallenges','Innovation Challenges'],['techFocus','Technology Focus Areas'],['partnershipModel','Partnership Model'],['successMetrics','Success Metrics'],['timeHorizon','Time Horizon']].map(([k,label]) => (
+          <div key={k} className={k==='strategicGoals'||k==='innovationChallenges'?'col-span-2':''}>
+            <label className="text-xs text-gray-400">{label}</label>
+            {k==='strategicGoals'||k==='innovationChallenges' ? <textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm h-16" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} /> : <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} />}
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Generating...' : 'Design Innovation Lab'}</button>
+      {result && !result.error && (
+        <div className="space-y-4 mt-4">
+          <div className="bg-gray-800 rounded-xl p-4 border border-fuchsia-500/30">
+            <h3 className="text-lg font-bold text-fuchsia-400">{result.labTitle}</h3>
+            <p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p>
+            {result.innovationThesis && <p className="text-fuchsia-200 text-sm mt-2 italic">"{result.innovationThesis}"</p>}
+          </div>
+          {result.innovationPortfolio?.horizons && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Innovation Portfolio (3 Horizons)</h4>
+              <div className="grid grid-cols-3 gap-3">{result.innovationPortfolio.horizons.map((h:any,i:number)=>(
+                <div key={i} className={`rounded p-3 ${HORIZON_BG[String(h.horizon)]||'bg-gray-700'}`}>
+                  <div className="text-white font-bold text-sm">{h.name}</div>
+                  <div className="text-gray-300 text-xs mt-1">{h.focus}</div>
+                  <div className="flex flex-col gap-1 mt-2 text-xs">
+                    <span className="text-green-400">Budget: {h.budget}</span>
+                    <span className="text-yellow-400">Timeline: {h.timescale}</span>
+                    <span className="text-orange-400">Risk: {h.riskLevel}</span>
+                  </div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.operatingModel?.ideationProcess && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Ideation Process</h4>
+              <div className="flex gap-2 overflow-x-auto pb-2">{result.operatingModel.ideationProcess.map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 text-xs shrink-0 min-w-[120px]">
+                  <div className="text-fuchsia-300 font-semibold">{s.name}</div>
+                  <div className="text-gray-400 mt-1">{s.description}</div>
+                  <div className="text-yellow-400 mt-1">{s.duration}</div>
+                  <div className="text-green-400">→ {s.output}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.technologyRadar?.emerging && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Technology Radar</h4>
+              <div className="grid grid-cols-2 gap-2">{result.technologyRadar.emerging.map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 text-xs flex gap-2 items-start">
+                  <span className="text-fuchsia-300 font-semibold shrink-0">{t.tech}</span>
+                  <span className="text-gray-400 flex-1">{t.relevance}</span>
+                  <span className="text-yellow-400 shrink-0">{t.timeline}</span>
+                  <span className="text-green-400 shrink-0">{t.action}</span>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.implementationRoadmap?.phases && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Implementation Roadmap</h4>
+              <div className="space-y-2">{result.implementationRoadmap.phases.map((ph:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3 text-sm">
+                  <div className="flex gap-2 items-center mb-1"><span className="bg-fuchsia-700 text-white text-xs px-2 py-0.5 rounded">Phase {ph.phase}</span><span className="text-white font-semibold">{ph.name}</span><span className="text-gray-400 text-xs ml-auto">{ph.duration}</span><span className="text-green-400 text-xs">{ph.budget}</span></div>
+                  <div className="text-gray-300 text-xs">{ph.milestones}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+    </div>
+  );
+}
 // --- v9.38 Startup Ecosystem & Accelerator Builder ---
 function AcceleratorBuilderPanel({ api }: { api: string }) {
   const [form, setForm] = useState({ organizationName:'', type:'', focus:'', targetStartupStage:'', cohortSize:'', programDuration:'', fundingOffered:'', mentorNetwork:'', partnerEcosystem:'', successMetrics:'', geographicFocus:'', applicationProcess:'', alumni:'', goals:'' });
@@ -10024,7 +10113,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10122,6 +10211,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'innovationlab', label: '🔬 Innovation Lab' },
     { id: 'accelerator', label: '🏗️ Accelerator Builder' },
     { id: 'revops', label: '💹 RevOps Command' },
     { id: 'plgstrategy', label: '🚀 PLG Strategy' },
@@ -10297,6 +10387,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
         {tab === 'accelerator' && <AcceleratorBuilderPanel api={api} />}
         {tab === 'revops' && <RevOpsPanel api={api} />}
         {tab === 'plgstrategy' && <PLGStrategyPanel api={api} />}
