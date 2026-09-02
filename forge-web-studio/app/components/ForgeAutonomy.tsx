@@ -597,6 +597,125 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.00 Agency Proposal Generator ---
+function AgencyProposalPanel({ api }: { api: string }) {
+  const [agencyName, setAgencyName] = useState('');
+  const [clientName, setClientName] = useState('');
+  const [projectType, setProjectType] = useState('');
+  const [projectGoals, setProjectGoals] = useState('');
+  const [budget, setBudget] = useState('');
+  const [timeline, setTimeline] = useState('3 months');
+  const [clientIndustry, setClientIndustry] = useState('');
+  const [differentiators, setDifferentiators] = useState('');
+  const [provider, setProvider] = useState('anthropic');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+  const [section, setSection] = useState<'overview'|'scope'|'team'|'cases'|'budget'|'terms'>('overview');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/agency-proposal`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify({ agencyName, clientName, projectType, projectGoals, budget, timeline, clientIndustry, differentiators, provider }) });
+      const d = await r.json();
+      if (!r.ok) setError(d.error || 'Error');
+      else setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-lg font-bold text-white mb-3">📄 Agency Proposal Generator</h2>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Agency name" value={agencyName} onChange={e=>setAgencyName(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Client name" value={clientName} onChange={e=>setClientName(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Project type" value={projectType} onChange={e=>setProjectType(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Client industry" value={clientIndustry} onChange={e=>setClientIndustry(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Budget" value={budget} onChange={e=>setBudget(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Timeline" value={timeline} onChange={e=>setTimeline(e.target.value)} />
+        </div>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <textarea className="bg-gray-700 text-white rounded px-3 py-2 text-sm" rows={2} placeholder="Project goals" value={projectGoals} onChange={e=>setProjectGoals(e.target.value)} />
+          <textarea className="bg-gray-700 text-white rounded px-3 py-2 text-sm" rows={2} placeholder="Agency differentiators" value={differentiators} onChange={e=>setDifferentiators(e.target.value)} />
+        </div>
+        <div className="flex gap-2">
+          <select className="bg-gray-700 text-white rounded px-3 py-2 text-sm" value={provider} onChange={e=>setProvider(e.target.value)}>
+            {['anthropic','openai','gemini','groq'].map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          <button onClick={run} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+            {loading ? 'Generating…' : 'Generate Proposal'}
+          </button>
+        </div>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <h3 className="text-white font-bold text-lg">{result.proposalTitle}</h3>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+            <div className="flex gap-2 mt-3 flex-wrap">
+              {(['overview','scope','team','cases','budget','terms'] as const).map(s=>(
+                <button key={s} onClick={()=>setSection(s)} className={`px-3 py-1 rounded text-xs font-medium ${section===s?'bg-blue-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>
+              ))}
+            </div>
+          </div>
+          {section==='overview' && result.clientUnderstanding && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              <div><p className="text-blue-400 text-xs font-semibold">Situation</p><p className="text-gray-300 text-sm mt-1">{result.clientUnderstanding.situation}</p></div>
+              <div><p className="text-red-400 text-xs font-semibold">Challenges</p><ul className="mt-1 space-y-0.5">{(result.clientUnderstanding.challenges||[]).map((c:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {c}</li>)}</ul></div>
+              <div><p className="text-green-400 text-xs font-semibold">Opportunities</p><ul className="mt-1 space-y-0.5">{(result.clientUnderstanding.opportunities||[]).map((o:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {o}</li>)}</ul></div>
+              {result.proposedSolution && <div className="bg-gray-700 rounded p-3"><p className="text-yellow-400 text-xs font-semibold mb-1">Our Approach</p><p className="text-gray-300 text-sm">{result.proposedSolution.approach}</p><p className="text-purple-400 text-xs mt-2">✨ {result.proposedSolution.uniqueAngle}</p></div>}
+              {result.whyUs && <div><p className="text-teal-400 text-xs font-semibold mb-2">Why Us</p><div className="space-y-1">{result.whyUs.map((w:any,i:number)=><div key={i} className="bg-gray-700 rounded px-3 py-2"><span className="text-white text-xs font-medium">{w.reason}</span><p className="text-gray-400 text-xs mt-0.5">{w.evidence}</p></div>)}</div></div>}
+            </div>
+          )}
+          {section==='scope' && result.scopeOfWork && (
+            <div className="space-y-3">{result.scopeOfWork.map((ph:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded-lg p-4">
+                <div className="flex justify-between mb-2"><span className="text-white font-medium">{ph.phase}</span><span className="text-gray-400 text-xs">{ph.timeline}</span></div>
+                <p className="text-blue-400 text-xs">Team: {ph.team?.join(', ')}</p>
+                <ul className="mt-2 space-y-0.5">{(ph.deliverables||[]).map((d:string,i:number)=><li key={i} className="text-gray-300 text-xs">✓ {d}</li>)}</ul>
+              </div>
+            ))}</div>
+          )}
+          {section==='team' && result.teamBios && (
+            <div className="grid grid-cols-2 gap-3">{result.teamBios.map((t:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded-lg p-4">
+                <p className="text-white font-semibold">{t.name}</p>
+                <p className="text-blue-400 text-xs">{t.role}</p>
+                <p className="text-gray-400 text-xs mt-1">{t.relevantExperience}</p>
+                <p className="text-gray-300 text-xs mt-1 italic">{t.contribution}</p>
+              </div>
+            ))}</div>
+          )}
+          {section==='cases' && result.caseStudies && (
+            <div className="space-y-3">{result.caseStudies.map((c:any,i:number)=>(
+              <div key={i} className="bg-gray-800 rounded-lg p-4">
+                <p className="text-white font-semibold">{c.client}</p>
+                <p className="text-red-400 text-xs mt-1">Challenge: {c.challenge}</p>
+                <p className="text-blue-400 text-xs mt-1">Solution: {c.solution}</p>
+                <div className="mt-2"><p className="text-green-400 text-xs font-semibold">Results:</p><ul className="space-y-0.5 mt-1">{(c.results||[]).map((r:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {r}</li>)}</ul></div>
+              </div>
+            ))}</div>
+          )}
+          {section==='budget' && result.investmentBreakdown && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <table className="w-full text-xs"><thead><tr className="text-gray-400 border-b border-gray-600"><th className="text-left py-1">Item</th><th className="text-left py-1">Description</th><th className="text-right py-1">Cost</th></tr></thead>
+              <tbody>{result.investmentBreakdown.map((b:any,i:number)=><tr key={i} className="border-b border-gray-700"><td className="text-white py-2">{b.item}</td><td className="text-gray-400 py-2">{b.description}</td><td className="text-green-400 text-right py-2">{b.cost}</td></tr>)}</tbody></table>
+              {result.callToAction && <div className="mt-4 bg-blue-900/40 border border-blue-700 rounded p-3"><p className="text-blue-300 text-sm">{result.callToAction}</p></div>}
+            </div>
+          )}
+          {section==='terms' && result.terms && (
+            <div className="bg-gray-800 rounded-lg p-4 space-y-3">
+              {Object.entries(result.terms).map(([k,v])=><div key={k}><p className="text-yellow-400 text-xs font-semibold capitalize">{k.replace(/([A-Z])/g,' $1')}</p><p className="text-gray-300 text-sm mt-1">{v as string}</p></div>)}
+              {result.nextSteps && <div><p className="text-green-400 text-xs font-semibold">Next Steps</p><ol className="mt-1 space-y-0.5">{result.nextSteps.map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">{i+1}. {s}</li>)}</ol></div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.99 Customer Journey Map Generator ---
 const EMOTION_BG: Record<string,string> = { Positive:'bg-green-900/40 border-green-700', Neutral:'bg-gray-700 border-gray-600', Negative:'bg-red-900/40 border-red-700' };
 const MOMENT_COLOR: Record<string,string> = { Peak:'text-green-400', Pain:'text-red-400', Critical:'text-yellow-400' };
@@ -6303,7 +6422,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6388,6 +6507,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'launchchecklist', label: '🚀 Launch Checklist' },
     { id: 'talentstrategy', label: '🎯 Talent Strategy' },
     { id: 'journeymap', label: '🗺️ Journey Map' },
+    { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -6524,6 +6644,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'launchchecklist' && <LaunchChecklistPanel api={api} />}
         {tab === 'talentstrategy' && <TalentStrategyPanel api={api} />}
         {tab === 'journeymap' && <JourneyMapPanel api={api} />}
+        {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.00 Agency Proposal Generator ---
+app.post('/api/agency-proposal', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { agencyName, clientName, projectType, projectGoals, budget, timeline, clientIndustry, differentiators, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a professional agency proposal for ${agencyName || 'our agency'} pitching to ${clientName || 'the client'}.
+Project type: ${projectType || 'digital marketing campaign'}
+Project goals: ${projectGoals || 'increase brand awareness and drive leads'}
+Budget: ${budget || 'not specified'}
+Timeline: ${timeline || '3 months'}
+Client industry: ${clientIndustry || 'technology'}
+Agency differentiators: ${differentiators || 'creative excellence, data-driven results'}
+Return JSON: { proposalTitle: string, executiveSummary: string, clientUnderstanding:{situation:string,challenges:string[],opportunities:string[]}, proposedSolution:{approach:string,keyStrategies:string[],uniqueAngle:string}, scopeOfWork:[{phase:string,timeline:string,deliverables:string[],team:string[]}], teamBios:[{name:string,role:string,relevantExperience:string,contribution:string}], caseStudies:[{client:string,challenge:string,solution:string,results:string[]}], investmentBreakdown:[{item:string,description:string,cost:string}], timeline:[{milestone:string,date:string,dependencies:string}], whyUs:[{reason:string,evidence:string}], nextSteps:string[], callToAction:string, terms:{paymentTerms:string,revisions:string,ownership:string} }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.99 Customer Journey Map Generator ---
 app.post('/api/journey-map', requireAuth, async (req: AuthRequest, res) => {
   try {
