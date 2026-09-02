@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.07 Business Continuity Plan Generator ---
+app.post('/api/bcp', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, industry, employeeCount, criticalProcesses, locations, it Infrastructure, regulatoryRequirements, rtoRpo, existingPlans, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a comprehensive Business Continuity Plan for ${company || 'the organization'}.
+Industry: ${industry || 'not specified'}
+Employees: ${employeeCount || 'not specified'}
+Critical processes: ${criticalProcesses || 'not specified'}
+Locations: ${locations || 'not specified'}
+Regulatory requirements: ${regulatoryRequirements || 'not specified'}
+RTO/RPO targets: ${rtoRpo || 'not specified'}
+Existing plans: ${existingPlans || 'none'}
+Return JSON: { planTitle: string, executiveSummary: string, businessImpactAnalysis:{methodology:string,criticalFunctions:[{function:string,rto:string,rpo:string,dependencies:string[],impactIfDown:string,financialImpact:string,regulatoryImpact:string}],mtvr:string}, threatScenarios:[{scenario:string,likelihood:'High'|'Medium'|'Low',impact:'Catastrophic'|'Major'|'Moderate'|'Minor',triggerEvents:string[],affectedAreas:string[]}], recoveryStrategies:[{scenario:string,strategy:string,primaryApproach:string,alternativeApproach:string,resourcesRequired:string[],cost:string}], incidentResponseTeam:[{role:string,responsibilities:string[],primaryContact:string,backupContact:string}], communicationPlan:{internalProtocol:string,externalStakeholders:[{stakeholder:string,timing:string,channel:string,message:string}],crisisHotline:string,socialMedia:string}, itDrRecovery:{backupStrategy:string,recoveryProcedures:string[],cloudFailover:string,dataIntegrity:string,vendorContacts:string[]}, testingSchedule:[{testType:string,frequency:string,participants:string[],successCriteria:string}], maintenanceSchedule:{reviewFrequency:string,triggerEvents:string[],ownerRole:string}, keyContacts:[{name:string,role:string,phone:string,email:string,responsibility:string}], appendices:string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.06 Customer Segmentation Analysis ---
 app.post('/api/customer-segmentation', requireAuth, async (req: AuthRequest, res) => {
   try {

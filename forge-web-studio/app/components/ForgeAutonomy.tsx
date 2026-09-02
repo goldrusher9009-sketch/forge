@@ -597,6 +597,140 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.07 Business Continuity Plan Generator ---
+const THREAT_LIKELIHOOD: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400' };
+const THREAT_IMPACT: Record<string,string> = { 'Catastrophic':'text-red-500','Major':'text-red-400','Moderate':'text-yellow-400','Minor':'text-green-400' };
+function BCPPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', employeeCount:'', criticalProcesses:'', locations:'', regulatoryRequirements:'', rtoRpo:'', existingPlans:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'bia'|'threats'|'recovery'|'response'|'testing'>('bia');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/bcp`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🛡️ Business Continuity Plan Generator</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['company','Company Name'],['industry','Industry'],['employeeCount','Employee Count'],['locations','Office Locations'],['rtoRpo','RTO / RPO Targets'],['regulatoryRequirements','Regulatory Requirements']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+      </div>
+      {[['criticalProcesses','Critical Business Processes'],['existingPlans','Existing Plans / Gaps']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Generating…':'Generate BCP'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.planTitle}</p>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+            {result.businessImpactAnalysis?.mtvr && <p className="text-yellow-300 text-xs mt-2">Maximum Tolerable Downtime: {result.businessImpactAnalysis.mtvr}</p>}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['bia','threats','recovery','response','testing'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s==='bia'?'Impact Analysis':s==='response'?'IRT':s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='bia' && (
+            <div className="space-y-2">
+              {(result.businessImpactAnalysis?.criticalFunctions||[]).map((f:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-white font-medium text-sm mb-2">{f.function}</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                    <div><span className="text-gray-400">RTO: </span><span className="text-blue-300">{f.rto}</span></div>
+                    <div><span className="text-gray-400">RPO: </span><span className="text-purple-300">{f.rpo}</span></div>
+                    <div><span className="text-gray-400">Financial: </span><span className="text-red-300">{f.financialImpact}</span></div>
+                  </div>
+                  <p className="text-gray-300 text-xs mb-1"><span className="text-gray-400">Impact: </span>{f.impactIfDown}</p>
+                  {f.regulatoryImpact && <p className="text-yellow-300 text-xs"><span className="text-gray-400">Regulatory: </span>{f.regulatoryImpact}</p>}
+                  {(f.dependencies||[]).length>0 && <p className="text-gray-400 text-xs mt-1">Deps: {f.dependencies.join(', ')}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='threats' && (
+            <div className="space-y-2">
+              {(result.threatScenarios||[]).map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-white font-medium text-sm">{t.scenario}</p>
+                    <div className="flex gap-2 text-xs"><span className={THREAT_LIKELIHOOD[t.likelihood]||'text-gray-400'}>L:{t.likelihood}</span><span className={THREAT_IMPACT[t.impact]||'text-gray-400'}>I:{t.impact}</span></div>
+                  </div>
+                  {(t.triggerEvents||[]).length>0 && <p className="text-gray-400 text-xs mb-1">Triggers: {t.triggerEvents.join(' · ')}</p>}
+                  {(t.affectedAreas||[]).length>0 && <p className="text-gray-400 text-xs">Affects: {t.affectedAreas.join(', ')}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='recovery' && (
+            <div className="space-y-2">
+              {(result.recoveryStrategies||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-white font-medium text-sm mb-1">{s.scenario}</p>
+                  <p className="text-gray-300 text-xs mb-1">{s.strategy}</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><span className="text-green-400">Primary: </span><span className="text-gray-300">{s.primaryApproach}</span></div>
+                    <div><span className="text-yellow-400">Alternative: </span><span className="text-gray-300">{s.alternativeApproach}</span></div>
+                  </div>
+                  {s.cost && <p className="text-gray-400 text-xs mt-1">Est. Cost: {s.cost}</p>}
+                </div>
+              ))}
+              {result.itDrRecovery && (
+                <div className="bg-gray-800 rounded p-3 mt-3">
+                  <p className="text-xs text-gray-400 mb-2">IT DR Recovery</p>
+                  <p className="text-gray-300 text-xs mb-2">Backup: {result.itDrRecovery.backupStrategy}</p>
+                  <p className="text-gray-300 text-xs mb-1">Failover: {result.itDrRecovery.cloudFailover}</p>
+                  {(result.itDrRecovery.recoveryProcedures||[]).length>0 && <ul>{result.itDrRecovery.recoveryProcedures.slice(0,5).map((p:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {p}</li>)}</ul>}
+                </div>
+              )}
+            </div>
+          )}
+          {subtab==='response' && (
+            <div className="space-y-2">
+              {(result.incidentResponseTeam||[]).map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-indigo-400 font-medium text-sm mb-1">{r.role}</p>
+                  <ul className="space-y-0.5 mb-2">{(r.responsibilities||[]).map((resp:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {resp}</li>)}</ul>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-400"><div>Primary: {r.primaryContact}</div><div>Backup: {r.backupContact}</div></div>
+                </div>
+              ))}
+              {result.communicationPlan && (
+                <div className="bg-gray-800 rounded p-3 mt-2">
+                  <p className="text-xs text-gray-400 mb-2">Communication Plan</p>
+                  <p className="text-gray-300 text-xs mb-2">{result.communicationPlan.internalProtocol}</p>
+                  {(result.communicationPlan.externalStakeholders||[]).map((s:any,i:number)=><div key={i} className="border-l-2 border-gray-600 pl-2 mb-1"><p className="text-white text-xs">{s.stakeholder}</p><p className="text-gray-400 text-xs">{s.timing} · {s.channel}</p></div>)}
+                </div>
+              )}
+            </div>
+          )}
+          {subtab==='testing' && (
+            <div className="space-y-2">
+              {(result.testingSchedule||[]).map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-1"><p className="text-white text-sm font-medium">{t.testType}</p><span className="text-indigo-300 text-xs">{t.frequency}</span></div>
+                  <p className="text-gray-400 text-xs mb-1">Participants: {(t.participants||[]).join(', ')}</p>
+                  <p className="text-green-300 text-xs">Success: {t.successCriteria}</p>
+                </div>
+              ))}
+              {result.maintenanceSchedule && (
+                <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Maintenance</p><p className="text-gray-300 text-xs mb-1">Review: {result.maintenanceSchedule.reviewFrequency}</p><p className="text-gray-300 text-xs mb-1">Owner: {result.maintenanceSchedule.ownerRole}</p><ul>{(result.maintenanceSchedule.triggerEvents||[]).map((e:string,i:number)=><li key={i} className="text-yellow-300 text-xs">⚡ {e}</li>)}</ul></div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.06 Customer Segmentation Analysis ---
 const CHURN_COLOR: Record<string,string> = { 'Low':'text-green-400','Medium':'text-yellow-400','High':'text-red-400' };
 function CustomerSegPanel({ api }: { api: string }) {
@@ -7132,7 +7266,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -7224,6 +7358,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'duediligence', label: '🔬 Due Diligence' },
     { id: 'engagementsurvey', label: '📋 Engagement Survey' },
     { id: 'customerseg', label: '🎯 Customer Segments' },
+    { id: 'bcp', label: '🛡️ Business Continuity' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -7367,6 +7502,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'duediligence' && <DueDiligencePanel api={api} />}
         {tab === 'engagementsurvey' && <EngagementSurveyPanel api={api} />}
         {tab === 'customerseg' && <CustomerSegPanel api={api} />}
+        {tab === 'bcp' && <BCPPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
