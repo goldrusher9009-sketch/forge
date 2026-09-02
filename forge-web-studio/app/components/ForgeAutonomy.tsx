@@ -597,6 +597,104 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.66 AI Crisis Management & Business Continuity Command ---
+const CRISIS_PHASE_COLOR: Record<string,string> = { 'Detection':'bg-red-800','Containment':'bg-orange-700','Eradication':'bg-yellow-700','Recovery':'bg-blue-700','Post-Incident':'bg-green-700' };
+const PRIORITY_BADGE: Record<string,string> = { 'Critical':'bg-red-700','High':'bg-orange-700','Medium':'bg-yellow-700' };
+function CrisisCommandPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ crisisType:'', severity:'High', description:'', affectedAreas:'', stakeholders:'', timeElapsed:'', currentActions:'', industry:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/crisis-command`, { method:'POST', headers:{'Content-Type':'application/json',...( (typeof window!=='undefined'&&(window as any).__forgeToken) ? {'Authorization':`Bearer ${(window as any).__forgeToken}`} : {})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error||'Error');
+      setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">🚨 AI Crisis Management & Business Continuity Command</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {([['crisisType','Crisis Type','Cybersecurity Breach'],['severity','Severity Level','High'],['industry','Industry','Financial Services'],['timeElapsed','Time Since Incident','2 hours'],['affectedAreas','Affected Areas','IT systems, customer data'],['stakeholders','Key Stakeholders','Executives, IT, customers'],['currentActions','Actions Taken So Far','Systems isolated, IR team notified'],['description','Crisis Description','Ransomware attack affecting core systems']] as [string,string,string][]).map(([k,l,ph])=>(
+          <div key={k} className={k==='description'||k==='currentActions'?'col-span-2':''}>
+            <label className="text-xs text-gray-400 block mb-1">{l}</label>
+            <input className="w-full bg-gray-700 text-white px-2 py-1.5 rounded text-sm" placeholder={ph} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium disabled:opacity-50">{loading?'Analyzing…':'Generate Crisis Response Plan'}</button>
+      {error && <div className="text-red-400 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-4 mt-2">
+          <div className="bg-gray-800 rounded p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-2 py-1 rounded text-xs font-bold text-white ${CRISIS_PHASE_COLOR[result.crisisPhase]||'bg-gray-600'}`}>{result.crisisPhase}</span>
+              <span className="text-gray-400 text-sm">Severity Score: <span className="text-red-400 font-bold">{result.crisisSeverityScore}/100</span></span>
+            </div>
+            <h3 className="text-white font-bold text-lg">{result.crisisTitle}</h3>
+            <p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p>
+          </div>
+          {result.immediateActions?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-red-400 font-semibold mb-2">⚡ Immediate Actions</h4>
+              <div className="space-y-2">{result.immediateActions.map((a:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2 flex items-start gap-2">
+                  <span className={`px-1.5 py-0.5 rounded text-xs font-bold mt-0.5 shrink-0 ${PRIORITY_BADGE[a.priority]||'bg-gray-600'}`}>{a.priority}</span>
+                  <div>
+                    <div className="text-white text-sm">{a.action}</div>
+                    <div className="text-gray-400 text-xs mt-0.5">Owner: {a.owner} · Deadline: {a.deadline}</div>
+                  </div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.communicationPlan && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-blue-400 font-semibold mb-2">📢 Communication Plan</h4>
+              {result.communicationPlan.mediaStatement && <div className="bg-gray-700 rounded p-2 mb-2"><div className="text-gray-400 text-xs mb-1">Media Statement</div><div className="text-gray-300 text-sm italic">"{result.communicationPlan.mediaStatement}"</div></div>}
+              {result.communicationPlan.internalMessages?.length>0 && <div className="space-y-1">{result.communicationPlan.internalMessages.slice(0,3).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2"><div className="text-white text-xs font-medium">{m.audience} — {m.channel}</div><div className="text-gray-400 text-xs mt-0.5">{m.message}</div></div>
+              ))}</div>}
+            </div>
+          )}
+          {result.recoveryRoadmap?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-green-400 font-semibold mb-2">🗺️ Recovery Roadmap</h4>
+              <div className="space-y-2">{result.recoveryRoadmap.map((p:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white font-medium text-sm">{p.phase}</span>
+                    <span className="text-gray-400 text-xs">{p.duration}</span>
+                  </div>
+                  <ul className="list-disc list-inside text-gray-400 text-xs space-y-0.5">{p.activities?.slice(0,3).map((a:string,j:number)=><li key={j}>{a}</li>)}</ul>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.riskAssessment && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-yellow-400 font-semibold mb-2">⚠️ Risk Assessment</h4>
+              <div className="grid grid-cols-2 gap-2">{[['Financial Exposure',result.riskAssessment.financialExposure],['Reputational Risk',result.riskAssessment.reputationalRisk],['Regulatory Risk',result.riskAssessment.regulatoryRisk],['Legal Exposure',result.riskAssessment.legalExposure]].map(([l,v])=>(
+                <div key={l} className="bg-gray-700 rounded p-2"><div className="text-gray-400 text-xs">{l}</div><div className="text-white text-sm mt-0.5">{v}</div></div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-orange-400 font-semibold mb-2">⚡ Quick Wins</h4>
+              <ul className="list-disc list-inside text-gray-300 text-sm space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i}>{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.65 AI Executive Coaching & Leadership Accelerator ---
 const LEADERSHIP_ARCHETYPE_COLOR: Record<string,string> = { 'Visionary':'bg-purple-700','Executor':'bg-blue-700','Coach':'bg-green-700','Diplomat':'bg-teal-700','Innovator':'bg-orange-700','Strategist':'bg-indigo-700' };
 const DEV_LEVEL_COLOR: Record<string,string> = { 'Novice':'bg-gray-600','Developing':'bg-yellow-700','Proficient':'bg-blue-700','Advanced':'bg-green-700','Mastery':'bg-purple-700' };
@@ -11111,7 +11209,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -11199,6 +11297,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'crisiscommand', label: '🚨 Crisis Command' },
     { id: 'execcoaching', label: '👔 Exec Coaching' },
     { id: 'productlaunchcmd', label: '🚀 Launch Command' },
     { id: 'salesforecast2', label: '📈 Sales Forecast' },
@@ -11235,6 +11334,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'crisiscommand', label: '🚨 Crisis Command' },
     { id: 'execcoaching', label: '👔 Exec Coaching' },
     { id: 'productlaunchcmd', label: '🚀 Launch Command' },
     { id: 'salesforecast2', label: '📈 Sales Forecast' },
@@ -11411,6 +11511,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
         {tab === 'salesforecast2' && <SalesForecastPanel api={api} />}
@@ -11441,6 +11542,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
         {tab === 'salesforecast2' && <SalesForecastPanel api={api} />}
@@ -11454,6 +11556,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
         {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
         {tab === 'salesforecast2' && <SalesForecastPanel api={api} />}

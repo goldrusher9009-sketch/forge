@@ -39500,6 +39500,47 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.66 AI Crisis Management & Business Continuity Command ---
+app.post('/api/crisis-command', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { crisisType, severity, description, affectedAreas, stakeholders, timeElapsed, currentActions, industry } = req.body;
+    const p = `You are a crisis management and business continuity expert. Generate a comprehensive crisis response and business continuity plan.
+Crisis Type: ${crisisType || 'Cybersecurity Breach'}
+Severity: ${severity || 'High'}
+Description: ${description || 'Ransomware attack affecting core systems'}
+Affected Areas: ${affectedAreas || 'IT systems, customer data, operations'}
+Key Stakeholders: ${stakeholders || 'Executives, IT team, customers, regulators'}
+Time Since Incident: ${timeElapsed || '2 hours'}
+Current Actions Taken: ${currentActions || 'Systems isolated, incident response team notified'}
+Industry: ${industry || 'Financial Services'}
+
+Return JSON only:
+{
+  "crisisTitle": "string",
+  "executiveSummary": "string",
+  "crisisSeverityScore": 0-100,
+  "crisisPhase": "Detection|Containment|Eradication|Recovery|Post-Incident",
+  "immediateActions": [{ "action": "string", "owner": "string", "deadline": "string", "priority": "Critical|High|Medium" }],
+  "communicationPlan": { "internalMessages": [{ "audience": "string", "message": "string", "channel": "string", "timing": "string" }], "externalMessages": [{ "audience": "string", "message": "string", "channel": "string", "timing": "string" }], "mediaStatement": "string" },
+  "containmentStrategy": [{ "step": "string", "rationale": "string", "timeline": "string", "resources": ["string"] }],
+  "recoveryRoadmap": [{ "phase": "string", "duration": "string", "activities": ["string"], "successCriteria": ["string"] }],
+  "businessContinuity": { "criticalProcesses": [{ "process": "string", "rtoHours": 0, "rpoHours": 0, "workaround": "string" }], "resourceRequirements": ["string"] },
+  "riskAssessment": { "financialExposure": "string", "reputationalRisk": "High|Medium|Low", "regulatoryRisk": "string", "legalExposure": "string" },
+  "lessonsLearned": ["string"],
+  "postIncidentActions": ["string"],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.65 AI Executive Coaching & Leadership Accelerator ---
 app.post('/api/exec-coaching', requireAuth, async (req: AuthRequest, res) => {
   try {
