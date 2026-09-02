@@ -39500,6 +39500,46 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.83 AI Talent Intelligence & Hiring Optimizer ---
+app.post('/api/talent-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { role, level, industry, location, teamSize, urgency, currentChallenges, budget } = req.body;
+    const p = `You are a talent intelligence expert and executive recruiter. Build a comprehensive hiring strategy for this role.
+Role: ${role || 'Unknown'}
+Level: ${level || 'Mid'}
+Industry: ${industry || 'Tech'}
+Location: ${location || 'Remote'}
+Team Size: ${teamSize || 'Unknown'}
+Urgency: ${urgency || 'Normal'}
+Current Challenges: ${currentChallenges || 'Unknown'}
+Budget: ${budget || 'Unknown'}
+Return ONLY valid JSON:
+{
+  "talentTitle": "string",
+  "executiveSummary": "string",
+  "hiringDifficultyScore": 0-100,
+  "timeToHireEstimate": "string",
+  "marketDemandLevel": "Oversupply|Balanced|High Demand|Extreme Scarcity",
+  "compensationBenchmark": {"baseSalaryRange": "string", "totalComp": "string", "equity": "string", "bonusRange": "string"},
+  "idealCandidateProfile": {"mustHaveSkills": ["string"], "niceToHaveSkills": ["string"], "redFlags": ["string"], "cultureFitIndicators": ["string"]},
+  "sourcingStrategy": [{"channel": "string", "expectedYield": "string", "cost": "string", "timeline": "string", "tactics": ["string"]}],
+  "interviewProcess": [{"round": number, "format": "string", "assessmentArea": "string", "duration": "string", "who": "string"}],
+  "scorecardCriteria": [{"criterion": "string", "weight": "string", "howToAssess": "string"}],
+  "competitorHiringLandscape": "string",
+  "retentionRiskFactors": ["string"],
+  "onboardingPlan": "string",
+  "alternativeStrategies": ["string"],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.82 AI Strategic Partnership Builder ---
 app.post('/api/partnership-builder', requireAuth, async (req: AuthRequest, res) => {
   try {
