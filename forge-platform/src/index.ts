@@ -39500,6 +39500,47 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.79 AI Executive Compensation & Equity Designer ---
+app.post('/api/exec-comp', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { role, stage, industry, location, revenue, headcount, fundingRaised, currentComp } = req.body;
+    const p = `You are a compensation expert and equity strategist. Design a comprehensive executive compensation package.
+Role: ${role || 'CEO'}
+Company Stage: ${stage || 'Series A'}
+Industry: ${industry || 'SaaS'}
+Location: ${location || 'San Francisco'}
+Annual Revenue: ${revenue || 'Unknown'}
+Headcount: ${headcount || 'Unknown'}
+Funding Raised: ${fundingRaised || 'Unknown'}
+Current Comp: ${currentComp || 'Unknown'}
+Return ONLY valid JSON:
+{
+  "compTitle": "string",
+  "executiveSummary": "string",
+  "marketCompetitiveness": 0-100,
+  "retentionRiskScore": 0-100,
+  "baseSalaryRange": {"low": "string", "midpoint": "string", "high": "string"},
+  "targetTotalCash": "string",
+  "equityPackage": {"grantSize": "string", "percentOwnership": "string", "vestingSchedule": "string", "cliffMonths": number, "vestingMonths": number, "accelerationProvisions": "string"},
+  "bonusStructure": {"targetBonus": "string", "maxBonus": "string", "metrics": [{"metric": "string", "weight": "string", "threshold": "string", "target": "string", "stretch": "string"}]},
+  "benefitsPackage": ["string"],
+  "longTermIncentives": "string",
+  "changeOfControlProvisions": "string",
+  "clawbackPolicy": "string",
+  "benchmarkComparisons": [{"company": "string", "stage": "string", "baseSalary": "string", "equity": "string"}],
+  "negotiationGuidance": "string",
+  "redFlags": ["string"],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.78 AI Competitive Moat & Defensibility Analyzer ---
 app.post('/api/moat-analyzer', requireAuth, async (req: AuthRequest, res) => {
   try {

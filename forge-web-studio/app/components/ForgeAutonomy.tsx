@@ -598,6 +598,44 @@ function AgentRunInspector({ api }: { api: Api }) {
 }
 
 // --- v9.77 AI Product-Market Fit Analyzer ---
+function ExecCompPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ role:'CEO', stage:'Series A', industry:'SaaS', location:'San Francisco', revenue:'', headcount:'', fundingRaised:'', currentComp:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true);
+    try { const r = await fetch(`${api}/api/exec-comp`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e){} setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">💰 Executive Comp Designer</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {(['role','stage','industry','location','revenue','headcount','fundingRaised','currentComp'] as const).map(f => (
+          <div key={f}><label className="text-gray-400 text-xs capitalize">{f.replace(/([A-Z])/g,' $1')}</label>
+          <input className="w-full bg-gray-800 text-white rounded px-3 py-2 text-sm mt-1" value={form[f]} onChange={e=>setForm(p=>({...p,[f]:e.target.value}))} placeholder={f}/></div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading?'Designing...':'Design Package'}</button>
+      {result && !result.error && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-white font-semibold">Market Fit: {result.marketCompetitiveness}/100</span>
+              <span className="text-orange-400 text-sm">Retention Risk: {result.retentionRiskScore}/100</span>
+            </div>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          {result.baseSalaryRange && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-2">Base Salary Range</h3><div className="flex gap-4"><div className="text-center"><div className="text-gray-400 text-xs">Low</div><div className="text-white font-bold">{result.baseSalaryRange.low}</div></div><div className="text-center"><div className="text-gray-400 text-xs">Midpoint</div><div className="text-emerald-400 font-bold text-lg">{result.baseSalaryRange.midpoint}</div></div><div className="text-center"><div className="text-gray-400 text-xs">High</div><div className="text-white font-bold">{result.baseSalaryRange.high}</div></div></div><p className="text-gray-400 text-sm mt-2">Target Total Cash: <span className="text-white font-semibold">{result.targetTotalCash}</span></p></div>}
+          {result.equityPackage && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-2">Equity Package</h3><div className="grid grid-cols-2 gap-2 text-sm"><div><span className="text-gray-400">Grant Size:</span> <span className="text-white">{result.equityPackage.grantSize}</span></div><div><span className="text-gray-400">Ownership:</span> <span className="text-emerald-400 font-semibold">{result.equityPackage.percentOwnership}</span></div><div><span className="text-gray-400">Vesting:</span> <span className="text-white">{result.equityPackage.vestingSchedule}</span></div><div><span className="text-gray-400">Cliff:</span> <span className="text-white">{result.equityPackage.cliffMonths}mo</span></div></div><p className="text-gray-300 text-xs mt-2">{result.equityPackage.accelerationProvisions}</p></div>}
+          {result.bonusStructure?.metrics?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-2">Bonus Metrics</h3><div className="space-y-2">{result.bonusStructure.metrics.map((m:any,i:number)=><div key={i} className="bg-gray-700 rounded p-2 text-xs"><div className="flex justify-between"><span className="text-white font-medium">{m.metric}</span><span className="text-emerald-400">{m.weight}</span></div><div className="text-gray-400">Target: {m.target} | Stretch: {m.stretch}</div></div>)}</div></div>}
+          {result.quickWins?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-2">Key Insights</h3><ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-emerald-400">→</span>{w}</li>)}</ul></div>}
+        </div>
+      )}
+      {result?.error && <p className="text-red-400 text-sm">{result.error}</p>}
+    </div>
+  );
+}
+
 const MOAT_DURABILITY_COLOR: Record<string,string> = { 'Fragile':'bg-red-800','Weak':'bg-red-700','Moderate':'bg-yellow-700','Strong':'bg-green-700','Exceptional':'bg-blue-700' };
 const THREAT_LEVEL_COLOR: Record<string,string> = { 'Low':'bg-green-700','Medium':'bg-yellow-700','High':'bg-orange-700','Critical':'bg-red-700' };
 function MoatAnalyzerPanel({ api }: { api: string }) {
@@ -12250,7 +12288,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -12442,6 +12480,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'gtmplanner', label: '🚀 GTM Planner' },
     { id: 'csretention', label: '🎯 CS Retention' },
     { id: 'fundraisingcmd', label: '💎 Fundraising' },
+    { id: 'execcomp', label: '💰 Exec Comp' },
     { id: 'moatanalyzer', label: '🏰 Moat Analyzer' },
     { id: 'pmfanalyzer', label: '🎯 PMF Analyzer' },
   ];
@@ -12575,6 +12614,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'execcomp' && <ExecCompPanel api={api} />}
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
@@ -12618,6 +12658,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'execcomp' && <ExecCompPanel api={api} />}
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
@@ -12644,6 +12685,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'execcomp' && <ExecCompPanel api={api} />}
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
