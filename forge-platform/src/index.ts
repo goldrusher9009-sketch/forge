@@ -39377,6 +39377,27 @@ app.post('/api/headline-analyze', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.57 Thread Writer — convert ideas into Twitter/X thread format
+app.post('/api/thread-writer', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, angle, tweets } = req.body;
+    if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'topic required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const n = Math.min(Math.max(parseInt(tweets) || 8, 5), 15);
+    const p = `You are a viral Twitter/X thread writer. Write a ${n}-tweet thread about:\nTopic: ${topic}\nAngle/Hook: ${angle || 'educational and engaging'}\n\nRules: Each tweet max 280 chars. Start with a hook tweet. End with a CTA tweet. Number each tweet.\n\nReturn ONLY JSON:\n{"topic":"${topic}","hook_tweet":"The opening hook tweet text (make it irresistible)","thread":[{"number":1,"tweet":"tweet text here","type":"hook","char_count":120},{"number":2,"tweet":"tweet text","type":"content","char_count":200}],"outro_tweet":"CTA closing tweet","hashtags":["tag1","tag2","tag3"],"estimated_impressions":"high/medium/low","best_time_to_post":"time recommendation","thread_type":"educational/story/listicle/controversial"}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

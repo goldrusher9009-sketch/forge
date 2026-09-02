@@ -597,6 +597,73 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.57 Thread Writer ---
+function ThreadWriterPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ topic: '', angle: '', tweets: '8' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(-1);
+  const submit = async () => {
+    if (!form.topic.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api.base}/api/thread-writer`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  const copyTweet = (text: string, idx: number) => {
+    navigator.clipboard.writeText(text);
+    setCopied(idx); setTimeout(() => setCopied(-1), 1500);
+  };
+  const copyAll = () => {
+    if (!result) return;
+    const all = (result.thread || []).map((t: any) => `${t.number}/ ${t.tweet}`).join('\n\n');
+    navigator.clipboard.writeText(all);
+  };
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>🧵 Thread Writer</h3>
+      <input placeholder="Topic (e.g. How I grew my SaaS to $10k MRR)" value={form.topic} onChange={e => setForm(f => ({ ...f, topic: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Angle / hook style (e.g. personal story, listicle, controversial)" value={form.angle} onChange={e => setForm(f => ({ ...f, angle: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input type="number" min={5} max={15} placeholder="# tweets" value={form.tweets} onChange={e => setForm(f => ({ ...f, tweets: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+          {loading ? 'Writing...' : 'Write Thread'}
+        </button>
+        {result && <button onClick={copyAll} style={{ padding: '8px 12px', background: '#1d9bf0', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12 }}>Copy All</button>}
+      </div>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, fontSize: 11, color: '#888' }}>
+            <span>Type: {result.thread_type}</span>
+            <span>·</span>
+            <span>Reach: {result.estimated_impressions}</span>
+            <span>·</span>
+            <span>Best time: {result.best_time_to_post}</span>
+          </div>
+          {(result.thread || []).map((t: any, i: number) => (
+            <div key={i} style={{ background: '#1a1a2e', padding: 10, borderRadius: 6, marginBottom: 6, position: 'relative' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                <div style={{ fontSize: 11, color: t.type === 'hook' ? '#a78bfa' : '#888', marginBottom: 4 }}>{t.number}/ · {t.type} · {t.char_count || '?'} chars</div>
+                <button onClick={() => copyTweet(t.tweet, i)} style={{ padding: '2px 8px', background: copied === i ? '#4ade80' : '#333', border: 'none', borderRadius: 4, color: '#fff', cursor: 'pointer', fontSize: 10 }}>{copied === i ? '✓' : 'Copy'}</button>
+              </div>
+              <div style={{ fontSize: 13 }}>{t.tweet}</div>
+            </div>
+          ))}
+          {result.hashtags && <div style={{ fontSize: 12, color: '#1d9bf0', marginTop: 8 }}>{(result.hashtags || []).map((h: string) => `#${h}`).join(' ')}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.56 Headline Analyzer ---
 function HeadlinePanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ headline: '', context: '' });
@@ -3212,7 +3279,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3263,6 +3330,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'brandvoice', label: '🎨 Brand Voice' },
     { id: 'contentcal', label: '📅 Content Cal' },
     { id: 'headline', label: '📰 Headlines' },
+    { id: 'threadwriter', label: '🧵 Threads' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3356,6 +3424,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'brandvoice' && <BrandVoicePanel api={api} />}
         {tab === 'contentcal' && <ContentCalPanel api={api} />}
         {tab === 'headline' && <HeadlinePanel api={api} />}
+        {tab === 'threadwriter' && <ThreadWriterPanel api={api} />}
       </div>
     </div>
   );
