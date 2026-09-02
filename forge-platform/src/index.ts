@@ -39500,6 +39500,53 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.88 AI Go-to-Market Strategy Builder ---
+app.post('/api/gtm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, targetMarket, icp, competitiveLandscape, uniqueValue, stage, budget, timeframe, currentChannels, gtmGoals } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class GTM strategist who has launched hundreds of B2B and B2C products. Build a comprehensive go-to-market strategy.
+
+Product: ${product}
+Target Market: ${targetMarket}
+Ideal Customer Profile: ${icp || 'Not specified'}
+Competitive Landscape: ${competitiveLandscape || 'Unknown'}
+Unique Value Proposition: ${uniqueValue || 'Not specified'}
+Company Stage: ${stage || 'Early Stage'}
+Budget: ${budget || 'Unknown'}
+Timeframe: ${timeframe || '6 months'}
+Current Channels: ${currentChannels || 'None'}
+GTM Goals: ${gtmGoals || 'Growth'}
+
+Return ONLY valid JSON:
+{
+  "gtmTitle": "string",
+  "executiveSummary": "string",
+  "gtmReadinessScore": 0-100,
+  "primaryMotion": "Product-Led|Sales-Led|Marketing-Led|Community-Led|Partner-Led",
+  "targetSegments": [{ "segment": "string", "size": "string", "priority": "Primary|Secondary|Tertiary", "painPoints": ["string"], "buyingTriggers": ["string"] }],
+  "positioningStatement": "string",
+  "messagingFramework": { "headline": "string", "subheadline": "string", "valueProps": ["string"], "proofPoints": ["string"] },
+  "channelStrategy": [{ "channel": "string", "priority": "High|Medium|Low", "cac": "string", "timeToResult": "string", "tactics": ["string"] }],
+  "launchPhases": [{ "phase": "string", "duration": "string", "goals": ["string"], "activities": ["string"], "metrics": ["string"], "budget": "string" }],
+  "pricingStrategy": { "model": "string", "tiers": [{ "name": "string", "price": "string", "targetUser": "string" }], "rationale": "string" },
+  "salesPlaybook": { "salesCycle": "string", "dealSize": "string", "keyObjHandling": [{ "objection": "string", "response": "string" }] },
+  "contentPlan": [{ "type": "string", "topic": "string", "channel": "string", "goal": "string" }],
+  "partnershipOpportunities": ["string"],
+  "kpis": [{ "metric": "string", "target": "string", "timeframe": "string" }],
+  "riskFactors": [{ "risk": "string", "mitigation": "string" }],
+  "budget_allocation": [{ "category": "string", "percentage": 0-100, "rationale": "string" }],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.87 AI M&A Due Diligence & Deal Analyzer ---
 app.post('/api/ma-diligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
