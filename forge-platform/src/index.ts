@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.31 Investor Relations & Fundraising ---
+app.post('/api/fundraising-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, stage, currentArr, growthRate, burnRate, runway, teamSize, productDescription, marketSize, competitors, previousFunding, useOfFunds, targetRaise, targetInvestors, geography } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a venture capital and fundraising expert. Generate a comprehensive fundraising strategy for:
+Company: ${company}, Industry: ${industry}, Stage: ${stage}
+Current ARR: ${currentArr}, Growth Rate: ${growthRate}, Burn Rate: ${burnRate}
+Runway: ${runway}, Team Size: ${teamSize}
+Product: ${productDescription}, Market Size: ${marketSize}
+Competitors: ${competitors}, Previous Funding: ${previousFunding}
+Use of Funds: ${useOfFunds}, Target Raise: ${targetRaise}
+Target Investors: ${targetInvestors}, Geography: ${geography}
+
+Return JSON: { strategyTitle, executiveSummary, fundraisingReadiness: { score, strengths, gaps, recommendations }, storyNarrative: { headline, problem, solution, traction, marketOpportunity, businessModel, team, ask }, targetInvestors: [{ firm, focus, stage, checkSize, why, keyPartners, approach, warmIntro }], pitchDeckOutline: [{ slide, title, keyPoints, dataToInclude, designNote }], financialNarratives: { revenueStory, unitEconomicsStory, pathToProfitability, useOfFunds: [{ category, amount, rationale }] }, dueDiligencePrep: { dataRoomChecklist: [{ category, items }], commonQuestions: [{ question, suggestedAnswer }] }, negotiationStrategy: { targetValuation, floorValuation, keyTerms, dealBreakers, niceToHaves }, timeline: [{ phase, duration, activities, milestones }], alternativeStrategies: [{ option, pros, cons, bestFor }], irCalendar: [{ activity, timing, owner }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.30 Partnership & Alliance Strategy ---
 app.post('/api/partnership-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, product, targetPartners, partnershipGoals, currentPartnerships, competitorPartnerships, geography, budget, teamSize, partnershipTypes } = req.body;
