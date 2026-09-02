@@ -597,6 +597,114 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.06 Customer Segmentation Analysis ---
+const CHURN_COLOR: Record<string,string> = { 'Low':'text-green-400','Medium':'text-yellow-400','High':'text-red-400' };
+function CustomerSegPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', currentCustomers:'', revenueModel:'', geographies:'', targetGoal:'', competitorSegments:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'segments'|'matrix'|'gtm'|'revenue'|'roadmap'>('segments');
+  const [activeSeg, setActiveSeg] = useState(0);
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/customer-segmentation`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  const seg = result?.segments?.[activeSeg];
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🎯 Customer Segmentation Analysis</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['company','Company'],['product','Product / Service'],['industry','Industry'],['revenueModel','Revenue Model'],['geographies','Geographies'],['competitorSegments','Competitor Segments']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+      </div>
+      {[['currentCustomers','Current Customers (describe your best customers)'],['targetGoal','Growth Goal']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Analyzing…':'Run Segmentation'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.analysisTitle}</p>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['segments','matrix','gtm','revenue','roadmap'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs capitalize ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s==='gtm'?'Go-To-Market':s}</button>)}
+          </div>
+          {subtab==='segments' && (
+            <div>
+              <div className="flex gap-2 mb-3 flex-wrap">{(result.segments||[]).map((s:any,i:number)=><button key={i} onClick={()=>setActiveSeg(i)} className={`px-3 py-1 rounded text-xs ${activeSeg===i?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.segmentCode}: {s.segmentName}</button>)}</div>
+              {seg && (
+                <div className="bg-gray-800 rounded p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div><p className="text-white font-bold">{seg.segmentName}</p><p className="text-indigo-300 text-xs italic">"{seg.personaName}"</p></div>
+                    <div className="text-right text-xs"><p className="text-gray-400">Size: <span className="text-white">{seg.size}</span></p><p className="text-gray-400">Revenue: <span className="text-green-400">{seg.revenueContribution}</span></p><p className="text-gray-400">Churn Risk: <span className={CHURN_COLOR[seg.behaviors?.churnRisk]||'text-gray-300'}>{seg.behaviors?.churnRisk}</span></p></div>
+                  </div>
+                  {seg.personaQuote && <p className="text-gray-300 text-sm italic border-l-2 border-indigo-500 pl-3">"{seg.personaQuote}"</p>}
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div><p className="text-gray-400 mb-1">Demographics</p>{Object.entries(seg.demographics||{}).map(([k,v])=><p key={k} className="text-gray-300"><span className="text-gray-500 capitalize">{k}: </span>{v as string}</p>)}</div>
+                    <div><p className="text-gray-400 mb-1">Behaviors</p><p className="text-gray-300"><span className="text-gray-500">Budget: </span>{seg.behaviors?.typicalBudget}</p><p className="text-gray-300"><span className="text-gray-500">Channels: </span>{(seg.behaviors?.preferredChannels||[]).join(', ')}</p></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-xs">
+                    <div><p className="text-gray-400 mb-1">Pain Points</p><ul>{(seg.psychographics?.painPoints||[]).map((p:string,i:number)=><li key={i} className="text-red-300">• {p}</li>)}</ul></div>
+                    <div><p className="text-gray-400 mb-1">Goals</p><ul>{(seg.psychographics?.goals||[]).map((g:string,i:number)=><li key={i} className="text-green-300">• {g}</li>)}</ul></div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    {[['Acquisition',seg.acquisitionStrategy,'text-blue-300'],['Retention',seg.retentionStrategy,'text-yellow-300'],['Upsell',seg.upsellOpportunity,'text-purple-300']].map(([l,v,c])=><div key={l as string} className="bg-gray-700/50 rounded p-2"><p className={`font-medium mb-1 ${c}`}>{l}</p><p className="text-gray-300">{v as string}</p></div>)}
+                  </div>
+                  {(seg.messagingAngles||[]).length>0&&<div><p className="text-gray-400 text-xs mb-1">Messaging Angles</p><ul className="space-y-0.5">{seg.messagingAngles.map((m:string,i:number)=><li key={i} className="text-gray-300 text-xs">→ {m}</li>)}</ul></div>}
+                </div>
+              )}
+            </div>
+          )}
+          {subtab==='matrix' && result.segmentMatrix && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3 text-xs text-gray-400">X: {result.segmentMatrix.xAxis} · Y: {result.segmentMatrix.yAxis}</div>
+              <div className="grid grid-cols-2 gap-3">{(result.segmentMatrix.quadrants||[]).map((q:any,i:number)=><div key={i} className="bg-gray-800 rounded p-3"><p className="text-white font-medium text-sm mb-1">{q.name}</p><p className="text-gray-400 text-xs mb-2">{q.strategy}</p><div className="flex flex-wrap gap-1">{(q.segments||[]).map((s:string,j:number)=><span key={j} className="text-xs bg-indigo-900/40 text-indigo-300 px-2 py-0.5 rounded">{s}</span>)}</div></div>)}</div>
+            </div>
+          )}
+          {subtab==='gtm' && (
+            <div className="space-y-2">
+              {(result.gtmRecommendations||[]).map((g:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2"><p className="text-white font-medium text-sm">{g.segment}</p><span className="text-xs text-indigo-300 bg-indigo-900/40 px-2 py-0.5 rounded">{g.channel}</span></div>
+                  <p className="text-gray-300 text-xs mb-1"><span className="text-gray-500">Message: </span>{g.message}</p>
+                  <p className="text-gray-300 text-xs mb-1"><span className="text-gray-500">Offer: </span>{g.offer}</p>
+                  <p className="text-green-300 text-xs"><span className="text-gray-500">KPI: </span>{g.kpi}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='revenue' && result.revenueProjection && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-3">{[['TAM',result.revenueProjection.totalAddressable],['SAM',result.revenueProjection.serviceable],['Target Capture',result.revenueProjection.targetCapture]].map(([l,v])=><div key={l as string} className="bg-gray-800 rounded p-3 text-center"><p className="text-xs text-gray-400">{l}</p><p className="text-white font-bold text-lg mt-1">{v as string}</p></div>)}</div>
+              {(result.revenueProjection.priorityOrder||[]).length>0&&<div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Priority Order</p>{result.revenueProjection.priorityOrder.map((s:string,i:number)=><p key={i} className="text-gray-300 text-xs">#{i+1} {s}</p>)}</div>}
+            </div>
+          )}
+          {subtab==='roadmap' && (
+            <div className="space-y-2">
+              {(result.implementationRoadmap||[]).map((ph:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-2"><p className="text-white font-medium text-sm">{ph.phase}</p><span className="text-gray-400 text-xs">{ph.timeline}</span></div>
+                  <div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-gray-400 mb-1">Actions</p><ul>{(ph.actions||[]).map((a:string,j:number)=><li key={j} className="text-gray-300">• {a}</li>)}</ul></div><div><p className="text-gray-400 mb-1">Metrics</p><ul>{(ph.metrics||[]).map((m:string,j:number)=><li key={j} className="text-green-300">→ {m}</li>)}</ul></div></div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.05 Employee Engagement Survey Builder ---
 const Q_TYPE_LABEL: Record<string,string> = { likert5:'1-5 Scale', likert7:'1-7 Scale', yesno:'Yes/No', opentext:'Open Text', multiselect:'Multi-Select', nps:'NPS 0-10' };
 function EngagementSurveyPanel({ api }: { api: string }) {
@@ -7024,7 +7132,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -7115,6 +7223,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform', label: '🚀 Digital Transform' },
     { id: 'duediligence', label: '🔬 Due Diligence' },
     { id: 'engagementsurvey', label: '📋 Engagement Survey' },
+    { id: 'customerseg', label: '🎯 Customer Segments' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -7257,6 +7366,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
         {tab === 'duediligence' && <DueDiligencePanel api={api} />}
         {tab === 'engagementsurvey' && <EngagementSurveyPanel api={api} />}
+        {tab === 'customerseg' && <CustomerSegPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.06 Customer Segmentation Analysis ---
+app.post('/api/customer-segmentation', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, product, industry, currentCustomers, revenueModel, geographies, targetGoal, competitorSegments, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a comprehensive customer segmentation analysis for ${company || 'the company'}.
+Product/service: ${product || 'not specified'}
+Industry: ${industry || 'not specified'}
+Current customers: ${currentCustomers || 'not specified'}
+Revenue model: ${revenueModel || 'not specified'}
+Geographies: ${geographies || 'not specified'}
+Target goal: ${targetGoal || 'grow revenue and retention'}
+Competitor segments: ${competitorSegments || 'not specified'}
+Return JSON: { analysisTitle: string, executiveSummary: string, segmentationFramework:{approach:string,primaryDimensions:string[],dataRequired:string[]}, segments:[{segmentName:string,segmentCode:string,size:string,revenueContribution:string,demographics:{age:string,role:string,companySize:string,industry:string,geography:string},psychographics:{values:string[],motivations:string[],painPoints:string[],goals:string[]},behaviors:{buyingTriggers:string[],preferredChannels:string[],decisionProcess:string,typicalBudget:string,churnRisk:'Low'|'Medium'|'High'},personaName:string,personaQuote:string,messagingAngles:string[],productFit:string,acquisitionStrategy:string,retentionStrategy:string,upsellOpportunity:string,priorityScore:number}], segmentMatrix:{xAxis:string,yAxis:string,quadrants:[{name:string,segments:string[],strategy:string}]}, gtmRecommendations:[{segment:string,channel:string,message:string,offer:string,kpi:string}], revenueProjection:{totalAddressable:string,serviceable:string,targetCapture:string,priorityOrder:string[]}, implementationRoadmap:[{phase:string,timeline:string,actions:string[],metrics:string[]}] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.05 Employee Engagement Survey Builder ---
 app.post('/api/engagement-survey', requireAuth, async (req: AuthRequest, res) => {
   try {
