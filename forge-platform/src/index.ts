@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.05 Employee Engagement Survey Builder ---
+app.post('/api/engagement-survey', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, industry, companySize, surveyGoals, currentChallenges, previousSurveys, anonymity, frequency, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a comprehensive employee engagement survey for ${company || 'the company'}.
+Industry: ${industry || 'not specified'}
+Company size: ${companySize || 'not specified'}
+Survey goals: ${surveyGoals || 'measure overall engagement'}
+Current challenges: ${currentChallenges || 'not specified'}
+Previous surveys: ${previousSurveys || 'none'}
+Anonymity: ${anonymity || 'fully anonymous'}
+Frequency: ${frequency || 'annual'}
+Return JSON: { surveyTitle: string, executiveSummary: string, surveyDesign:{totalQuestions:number,estimatedTime:string,anonymityLevel:string,recommendedFrequency:string}, sections:[{sectionName:string,purpose:string,engagementDimension:string,questions:[{id:string,text:string,type:'likert5'|'likert7'|'yesno'|'opentext'|'multiselect'|'nps',options:string[],required:boolean,followUpTrigger:string,benchmarkAvailable:boolean}]}], demographicQuestions:[{text:string,type:string,options:string[],optional:boolean}], eNPS:{question:string,followUp:string}, pulseVariant:{description:string,questions:string[]}, administrationGuide:{timing:string,communication:[{touchpoint:string,timing:string,channel:string,template:string}],responseRateTargets:string,incentives:string[]}, analysisFramework:{keyMetrics:string[],segmentationRecommended:string[],benchmarkSources:string[],redFlagThresholds:string[]}, actionPlanningGuide:{shareResultsBy:string,actionWorkshopFormat:string,commitmentProcess:string,followUpTimeline:string}, sampleInsightReport:{overallScore:string,topStrengths:string[],areasForImprovement:string[],recommendedActions:string[]} }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.04 Acquisition Due Diligence Checklist ---
 app.post('/api/due-diligence', requireAuth, async (req: AuthRequest, res) => {
   try {

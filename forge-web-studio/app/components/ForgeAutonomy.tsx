@@ -597,6 +597,124 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.05 Employee Engagement Survey Builder ---
+const Q_TYPE_LABEL: Record<string,string> = { likert5:'1-5 Scale', likert7:'1-7 Scale', yesno:'Yes/No', opentext:'Open Text', multiselect:'Multi-Select', nps:'NPS 0-10' };
+function EngagementSurveyPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', companySize:'', surveyGoals:'', currentChallenges:'', previousSurveys:'', anonymity:'fully anonymous', frequency:'annual', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'questions'|'pulse'|'admin'|'insights'>('overview');
+  const [expandedSection, setExpandedSection] = useState<number|null>(0);
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/engagement-survey`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">📋 Employee Engagement Survey Builder</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['company','Company Name'],['industry','Industry'],['companySize','Company Size'],['anonymity','Anonymity Level'],['frequency','Survey Frequency']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+        <div><label className="text-xs text-gray-400">Provider</label><select className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      </div>
+      {[['surveyGoals','Survey Goals'],['currentChallenges','Current Employee Challenges'],['previousSurveys','Previous Survey History / Results']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Building…':'Build Survey'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.surveyTitle}</p>
+            <p className="text-gray-300 text-sm mb-3">{result.executiveSummary}</p>
+            {result.surveyDesign && (
+              <div className="grid grid-cols-4 gap-3">
+                {[['Questions',result.surveyDesign.totalQuestions],['Time',result.surveyDesign.estimatedTime],['Anonymity',result.surveyDesign.anonymityLevel],['Frequency',result.surveyDesign.recommendedFrequency]].map(([l,v])=>(
+                  <div key={l as string} className="text-center bg-gray-700/50 rounded p-2"><p className="text-xs text-gray-400">{l}</p><p className="text-white text-sm font-medium mt-1">{v}</p></div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['overview','questions','pulse','admin','insights'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs capitalize ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s==='admin'?'Admin Guide':s==='insights'?'Sample Insights':s}</button>)}
+          </div>
+          {subtab==='overview' && (
+            <div className="space-y-3">
+              {result.eNPS && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">eNPS Question</p><p className="text-white text-sm mb-1">{result.eNPS.question}</p><p className="text-gray-400 text-xs">Follow-up: {result.eNPS.followUp}</p></div>}
+              {result.analysisFramework && (
+                <div className="bg-gray-800 rounded p-3">
+                  <p className="text-xs text-gray-400 mb-2">Analysis Framework</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><p className="text-xs text-blue-300 mb-1">Key Metrics</p><ul>{(result.analysisFramework.keyMetrics||[]).map((m:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {m}</li>)}</ul></div>
+                    <div><p className="text-xs text-red-300 mb-1">Red Flag Thresholds</p><ul>{(result.analysisFramework.redFlagThresholds||[]).map((m:string,i:number)=><li key={i} className="text-gray-300 text-xs">⚠ {m}</li>)}</ul></div>
+                  </div>
+                </div>
+              )}
+              {result.demographicQuestions && result.demographicQuestions.length>0 && (
+                <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Demographic Questions</p><ul className="space-y-1">{result.demographicQuestions.map((q:any,i:number)=><li key={i} className="text-gray-300 text-xs flex gap-2"><span className="text-gray-500">{i+1}.</span><span>{q.text}{q.optional?<span className="text-gray-500 ml-1">(Optional)</span>:null}</span></li>)}</ul></div>
+              )}
+            </div>
+          )}
+          {subtab==='questions' && (
+            <div className="space-y-2">
+              {(result.sections||[]).map((sec:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded overflow-hidden">
+                  <button className="w-full flex items-center justify-between p-3" onClick={()=>setExpandedSection(expandedSection===i?null:i)}>
+                    <div><p className="text-white text-sm font-medium">{sec.sectionName}</p><p className="text-gray-400 text-xs">{sec.engagementDimension} · {(sec.questions||[]).length} questions</p></div>
+                    <span className="text-gray-400 text-xs">{expandedSection===i?'▲':'▼'}</span>
+                  </button>
+                  {expandedSection===i && <div className="px-3 pb-3 space-y-2">{(sec.questions||[]).map((q:any,j:number)=>(
+                    <div key={j} className="bg-gray-700/50 rounded p-2">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <p className="text-gray-200 text-xs flex-1">{q.id}. {q.text}</p>
+                        <span className="text-xs text-indigo-300 bg-indigo-900/40 px-1.5 py-0.5 rounded whitespace-nowrap">{Q_TYPE_LABEL[q.type]||q.type}</span>
+                      </div>
+                      {q.options&&q.options.length>0&&<p className="text-gray-500 text-xs">Options: {q.options.join(' · ')}</p>}
+                      {q.followUpTrigger&&<p className="text-yellow-400 text-xs">Follow-up if: {q.followUpTrigger}</p>}
+                    </div>
+                  ))}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='pulse' && result.pulseVariant && (
+            <div className="bg-gray-800 rounded p-4">
+              <p className="text-xs text-gray-400 mb-2">Pulse Survey Variant</p>
+              <p className="text-gray-300 text-sm mb-3">{result.pulseVariant.description}</p>
+              <ul className="space-y-2">{(result.pulseVariant.questions||[]).map((q:string,i:number)=><li key={i} className="text-gray-200 text-sm flex gap-2"><span className="text-gray-500">{i+1}.</span>{q}</li>)}</ul>
+            </div>
+          )}
+          {subtab==='admin' && result.administrationGuide && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-1">Recommended Timing</p><p className="text-gray-200 text-sm">{result.administrationGuide.timing}</p></div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Response Rate Target</p><p className="text-gray-200 text-sm">{result.administrationGuide.responseRateTargets}</p></div>
+              {(result.administrationGuide.communication||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Communication Plan</p><div className="space-y-2">{result.administrationGuide.communication.map((c:any,i:number)=><div key={i} className="border-l-2 border-indigo-600 pl-2"><p className="text-white text-xs font-medium">{c.touchpoint}</p><p className="text-gray-400 text-xs">{c.timing} · {c.channel}</p><p className="text-gray-300 text-xs italic mt-0.5">{c.template}</p></div>)}</div></div>}
+              {result.actionPlanningGuide && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Action Planning</p><div className="space-y-1 text-xs text-gray-300"><p>Share results by: {result.actionPlanningGuide.shareResultsBy}</p><p>Workshop format: {result.actionPlanningGuide.actionWorkshopFormat}</p><p>Follow-up: {result.actionPlanningGuide.followUpTimeline}</p></div></div>}
+            </div>
+          )}
+          {subtab==='insights' && result.sampleInsightReport && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3 text-center"><p className="text-xs text-gray-400 mb-1">Overall Engagement Score</p><p className="text-3xl font-bold text-indigo-400">{result.sampleInsightReport.overallScore}</p></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-800 rounded p-3"><p className="text-xs text-green-400 mb-2">Top Strengths</p><ul>{(result.sampleInsightReport.topStrengths||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">✓ {s}</li>)}</ul></div>
+                <div className="bg-gray-800 rounded p-3"><p className="text-xs text-yellow-400 mb-2">Areas for Improvement</p><ul>{(result.sampleInsightReport.areasForImprovement||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-xs">△ {s}</li>)}</ul></div>
+              </div>
+              {(result.sampleInsightReport.recommendedActions||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Recommended Actions</p><ul className="space-y-1">{result.sampleInsightReport.recommendedActions.map((a:string,i:number)=><li key={i} className="text-indigo-300 text-xs">→ {a}</li>)}</ul></div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.04 Acquisition Due Diligence Checklist ---
 const DD_SEV_COLOR: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400' };
 const DD_STATUS_COLOR: Record<string,string> = { 'Complete':'text-green-400','In Progress':'text-blue-400','Not Started':'text-gray-400','Red Flag':'text-red-400' };
@@ -6906,7 +7024,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6996,6 +7114,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
     { id: 'digitaltransform', label: '🚀 Digital Transform' },
     { id: 'duediligence', label: '🔬 Due Diligence' },
+    { id: 'engagementsurvey', label: '📋 Engagement Survey' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -7137,6 +7256,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
         {tab === 'duediligence' && <DueDiligencePanel api={api} />}
+        {tab === 'engagementsurvey' && <EngagementSurveyPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
