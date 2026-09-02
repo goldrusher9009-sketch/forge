@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.58 AI Customer Success Playbook Builder ---
+app.post('/api/cs-playbook-builder', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { company, product, customerSegments, churnRate, npsScore, mrr } = req.body;
+    const p = `You are a world-class Customer Success strategist. Build a comprehensive CS playbook for "${company}" selling "${product||'SaaS product'}". Customer segments: ${(customerSegments||[]).join(', ')||'SMB, Mid-market, Enterprise'}. Current churn: ${churnRate||'unknown'}%, NPS: ${npsScore||'unknown'}, MRR: $${mrr||'unknown'}.
+Return ONLY valid JSON: { "playbookTitle": string, "executiveSummary": string, "csHealthScore": number (0-100), "csMaturity": "Reactive"|"Proactive"|"Predictive"|"Strategic", "customerSegments": [{ "segment": string, "size": string, "arr": string, "churnRisk": "High"|"Medium"|"Low", "engagementModel": string, "csRatio": string }], "onboardingPlaybook": { "phases": [{ "phase": string, "duration": string, "goals": string[], "activities": string[], "successCriteria": string }], "timeToValue": string, "commonFailures": string[] }, "healthScoring": { "metrics": [{ "metric": string, "weight": number, "greenThreshold": string, "yellowThreshold": string, "redThreshold": string }], "scoringLogic": string, "alertTriggers": string[] }, "engagementCadences": [{ "segment": string, "touchpoints": [{ "trigger": string, "channel": string, "owner": string, "template": string }] }], "expansionPlaybook": { "upsellTriggers": string[], "expansionMotions": string[], "crossSellOpportunities": string[], "expansionNurture": string }, "churnPrevention": { "earlyWarnings": string[], "savePlaybooks": [{ "risk": string, "intervention": string, "timeline": string }], "winBackStrategies": string[] }, "qbrFramework": { "agenda": string[], "keyMetrics": string[], "valueNarrative": string, "nextStepsTemplate": string }, "csOps": { "toolStack": string[], "automations": string[], "reportingCadence": string, "teamStructure": string }, "voiceOfCustomer": { "feedbackLoops": string[], "npsProgram": string, "casStudyProcess": string }, "quickWins": string[] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.57 AI Pricing Psychology Engine ---
 app.post('/api/pricing-psychology', requireAuth, async (req: AuthRequest, res) => {
   try {

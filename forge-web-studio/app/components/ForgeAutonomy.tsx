@@ -597,6 +597,60 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.58 AI Customer Success Playbook Builder ---
+const CS_MATURITY_COLOR: Record<string,string> = { 'Reactive':'bg-red-700','Proactive':'bg-yellow-700','Predictive':'bg-blue-700','Strategic':'bg-green-700' };
+const CHURN_RISK_COLOR: Record<string,string> = { 'High':'bg-red-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
+function CSPlaybookBuilderPanel({ api }: { api: string }) {
+  const [company, setCompany] = React.useState('');
+  const [product, setProduct] = React.useState('');
+  const [segments, setSegments] = React.useState('');
+  const [churnRate, setChurnRate] = React.useState('');
+  const [npsScore, setNpsScore] = React.useState('');
+  const [mrr, setMrr] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<any>(null);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    if (!company.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/cs-playbook-builder`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ company, product, customerSegments: segments.split(',').map(s=>s.trim()).filter(Boolean), churnRate, npsScore, mrr }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-900 rounded-lg p-4 space-y-3">
+        <h2 className="text-xl font-bold text-white">🎯 AI Customer Success Playbook Builder</h2>
+        <div className="grid grid-cols-2 gap-2">
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Company name" value={company} onChange={e=>setCompany(e.target.value)} />
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Product/service" value={product} onChange={e=>setProduct(e.target.value)} />
+        </div>
+        <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" placeholder="Customer segments (comma-separated)" value={segments} onChange={e=>setSegments(e.target.value)} />
+        <div className="grid grid-cols-3 gap-2">
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Churn rate %" value={churnRate} onChange={e=>setChurnRate(e.target.value)} />
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="NPS score" value={npsScore} onChange={e=>setNpsScore(e.target.value)} />
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="MRR ($)" value={mrr} onChange={e=>setMrr(e.target.value)} />
+        </div>
+        <button onClick={run} disabled={loading || !company.trim()} className="w-full bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded">{loading ? 'Building...' : '📋 Build CS Playbook'}</button>
+        {error && <div className="text-red-400 text-sm">{error}</div>}
+      </div>
+      {result && (
+        <div className="space-y-3">
+          <div className="bg-gray-800 rounded p-4"><div className="flex items-center gap-3 mb-2"><h3 className="text-lg font-bold text-white">{result.playbookTitle}</h3><span className={`px-3 py-1 rounded-full text-xs text-white ${CS_MATURITY_COLOR[result.csMaturity]||'bg-gray-700'}`}>{result.csMaturity}</span><span className="text-2xl font-bold text-teal-400">{result.csHealthScore}/100</span></div><p className="text-gray-300 text-sm">{result.executiveSummary}</p></div>
+          {result.customerSegments?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">👥 Customer Segments</h4><div className="space-y-2">{result.customerSegments.map((s:any,i:number)=><div key={i} className="bg-gray-900 rounded p-3"><div className="flex items-center gap-2 mb-1"><span className="text-white font-semibold">{s.segment}</span><span className={`px-2 py-0.5 rounded text-xs text-white ${CHURN_RISK_COLOR[s.churnRisk]||'bg-gray-700'}`}>{s.churnRisk} Risk</span><span className="text-gray-400 text-xs">CS Ratio: {s.csRatio}</span></div><div className="text-teal-400 text-xs">{s.engagementModel}</div></div>)}</div></div>}
+          {result.onboardingPlaybook?.phases?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">🚀 Onboarding Playbook</h4><div className="text-gray-400 text-xs mb-2">Time to Value: {result.onboardingPlaybook.timeToValue}</div><div className="space-y-2">{result.onboardingPlaybook.phases.map((p:any,i:number)=><div key={i} className="bg-gray-900 rounded p-2 text-xs"><div className="flex items-center gap-2 mb-1"><span className="text-teal-400 font-semibold">{p.phase}</span><span className="text-gray-500">{p.duration}</span></div><div className="text-green-400 text-xs">{p.successCriteria}</div><div className="text-gray-300 mt-1">{p.activities?.join(' • ')}</div></div>)}</div></div>}
+          {result.healthScoring?.metrics?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">❤️ Health Scoring</h4><div className="space-y-1">{result.healthScoring.metrics.map((m:any,i:number)=><div key={i} className="flex items-center gap-2 text-xs"><span className="text-white w-40 shrink-0">{m.metric}</span><span className="text-gray-400">Weight: {m.weight}%</span><span className="text-green-400">✓{m.greenThreshold}</span><span className="text-yellow-400">⚡{m.yellowThreshold}</span><span className="text-red-400">✗{m.redThreshold}</span></div>)}</div></div>}
+          {result.churnPrevention?.earlyWarnings?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-2">🚨 Churn Prevention</h4><div className="text-xs mb-2"><div className="text-red-400 font-semibold mb-1">Early Warnings</div>{result.churnPrevention.earlyWarnings.map((w:string,i:number)=><div key={i} className="text-gray-300">• {w}</div>)}</div>{result.churnPrevention.savePlaybooks?.map((p:any,i:number)=><div key={i} className="bg-gray-900 rounded p-2 text-xs mb-1"><span className="text-orange-400 font-semibold">{p.risk}</span><span className="text-gray-300"> → {p.intervention}</span><span className="text-gray-500"> ({p.timeline})</span></div>)}</div>}
+          {result.quickWins?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-2">⚡ Quick Wins</h4>{result.quickWins.map((w:string,i:number)=><div key={i} className="text-green-400 text-sm">• {w}</div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.57 AI Pricing Psychology Engine ---
 const PRICE_OPT_COLOR: Record<string,string> = { 'Optimal':'bg-green-700','Underpriced':'bg-blue-700','Overpriced':'bg-red-700','Misaligned':'bg-yellow-700' };
 const ELASTICITY_COLOR: Record<string,string> = { 'High':'bg-red-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
@@ -10686,7 +10740,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10774,6 +10828,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'csplaybookbuilder', label: '🎯 CS Playbook' },
     { id: 'pricingpsychology', label: '🧠 Pricing Psychology' },
     { id: 'competitivewarroom', label: '⚔️ War Room' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
@@ -10802,6 +10857,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'csplaybookbuilder', label: '🎯 CS Playbook' },
     { id: 'pricingpsychology', label: '🧠 Pricing Psychology' },
     { id: 'competitivewarroom', label: '⚔️ War Room' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
@@ -10970,6 +11026,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'csplaybookbuilder' && <CSPlaybookBuilderPanel api={api} />}
         {tab === 'pricingpsychology' && <PricingPsychologyPanel api={api} />}
         {tab === 'competitivewarroom' && <CompetitiveWarRoomPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
@@ -10998,6 +11055,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'csplaybookbuilder' && <CSPlaybookBuilderPanel api={api} />}
         {tab === 'pricingpsychology' && <PricingPsychologyPanel api={api} />}
         {tab === 'competitivewarroom' && <CompetitiveWarRoomPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
