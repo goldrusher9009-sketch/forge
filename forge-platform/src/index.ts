@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.91 Market Entry Strategy Generator ---
+app.post('/api/market-entry', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, product, targetMarket, targetCountry, budget, timeline, currentPresence, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a market entry strategy for ${company || 'the company'} entering ${targetMarket || 'a new market'} in ${targetCountry || 'the target region'}.
+Product/service: ${product || 'the product'}
+Budget: ${budget || 'not specified'}
+Timeline: ${timeline || '12 months'}
+Current presence: ${currentPresence || 'none'}
+Return JSON: { strategyTitle: string, marketOverview: string, entryMode: string, entryModeRationale: string, phases: [{phase:string,timeline:string,objectives:string[],keyActions:string[],budget:string,kpis:string[]}], localAdaptations: string[], regulatoryConsiderations: string[], partnershipStrategy: string, competitiveLandscape: string, riskMitigation: [{risk:string,likelihood:string,mitigation:string}], successMetrics: string[], goNoGoChecklist: string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.90 Investor Update Generator ---
 app.post('/api/investor-update', requireAuth, async (req: AuthRequest, res) => {
   try {
