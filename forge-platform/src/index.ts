@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.45 Customer Success Playbook Builder ---
+app.post('/api/cs-playbook-builder', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, customerSegments, arr, nrr, churnRate, nps, csTeamSize, csToolStack, onboardingTime, timeToValue, supportVolume, expansionRevenue, keyChurnReasons, topCustomerGoals, csGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a customer success expert. Build a comprehensive CS playbook for: Company: ${company}, Product: ${product}, Industry: ${industry}, Customer Segments: ${customerSegments}, ARR: ${arr}, NRR: ${nrr}, Churn Rate: ${churnRate}, NPS: ${nps}, CS Team Size: ${csTeamSize}, Tool Stack: ${csToolStack}, Onboarding Time: ${onboardingTime}, Time to Value: ${timeToValue}, Support Volume: ${supportVolume}, Expansion Revenue: ${expansionRevenue}, Key Churn Reasons: ${keyChurnReasons}, Top Customer Goals: ${topCustomerGoals}, CS Goals: ${csGoals}. Return JSON: { playbookTitle, executiveSummary, csPhilosophy, customerSegmentation (array: {segment, size, arpu, churnRisk, csModel, touchFrequency}), onboardingPlaybook (array: {day, milestone, actions, successCriteria, ownerRole}), healthScoreModel (array: {signal, weight, measurement, redThreshold, greenThreshold}), qbrPlaybook (array: {phase, duration, agenda, talkingPoints, successMetrics}), churnPreventionPlaybook (array: {trigger, riskLevel, response, timeline, owner}), expansionPlaybook (array: {trigger, opportunity, approach, targetSegment, expectedUplift}), escalationMatrix (array: {severity, definition, response, owner, timeline}), csMetricsDashboard (array: {metric, target, frequency, owner}), toolingRecommendations, hiringPlan, trainingCurriculum, voiceOfCustomerProgram, implementationRoadmap (array: {phase, timeline, initiatives, kpis}) }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.44 Board Meeting Prep AI ---
 app.post('/api/board-prep', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, meetingDate, meetingType, boardMembers, arr, growth, burnRate, runway, keyMetrics, strategicInitiatives, challenges, decisions_needed, competitiveUpdates, financialHighlights, productUpdates, teamUpdates, goals } = req.body;
