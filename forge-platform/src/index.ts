@@ -39500,6 +39500,59 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.49 AI Go-to-Market Strategy Engine ---
+app.post('/api/gtm-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, product, targetMarket, currentStage, competitors, uniqueValue, currentRevenue, teamSize, budget, geography, launchTimeline } = req.body;
+  const p = `You are a world-class GTM strategist who has launched 100+ products. Create a comprehensive go-to-market strategy.
+
+Company: ${companyName}
+Product: ${product}
+Target Market: ${targetMarket}
+Stage: ${currentStage}
+Competitors: ${competitors}
+Unique Value: ${uniqueValue}
+Current Revenue: ${currentRevenue}
+Team Size: ${teamSize}
+GTM Budget: ${budget}
+Geography: ${geography}
+Launch Timeline: ${launchTimeline}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "GTM Strategy for [Company]",
+  "executiveSummary": "...",
+  "gtmScore": 0-100,
+  "gtmReadiness": "Not Ready|Early Stage|Approaching Ready|Ready|Optimized",
+  "biggestGap": "...",
+  "fastestPath": "...",
+  "estimatedRampTime": "...",
+  "icp": { "primaryPersona": "...", "companySize": "...", "industry": "...", "painPoints": [], "buyingTriggers": [], "decisionProcess": "...", "budgetRange": "..." },
+  "positioningStrategy": { "categoryDefinition": "...", "uniqueDifferentiator": "...", "valueProposition": "...", "messagingPillar1": "...", "messagingPillar2": "...", "messagingPillar3": "...", "competitiveNarrative": "..." },
+  "channelStrategy": [
+    { "channel": "...", "priority": "Primary|Secondary|Test", "cac": "$X", "conversionRate": "X%", "monthlyLeads": X, "tactics": [], "budget": "$X/mo", "timeToROI": "..." }
+  ],
+  "launchPlan": [
+    { "phase": "Phase 1: Foundation", "duration": "...", "goals": [], "activities": [], "budget": "$X", "successMetrics": [] }
+  ],
+  "salesMotion": { "motionType": "PLG|SLG|Hybrid|Channel", "avgDealSize": "$X", "salesCycle": "...", "requiredRoles": [], "quotaModel": "...", "enablementPriorities": [] },
+  "pricingGTM": { "entryPrice": "...", "expansionPath": "...", "competitiveBenchmark": "...", "discountPolicy": "...", "packagingRecommendation": "..." },
+  "contentPlan": [ { "contentType": "...", "topic": "...", "channel": "...", "frequency": "...", "goal": "..." } ],
+  "partnerStrategy": { "partnerTypes": [], "topPartners": [], "partnerValue": "...", "enablementPlan": "..." },
+  "kpis": [ { "metric": "...", "week4": "...", "month3": "...", "month6": "...", "month12": "..." } ],
+  "quickWins": []
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!json) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.48 AI Financial Modeling & Scenario Planning Engine ---
 app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
