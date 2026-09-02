@@ -39500,6 +39500,75 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.75 AI Product-Market Fit & Growth Engine ---
+app.post('/api/pmf-growth', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { productName, category, targetMarket, currentRevenue, monthlyActiveUsers, churnRate, npsScore, retentionRate, acquisitionChannels, avgRevenuePerUser, paybackPeriod, ltv, cac, growthRate, competitors, uniqueValue, currentStage, fundingStatus, teamSize, keyMetrics } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const p = `You are a world-class product-market fit analyst and growth strategist. Diagnose PMF and build a comprehensive growth plan.
+
+Product: ${productName}, Category: ${category}, Target Market: ${targetMarket}
+Current Revenue: ${currentRevenue}, MAU: ${monthlyActiveUsers}, Churn: ${churnRate}, NPS: ${npsScore}
+Retention: ${retentionRate}, Channels: ${acquisitionChannels}, ARPU: ${avgRevenuePerUser}
+Payback Period: ${paybackPeriod}, LTV: ${ltv}, CAC: ${cac}, Growth Rate: ${growthRate}
+Competitors: ${competitors}, Unique Value: ${uniqueValue}, Stage: ${currentStage}
+Funding: ${fundingStatus}, Team: ${teamSize}, Key Metrics: ${keyMetrics}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "pmfScore": 0-100,
+  "pmfVerdict": "Strong PMF|Good PMF|Weak PMF|No PMF",
+  "growthPotential": "Hypergrowth|High|Moderate|Low",
+  "estimatedMarketSize": "string",
+  "pmfDiagnosis": {
+    "signals": [{"signal": "string", "strength": "Strong|Moderate|Weak", "evidence": "string", "action": "string"}],
+    "retentionAnalysis": {"verdict": "string", "benchmarkComparison": "string", "cohortInsights": "string", "improvementPriority": "string"},
+    "engagementDepth": "string",
+    "willingness": "string",
+    "networkEffects": "string",
+    "switchingCosts": "string"
+  },
+  "unitEconomics": {
+    "healthScore": 0-100,
+    "ltvCacRatio": "string",
+    "ltvCacVerdict": "Excellent|Good|Borderline|Poor",
+    "paybackHealthy": "boolean string",
+    "improvements": [{"metric": "string", "current": "string", "target": "string", "initiative": "string", "impact": "string"}],
+    "benchmarks": [{"metric": "string", "yourValue": "string", "industrBenchmark": "string", "gap": "string"}]
+  },
+  "growthStrategy": {
+    "primaryGrowthMotion": "Product-Led|Sales-Led|Marketing-Led|Community-Led|Partnership-Led",
+    "channelPrioritization": [{"channel": "string", "currentPerformance": "string", "potential": "High|Medium|Low", "investment": "string", "expectedROI": "string", "timeToResults": "string"}],
+    "viralMechanics": ["string"],
+    "expansionOpportunities": [{"opportunity": "string", "marketSize": "string", "effort": "High|Medium|Low", "timeline": "string"}],
+    "retentionPlaybook": [{"lever": "string", "expectedImpact": "string", "implementation": "string", "owner": "string"}],
+    "monetizationOptimization": [{"approach": "string", "expectedLift": "string", "segment": "string", "risk": "string"}]
+  },
+  "competitivePositioning": {
+    "moatStrength": 0-100,
+    "moatSources": ["string"],
+    "vulnerabilities": ["string"],
+    "winThemes": ["string"],
+    "loseThemes": ["string"],
+    "differentiationActions": ["string"]
+  },
+  "growthRoadmap": [{"quarter": "string", "theme": "string", "initiatives": ["string"], "targetMetrics": [{"metric": "string", "target": "string"}], "budget": "string", "owner": "string"}],
+  "experimentBacklog": [{"experiment": "string", "hypothesis": "string", "metric": "string", "expectedLift": "string", "effort": "High|Medium|Low", "priority": 1}],
+  "riskFactors": [{"risk": "string", "probability": "High|Medium|Low", "impact": "High|Medium|Low", "mitigation": "string"}],
+  "northStarMetric": {"metric": "string", "currentValue": "string", "target": "string", "rationale": "string"},
+  "quickWins": ["string"]
+}`;
+    const t = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    let data: any;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.74 AI Mergers & Acquisitions Intelligence Engine ---
 app.post('/api/ma-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
