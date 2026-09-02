@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.05 AI Financial Modeling & Forecasting Engine ---
+app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, businessModel, currentRevenue, revenueGrowth, costStructure, grossMargin, burnRate, fundingStage, forecastPeriod, keyDrivers, scenarios, investmentFocus } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class CFO and financial modeling expert. Build a comprehensive financial model and forecast for ${companyName} in the ${industry} industry.
+Business model: ${businessModel}. Current revenue: ${currentRevenue}. Revenue growth: ${revenueGrowth}. Cost structure: ${costStructure}. Gross margin: ${grossMargin}. Burn rate: ${burnRate}. Funding stage: ${fundingStage}. Forecast period: ${forecastPeriod}. Key drivers: ${keyDrivers}. Scenarios: ${scenarios}. Investment focus: ${investmentFocus}.
+Return ONLY valid JSON:
+{
+  "modelTitle": "string",
+  "executiveSummary": "string",
+  "financialHealthScore": 0-100,
+  "keyRisk": "Critical|High|Medium|Low",
+  "revenueModel": {"streams": [{"stream": "string", "currentArr": "string", "growthRate": "string", "assumptions": "string"}], "totalRevenue": "string", "mix": "string"},
+  "incomeStatement": [{"period": "string", "revenue": "string", "cogs": "string", "grossProfit": "string", "grossMargin": "string", "opex": "string", "ebitda": "string", "netIncome": "string"}],
+  "cashFlowForecast": [{"period": "string", "operatingCF": "string", "investingCF": "string", "financingCF": "string", "netCashFlow": "string", "cashBalance": "string"}],
+  "unitEconomics": {"cac": "string", "ltv": "string", "ltvCacRatio": "string", "paybackPeriod": "string", "grossMarginPerUnit": "string", "contributionMargin": "string"},
+  "scenarioAnalysis": [{"scenario": "string", "probability": "string", "revenueImpact": "string", "ebitdaImpact": "string", "keyAssumptions": ["string"], "actions": ["string"]}],
+  "fundingNeeds": {"runwayMonths": 0, "nextRoundSize": "string", "useOfFunds": [{"category": "string", "amount": "string", "rationale": "string"}], "fundingTimeline": "string"},
+  "keyMetrics": [{"metric": "string", "current": "string", "year1": "string", "year3": "string", "benchmark": "string"}],
+  "sensitivityAnalysis": [{"driver": "string", "baseCase": "string", "upside": "string", "downside": "string", "impact": "string"}],
+  "valuationIndicators": {"revenueMultiple": "string", "ebitdaMultiple": "string", "impliedValuation": "string", "comparables": ["string"]},
+  "financialRisks": [{"risk": "string", "impact": "High|Medium|Low", "mitigation": "string"}],
+  "roadmap": [{"phase": "string", "timeframe": "string", "financialMilestone": "string", "actions": ["string"]}],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.04 AI Brand Architecture & Strategy Builder ---
 app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
