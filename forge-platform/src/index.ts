@@ -39500,6 +39500,24 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.13 Innovation Sprint & Design Thinking Facilitator ---
+app.post('/api/innovation-sprint', requireAuth, async (req: AuthRequest, res) => {
+  const { company, challenge, industry, teamSize, sprintDuration, targetUser, desiredOutcome, constraints, existingSolutions, successMetrics, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an expert design thinking and innovation sprint facilitator (IDEO, Google Ventures). Create a comprehensive innovation sprint plan.
+Company: ${company} | Challenge: ${challenge} | Industry: ${industry}
+Team Size: ${teamSize} | Sprint Duration: ${sprintDuration} | Target User: ${targetUser}
+Desired Outcome: ${desiredOutcome} | Constraints: ${constraints}
+Existing Solutions: ${existingSolutions} | Success Metrics: ${successMetrics}
+Return JSON: { sprintTitle, problemStatement, hmwStatements:string[], sprintOverview:{ totalDays:number, phases:string[], teamRoles:[{ role, responsibilities:string[] }] }, days:[{ day:number, phase:'Understand'|'Define'|'Ideate'|'Prototype'|'Test', theme, objectives:string[], activities:[{ time, activity, duration, facilitationNotes, materials:string[], output }], dayOutput:string }], userPersonas:[{ name, age, occupation, goals:string[], painPoints:string[], quote, jobToBeDone }], insights:[{ insight, evidence, opportunity }], ideaGenerationTechniques:[{ technique, description, duration, howTo:string[], example }], prototypeGuide:{ fidelityLevel:'Low'|'Medium'|'High', tools:string[], approach:string, keyScreensOrComponents:string[] }, testingPlan:{ recruitmentCriteria:string[], sessionFormat, questions:string[], successCriteria:[{ criterion, measure }] }, decisionFramework:{ votingMethod, criteria:string[], goNoGoThreshold }, nextSteps:[{ action, owner, timeline, priority:'P1'|'P2'|'P3' }], facilitationTips:string[] }`;
+    const result = await callLLM(provider, key, null as any, [{ role:'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.12 ESG & Sustainability Report Generator ---
 app.post('/api/esg-report', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, revenue, employees, reportingYear, framework, currentInitiatives, emissions, energySources, wasteMetrics, diversityMetrics, governanceStructure, supplyChainPractices, stakeholders, provider = 'anthropic' } = req.body;

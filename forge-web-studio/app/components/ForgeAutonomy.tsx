@@ -597,6 +597,110 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.13 Innovation Sprint & Design Thinking Facilitator ---
+const PHASE_COLOR: Record<string,string> = { 'Understand':'bg-blue-800','Define':'bg-purple-800','Ideate':'bg-yellow-800','Prototype':'bg-orange-800','Test':'bg-green-800' };
+function InnovationSprintPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', challenge:'', industry:'', teamSize:'', sprintDuration:'5 days', targetUser:'', desiredOutcome:'', constraints:'', existingSolutions:'', successMetrics:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'days'|'personas'|'ideation'|'prototype'|'testing'>('overview');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/innovation-sprint`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">💡 Innovation Sprint Facilitator</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['company','Company'],['industry','Industry'],['teamSize','Team Size'],['sprintDuration','Sprint Duration'],['targetUser','Target User'],['desiredOutcome','Desired Outcome'],['successMetrics','Success Metrics']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+      </div>
+      {[['challenge','Innovation Challenge / Problem Statement'],['constraints','Constraints & Boundaries'],['existingSolutions','Existing Solutions / What\'s Been Tried']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-yellow-700 hover:bg-yellow-600 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Generating…':'Generate Sprint Plan'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.sprintTitle}</p>
+            <p className="text-indigo-300 text-sm italic mb-2">"{result.problemStatement}"</p>
+            <div className="flex flex-wrap gap-2">{(result.hmwStatements||[]).slice(0,3).map((h:string,i:number)=><span key={i} className="bg-yellow-900 text-yellow-200 text-xs px-2 py-1 rounded">{h}</span>)}</div>
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['overview','days','personas','ideation','prototype','testing'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-yellow-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='overview' && (
+            <div className="space-y-3">
+              {result.sprintOverview && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Phases</p><div className="flex flex-wrap gap-2">{(result.sprintOverview.phases||[]).map((p:string,i:number)=><span key={i} className="bg-gray-700 text-white text-xs px-2 py-1 rounded">{p}</span>)}</div></div>}
+              {(result.sprintOverview?.teamRoles||[]).map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded p-3"><p className="text-yellow-300 text-xs font-bold mb-1">{r.role}</p><ul>{(r.responsibilities||[]).map((resp:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {resp}</li>)}</ul></div>)}
+              {(result.facilitationTips||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Facilitation Tips</p><ul>{result.facilitationTips.slice(0,5).map((t:string,i:number)=><li key={i} className="text-indigo-300 text-xs">💡 {t}</li>)}</ul></div>}
+            </div>
+          )}
+          {subtab==='days' && (
+            <div className="space-y-3">
+              {(result.days||[]).map((d:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-3 mb-3"><span className={`${PHASE_COLOR[d.phase]||'bg-gray-700'} text-white text-xs px-2 py-1 rounded`}>{d.phase}</span><p className="text-white font-medium text-sm">Day {d.day}: {d.theme}</p></div>
+                  <ul className="mb-2">{(d.objectives||[]).map((o:string,j:number)=><li key={j} className="text-green-300 text-xs">✓ {o}</li>)}</ul>
+                  {(d.activities||[]).slice(0,3).map((a:any,j:number)=><div key={j} className="border-l-2 border-gray-600 pl-2 mb-1"><p className="text-white text-xs">{a.time} — {a.activity} ({a.duration})</p><p className="text-gray-400 text-xs">Output: {a.output}</p></div>)}
+                  <p className="text-indigo-300 text-xs mt-2">Day Output: {d.dayOutput}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='personas' && (
+            <div className="space-y-3">
+              {(result.userPersonas||[]).map((p:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-2 mb-2"><p className="text-white font-bold">{p.name}</p><span className="text-gray-400 text-xs">{p.age} · {p.occupation}</span></div>
+                  <p className="text-yellow-300 text-sm italic mb-2">"{p.quote}"</p>
+                  <p className="text-gray-300 text-xs mb-2"><span className="text-gray-400">Job to be done: </span>{p.jobToBeDone}</p>
+                  <div className="grid grid-cols-2 gap-2"><div><p className="text-green-400 text-xs font-medium mb-1">Goals</p><ul>{(p.goals||[]).map((g:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {g}</li>)}</ul></div><div><p className="text-red-400 text-xs font-medium mb-1">Pain Points</p><ul>{(p.painPoints||[]).map((pp:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {pp}</li>)}</ul></div></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='ideation' && (
+            <div className="space-y-2">
+              {(result.ideaGenerationTechniques||[]).map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-1"><p className="text-white font-medium text-sm">{t.technique}</p><span className="text-yellow-300 text-xs">{t.duration}</span></div>
+                  <p className="text-gray-300 text-xs mb-2">{t.description}</p>
+                  <ul>{(t.howTo||[]).slice(0,3).map((s:string,j:number)=><li key={j} className="text-gray-400 text-xs">{j+1}. {s}</li>)}</ul>
+                  {t.example && <p className="text-indigo-300 text-xs mt-1">Example: {t.example}</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='prototype' && result.prototypeGuide && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><div className="flex gap-3 mb-2 text-xs"><span className="text-gray-400">Fidelity: </span><span className="text-white">{result.prototypeGuide.fidelityLevel}</span></div><p className="text-gray-300 text-sm mb-2">{result.prototypeGuide.approach}</p><p className="text-gray-400 text-xs mb-2">Tools: {(result.prototypeGuide.tools||[]).join(', ')}</p><ul>{(result.prototypeGuide.keyScreensOrComponents||[]).map((c:string,i:number)=><li key={i} className="text-indigo-300 text-xs">• {c}</li>)}</ul></div>
+              {result.insights && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Key Insights</p>{(result.insights||[]).map((ins:any,i:number)=><div key={i} className="mb-2"><p className="text-white text-xs font-medium">{ins.insight}</p><p className="text-green-300 text-xs">Opportunity: {ins.opportunity}</p></div>)}</div>}
+            </div>
+          )}
+          {subtab==='testing' && result.testingPlan && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Session Format</p><p className="text-gray-300 text-sm">{result.testingPlan.sessionFormat}</p></div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Test Questions</p><ul>{(result.testingPlan.questions||[]).map((q:string,i:number)=><li key={i} className="text-gray-300 text-xs mb-1">{i+1}. {q}</li>)}</ul></div>
+              {result.decisionFramework && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Decision Framework: {result.decisionFramework.votingMethod}</p><ul>{(result.decisionFramework.criteria||[]).map((c:string,i:number)=><li key={i} className="text-indigo-300 text-xs">• {c}</li>)}</ul></div>}
+              {(result.nextSteps||[]).slice(0,4).map((s:any,i:number)=><div key={i} className="bg-gray-800 rounded p-2 flex items-center justify-between"><div><p className="text-white text-xs">{s.action}</p><p className="text-gray-400 text-xs">{s.owner} · {s.timeline}</p></div><span className={s.priority==='P1'?'text-red-400 text-xs':s.priority==='P2'?'text-yellow-400 text-xs':'text-green-400 text-xs'}>{s.priority}</span></div>)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.12 ESG & Sustainability Report Generator ---
 const ESG_RATING_COLOR: Record<string,string> = { 'Leader':'text-green-400','Advanced':'text-blue-400','Intermediate':'text-yellow-400','Basic':'text-gray-400' };
 const MATERIALITY_COLOR: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400' };
@@ -7802,7 +7906,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -7900,6 +8004,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'innovationsprint', label: '💡 Innovation Sprint' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -8049,6 +8154,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'innovationsprint' && <InnovationSprintPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
