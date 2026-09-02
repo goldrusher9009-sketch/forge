@@ -597,6 +597,40 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.71 Case Study Writer ---
+function CaseStudyPanel({ api }: { api: string }) {
+  const [customer, setCustomer] = React.useState('');
+  const [industry, setIndustry] = React.useState('technology');
+  const [challenge, setChallenge] = React.useState('');
+  const [solution, setSolution] = React.useState('');
+  const [results, setResults] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/case-study`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ customer, industry, challenge, solution, results }) });
+      const d = await r.json();
+      setResult(d.study || d.error || 'Error');
+    } catch(e: any) { setResult(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>📋 Case Study Writer</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
+        <input placeholder="Customer/company name" value={customer} onChange={e => setCustomer(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Industry" value={industry} onChange={e => setIndustry(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <textarea placeholder="The challenge they faced" value={challenge} onChange={e => setChallenge(e.target.value)} rows={2} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff', resize: 'vertical' }} />
+        <textarea placeholder="Solution you provided" value={solution} onChange={e => setSolution(e.target.value)} rows={2} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff', resize: 'vertical' }} />
+        <textarea placeholder="Results & outcomes (include metrics if possible)" value={results} onChange={e => setResults(e.target.value)} rows={2} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff', resize: 'vertical' }} />
+        <button onClick={run} disabled={loading || !customer || !challenge} style={{ padding: '10px 20px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Writing...' : 'Generate Case Study'}</button>
+      </div>
+      {result && <pre style={{ marginTop: 20, padding: 16, background: '#1a1a1a', borderRadius: 8, whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{result}</pre>}
+    </div>
+  );
+}
+
 // --- v8.70 Testimonial Request Writer ---
 function TestimonialReqPanel({ api }: { api: string }) {
   const [customerName, setCustomerName] = React.useState('');
@@ -4025,7 +4059,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4090,6 +4124,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pressrelease', label: '📰 Press Release' },
     { id: 'faqgen', label: '❓ FAQ Generator' },
     { id: 'testimonialreq', label: '⭐ Testimonial Request' },
+    { id: 'casestudy', label: '📋 Case Study' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4197,6 +4232,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pressrelease' && <PressReleasePanel api={api} />}
         {tab === 'faqgen' && <FAQGenPanel api={api} />}
         {tab === 'testimonialreq' && <TestimonialReqPanel api={api} />}
+        {tab === 'casestudy' && <CaseStudyPanel api={api} />}
       </div>
     </div>
   );

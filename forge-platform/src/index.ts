@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.71 Case Study Writer ---
+app.post('/api/case-study', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { customer, challenge, solution, results, industry, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a professional B2B case study.
+Customer: ${customer}
+Industry: ${industry || 'technology'}
+Challenge: ${challenge}
+Solution provided: ${solution}
+Results/outcomes: ${results}
+Structure: Executive Summary, The Challenge, Our Solution, Implementation, Results (with metrics if provided), Key Takeaways, Customer Quote (auto-generate). 600-800 words. Professional and persuasive.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    res.json({ success: true, study: (r.content || '').trim() });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.70 Testimonial Request Writer ---
 app.post('/api/testimonial-req', requireAuth, async (req: AuthRequest, res) => {
   try {
