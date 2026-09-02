@@ -39500,6 +39500,57 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.32 AI Market Intelligence & Competitive Moat Engine ---
+app.post('/api/market-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, product, competitors, targetMarket, stage } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const p = `You are an elite market intelligence and competitive strategy expert. Generate a comprehensive market intelligence and competitive moat analysis for: Company: ${companyName||'Tech Startup'}, Industry: ${industry||'SaaS'}, Product: ${product||'B2B platform'}, Competitors: ${competitors||'unknown'}, Target Market: ${targetMarket||'SMB'}, Stage: ${stage||'Growth'}.
+
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "marketScore": 82,
+  "moatStrength": "string",
+  "primaryThreat": "string",
+  "marketSizing": {
+    "tam": "string",
+    "sam": "string",
+    "som": "string",
+    "growthRate": "string",
+    "keyTrends": ["string"]
+  },
+  "competitiveLandscape": [{"competitor":"string","strength":"string","weakness":"string","threat":"High|Medium|Low","differentiator":"string"}],
+  "moatAnalysis": {
+    "existingMoats": [{"type":"string","description":"string","durability":"string"}],
+    "moatsToBuild": [{"type":"string","strategy":"string","timeline":"string"}],
+    "moatScore": 75
+  },
+  "positioningStrategy": {
+    "currentPosition": "string",
+    "targetPosition": "string",
+    "messagingPillars": ["string"],
+    "icp": "string"
+  },
+  "winLossPatterns": {"whyWeWin":["string"],"whyWeLose":["string"],"switchingTriggers":["string"]},
+  "battlecards": [{"competitor":"string","headline":"string","ourWinMove":"string","traps":["string"]}],
+  "marketEntryThreats": [{"threat":"string","likelihood":"string","impact":"string","defense":"string"}],
+  "opportunityMap": [{"segment":"string","size":"string","competition":"string","priority":"string"}],
+  "metrics": [{"name":"string","benchmark":"string","target":"string"}],
+  "thirtyDayActions": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = typeof result === 'string' ? result : JSON.stringify(result);
+    let data: any = {};
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.31 AI Customer Success & Revenue Retention Engine ---
 app.post('/api/cs-revenue-retention', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;

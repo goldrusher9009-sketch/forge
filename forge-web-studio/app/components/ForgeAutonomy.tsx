@@ -600,6 +600,111 @@ function AgentRunInspector({ api }: { api: Api }) {
 // --- v10.29 AI Product-Led Growth & Monetization Engine ---
 const TIER_COLOR: Record<string,string> = { 'Free':'bg-gray-700','Starter':'bg-blue-800','Pro':'bg-indigo-800','Enterprise':'bg-purple-800','Growth':'bg-green-800' };
 const GROWTH_LEVER_COLOR: Record<string,string> = { 'Viral':'bg-pink-800','Product':'bg-blue-800','Content':'bg-green-800','Paid':'bg-yellow-800','Community':'bg-purple-800' };
+const THREAT_COLOR: Record<string,string> = { High:'bg-red-100 text-red-700', Medium:'bg-yellow-100 text-yellow-700', Low:'bg-green-100 text-green-700' };
+const PRIORITY_COLOR3: Record<string,string> = { High:'text-red-600', Medium:'text-yellow-600', Low:'text-green-600' };
+
+function MarketIntelligencePanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ companyName:'', industry:'', product:'', competitors:'', targetMarket:'', stage:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/market-intelligence`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-6 space-y-6">
+      <div className="bg-gradient-to-r from-indigo-700 to-violet-800 rounded-xl p-6 text-white">
+        <h2 className="text-2xl font-bold mb-1">🔭 Market Intelligence & Competitive Moat</h2>
+        <p className="text-indigo-200 text-sm">AI-powered market sizing, competitor battlecards, and moat-building strategy</p>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-200 p-5 grid grid-cols-2 gap-4">
+        {(['companyName:Company Name','industry:Industry','product:Product/Service','competitors:Key Competitors','targetMarket:Target Market','stage:Stage'] as const).map(f => {
+          const [k, label] = f.split(':') as [keyof typeof form, string];
+          return <div key={k}>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+            <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} placeholder={label} />
+          </div>;
+        })}
+        <div className="col-span-2"><button onClick={run} disabled={loading} className="w-full bg-indigo-700 hover:bg-indigo-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50">{loading?'Analyzing Market...':'Generate Market Intelligence'}</button></div>
+      </div>
+      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-5">
+          <div className="bg-indigo-800 text-white rounded-xl p-5">
+            <div className="flex items-start justify-between">
+              <div><h3 className="text-xl font-bold">{result.reportTitle}</h3><p className="text-indigo-200 text-sm mt-2">{result.executiveSummary}</p></div>
+              <div className="text-right ml-4 shrink-0"><div className="text-4xl font-black text-indigo-200">{result.marketScore}</div><div className="text-indigo-400 text-xs">Market Score</div><div className="mt-1 text-sm text-amber-300 font-medium">{result.moatStrength}</div></div>
+            </div>
+            {result.primaryThreat && <div className="mt-3 bg-red-900/40 border border-red-500 rounded-lg p-3 text-sm"><span className="font-semibold text-red-300">Primary Threat: </span><span className="text-red-200">{result.primaryThreat}</span></div>}
+          </div>
+          {result.marketSizing && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h4 className="font-bold text-gray-800 mb-3">📐 Market Sizing</h4>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                {[['TAM',result.marketSizing.tam],['SAM',result.marketSizing.sam],['SOM',result.marketSizing.som]].map(([label,val])=>(
+                  <div key={label} className="p-3 bg-indigo-50 rounded-lg"><div className="text-xs text-indigo-500 font-medium">{label}</div><div className="text-lg font-bold text-indigo-800 mt-1">{val}</div></div>
+                ))}
+              </div>
+              <div className="mt-3 flex items-center gap-2"><span className="text-xs text-gray-500">Growth Rate:</span><span className="text-sm font-medium text-green-600">{result.marketSizing.growthRate}</span></div>
+              {result.marketSizing.keyTrends?.length > 0 && <div className="mt-2 flex flex-wrap gap-2">{result.marketSizing.keyTrends.map((t:string,i:number)=><span key={i} className="bg-indigo-100 text-indigo-700 text-xs px-2 py-1 rounded-full">{t}</span>)}</div>}
+            </div>
+          )}
+          {result.competitiveLandscape?.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h4 className="font-bold text-gray-800 mb-3">⚔️ Competitive Landscape</h4>
+              <div className="space-y-3">{result.competitiveLandscape.map((c:any,i:number)=>(
+                <div key={i} className="p-3 border border-gray-100 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-gray-800">{c.competitor}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${THREAT_COLOR[c.threat]||'bg-gray-100 text-gray-700'}`}>{c.threat} Threat</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div><span className="text-gray-400">Strength: </span><span className="text-gray-600">{c.strength}</span></div>
+                    <div><span className="text-gray-400">Weakness: </span><span className="text-gray-600">{c.weakness}</span></div>
+                    <div><span className="text-gray-400">Our edge: </span><span className="text-green-600 font-medium">{c.differentiator}</span></div>
+                  </div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.moatAnalysis && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="flex items-center justify-between mb-3"><h4 className="font-bold text-gray-800">🏰 Moat Analysis</h4><span className="text-2xl font-black text-indigo-600">{result.moatAnalysis.moatScore}<span className="text-sm text-gray-400 font-normal">/100</span></span></div>
+              {result.moatAnalysis.existingMoats?.length > 0 && <div className="mb-3"><div className="text-xs font-medium text-green-600 mb-2">Existing Moats</div><div className="space-y-2">{result.moatAnalysis.existingMoats.map((m:any,i:number)=><div key={i} className="flex gap-2 text-sm"><span className="text-green-500 shrink-0">✓</span><div><span className="font-medium">{m.type}: </span><span className="text-gray-600">{m.description}</span><span className="text-xs text-gray-400 ml-1">({m.durability})</span></div></div>)}</div></div>}
+              {result.moatAnalysis.moatsToBuild?.length > 0 && <div><div className="text-xs font-medium text-indigo-600 mb-2">Moats to Build</div><div className="space-y-2">{result.moatAnalysis.moatsToBuild.map((m:any,i:number)=><div key={i} className="flex gap-2 text-sm"><span className="text-indigo-400 shrink-0">→</span><div><span className="font-medium">{m.type}: </span><span className="text-gray-600">{m.strategy}</span><span className="text-xs text-indigo-400 ml-1">({m.timeline})</span></div></div>)}</div></div>}
+            </div>
+          )}
+          {result.battlecards?.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h4 className="font-bold text-gray-800 mb-3">🃏 Battlecards</h4>
+              <div className="space-y-3">{result.battlecards.map((bc:any,i:number)=>(
+                <div key={i} className="p-4 bg-indigo-50 border border-indigo-100 rounded-lg">
+                  <div className="font-semibold text-indigo-800 mb-1">vs. {bc.competitor}</div>
+                  <div className="text-sm text-gray-700 mb-2">{bc.headline}</div>
+                  <div className="text-sm text-green-700 mb-2"><span className="font-medium">Win move: </span>{bc.ourWinMove}</div>
+                  {bc.traps?.length > 0 && <div className="text-xs text-red-600"><span className="font-medium">Avoid: </span>{bc.traps.join(' • ')}</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins?.length > 0 && (
+            <div className="bg-green-50 rounded-xl border border-green-200 p-5">
+              <h4 className="font-bold text-green-800 mb-3">⚡ Quick Wins</h4>
+              <div className="space-y-2">{result.quickWins.map((w:string,i:number)=><div key={i} className="flex gap-2 text-sm text-green-700"><span className="text-green-500 font-bold">✓</span>{w}</div>)}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const CS_STAGE_COLOR: Record<string,string> = { Onboarding:'bg-blue-100 text-blue-700', Adoption:'bg-purple-100 text-purple-700', Expansion:'bg-green-100 text-green-700', Renewal:'bg-amber-100 text-amber-700', 'At-Risk':'bg-red-100 text-red-700' };
 const RETENTION_SCORE_COLOR = (s: number) => s >= 80 ? 'text-green-600' : s >= 60 ? 'text-yellow-600' : 'text-red-600';
 
@@ -18924,7 +19029,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -19038,6 +19143,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
             { id: 'plgmonetize', label: '🚀 PLG & Monetization' },
     { id: 'execleadership', label: '👔 Exec Leadership' },
     { id: 'csrevretention', label: '🔄 CS & Retention' },
+    { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19121,6 +19227,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
             { id: 'plgmonetize', label: '🚀 PLG & Monetization' },
     { id: 'execleadership', label: '👔 Exec Leadership' },
     { id: 'csrevretention', label: '🔄 CS & Retention' },
+    { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19190,6 +19297,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
             { id: 'plgmonetize', label: '🚀 PLG & Monetization' },
     { id: 'execleadership', label: '👔 Exec Leadership' },
     { id: 'csrevretention', label: '🔄 CS & Retention' },
+    { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19215,6 +19323,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
             { id: 'plgmonetize', label: '🚀 PLG & Monetization' },
     { id: 'execleadership', label: '👔 Exec Leadership' },
     { id: 'csrevretention', label: '🔄 CS & Retention' },
+    { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'prdgenerator', label: '📋 PRD Generator' },
     { id: 'fundraisingstrat', label: '💎 Fundraising Strategy' },
     { id: 'partnershipstrat', label: '🤝 Partnership Strategy' },
@@ -19290,6 +19399,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
             { id: 'plgmonetize', label: '🚀 PLG & Monetization' },
     { id: 'execleadership', label: '👔 Exec Leadership' },
     { id: 'csrevretention', label: '🔄 CS & Retention' },
+    { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19461,6 +19571,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19486,6 +19597,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -19539,6 +19651,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19564,6 +19677,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -19608,6 +19722,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19633,6 +19748,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -19690,6 +19806,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19739,6 +19856,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19764,6 +19882,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -19808,6 +19927,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19833,6 +19953,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -19890,6 +20011,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19915,6 +20037,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -19959,6 +20082,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19984,6 +20108,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -20037,6 +20162,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -20062,6 +20188,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'plgmonetize' && <PLGMonetizationPanel api={api} />}
           {tab === 'execleadership' && <ExecLeadershipPanel api={api} />}
           {tab === 'csrevretention' && <CSRevenueRetentionPanel api={api} />}
+          {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
         {tab === 'prdgenerator' && <PRDGeneratorPanel api={api} />}
         {tab === 'fundraisingstrat' && <FundraisingStrategyPanel api={api} />}
         {tab === 'partnershipstrat' && <PartnershipStrategyPanel api={api} />}
