@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.17 AI Enterprise Sales & Account-Based Marketing Engine ---
+app.post('/api/enterprise-sales', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+  const { productCategory, targetAccountSize, avgSalesCycle, currentWinRate, avgDealSize, buyingCommittee, topCompetitors, currentSDRCount, currentAECount, abmBudget } = req.body;
+  const p = `You are an enterprise sales and ABM strategist. Generate a comprehensive enterprise sales & ABM report.
+Product: ${productCategory}, target accounts=${targetAccountSize}
+Sales: cycle=${avgSalesCycle}, win rate=${currentWinRate}, ACV=${avgDealSize}
+Buyers: committee=${buyingCommittee}, competitors=${topCompetitors}
+Team: SDRs=${currentSDRCount}, AEs=${currentAECount}, ABM budget=${abmBudget}
+
+Return JSON: { reportTitle, executiveSummary, salesScore (0-100), revenueOpportunity, criticalGap, icpDefinition: { firmographics, technographics, behavioral_signals[], negative_signals[], tier1_accounts[], tier2_criteria }, buyingCommitteeMap: [{ persona, title, pain_points[], motivations[], objections[], preferred_content[], messaging_approach }] (5 personas), abmStrategy: { tier1_plays[], tier2_plays[], account_signals[], personalization_framework }, salesPlaybooks: [{ stage, entry_criteria, exit_criteria, activities[], talk_tracks[], objection_handling[], tools[] }] (5 stages), prospectingEngine: { outbound_sequences[], inbound_playbook, referral_program, linkedin_strategy, cold_call_framework }, enterpriseNegotiation: { procurement_tactics[], security_reviews[], legal_hurdles[], champion_coaching[], executive_alignment }, revOpsInfrastructure: { crm_hygiene[], forecasting_model, pipeline_metrics[], territory_design, quota_setting }, contentForSales: [{ stage, content_type, topic, format, distribution }] (8 items), metrics: [{ kpi, current_baseline, target, improvement_lever }] (10 metrics), quarterlyPlan: [{ quarter, focus, targets[], key_plays[], hires_needed }] (4 quarters), quickWins: [] (5 items) }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    res.json(json ? JSON.parse(json) : { error: 'Parse failed', raw: text });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.16 AI Pricing Intelligence & Monetization Strategy Engine ---
 app.post('/api/pricing-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
