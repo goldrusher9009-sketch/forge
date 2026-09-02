@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.28 Content Marketing Calendar ---
+app.post('/api/content-calendar', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, audience, channels, goals, brandVoice, contentPillars, frequency, campaignThemes, competitors, budget, teamSize, timeHorizon } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a content marketing strategist. Generate a comprehensive content marketing calendar for:
+Company: ${company}, Industry: ${industry}, Audience: ${audience}
+Channels: ${channels}, Goals: ${goals}, Brand Voice: ${brandVoice}
+Content Pillars: ${contentPillars}, Frequency: ${frequency}
+Campaign Themes: ${campaignThemes}, Competitors: ${competitors}
+Budget: ${budget}, Team Size: ${teamSize}, Time Horizon: ${timeHorizon}
+
+Return JSON: { calendarTitle, executiveSummary, contentStrategy, audiencePersonas: [{ name, description, painPoints, preferredChannels, contentPreferences }], contentPillars: [{ pillar, description, percentage, keyTopics, formats }], calendar: [{ week, theme, posts: [{ day, channel, format, headline, angle, cta, keywords, estimatedReach }] }], campaignIdeas: [{ name, description, duration, channels, formats, kpi, estimatedBudget }], seoStrategy: { primaryKeywords, longTailKeywords, contentGaps, linkBuildingIdeas }, channelStrategy: [{ channel, frequency, contentMix, bestTimes, kpis }], repurposingMatrix: [{ originalContent, repurposedVersions }], contentBriefs: [{ title, format, angle, outline, targetKeyword, cta }], kpiDashboard: [{ metric, target, measurement, frequency }], productionWorkflow: { ideation, creation, review, publishing, distribution }, contentCalendarNotes }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.27 Competitive Intelligence Dashboard ---
 app.post('/api/competitive-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, competitors, productCategory, targetMarket, geographies, strengths, weaknesses, recentMoves, analysisGoal } = req.body;

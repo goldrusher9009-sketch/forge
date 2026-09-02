@@ -597,6 +597,67 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.28 Content Marketing Calendar ---
+const CHANNEL_BADGE: Record<string,string> = { 'LinkedIn':'bg-blue-700','Twitter':'bg-sky-700','Instagram':'bg-pink-700','Blog':'bg-green-700','Email':'bg-yellow-700','YouTube':'bg-red-700','TikTok':'bg-purple-700','Facebook':'bg-blue-800','Newsletter':'bg-orange-700' };
+function ContentCalendarPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', audience:'', channels:'', goals:'', brandVoice:'', contentPillars:'', frequency:'', campaignThemes:'', competitors:'', budget:'', teamSize:'', timeHorizon:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState('calendar');
+  const [activeWeek, setActiveWeek] = useState(0);
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/content-calendar`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">📅 Content Marketing Calendar</h2><p className="text-gray-400 text-sm mt-1">Full content strategy, weekly calendar, channel plans, SEO, campaigns & briefs</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme Inc')} {F('Industry','industry','B2B SaaS')}
+            {F('Target Audience','audience','Startup founders, SMB owners')} {F('Channels','channels','LinkedIn, Blog, Email, Twitter')}
+            {F('Goals','goals','Lead gen, brand awareness')} {F('Brand Voice','brandVoice','Professional, witty, educational')}
+            {F('Content Pillars','contentPillars','Productivity, Growth, AI, Behind the scenes')} {F('Posting Frequency','frequency','Daily LinkedIn, 2x blog/week')}
+            {F('Campaign Themes','campaignThemes','Q4 launch, Black Friday, Year in Review')} {F('Competitors','competitors','Notion, Monday.com')}
+            {F('Budget','budget','$5K/mo')} {F('Team Size','teamSize','2 writers, 1 designer')}
+            {F('Time Horizon','timeHorizon','3 months')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Building content calendar...' : 'Generate Content Calendar'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.calendarTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Calendar</button></div>
+          <div className="flex gap-2 flex-wrap">{['calendar','pillars','campaigns','seo','channels','briefs','kpis'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Calendar */}
+          {view==='calendar' && result.calendar?.length>0 && <div><div className="flex gap-2 mb-4 flex-wrap">{result.calendar.slice(0,8).map((w:any,i:number)=><button key={i} onClick={()=>setActiveWeek(i)} className={`text-xs px-3 py-2 rounded-lg transition ${activeWeek===i?'bg-green-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{w.week}</button>)}</div>{result.calendar[activeWeek] && <div className="space-y-2"><p className="text-blue-300 text-sm font-medium mb-3">Theme: {result.calendar[activeWeek].theme}</p>{(result.calendar[activeWeek].posts||[]).map((p:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3 flex items-start gap-3"><div className="min-w-[60px]"><span className={`text-xs px-2 py-0.5 rounded text-white ${CHANNEL_BADGE[p.channel]||'bg-gray-600'}`}>{p.channel}</span></div><div className="flex-1"><p className="text-white text-sm font-medium">{p.headline}</p><p className="text-gray-400 text-xs mt-0.5">{p.day} · {p.format} · {p.angle}</p>{p.cta && <p className="text-blue-300 text-xs mt-0.5">CTA: {p.cta}</p>}</div><div className="text-right text-xs text-gray-500">{p.estimatedReach}</div></div>)}</div>}</div>}
+          {/* Pillars */}
+          {view==='pillars' && result.contentPillars?.length>0 && <div className="grid grid-cols-2 gap-3">{result.contentPillars.map((p:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{p.pillar}</p><span className="text-green-400 text-sm font-bold">{p.percentage}</span></div><p className="text-gray-400 text-xs mb-2">{p.description}</p><p className="text-blue-300 text-xs">{p.keyTopics}</p></div>)}</div>}
+          {/* Campaigns */}
+          {view==='campaigns' && result.campaignIdeas?.length>0 && <div className="space-y-3">{result.campaignIdeas.map((c:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-start mb-2"><p className="text-white font-semibold">{c.name}</p><span className="text-yellow-400 text-xs">{c.estimatedBudget}</span></div><p className="text-gray-300 text-sm mb-2">{c.description}</p><div className="flex gap-3 text-xs text-gray-400"><span>⏱ {c.duration}</span><span>📡 {c.channels}</span><span className="text-green-400">📈 {c.kpi}</span></div></div>)}</div>}
+          {/* SEO */}
+          {view==='seo' && result.seoStrategy && <div className="space-y-4"><div className="grid grid-cols-2 gap-3"><div className="bg-gray-800 rounded-xl p-4"><p className="text-green-400 text-xs mb-2">Primary Keywords</p><p className="text-gray-300 text-sm">{result.seoStrategy.primaryKeywords}</p></div><div className="bg-gray-800 rounded-xl p-4"><p className="text-blue-400 text-xs mb-2">Long-tail Keywords</p><p className="text-gray-300 text-sm">{result.seoStrategy.longTailKeywords}</p></div><div className="bg-gray-800 rounded-xl p-4"><p className="text-yellow-400 text-xs mb-2">Content Gaps</p><p className="text-gray-300 text-sm">{result.seoStrategy.contentGaps}</p></div><div className="bg-gray-800 rounded-xl p-4"><p className="text-purple-400 text-xs mb-2">Link Building</p><p className="text-gray-300 text-sm">{result.seoStrategy.linkBuildingIdeas}</p></div></div></div>}
+          {/* Channels */}
+          {view==='channels' && result.channelStrategy?.length>0 && <div className="space-y-3">{result.channelStrategy.map((c:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center gap-2 mb-2"><span className={`text-xs px-2 py-0.5 rounded text-white ${CHANNEL_BADGE[c.channel]||'bg-gray-600'}`}>{c.channel}</span><span className="text-gray-400 text-xs">{c.frequency}</span></div><div className="grid grid-cols-3 gap-2 text-xs"><div><p className="text-gray-500">Content Mix</p><p className="text-gray-300">{c.contentMix}</p></div><div><p className="text-gray-500">Best Times</p><p className="text-gray-300">{c.bestTimes}</p></div><div><p className="text-gray-500">KPIs</p><p className="text-gray-300">{c.kpis}</p></div></div></div>)}</div>}
+          {/* Briefs */}
+          {view==='briefs' && result.contentBriefs?.length>0 && <div className="space-y-3">{result.contentBriefs.slice(0,6).map((b:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-white font-semibold mb-1">{b.title}</p><div className="flex gap-3 text-xs text-gray-400 mb-2"><span>{b.format}</span><span className="text-green-400">{b.targetKeyword}</span></div><p className="text-gray-300 text-sm mb-2">{b.angle}</p><p className="text-blue-300 text-xs">{b.outline}</p></div>)}</div>}
+          {/* KPIs */}
+          {view==='kpis' && result.kpiDashboard?.length>0 && <div className="grid grid-cols-2 gap-3">{result.kpiDashboard.map((k:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs">{k.metric}</p><p className="text-white text-lg font-bold mt-1">{k.target}</p><div className="flex gap-2 text-xs text-gray-500 mt-1"><span>{k.measurement}</span><span>·</span><span>{k.frequency}</span></div></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.27 Competitive Intelligence Dashboard ---
 const THREAT_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400','Critical':'text-red-500','Moderate':'text-yellow-400' };
 const URGENCY_BG: Record<string,string> = { 'High':'bg-red-900/40','Medium':'bg-yellow-900/40','Low':'bg-gray-700','Critical':'bg-red-900/60' };
@@ -9134,7 +9195,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9232,6 +9293,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'contentcalendar', label: '📅 Content Calendar' },
     { id: 'competitiveintel', label: '🔍 Competitive Intel' },
     { id: 'financialmodeling', label: '💰 Financial Model' },
     { id: 'workforceplanning', label: '👥 Workforce Plan' },
@@ -9396,6 +9458,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'contentcalendar' && <ContentCalendarPanel api={api} />}
         {tab === 'competitiveintel' && <CompetitiveIntelPanel api={api} />}
         {tab === 'financialmodeling' && <FinancialModelingPanel api={api} />}
         {tab === 'workforceplanning' && <WorkforcePlanningPanel api={api} />}
