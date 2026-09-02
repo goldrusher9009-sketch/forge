@@ -597,6 +597,105 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.09 Sales Territory Planner ---
+const GROWTH_COLOR: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-gray-400' };
+const THREAT_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400' };
+function TerritoryPlanPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', totalReps:'', regions:'', revenueTarget:'', averageDealSize:'', salesCycle:'', icp:'', competitorPresence:'', existingAccounts:'', expansionGoal:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'territories'|'quota'|'coverage'|'prospects'|'forecast'>('overview');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/territory-plan`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🗺️ Sales Territory Planner</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['company','Company'],['product','Product/Solution'],['industry','Industry'],['totalReps','Total Sales Reps'],['regions','Regions/Markets'],['revenueTarget','Revenue Target'],['averageDealSize','Avg Deal Size'],['salesCycle','Sales Cycle'],['existingAccounts','Existing Accounts'],['expansionGoal','Expansion Goal']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+      </div>
+      {[['icp','Ideal Customer Profile (ICP)'],['competitorPresence','Competitor Presence by Region']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Generating…':'Generate Territory Plan'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.planTitle}</p>
+            <p className="text-gray-300 text-sm mb-2">{result.executiveSummary}</p>
+            {result.marketSizing && <div className="grid grid-cols-3 gap-3 text-xs"><div><span className="text-gray-400">TAM: </span><span className="text-green-300">{result.marketSizing.tam}</span></div><div><span className="text-gray-400">SAM: </span><span className="text-blue-300">{result.marketSizing.sam}</span></div><div><span className="text-gray-400">Addressable: </span><span className="text-indigo-300">{result.marketSizing.addressableAccounts} accts</span></div></div>}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['overview','territories','quota','coverage','prospects','forecast'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='overview' && result.implementationTimeline && (
+            <div className="space-y-2">
+              {result.implementationTimeline.map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3 flex items-start gap-3">
+                  <span className="text-indigo-300 text-xs font-bold whitespace-nowrap">{t.week}</span>
+                  <div><p className="text-white text-sm">{t.milestone}</p><p className="text-gray-400 text-xs">{t.owner} · {t.deliverable}</p></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='territories' && (
+            <div className="space-y-2">
+              {(result.territories||[]).map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2"><p className="text-white font-medium text-sm">{t.territoryName}</p><div className="flex gap-2 text-xs"><span className={GROWTH_COLOR[t.growthPotential]||'text-gray-400'}>Growth:{t.growthPotential}</span><span className={THREAT_COLOR[t.competitorStrength]||'text-gray-400'}>Comp:{t.competitorStrength}</span></div></div>
+                  <div className="grid grid-cols-3 gap-2 text-xs mb-2"><div><span className="text-gray-400">Rep: </span><span className="text-blue-300">{t.assignedRep}</span></div><div><span className="text-gray-400">Accounts: </span><span className="text-gray-300">{t.accountCount}</span></div><div><span className="text-gray-400">Quota: </span><span className="text-green-300">{t.quota}</span></div></div>
+                  {(t.priorityActions||[]).length>0 && <ul>{t.priorityActions.slice(0,3).map((a:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {a}</li>)}</ul>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='quota' && result.quotaAllocation && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Methodology: {result.quotaAllocation.methodology}</p><p className="text-white font-bold">Total: {result.quotaAllocation.totalQuota}</p></div>
+              {result.quotaAllocation.breakdownByTier && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">By Tier</p><div className="grid grid-cols-3 gap-3 text-sm"><div><span className="text-yellow-400">Tier 1: </span><span className="text-white">{result.quotaAllocation.breakdownByTier.tier1}%</span></div><div><span className="text-blue-400">Tier 2: </span><span className="text-white">{result.quotaAllocation.breakdownByTier.tier2}%</span></div><div><span className="text-gray-400">Tier 3: </span><span className="text-white">{result.quotaAllocation.breakdownByTier.tier3}%</span></div></div></div>}
+              {(result.quotaAllocation.rampSchedule||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Ramp Schedule</p><div className="flex flex-wrap gap-2">{result.quotaAllocation.rampSchedule.map((r:any,i:number)=><div key={i} className="bg-gray-700 rounded px-2 py-1 text-xs"><span className="text-gray-400">M{r.month}: </span><span className="text-green-300">{r.targetPct}%</span></div>)}</div></div>}
+            </div>
+          )}
+          {subtab==='coverage' && result.coverageModel && (
+            <div className="bg-gray-800 rounded p-4 space-y-2">
+              {Object.entries(result.coverageModel).map(([k,v]:any)=><div key={k} className="flex justify-between text-sm"><span className="text-gray-400 capitalize">{k.replace(/([A-Z])/g,' $1')}</span><span className="text-white">{String(v)}</span></div>)}
+            </div>
+          )}
+          {subtab==='prospects' && (
+            <div className="space-y-2">
+              {(result.prospectingPriorities||[]).map((p:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2"><p className="text-white font-medium text-sm">{p.segment}</p><span className="text-indigo-300 text-xs">Score: {p.priorityScore}</span></div>
+                  <div className="grid grid-cols-3 gap-2 text-xs mb-2"><div><span className="text-gray-400">Accounts: </span><span className="text-gray-300">{p.accountCount}</span></div><div><span className="text-gray-400">Avg Deal: </span><span className="text-green-300">{p.avgDealSize}</span></div><div><span className="text-gray-400">Win Rate: </span><span className="text-blue-300">{p.winRate}</span></div></div>
+                  {(p.tactics||[]).length>0 && <ul>{p.tactics.slice(0,3).map((t:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {t}</li>)}</ul>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='forecast' && result.forecastModel && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">{['q1','q2','q3','q4'].map(q=><div key={q} className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs uppercase mb-1">{q}</p><p className="text-white font-bold">{result.forecastModel[q]}</p></div>)}</div>
+              <div className="bg-indigo-900 rounded p-3"><p className="text-gray-400 text-xs mb-1">Full Year</p><p className="text-white font-bold text-lg">{result.forecastModel.fullYear}</p></div>
+              {(result.forecastModel.assumptions||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Assumptions</p><ul>{result.forecastModel.assumptions.map((a:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {a}</li>)}</ul></div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.08 Change Management Planner ---
 const SUPPORT_COLOR: Record<string,string> = { 'Champion':'text-green-400','Supporter':'text-blue-400','Neutral':'text-gray-400','Skeptic':'text-yellow-400','Resistor':'text-red-400' };
 const IMPACT_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400' };
@@ -7384,7 +7483,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -7478,6 +7577,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'customerseg', label: '🎯 Customer Segments' },
     { id: 'bcp', label: '🛡️ Business Continuity' },
     { id: 'changemgmtplan', label: '🔄 Change Management' },
+    { id: 'territoryplan', label: '🗺️ Territory Plan' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -7623,6 +7723,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'customerseg' && <CustomerSegPanel api={api} />}
         {tab === 'bcp' && <BCPPanel api={api} />}
         {tab === 'changemgmtplan' && <ChangeMgmtPlanPanel api={api} />}
+        {tab === 'territoryplan' && <TerritoryPlanPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

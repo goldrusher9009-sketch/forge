@@ -39500,6 +39500,24 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.09 Sales Territory Planner ---
+app.post('/api/territory-plan', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, totalReps, regions, revenueTarget, averageDealSize, salesCycle, icp, competitorPresence, existingAccounts, expansionGoal, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an expert sales operations and territory planning consultant. Create a comprehensive sales territory plan.
+Company: ${company} | Product: ${product} | Industry: ${industry}
+Total Reps: ${totalReps} | Regions: ${regions} | Revenue Target: ${revenueTarget}
+Avg Deal Size: ${averageDealSize} | Sales Cycle: ${salesCycle} | ICP: ${icp}
+Competitor Presence: ${competitorPresence} | Existing Accounts: ${existingAccounts} | Expansion Goal: ${expansionGoal}
+Return JSON: { planTitle, executiveSummary, marketSizing:{ tam, sam, som, addressableAccounts, priorityAccounts }, territories:[{ territoryName, region, assignedRep, accountCount, revenueTarget, quota, tier1Accounts:string[], tier2Accounts:string[], tier3Accounts:string[], industries:string[], geoScope, competitorStrength:'Low'|'Medium'|'High', growthPotential:'Low'|'Medium'|'High', priorityActions:string[], kpis:[{ kpi, target, frequency }] }], quotaAllocation:{ methodology, totalQuota, breakdownByTier:{ tier1:number, tier2:number, tier3:number }, rampSchedule:[{ month, targetPct }] }, coverageModel:{ accountsPerRep, callsPerWeek, pipelineCoverageRatio, activityModel:string }, prospectingPriorities:[{ segment, accountCount, avgDealSize, winRate, priorityScore, tactics:string[] }], competitorPlaybook:[{ competitor, territory, threatLevel:'Low'|'Medium'|'High', winStrategy, loseRisks:string[], differentiators:string[] }], enablementNeeds:[{ need, priority:'P1'|'P2'|'P3', audience, timeline }], forecastModel:{ q1, q2, q3, q4, fullYear, assumptions:string[] }, successMetrics:[{ metric, target, owner, reviewCadence }], implementationTimeline:[{ week, milestone, owner, deliverable }] }`;
+    const result = await callLLM(provider, key, null as any, [{ role:'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.08 Change Management Planner ---
 app.post('/api/change-mgmt', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, changeType, changeDescription, scope, affectedEmployees, timeline, sponsorName, currentCulture, resistanceFactors, successMetrics, provider = 'anthropic' } = req.body;
