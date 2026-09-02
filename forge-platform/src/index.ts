@@ -39500,6 +39500,54 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.87 AI M&A Due Diligence & Deal Analyzer ---
+app.post('/api/ma-diligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { targetCompany, acquirerProfile, dealType, targetRevenue, targetEbitda, askingPrice, industry, strategicRationale, dealContext } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are an elite M&A advisor and due diligence expert. Analyze this acquisition opportunity and provide comprehensive deal analysis.
+
+Target: ${targetCompany}
+Acquirer Profile: ${acquirerProfile}
+Deal Type: ${dealType || 'Strategic Acquisition'}
+Target Revenue: ${targetRevenue || 'Unknown'}
+Target EBITDA: ${targetEbitda || 'Unknown'}
+Asking Price: ${askingPrice || 'Unknown'}
+Industry: ${industry || 'Technology'}
+Strategic Rationale: ${strategicRationale || 'Not specified'}
+Context: ${dealContext || 'None'}
+
+Return ONLY valid JSON:
+{
+  "dealTitle": "string",
+  "executiveSummary": "string",
+  "dealRecommendation": "Strong Buy|Buy|Hold|Pass|Strong Pass",
+  "dealScore": 0-100,
+  "valuationAssessment": "Undervalued|Fair Value|Overvalued|Cannot Determine",
+  "impliedMultiples": { "evRevenue": "string", "evEbitda": "string", "peRatio": "string" },
+  "valuationRange": { "bearCase": "string", "baseCase": "string", "bullCase": "string" },
+  "strategicFitScore": 0-100,
+  "synergyPotential": { "revenueSynergies": "string", "costSynergies": "string", "totalNpv": "string", "timeToRealize": "string" },
+  "dueDiligenceChecklist": [{ "category": "string", "item": "string", "priority": "Critical|High|Medium|Low", "status": "Pending|In Progress|Complete|Red Flag" }],
+  "redFlags": [{ "flag": "string", "severity": "Critical|High|Medium", "mitigation": "string" }],
+  "dealStructureOptions": [{ "structure": "string", "pros": ["string"], "cons": ["string"], "taxImplications": "string" }],
+  "integrationComplexity": "Low|Medium|High|Very High",
+  "integrationRoadmap": [{ "phase": "string", "duration": "string", "keyActions": ["string"], "risks": ["string"] }],
+  "financingOptions": [{ "type": "string", "amount": "string", "terms": "string", "impact": "string" }],
+  "regulatoryConsiderations": ["string"],
+  "walkawayPrice": "string",
+  "negotiationLeverage": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.86 AI Data Strategy & Analytics Roadmap ---
 app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
   try {
