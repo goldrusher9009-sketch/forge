@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.02 AI Pricing Intelligence & Strategy Engine ---
+app.post('/api/pricing-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, productName, currentPrice, costStructure, targetMargin, competitorPrices, customerSegments, pricingModel, marketPosition, volumeData, elasticity } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class pricing strategist and economist. Build a comprehensive pricing intelligence report for ${companyName}'s product ${productName} in the ${industry} industry.
+Current price: ${currentPrice}. Cost structure: ${costStructure}. Target margin: ${targetMargin}. Competitor prices: ${competitorPrices}. Customer segments: ${customerSegments}. Pricing model: ${pricingModel}. Market position: ${marketPosition}. Volume data: ${volumeData}. Price elasticity: ${elasticity}.
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "pricingHealthScore": 0-100,
+  "revenueOpportunity": "string",
+  "currentPriceAssessment": {"verdict": "Underpriced|Fairly Priced|Overpriced", "reasoning": "string", "priceGap": "string"},
+  "competitivePriceMap": [{"competitor": "string", "price": "string", "positioning": "string", "valueDelivered": "string", "ourAdvantage": "string"}],
+  "pricingModels": [{"model": "string", "description": "string", "revenueImpact": "string", "complexity": "Low|Medium|High", "recommendation": "string"}],
+  "segmentPricing": [{"segment": "string", "willingnessToPay": "string", "recommendedPrice": "string", "rationale": "string", "packaging": "string"}],
+  "priceOptimization": {"recommendedPrice": "string", "priceRange": {"floor": "string", "ceiling": "string"}, "revenueImpact": "string", "marginImpact": "string", "volumeImpact": "string"},
+  "psychologicalPricing": [{"tactic": "string", "application": "string", "expectedLift": "string"}],
+  "packagingStrategy": [{"tier": "string", "price": "string", "features": ["string"], "targetSegment": "string", "conversionGoal": "string"}],
+  "dynamicPricingOpportunities": [{"scenario": "string", "trigger": "string", "adjustment": "string", "impact": "string"}],
+  "revenueLeakage": [{"source": "string", "estimatedLoss": "string", "fix": "string"}],
+  "implementationRoadmap": [{"phase": "string", "timeframe": "string", "actions": ["string"], "expectedRevenueGain": "string"}],
+  "riskAnalysis": [{"risk": "string", "likelihood": "High|Medium|Low", "mitigation": "string"}],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.01 AI Customer Experience Optimization Engine ---
 app.post('/api/cx-optimizer', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
