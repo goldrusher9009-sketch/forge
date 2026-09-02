@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.36 AI Data Strategy & Analytics Intelligence Engine ---
+app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, teamSize, dataMaturity, currentTools, goals } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const p = `You are an elite data strategy and analytics expert. Generate a comprehensive data strategy for: Company: ${companyName||'Tech Company'}, Industry: ${industry||'SaaS'}, Team Size: ${teamSize||'50'}, Data Maturity: ${dataMaturity||'Developing'}, Current Tools: ${currentTools||'spreadsheets, basic BI'}, Goals: ${goals||'better decisions, predictive analytics'}.
+
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "dataScore": 65,
+  "maturityLevel": "string",
+  "criticalGap": "string",
+  "primaryOpportunity": "string",
+  "dataAudit": {"strengths":["string"],"gaps":["string"],"dataQualityIssues":["string"],"technicalDebt":["string"]},
+  "modernDataStack": [{"layer":"string","purpose":"string","recommended":["string"],"priority":"string","cost":"string"}],
+  "governanceFramework": {"dataOwnership":"string","policies":["string"],"qualityStandards":["string"],"privacyCompliance":["string"]},
+  "analyticsRoadmap": [{"phase":"string","timeline":"string","capabilities":["string"],"outcomes":["string"],"investment":"string"}],
+  "keyMetricsFramework": {"northStar":"string","operationalMetrics":[{"name":"string","definition":"string","owner":"string"}],"dataProducts":["string"]},
+  "aiMlOpportunities": [{"useCase":"string","value":"string","complexity":"string","timeline":"string","dataRequirements":["string"]}],
+  "organizationDesign": {"teamStructure":"string","keyRoles":["string"],"embeddedAnalytics":"string","selfServiceStrategy":"string"},
+  "implementation": [{"initiative":"string","effort":"string","impact":"string","timeline":"string","dependencies":["string"]}],
+  "metrics": [{"metric":"string","current":"string","target":"string","timeline":"string"}],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = typeof result === 'string' ? result : JSON.stringify(result);
+    let data: any = {};
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.35 AI GTM Launch Command Engine ---
 app.post('/api/gtm-launch', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
