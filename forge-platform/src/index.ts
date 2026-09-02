@@ -39500,6 +39500,92 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.11 AI Legal Intelligence & Contract Management Engine ---
+app.post('/api/legal-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyType, businessModel, jurisdictions, contractTypes, annualContractVolume, teamSize, currentLegalSpend, topRisks, complianceFrameworks } = req.body;
+  const p = `You are an expert corporate attorney and legal operations strategist. Create a comprehensive legal intelligence and contract management report.
+
+Company Type: ${companyType || 'B2B SaaS startup'}
+Business Model: ${businessModel || 'subscription software'}
+Jurisdictions: ${jurisdictions || 'US, EU, UK'}
+Contract Types: ${contractTypes || 'MSA, SaaS agreements, NDAs, employment'}
+Annual Contract Volume: ${annualContractVolume || '50-200 contracts/year'}
+Legal Team Size: ${teamSize || 'in-house counsel + outside'}
+Annual Legal Spend: ${currentLegalSpend || '$200K-$1M'}
+Top Risks: ${topRisks || 'IP, data privacy, contractual liability'}
+Compliance Frameworks: ${complianceFrameworks || 'GDPR, SOC2, CCPA'}
+
+Return a JSON object with this exact structure:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "legalRiskScore": number 0-100,
+  "complianceScore": number 0-100,
+  "criticalRiskLevel": "Critical|High|Medium|Low",
+  "contractPlaybook": [
+    { "contractType": "string", "riskLevel": "High|Medium|Low", "keyProtections": ["string"], "redlines": ["string"], "fallbackPositions": ["string"], "mustHaveClauses": ["string"], "avoidClauses": ["string"], "negotiationTips": ["string"] }
+  ],
+  "complianceGaps": [
+    { "framework": "string", "requirement": "string", "currentStatus": "Compliant|Partial|Non-Compliant", "gap": "string", "remediationSteps": ["string"], "deadline": "string", "riskIfUnaddressed": "string" }
+  ],
+  "ipProtection": {
+    "assets": ["string"],
+    "protectionStrategies": ["string"],
+    "registrations": ["string"],
+    "employeeAgreements": ["string"],
+    "openSourceRisks": ["string"]
+  },
+  "dataPrivacy": {
+    "gdprCompliance": "string",
+    "ccpaCompliance": "string",
+    "dataMapping": ["string"],
+    "dpaRequirements": ["string"],
+    "breachProtocol": ["string"],
+    "vendorManagement": ["string"]
+  },
+  "liabilityManagement": {
+    "limitationOfLiability": "string",
+    "indemnification": "string",
+    "insuranceRecommendations": ["string"],
+    "riskTransfer": ["string"]
+  },
+  "vendorContracts": {
+    "reviewChecklist": ["string"],
+    "keyTermsToNegotiate": ["string"],
+    "slaRequirements": ["string"],
+    "exitRights": ["string"]
+  },
+  "employmentLegal": {
+    "keyDocuments": ["string"],
+    "nonCompeteStrategy": "string",
+    "equityConsiderations": ["string"],
+    "hrComplianceChecks": ["string"]
+  },
+  "legalOpsEfficiency": {
+    "contractManagementSystem": "string",
+    "automationOpportunities": ["string"],
+    "outsourcingStrategy": "string",
+    "costOptimization": ["string"],
+    "templateLibrary": ["string"]
+  },
+  "regulatoryRadar": [
+    { "regulation": "string", "jurisdiction": "string", "applicability": "string", "timeline": "string", "impact": "string", "preparationSteps": ["string"] }
+  ],
+  "immediateActions": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.10 AI Growth Hacking & Demand Generation Engine ---
 app.post('/api/growth-engine', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
