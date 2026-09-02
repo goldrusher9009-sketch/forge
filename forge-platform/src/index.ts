@@ -39398,6 +39398,26 @@ app.post('/api/thread-writer', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.58 Newsletter Builder — draft full email newsletter from topic/bullet points
+app.post('/api/newsletter-build', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, bullets, audience, tone } = req.body;
+    if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'topic required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are an expert email newsletter writer. Write a complete newsletter issue.\nTopic: ${topic}\nKey points: ${bullets || 'not specified'}\nAudience: ${audience || 'general subscribers'}\nTone: ${tone || 'professional yet conversational'}\n\nReturn ONLY JSON:\n{"subject_lines":["Subject option 1","Subject option 2","Subject option 3"],"preview_text":"Email preview/preheader text (90 chars max)","sections":[{"type":"intro","heading":"","content":"Opening paragraph that hooks the reader"},{"type":"main","heading":"Section heading","content":"Main content section with valuable insights"},{"type":"insight","heading":"Key Insight","content":"A standout insight or stat"},{"type":"actionable","heading":"What To Do","content":"Actionable takeaway"},{"type":"closing","heading":"","content":"Warm closing paragraph with CTA"}],"cta_button":"Button label text","cta_url_placeholder":"https://yourlink.com","ps_line":"P.S. line for extra engagement","estimated_read_time":"2 min","word_count":350}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

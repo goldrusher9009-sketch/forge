@@ -597,6 +597,74 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.58 Newsletter Builder ---
+function NewsletterPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ topic: '', bullets: '', audience: '', tone: 'professional yet conversational' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selSubject, setSelSubject] = useState(0);
+  const submit = async () => {
+    if (!form.topic.trim()) return;
+    setLoading(true); setError(''); setResult(null); setSelSubject(0);
+    try {
+      const r = await fetch(`${api.base}/api/newsletter-build`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  const sectionColors: Record<string, string> = { intro: '#7c3aed', main: '#2563eb', insight: '#d97706', actionable: '#16a34a', closing: '#6b7280' };
+  const copyFull = () => {
+    if (!result) return;
+    const txt = `Subject: ${(result.subject_lines || [])[selSubject] || ''}\nPreview: ${result.preview_text || ''}\n\n${(result.sections || []).map((s: any) => `${s.heading ? s.heading + '\n' : ''}${s.content}`).join('\n\n')}\n\n[${result.cta_button}](${result.cta_url_placeholder})\n\n${result.ps_line}`;
+    navigator.clipboard.writeText(txt);
+  };
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>📧 Newsletter Builder</h3>
+      <input placeholder="Newsletter topic / this week's theme" value={form.topic} onChange={e => setForm(f => ({ ...f, topic: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <textarea placeholder="Key points / bullet points to include (optional)" value={form.bullets} onChange={e => setForm(f => ({ ...f, bullets: e.target.value }))} rows={3} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Audience (e.g. SaaS founders)" value={form.audience} onChange={e => setForm(f => ({ ...f, audience: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Tone" value={form.tone} onChange={e => setForm(f => ({ ...f, tone: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+          {loading ? 'Building...' : 'Build Newsletter'}
+        </button>
+        {result && <button onClick={copyFull} style={{ padding: '8px 12px', background: '#333', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12 }}>Copy Full</button>}
+      </div>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>SUBJECT LINE (click to select)</div>
+            {(result.subject_lines || []).map((s: string, i: number) => (
+              <div key={i} onClick={() => setSelSubject(i)} style={{ padding: '6px 10px', marginBottom: 4, background: selSubject === i ? '#7c3aed22' : '#1a1a2e', border: `1px solid ${selSubject === i ? '#7c3aed' : '#333'}`, borderRadius: 6, cursor: 'pointer', fontSize: 13 }}>{s}</div>
+            ))}
+          </div>
+          <div style={{ background: '#1a1a2e', padding: 8, borderRadius: 6, marginBottom: 10, fontSize: 12, color: '#888' }}>
+            Preview: {result.preview_text}
+          </div>
+          {(result.sections || []).map((s: any, i: number) => (
+            <div key={i} style={{ borderLeft: `3px solid ${sectionColors[s.type] || '#333'}`, paddingLeft: 10, marginBottom: 12 }}>
+              {s.heading && <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 4 }}>{s.heading}</div>}
+              <div style={{ fontSize: 13, lineHeight: 1.6 }}>{s.content}</div>
+            </div>
+          ))}
+          <div style={{ background: '#7c3aed', padding: '8px 16px', borderRadius: 6, display: 'inline-block', marginBottom: 10, fontSize: 13 }}>
+            {result.cta_button} →
+          </div>
+          {result.ps_line && <div style={{ fontSize: 12, color: '#888', fontStyle: 'italic' }}>{result.ps_line}</div>}
+          <div style={{ fontSize: 11, color: '#555', marginTop: 8 }}>{result.estimated_read_time} read · ~{result.word_count} words</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.57 Thread Writer ---
 function ThreadWriterPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ topic: '', angle: '', tweets: '8' });
@@ -3279,7 +3347,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3331,6 +3399,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'contentcal', label: '📅 Content Cal' },
     { id: 'headline', label: '📰 Headlines' },
     { id: 'threadwriter', label: '🧵 Threads' },
+    { id: 'newsletter', label: '📧 Newsletter' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3425,6 +3494,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'contentcal' && <ContentCalPanel api={api} />}
         {tab === 'headline' && <HeadlinePanel api={api} />}
         {tab === 'threadwriter' && <ThreadWriterPanel api={api} />}
+        {tab === 'newsletter' && <NewsletterPanel api={api} />}
       </div>
     </div>
   );
