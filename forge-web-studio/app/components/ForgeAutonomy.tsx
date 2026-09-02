@@ -602,6 +602,122 @@ const TIER_COLOR: Record<string,string> = { 'Free':'bg-gray-700','Starter':'bg-b
 const GROWTH_LEVER_COLOR: Record<string,string> = { 'Viral':'bg-pink-800','Product':'bg-blue-800','Content':'bg-green-800','Paid':'bg-yellow-800','Community':'bg-purple-800' };
 const THREAT_COLOR: Record<string,string> = { High:'bg-red-100 text-red-700', Medium:'bg-yellow-100 text-yellow-700', Low:'bg-green-100 text-green-700' };
 const PRIORITY_COLOR3: Record<string,string> = { High:'text-red-600', Medium:'text-yellow-600', Low:'text-green-600' };
+const GTM_PHASE_COLOR: Record<string,string> = { 'Pre-Launch':'bg-blue-100 text-blue-700', 'Launch':'bg-green-100 text-green-700', 'Post-Launch':'bg-purple-100 text-purple-700', 'Scale':'bg-orange-100 text-orange-700' };
+const GTM_SCORE_COLOR = (s: number) => s >= 80 ? 'text-green-400' : s >= 60 ? 'text-yellow-400' : 'text-red-400';
+
+function GTMLaunchPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ companyName:'', product:'', icp:'', launchDate:'', budget:'', channels:'', competitors:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState<'strategy'|'channels'|'content'|'metrics'>('strategy');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/gtm-launch`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-6 space-y-6">
+      <div className="bg-gradient-to-r from-green-700 to-teal-700 rounded-xl p-6 text-white">
+        <h2 className="text-2xl font-bold mb-1">🚀 GTM Launch Command Engine</h2>
+        <p className="text-green-100 text-sm">AI-powered go-to-market strategy, channel playbook, and launch execution plan</p>
+      </div>
+      <div className="bg-white rounded-xl border border-gray-200 p-5 grid grid-cols-2 gap-4">
+        {(['companyName:Company Name','product:Product/Service','icp:Ideal Customer','launchDate:Launch Date','budget:Budget','channels:Key Channels','competitors:Competitors'] as const).map(f => {
+          const [k, label] = f.split(':') as [keyof typeof form, string];
+          return <div key={k}>
+            <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+            <input className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} placeholder={label} />
+          </div>;
+        })}
+        <div className="col-span-2"><button onClick={run} disabled={loading} className="w-full bg-green-700 hover:bg-green-600 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-50">{loading?'Building GTM Plan...':'Generate GTM Launch Plan'}</button></div>
+      </div>
+      {error && <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-5">
+          <div className="bg-green-800 text-white rounded-xl p-5">
+            <div className="flex items-start justify-between">
+              <div><h3 className="text-xl font-bold">{result.reportTitle}</h3><p className="text-green-100 text-sm mt-2">{result.executiveSummary}</p></div>
+              <div className="text-right ml-4 shrink-0"><div className={`text-4xl font-black ${GTM_SCORE_COLOR(result.launchScore||0)}`}>{result.launchScore}</div><div className="text-green-300 text-xs">Launch Score</div><div className="mt-1 text-sm text-emerald-300 font-medium">{result.readinessLevel}</div></div>
+            </div>
+            {result.positioningStatement && <div className="mt-3 bg-green-700/50 rounded-lg p-3 text-sm italic">"{result.positioningStatement}"</div>}
+            {result.criticalPath && <div className="mt-2 bg-red-900/40 border border-red-400 rounded-lg p-2 text-xs"><span className="font-semibold text-red-300">Critical Path: </span>{result.criticalPath}</div>}
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {(['strategy','channels','content','metrics'] as const).map(t=><button key={t} onClick={()=>setActiveTab(t)} className={`px-4 py-2 text-sm font-medium capitalize rounded-lg transition-colors ${activeTab===t?'bg-green-700 text-white':'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>{t}</button>)}
+          </div>
+          {activeTab==='strategy' && (
+            <div className="space-y-4">
+              {result.messagingFramework && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <h4 className="font-bold text-gray-800 mb-3">📣 Messaging Framework</h4>
+                  <div className="space-y-2"><div className="text-lg font-bold text-gray-900">{result.messagingFramework.headline}</div><div className="text-gray-600 text-sm">{result.messagingFramework.subheadline}</div>
+                  {result.messagingFramework.valueProps?.length > 0 && <div className="mt-3"><div className="text-xs font-medium text-gray-500 mb-2">Value Propositions</div><div className="space-y-1">{result.messagingFramework.valueProps.map((v:string,i:number)=><div key={i} className="flex gap-2 text-sm text-gray-700"><span className="text-green-500">✓</span>{v}</div>)}</div></div>}
+                  {result.messagingFramework.cta && <div className="mt-2 inline-block bg-green-600 text-white text-sm px-4 py-2 rounded-lg font-medium">{result.messagingFramework.cta}</div>}</div>
+                </div>
+              )}
+              {result.launchPhases?.length > 0 && (
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <h4 className="font-bold text-gray-800 mb-3">📅 Launch Phases</h4>
+                  <div className="space-y-4">{result.launchPhases.map((ph:any,i:number)=>(
+                    <div key={i} className="border-l-4 border-green-500 pl-4">
+                      <div className="flex items-center gap-2 mb-1"><span className="font-semibold text-gray-800">{ph.phase}</span><span className="text-xs text-green-600">{ph.timeline}</span></div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div><span className="font-medium text-gray-600">Goals: </span>{ph.goals?.join(', ')}</div>
+                        <div><span className="font-medium text-gray-600">KPIs: </span>{ph.successMetrics?.join(', ')}</div>
+                      </div>
+                    </div>
+                  ))}</div>
+                </div>
+              )}
+            </div>
+          )}
+          {activeTab==='channels' && result.channelStrategy?.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h4 className="font-bold text-gray-800 mb-3">📡 Channel Strategy</h4>
+              <div className="space-y-3">{result.channelStrategy.map((ch:any,i:number)=>(
+                <div key={i} className="p-3 border border-gray-100 rounded-lg">
+                  <div className="flex items-center justify-between mb-1"><span className="font-semibold text-sm text-gray-800">{ch.channel}</span><span className="text-xs font-bold text-green-600">{ch.budget}</span></div>
+                  <div className="text-xs text-gray-600 mb-1">{ch.tactic}</div>
+                  <div className="flex items-center gap-3 text-xs text-gray-400"><span>Impact: {ch.expectedImpact}</span><span>KPI: {ch.kpi}</span><span>Timeline: {ch.timeline}</span></div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {activeTab==='content' && result.contentPlan?.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h4 className="font-bold text-gray-800 mb-3">📝 Content Plan</h4>
+              <div className="space-y-2">{result.contentPlan.map((c:any,i:number)=>(
+                <div key={i} className="p-3 bg-gray-50 rounded-lg flex items-start gap-3">
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full shrink-0">{c.type}</span>
+                  <div className="flex-1"><div className="text-sm font-medium text-gray-800">{c.topic}</div><div className="text-xs text-gray-500">{c.channel} · {c.timeline} · {c.goal}</div></div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {activeTab==='metrics' && result.launchMetrics?.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <h4 className="font-bold text-gray-800 mb-3">📊 Launch Metrics</h4>
+              <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-gray-200 text-left"><th className="py-2 text-gray-500 font-medium">Metric</th><th className="py-2 text-gray-500 font-medium">Day 30</th><th className="py-2 text-gray-500 font-medium">Day 60</th><th className="py-2 text-gray-500 font-medium">Day 90</th></tr></thead>
+              <tbody>{result.launchMetrics.map((m:any,i:number)=><tr key={i} className="border-b border-gray-50"><td className="py-2 font-medium text-gray-800">{m.metric}</td><td className="py-2 text-gray-600">{m.day30Target}</td><td className="py-2 text-gray-600">{m.day60Target}</td><td className="py-2 text-green-600 font-medium">{m.day90Target}</td></tr>)}</tbody></table></div>
+            </div>
+          )}
+          {result.quickWins?.length > 0 && (
+            <div className="bg-green-50 rounded-xl border border-green-200 p-5">
+              <h4 className="font-bold text-green-800 mb-3">⚡ Quick Wins</h4>
+              <div className="space-y-2">{result.quickWins.map((w:string,i:number)=><div key={i} className="flex gap-2 text-sm text-green-700"><span className="text-green-500 font-bold">✓</span>{w}</div>)}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const IR_FIT_COLOR: Record<string,string> = { High:'bg-green-100 text-green-700', Medium:'bg-yellow-100 text-yellow-700', Low:'bg-gray-100 text-gray-700' };
 const FUND_SCORE_COLOR = (s: number) => s >= 80 ? 'text-green-400' : s >= 60 ? 'text-yellow-400' : 'text-red-400';
 
@@ -19246,7 +19362,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -19363,6 +19479,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'opsexcellence3', label: '⚙️ Ops Excellence' },
     { id: 'fundraisingir', label: '💰 Fundraising & IR' },
+    { id: 'gtmlaunch', label: '🚀 GTM Launch' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19449,6 +19566,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'opsexcellence3', label: '⚙️ Ops Excellence' },
     { id: 'fundraisingir', label: '💰 Fundraising & IR' },
+    { id: 'gtmlaunch', label: '🚀 GTM Launch' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19521,6 +19639,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'opsexcellence3', label: '⚙️ Ops Excellence' },
     { id: 'fundraisingir', label: '💰 Fundraising & IR' },
+    { id: 'gtmlaunch', label: '🚀 GTM Launch' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19549,6 +19668,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'opsexcellence3', label: '⚙️ Ops Excellence' },
     { id: 'fundraisingir', label: '💰 Fundraising & IR' },
+    { id: 'gtmlaunch', label: '🚀 GTM Launch' },
     { id: 'prdgenerator', label: '📋 PRD Generator' },
     { id: 'fundraisingstrat', label: '💎 Fundraising Strategy' },
     { id: 'partnershipstrat', label: '🤝 Partnership Strategy' },
@@ -19627,6 +19747,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'marketintel', label: '🔭 Market Intel' },
     { id: 'opsexcellence3', label: '⚙️ Ops Excellence' },
     { id: 'fundraisingir', label: '💰 Fundraising & IR' },
+    { id: 'gtmlaunch', label: '🚀 GTM Launch' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -19801,6 +19922,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19829,6 +19951,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -19885,6 +20008,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19913,6 +20037,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -19960,6 +20085,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -19988,6 +20114,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -20048,6 +20175,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -20100,6 +20228,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -20128,6 +20257,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -20175,6 +20305,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -20203,6 +20334,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -20263,6 +20395,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -20291,6 +20424,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -20338,6 +20472,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -20366,6 +20501,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -20422,6 +20558,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -20450,6 +20587,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'marketintel' && <MarketIntelligencePanel api={api} />}
           {tab === 'opsexcellence3' && <OpsExcellencePanel api={api} />}
           {tab === 'fundraisingir' && <FundraisingIRPanel api={api} />}
+          {tab === 'gtmlaunch' && <GTMLaunchPanel api={api} />}
         {tab === 'prdgenerator' && <PRDGeneratorPanel api={api} />}
         {tab === 'fundraisingstrat' && <FundraisingStrategyPanel api={api} />}
         {tab === 'partnershipstrat' && <PartnershipStrategyPanel api={api} />}

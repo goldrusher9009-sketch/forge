@@ -39500,6 +39500,43 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.35 AI GTM Launch Command Engine ---
+app.post('/api/gtm-launch', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, product, icp, launchDate, budget, channels, competitors } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const p = `You are an elite go-to-market strategist. Generate a comprehensive GTM launch plan for: Company: ${companyName||'Tech Startup'}, Product: ${product||'B2B SaaS platform'}, ICP: ${icp||'SMB teams'}, Launch Date: ${launchDate||'Q1 next quarter'}, Budget: ${budget||'$50K'}, Channels: ${channels||'content, paid, partnerships'}, Competitors: ${competitors||'unknown'}.
+
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "launchScore": 85,
+  "readinessLevel": "string",
+  "criticalPath": "string",
+  "positioningStatement": "string",
+  "icpProfile": {"description":"string","painPoints":["string"],"decisionCriteria":["string"],"channels":["string"]},
+  "messagingFramework": {"headline":"string","subheadline":"string","valueProps":["string"],"proofPoints":["string"],"cta":"string"},
+  "channelStrategy": [{"channel":"string","tactic":"string","budget":"string","expectedImpact":"string","kpi":"string","timeline":"string"}],
+  "launchPhases": [{"phase":"string","timeline":"string","goals":["string"],"tactics":["string"],"successMetrics":["string"]}],
+  "salesEnablement": {"salesPlaybook":"string","battlecard":"string","objectionHandling":[{"objection":"string","response":"string"}],"demoScript":"string"},
+  "partnerStrategy": {"partnerTypes":["string"],"jointGTM":"string","channelIncentives":"string"},
+  "contentPlan": [{"type":"string","topic":"string","channel":"string","timeline":"string","goal":"string"}],
+  "launchMetrics": [{"metric":"string","day30Target":"string","day60Target":"string","day90Target":"string"}],
+  "riskMitigation": [{"risk":"string","likelihood":"string","mitigation":"string"}],
+  "budget": [{"category":"string","allocation":"string","rationale":"string"}],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = typeof result === 'string' ? result : JSON.stringify(result);
+    let data: any = {};
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.34 AI Fundraising & Investor Relations Engine ---
 app.post('/api/fundraising-ir', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
