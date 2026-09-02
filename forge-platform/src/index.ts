@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.12 ESG & Sustainability Report Generator ---
+app.post('/api/esg-report', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, revenue, employees, reportingYear, framework, currentInitiatives, emissions, energySources, wasteMetrics, diversityMetrics, governanceStructure, supplyChainPractices, stakeholders, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an expert ESG (Environmental, Social, Governance) consultant. Generate a comprehensive ESG sustainability report.
+Company: ${company} | Industry: ${industry} | Revenue: ${revenue} | Employees: ${employees}
+Reporting Year: ${reportingYear} | Framework: ${framework}
+Current Initiatives: ${currentInitiatives} | Emissions Data: ${emissions}
+Energy Sources: ${energySources} | Waste Metrics: ${wasteMetrics}
+Diversity Metrics: ${diversityMetrics} | Governance: ${governanceStructure}
+Supply Chain: ${supplyChainPractices} | Stakeholders: ${stakeholders}
+Return JSON: { reportTitle, executiveSummary, esgScore:{ overall:number, environmental:number, social:number, governance:number, rating:'Leader'|'Advanced'|'Intermediate'|'Basic' }, environmental:{ climateStrategy, emissions:[{ scope:'Scope 1'|'Scope 2'|'Scope 3', metric, value, unit, yoyChange, target }], energyManagement:{ totalConsumption, renewablePercent, energyIntensity, initiatives:string[] }, waterManagement:{ consumption, recycledPercent, initiatives:string[] }, wasteManagement:{ totalWaste, divertedFromLandfill, initiatives:string[] }, biodiversity:string, keyTargets:[{ target, deadline, currentProgress }] }, social:{ workforceData:{ totalEmployees, turnoverRate, genderPayGap, diversityBreakdown:{ leadership:string, total:string }, avgTrainingHours }, healthSafety:{ incidentRate, inititiatives:string[] }, communityInvestment:{ totalInvestment, programs:string[], beneficiaries }, humanRights:string, supplyChainESG:string, keyTargets:[{ target, deadline, currentProgress }] }, governance:{ boardComposition:{ size, independentPercent, womenPercent, avgTenure }, executiveComp:{ payRatio, esgLinkage:boolean }, ethicsCompliance:{ codeOfConduct, whistleblowerPolicy, trainingCompletion }, riskManagement:string, transparency:string, keyTargets:[{ target, deadline, currentProgress }] }, materialityMatrix:[{ issue, environmentalImpact:'High'|'Medium'|'Low', stakeholderConcern:'High'|'Medium'|'Low', priority:'Critical'|'High'|'Medium' }], sdgAlignment:[{ sdg, sdgName, contribution:string, metrics:string[] }], improvementRoadmap:[{ area, initiative, timeline, investment, expectedImpact, kpi }], peerBenchmark:{ industryAvgScore:number, topQuartileScore:number, companyPosition:string }, disclosureIndex:[{ framework, standard, disclosure, reported:boolean, location:string }] }`;
+    const result = await callLLM(provider, key, null as any, [{ role:'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.11 Supply Chain Risk Analyzer ---
 app.post('/api/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, products, suppliers, geographies, annualSpend, criticalComponents, currentRisks, regulatoryRequirements, resilienceGoal, provider = 'anthropic' } = req.body;

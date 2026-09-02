@@ -597,6 +597,104 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.12 ESG & Sustainability Report Generator ---
+const ESG_RATING_COLOR: Record<string,string> = { 'Leader':'text-green-400','Advanced':'text-blue-400','Intermediate':'text-yellow-400','Basic':'text-gray-400' };
+const MATERIALITY_COLOR: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400' };
+function ESGReportPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', revenue:'', employees:'', reportingYear:'', framework:'GRI', currentInitiatives:'', emissions:'', energySources:'', wasteMetrics:'', diversityMetrics:'', governanceStructure:'', supplyChainPractices:'', stakeholders:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'environmental'|'social'|'governance'|'materiality'|'roadmap'>('overview');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/esg-report`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  const ScoreBar = ({ label, score, color }: { label: string, score: number, color: string }) => (
+    <div className="mb-2"><div className="flex justify-between text-xs mb-1"><span className="text-gray-400">{label}</span><span className={color}>{score}/100</span></div><div className="bg-gray-700 rounded-full h-2"><div className={`h-2 rounded-full ${color.replace('text-','bg-')}`} style={{ width:`${score}%` }} /></div></div>
+  );
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🌱 ESG & Sustainability Report</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['company','Company'],['industry','Industry'],['revenue','Revenue'],['employees','Employees'],['reportingYear','Reporting Year'],['energySources','Energy Sources'],['wasteMetrics','Waste Metrics'],['diversityMetrics','Diversity Metrics']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+      </div>
+      <div className="mb-3"><label className="text-xs text-gray-400">Framework</label><select className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={form.framework} onChange={e=>setForm(f=>({...f,framework:e.target.value}))}><option>GRI</option><option>SASB</option><option>TCFD</option><option>CSRD</option><option>ISO 26000</option></select></div>
+      {[['currentInitiatives','Current ESG Initiatives'],['emissions','Emissions Data (Scope 1/2/3)'],['governanceStructure','Governance Structure'],['supplyChainPractices','Supply Chain Practices'],['stakeholders','Key Stakeholders']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-green-700 hover:bg-green-600 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Generating…':'Generate ESG Report'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.reportTitle}</p>
+            <p className="text-gray-300 text-sm mb-3">{result.executiveSummary}</p>
+            {result.esgScore && (<div><div className="flex items-center gap-3 mb-3"><span className="text-2xl font-bold text-white">{result.esgScore.overall}</span><span className={`text-sm font-bold ${ESG_RATING_COLOR[result.esgScore.rating]||''}`}>{result.esgScore.rating}</span></div><ScoreBar label="Environmental" score={result.esgScore.environmental} color="text-green-400" /><ScoreBar label="Social" score={result.esgScore.social} color="text-blue-400" /><ScoreBar label="Governance" score={result.esgScore.governance} color="text-purple-400" /></div>)}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['overview','environmental','social','governance','materiality','roadmap'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-green-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='overview' && (
+            <div className="space-y-2">
+              {result.peerBenchmark && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Peer Benchmark</p><div className="grid grid-cols-3 gap-3 text-xs"><div><span className="text-gray-400">Industry Avg: </span><span className="text-white">{result.peerBenchmark.industryAvgScore}</span></div><div><span className="text-gray-400">Top Quartile: </span><span className="text-green-300">{result.peerBenchmark.topQuartileScore}</span></div><div><span className="text-gray-400">Position: </span><span className="text-indigo-300">{result.peerBenchmark.companyPosition}</span></div></div></div>}
+              {(result.sdgAlignment||[]).slice(0,4).map((s:any,i:number)=><div key={i} className="bg-gray-800 rounded p-3"><p className="text-white text-xs font-medium">SDG {s.sdg}: {s.sdgName}</p><p className="text-gray-300 text-xs">{s.contribution}</p></div>)}
+            </div>
+          )}
+          {subtab==='environmental' && result.environmental && (
+            <div className="space-y-2">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Climate Strategy</p><p className="text-gray-300 text-sm">{result.environmental.climateStrategy}</p></div>
+              {(result.environmental.emissions||[]).map((e:any,i:number)=><div key={i} className="bg-gray-800 rounded p-3 flex items-center justify-between"><div><p className="text-white text-xs font-medium">{e.scope}</p><p className="text-gray-300 text-xs">{e.metric}</p></div><div className="text-right"><p className="text-white text-sm font-bold">{e.value} {e.unit}</p><p className={e.yoyChange?.startsWith('-')?'text-green-400 text-xs':'text-red-400 text-xs'}>{e.yoyChange} YoY</p></div></div>)}
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Key Targets</p>{(result.environmental.keyTargets||[]).map((t:any,i:number)=><div key={i} className="mb-1"><p className="text-white text-xs">{t.target}</p><div className="flex gap-2 text-xs"><span className="text-gray-400">{t.deadline}</span><span className="text-indigo-300">{t.currentProgress}</span></div></div>)}</div>
+            </div>
+          )}
+          {subtab==='social' && result.social && (
+            <div className="space-y-2">
+              {result.social.workforceData && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Workforce</p><div className="grid grid-cols-2 gap-2 text-xs"><div><span className="text-gray-400">Turnover: </span><span className="text-white">{result.social.workforceData.turnoverRate}</span></div><div><span className="text-gray-400">Gender Pay Gap: </span><span className="text-white">{result.social.workforceData.genderPayGap}</span></div><div><span className="text-gray-400">Training Hrs: </span><span className="text-white">{result.social.workforceData.avgTrainingHours}</span></div></div></div>}
+              {result.social.communityInvestment && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Community Investment: <span className="text-green-300">{result.social.communityInvestment.totalInvestment}</span></p><ul>{(result.social.communityInvestment.programs||[]).slice(0,3).map((p:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {p}</li>)}</ul></div>}
+            </div>
+          )}
+          {subtab==='governance' && result.governance && (
+            <div className="space-y-2">
+              {result.governance.boardComposition && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Board Composition</p><div className="grid grid-cols-2 gap-2 text-xs"><div><span className="text-gray-400">Size: </span><span className="text-white">{result.governance.boardComposition.size}</span></div><div><span className="text-gray-400">Independent: </span><span className="text-white">{result.governance.boardComposition.independentPercent}</span></div><div><span className="text-gray-400">Women: </span><span className="text-white">{result.governance.boardComposition.womenPercent}</span></div></div></div>}
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-300 text-xs">{result.governance.riskManagement}</p></div>
+            </div>
+          )}
+          {subtab==='materiality' && (
+            <div className="space-y-1">
+              {(result.materialityMatrix||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-2 flex items-center justify-between">
+                  <p className="text-white text-xs">{m.issue}</p>
+                  <div className="flex gap-3 text-xs"><span className="text-gray-400">E:{m.environmentalImpact}</span><span className="text-gray-400">S:{m.stakeholderConcern}</span><span className={MATERIALITY_COLOR[m.priority]||''}>{m.priority}</span></div>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='roadmap' && (
+            <div className="space-y-2">
+              {(result.improvementRoadmap||[]).map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-1"><p className="text-white text-sm font-medium">{r.initiative}</p><span className="text-green-300 text-xs">{r.area}</span></div>
+                  <div className="grid grid-cols-3 gap-2 text-xs mb-1"><div><span className="text-gray-400">Timeline: </span><span className="text-gray-300">{r.timeline}</span></div><div><span className="text-gray-400">Investment: </span><span className="text-gray-300">{r.investment}</span></div></div>
+                  <p className="text-indigo-300 text-xs">{r.expectedImpact}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.11 Supply Chain Risk Analyzer ---
 const SC_RISK_COLOR: Record<string,string> = { 'Critical':'text-red-500','High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400' };
 const SC_PROB_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400' };
@@ -7704,7 +7802,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -7801,6 +7899,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'territoryplan', label: '🗺️ Territory Plan' },
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
+    { id: 'esgreport', label: '🌱 ESG Report' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -7949,6 +8048,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'territoryplan' && <TerritoryPlanPanel api={api} />}
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
+        {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
