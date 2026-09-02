@@ -39500,6 +39500,24 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.11 Supply Chain Risk Analyzer ---
+app.post('/api/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, products, suppliers, geographies, annualSpend, criticalComponents, currentRisks, regulatoryRequirements, resilienceGoal, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an expert supply chain risk management consultant. Create a comprehensive supply chain risk analysis and mitigation plan.
+Company: ${company} | Industry: ${industry} | Products: ${products}
+Key Suppliers: ${suppliers} | Geographies: ${geographies} | Annual Spend: ${annualSpend}
+Critical Components: ${criticalComponents} | Current Risks: ${currentRisks}
+Regulatory Requirements: ${regulatoryRequirements} | Resilience Goal: ${resilienceGoal}
+Return JSON: { reportTitle, executiveSummary, riskProfile:{ overallRiskScore:number, riskLevel:'Low'|'Medium'|'High'|'Critical', topThreats:string[], resilienceScore:number }, supplierAnalysis:[{ supplierTier:'Tier 1'|'Tier 2'|'Tier 3', supplierName, country, annualSpend, category, riskFactors:[{ factor, severity:'High'|'Medium'|'Low', likelihood:'High'|'Medium'|'Low' }], singleSourceRisk:boolean, alternativeSuppliers:string[], recommendedActions:string[] }], riskCategories:[{ category, riskLevel:'Critical'|'High'|'Medium'|'Low', description, likelihood:'High'|'Medium'|'Low', financialImpact, triggers:string[], indicators:string[], mitigations:string[] }], geopoliticalRisks:[{ region, risks:string[], tradePolicies:string[], recommendedHedges:string[] }], resilienceStrategies:[{ strategy, description, timeToImplement, cost, riskReduction, priority:'P1'|'P2'|'P3' }], inventoryOptimization:{ safetyStockRecommendations:string[], justInTimeCandidates:string[], bufferStrategies:string[] }, scenarioAnalysis:[{ scenario, probability:'High'|'Medium'|'Low', financialImpact, operationalImpact, mitigationPlan:string[], recoveryTime }], kpis:[{ kpi, currentValue, targetValue, measurementMethod }], implementationRoadmap:[{ phase, timeline, initiatives:string[], investment, riskReduction }], quickWins:string[] }`;
+    const result = await callLLM(provider, key, null as any, [{ role:'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.10 M&A Integration Playbook ---
 app.post('/api/ma-integration', requireAuth, async (req: AuthRequest, res) => {
   const { acquirer, target, dealType, dealValue, industry, acquirerRevenue, targetRevenue, acquirerEmployees, targetEmployees, strategicRationale, integrationApproach, day1Priorities, keyRisks, provider = 'anthropic' } = req.body;
