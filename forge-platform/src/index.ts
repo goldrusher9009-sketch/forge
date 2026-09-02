@@ -39500,6 +39500,63 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.31 AI Customer Success & Revenue Retention Engine ---
+app.post('/api/cs-revenue-retention', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, arrSize, churnRate, csTeamSize, challenges } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const p = `You are an elite Customer Success and Revenue Retention strategist. Generate a comprehensive CS and retention strategy for: Company: ${companyName||'SaaS Company'}, Industry: ${industry||'B2B SaaS'}, ARR: ${arrSize||'$5M'}, Churn Rate: ${churnRate||'5%'}, CS Team Size: ${csTeamSize||'5'}, Challenges: ${challenges||'high churn, low expansion revenue'}.
+
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "retentionScore": 78,
+  "churnRisk": "string",
+  "primaryOpportunity": "string",
+  "revenueAtRisk": "string",
+  "healthScoreModel": {
+    "dimensions": [{"name":"string","weight":"string","signals":["string"]}],
+    "scoringLogic": "string",
+    "redFlags": ["string"]
+  },
+  "churnPrevention": {
+    "earlyWarningSystem": ["string"],
+    "interventionPlaybooks": [{"trigger":"string","action":"string","owner":"string"}],
+    "winbackStrategy": "string"
+  },
+  "expansionRevenue": {
+    "upsellMotion": "string",
+    "crossSellOpportunities": ["string"],
+    "expansionTriggers": ["string"],
+    "nrrTarget": "string"
+  },
+  "customerJourneyOptimization": [{"stage":"string","currentState":"string","improvement":"string","impact":"string"}],
+  "csTeamStructure": {
+    "segmentation": "string",
+    "roles": ["string"],
+    "toolStack": ["string"],
+    "kpis": ["string"]
+  },
+  "voiceOfCustomer": {
+    "feedbackLoops": ["string"],
+    "npsStrategy": "string",
+    "advocacyProgram": "string"
+  },
+  "metrics": [{"name":"string","current":"string","target":"string","timeline":"string"}],
+  "thirtyDayPlan": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = typeof result === 'string' ? result : JSON.stringify(result);
+    let data: any = {};
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.30 AI Executive Leadership & Board Governance Engine ---
 app.post('/api/exec-leadership', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
