@@ -597,6 +597,101 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.91 AI OKR & Goal Setting Framework ---
+const OKR_CATEGORY_COLOR: Record<string,string> = { 'Growth':'bg-green-700','Retention':'bg-blue-700','Product':'bg-purple-700','Operations':'bg-yellow-700','People':'bg-orange-700','Financial':'bg-teal-700' };
+function OkrFrameworkPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ company:'', teamLevel:'Company', timeframe:'Q1 2026', companyMission:'', currentChallenges:'', strategicPriorities:'', teamSize:'', currentMetrics:'', okrContext:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/okr-framework`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      setResult(await r.json());
+    } catch(e:any){setResult({error:e.message});}
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">🎯 AI OKR & Goal Setting Framework</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Company / Team Name" value={form.company} onChange={e=>setForm(f=>({...f,company:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Level (Company, Dept, Team)" value={form.teamLevel} onChange={e=>setForm(f=>({...f,teamLevel:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Timeframe (Q1 2026, H1 2026...)" value={form.timeframe} onChange={e=>setForm(f=>({...f,timeframe:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Team Size" value={form.teamSize} onChange={e=>setForm(f=>({...f,teamSize:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Company Mission" value={form.companyMission} onChange={e=>setForm(f=>({...f,companyMission:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Strategic Priorities (Growth, Retention, Efficiency...)" value={form.strategicPriorities} onChange={e=>setForm(f=>({...f,strategicPriorities:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Current Metrics / Baseline (MRR, NPS, etc.)" value={form.currentMetrics} onChange={e=>setForm(f=>({...f,currentMetrics:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Current Challenges & Context" value={form.currentChallenges} onChange={e=>setForm(f=>({...f,currentChallenges:e.target.value}))} />
+      </div>
+      <button onClick={run} disabled={loading||!form.company} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50">{loading?'Building OKRs...':'Generate OKR Framework'}</button>
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+      {result?.okrTitle && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded p-3">
+            <div className="flex items-center gap-3 flex-wrap mb-2">
+              <span className="text-white font-bold text-lg">{result.okrTitle}</span>
+              <span className="text-xs text-gray-400">Health Score: <span className="text-white font-bold">{result.okrHealthScore}/100</span></span>
+            </div>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          {result.northStarMetric && (
+            <div className="bg-yellow-900/30 border border-yellow-700 rounded p-3">
+              <div className="text-yellow-400 font-semibold text-sm mb-1">⭐ North Star Metric</div>
+              <div className="flex items-center gap-4">
+                <div><div className="text-gray-400 text-xs">Metric</div><div className="text-white font-bold">{result.northStarMetric.metric}</div></div>
+                <div><div className="text-gray-400 text-xs">Current</div><div className="text-orange-400 font-bold">{result.northStarMetric.currentValue}</div></div>
+                <div><div className="text-gray-400 text-xs">Target</div><div className="text-green-400 font-bold">{result.northStarMetric.targetValue}</div></div>
+              </div>
+              <p className="text-gray-400 text-xs mt-2">{result.northStarMetric.why}</p>
+            </div>
+          )}
+          {result.objectives?.map((obj:any,i:number)=>(
+            <div key={i} className="bg-gray-800 rounded p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-white font-bold text-sm">O{i+1}: {obj.objective}</span>
+                <span className={`text-xs px-1 rounded text-white ${OKR_CATEGORY_COLOR[obj.category]||'bg-gray-700'}`}>{obj.category}</span>
+                <span className="text-gray-400 text-xs ml-auto">Confidence: {obj.confidence}%</span>
+              </div>
+              {obj.keyResults?.map((kr:any,j:number)=>(
+                <div key={j} className="bg-gray-700 rounded p-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-400 text-xs font-bold">KR{j+1}</span>
+                    <span className="text-gray-200 text-sm flex-1">{kr.kr}</span>
+                    <span className={`text-xs px-1 rounded ${kr.leadOrLag==='Lead'?'bg-purple-800':'bg-blue-800'} text-white`}>{kr.leadOrLag}</span>
+                  </div>
+                  <div className="flex gap-3 mt-1 text-xs text-gray-400">
+                    <span>Baseline: <span className="text-white">{kr.baseline}</span></span>
+                    <span>Target: <span className="text-green-400 font-bold">{kr.target} {kr.unit}</span></span>
+                  </div>
+                </div>
+              ))}
+              {obj.initiatives?.length > 0 && <div className="text-xs text-gray-400 mt-1">Initiatives: {obj.initiatives.slice(0,2).join(' • ')}</div>}
+            </div>
+          ))}
+          {result.scoringGuidance && (
+            <div className="bg-gray-800 rounded p-3">
+              <div className="text-blue-400 font-semibold text-sm mb-2">📏 Scoring Guidance</div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-green-900/40 rounded p-2"><span className="text-green-400 font-bold">🟢 Green: </span>{result.scoringGuidance.greenZone}</div>
+                <div className="bg-yellow-900/40 rounded p-2"><span className="text-yellow-400 font-bold">🟡 Yellow: </span>{result.scoringGuidance.yellowZone}</div>
+                <div className="bg-red-900/40 rounded p-2"><span className="text-red-400 font-bold">🔴 Red: </span>{result.scoringGuidance.redZone}</div>
+                <div className="bg-purple-900/40 rounded p-2"><span className="text-purple-400 font-bold">🚀 Stretch: </span>{result.scoringGuidance.stretchTarget}</div>
+              </div>
+            </div>
+          )}
+          {result.quickWins?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <div className="text-green-400 font-semibold text-sm mb-2">⚡ Quick Wins</div>
+              <ul className="list-disc list-inside space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm">{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.90 AI Sales Playbook Generator ---
 function SalesPlaybookPanel({ api }: { api: string }) {
   const [form, setForm] = React.useState({ product:'', targetBuyer:'', salesMotion:'Outbound + Inbound', avgDealSize:'', salesCycleLength:'', topObjections:'', competitors:'', teamSize:'', currentChallenges:'', winRate:'' });
@@ -13046,7 +13141,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -13126,6 +13221,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'fundraisingstrategy', label: '💸 Fundraising' },
     { id: 'kpidashboard', label: '📊 KPI Dashboard' },
     { id: 'changemgmt', label: '🔄 Change Mgmt' },
+    { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
     { id: 'gtmstrategy', label: '🚀 GTM Strategy' },
@@ -13205,6 +13301,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'plgstrategy', label: '🚀 PLG Strategy' },
     { id: 'journeyorch', label: '🗺️ Journey Orchestration' },
     { id: 'aiethics', label: '⚖️ AI Ethics Framework' },
+    { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
     { id: 'gtmstrategy', label: '🚀 GTM Strategy' },
@@ -13251,6 +13348,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'gtmplanner', label: '🚀 GTM Planner' },
     { id: 'csretention', label: '🎯 CS Retention' },
     { id: 'fundraisingcmd', label: '💎 Fundraising' },
+    { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
     { id: 'gtmstrategy', label: '🚀 GTM Strategy' },
@@ -13381,6 +13479,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'fundraisingstrategy' && <FundraisingStrategyPanel api={api} />}
         {tab === 'kpidashboard' && <KPIDashboardPanel api={api} />}
         {tab === 'changemgmt' && <ChangeMgmtPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}
@@ -13405,6 +13504,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}
@@ -13420,6 +13520,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}
@@ -13465,6 +13566,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}
@@ -13480,6 +13582,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}
@@ -13508,6 +13611,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}
@@ -13523,6 +13627,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}
@@ -13547,6 +13652,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'plgstrategy' && <PLGStrategyPanel api={api} />}
         {tab === 'journeyorch' && <JourneyOrchestrationPanel api={api} />}
         {tab === 'aiethics' && <AIEthicsPanel api={api} />}
+        {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
         {tab === 'gtmstrategy' && <GtmStrategyPanel api={api} />}

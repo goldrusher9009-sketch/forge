@@ -39500,6 +39500,47 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.91 AI OKR & Goal Setting Framework ---
+app.post('/api/okr-framework', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, teamLevel, timeframe, companyMission, currentChallenges, strategicPriorities, teamSize, currentMetrics, okrContext } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class OKR coach who has implemented OKR frameworks at Google, Intel, and hundreds of high-growth companies. Design a comprehensive OKR framework.
+
+Company/Team: ${company}
+Level: ${teamLevel || 'Company'}
+Timeframe: ${timeframe || 'Q1 2026'}
+Mission: ${companyMission || 'Not specified'}
+Current Challenges: ${currentChallenges || 'None specified'}
+Strategic Priorities: ${strategicPriorities || 'Growth, Retention, Efficiency'}
+Team Size: ${teamSize || 'Unknown'}
+Current Metrics: ${currentMetrics || 'Unknown'}
+Context: ${okrContext || 'None'}
+
+Return ONLY valid JSON:
+{
+  "okrTitle": "string",
+  "executiveSummary": "string",
+  "okrHealthScore": 0-100,
+  "northStarMetric": { "metric": "string", "currentValue": "string", "targetValue": "string", "why": "string" },
+  "objectives": [{ "id": "string", "objective": "string", "category": "Growth|Retention|Product|Operations|People|Financial", "confidence": 0-100, "keyResults": [{ "kr": "string", "baseline": "string", "target": "string", "unit": "string", "measurementMethod": "string", "leadOrLag": "Lead|Lag" }], "initiatives": ["string"], "risks": ["string"], "owner": "string" }],
+  "okrCadence": { "weeklyCheckIn": "string", "monthlyReview": "string", "quarterlyReview": "string" },
+  "alignmentCheck": [{ "objective": "string", "alignsTo": "string", "conflictsWith": "string" }],
+  "commonMistakes": ["string"],
+  "scoringGuidance": { "greenZone": "string", "yellowZone": "string", "redZone": "string", "stretchTarget": "string" },
+  "implementationRoadmap": [{ "week": "string", "action": "string" }],
+  "teamCascadeGuidance": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.90 AI Sales Playbook Generator ---
 app.post('/api/sales-playbook', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
