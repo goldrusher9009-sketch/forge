@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.94 AI Partnership & Alliance Strategy Builder ---
+app.post('/api/partnership-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, partnershipGoal, currentProducts, targetMarkets, existingPartnerships, budget, timeframe, constraints } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are an elite partnership & alliance strategist. Build a comprehensive partnership strategy for: Company: ${companyName}, Industry: ${industry}, Goal: ${partnershipGoal}, Products: ${currentProducts}, Target Markets: ${targetMarkets}, Existing Partnerships: ${existingPartnerships||'None'}, Budget: ${budget||'Flexible'}, Timeframe: ${timeframe||'12 months'}, Constraints: ${constraints||'None'}.
+Return ONLY valid JSON: { "strategyTitle": string, "executiveSummary": string, "partnershipHealthScore": number (0-100), "strategicRationale": string, "partnershipTypes": [{ "type": string, "description": string, "examples": string[], "priority": "High"|"Medium"|"Low", "timeToValue": string }], "targetPartners": [{ "partnerName": string, "partnerType": string, "strategicFit": number (0-100), "rationale": string, "approachStrategy": string, "potentialDeal": string, "risks": string[], "estimatedValue": string }], "partnershipModels": [{ "model": string, "structure": string, "revenueShare": string, "governance": string, "exitClauses": string }], "negotiationFramework": { "prepPhase": string[], "openingPosition": string, "batna": string, "concessionStrategy": string[], "dealBreakers": string[], "signalsToBuy": string[] }, "dueDiligenceChecklist": [{ "category": string, "items": string[] }], "partnerEnablementPlan": [{ "phase": string, "activities": string[], "tools": string[], "timeline": string }], "kpis": [{ "metric": string, "target": string, "measurement": string }], "riskMatrix": [{ "risk": string, "probability": "High"|"Medium"|"Low", "impact": "High"|"Medium"|"Low", "mitigation": string }], "implementationRoadmap": [{ "phase": string, "duration": string, "milestones": string[], "resources": string }], "quickWins": string[] }`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = raw.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.93 AI Product Launch Command Center ---
 app.post('/api/launch-command', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
