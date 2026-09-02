@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.68 AI Competitive Intelligence & Market Positioning Engine ---
+app.post('/api/competitive-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, productName, industry, targetMarket, competitors, ourStrengths, ourWeaknesses, revenueModel, gtmMotion, idealCustomerProfile, currentPositioning, differentiators, pricingPosition, geographies, competitorData, strategicGoals } = req.body;
+    const p = `You are an elite competitive intelligence analyst and market positioning strategist. Analyze competitive landscape for:
+Company: ${companyName}
+Product: ${productName}
+Industry: ${industry}
+Target Market: ${targetMarket}
+Competitors: ${competitors}
+Our Strengths: ${ourStrengths}
+Our Weaknesses: ${ourWeaknesses}
+Revenue Model: ${revenueModel}
+GTM Motion: ${gtmMotion}
+ICP: ${idealCustomerProfile}
+Current Positioning: ${currentPositioning}
+Differentiators: ${differentiators}
+Pricing Position: ${pricingPosition}
+Geographies: ${geographies}
+Competitor Data: ${competitorData}
+Strategic Goals: ${strategicGoals}
+
+Return JSON: { reportTitle, executiveSummary, competitiveHealthScore (0-100), marketPositionStatus ("Market Leader"|"Strong Challenger"|"Niche Player"|"Follower"), winRate, estimatedMarketShare, competitorProfiles: [{ name, tier ("Tier 1"|"Tier 2"|"Tier 3"), overallThreatLevel ("Critical"|"High"|"Medium"|"Low"), revenue, funding, headcount, targetCustomers, pricingStrategy, keyStrengths: [], keyWeaknesses: [], recentMoves: [], churnRiskFromCompetitor, ourWinRate, ourLossRate, battleCardSummary, talkingPoints: [], objectionHandlers: [{ objection, response }], landMines: [] }], positioningAnalysis: { currentPositionStrengths: [], currentPositionWeaknesses: [], recommendedPositioning, positioningStatement, messagingPillars: [{ pillar, rationale, proofPoints: [] }], differentiationMap: [{ dimension, us, competitors: [{ name, rating }], advantage }], blueOceanOpportunities: [] }, winLossAnalysis: { winThemes: [], lossThemes: [], competitorMostWonAgainst, competitorMostLostTo, dealSizeCorrelation, industryWinRates: [{ industry, winRate, keyFactor }], geographyWinRates: [{ geography, winRate }] }, marketIntelligence: { marketSize, growthRate, keyTrends: [], disruptors: [], regulatoryFactors: [], buyerBehaviorShifts: [], emergingCompetitors: [] }, strategicRecommendations: [{ priority ("P0"|"P1"|"P2"), recommendation, rationale, expectedImpact, timeframe, effort }], competitiveResponsePlaybook: [{ scenario, trigger, immediateResponse: [], longtermResponse: [], owner }], salesEnablement: { elevatorPitch, discoveryQuestions: [], competitiveObjections: [{ objection, response }], proofPoints: [], competitorMinefield: [] }, quickWins: [] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.67 AI Pricing Psychology & Revenue Optimization Engine ---
 app.post('/api/pricing-optimization', requireAuth, async (req: AuthRequest, res) => {
   try {
