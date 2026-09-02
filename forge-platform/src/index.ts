@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.18 Digital Transformation Roadmap ---
+app.post('/api/digital-transform', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, currentTechStack, transformationGoals, budget, timeline, painPoints, competitors, regulatoryConstraints, changeReadiness, keyStakeholders, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a leading digital transformation consultant. Create a comprehensive transformation roadmap.
+Company: ${company} | Industry: ${industry} | Size: ${companySize}
+Current Tech Stack: ${currentTechStack}
+Transformation Goals: ${transformationGoals}
+Budget: ${budget} | Timeline: ${timeline}
+Pain Points: ${painPoints}
+Competitors: ${competitors}
+Regulatory Constraints: ${regulatoryConstraints}
+Change Readiness: ${changeReadiness}
+Key Stakeholders: ${keyStakeholders}
+
+Return JSON: { roadmapTitle, executiveSummary, maturityAssessment: { current, target, gaps: [{ dimension, currentScore, targetScore, priority }] }, strategicPillars: [{ pillar, vision, initiatives: [{ initiative, impact, effort, timeline }] }], phases: [{ phase, name, duration, objectives, keyInitiatives: [{ initiative, owner, budget, dependencies, kpis }], milestones, risks }], technologyArchitecture: { corePlatforms, dataStrategy, integrations, cloudStrategy, securityFramework }, changeManagement: { communicationPlan, trainingNeeds, resistanceStrategies, successCriteria }, roi: { year1, year2, year3, totalInvestment, npv, paybackPeriod, assumptions }, quickWins: [{ initiative, timeline, impact, effort }], riskRegister: [{ risk, probability, impact, mitigation }], governanceModel, successMetrics }`;
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.17 Customer Success Playbook Generator ---
 app.post('/api/cs-playbook', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, customerSegments, contractValue, churnRate, npsScore, teamSize, currentChallenges, successMetrics, onboardingProcess, expansionGoals, provider = 'anthropic' } = req.body;
