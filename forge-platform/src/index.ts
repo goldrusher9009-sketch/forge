@@ -39500,6 +39500,23 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.28 AI Regulatory Compliance & ESG Strategy Engine ---
+app.post('/api/compliance-esg', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { industry, companySize, geographies, publicPrivate, currentCompliance, esgGoals, regulatoryPressures, stakeholders } = req.body;
+  const p = `You are a regulatory compliance and ESG strategy expert. Build a comprehensive compliance and ESG framework.
+Company: Industry=${industry}, Size=${companySize}, Geographies=${geographies}, Public/Private=${publicPrivate}, Compliance=${currentCompliance}, ESG Goals=${esgGoals}, Pressures=${regulatoryPressures}, Stakeholders=${stakeholders}
+Return JSON: { reportTitle, executiveSummary, complianceScore (0-100), esgScore (0-100), primaryRisk, regulatoryLandscape: [ { regulation, jurisdiction, status, gap, deadline, priority, action } ], esgStrategy: { environmentalPillars[], socialPillars[], governancePillars[], materialityMatrix[], reportingFrameworks[] }, environmentalPlan: { emissionsTargets, energyTransition, wasteReduction, waterStewardship, biodiversity, carbonCredits }, socialPlan: { dei&inclusion, laborPractices, communityImpact, humanRights, supplyChainEthics, employeeWellbeing }, governancePlan: { boardDiversity, executiveComp, whistleblower, antiCorruption, dataPrivacy, taxTransparency }, disclosureStrategy: { frameworks[], reportingCalendar, stakeholderComms, auditPrep, dataSystems }, riskExposure: [ { risk, likelihood, financialImpact, reputationalImpact, mitigation } ], complianceRoadmap: [ { phase, initiative, timeline, owner, investment, outcome } ], kpis: [ { category, metric, baseline, target, timeline } ], quickWins: [ { win, effort, impact, timeline } ] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'No JSON' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.27 AI Digital Transformation & Change Management Engine ---
 app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
