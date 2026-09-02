@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.71 AI Digital Transformation & Technology Strategy Engine ---
+app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, companySize, currentTechStack, digitalMaturity, keyProcesses, painPoints, budget, timeline, strategicGoals, competitors, regulatoryConstraints, dataAssets, cloudAdoption, aiMaturity, changeReadiness, executiveSponsor } = req.body;
+    const p = `You are a world-class digital transformation consultant and CTO advisor. Create a comprehensive digital transformation & technology strategy for:
+Company: ${companyName}
+Industry: ${industry}
+Size: ${companySize}
+Current Tech Stack: ${currentTechStack}
+Digital Maturity: ${digitalMaturity}
+Key Processes: ${keyProcesses}
+Pain Points: ${painPoints}
+Budget: ${budget}
+Timeline: ${timeline}
+Strategic Goals: ${strategicGoals}
+Competitors: ${competitors}
+Regulatory: ${regulatoryConstraints}
+Data Assets: ${dataAssets}
+Cloud Adoption: ${cloudAdoption}
+AI Maturity: ${aiMaturity}
+Change Readiness: ${changeReadiness}
+Executive Sponsor: ${executiveSponsor}
+
+Return JSON: { reportTitle, executiveSummary, digitalMaturityScore (0-100), transformationReadinessLevel ("Ready"|"Mostly Ready"|"Needs Prep"|"Not Ready"), estimatedROI, paybackPeriod, digitalVision: { visionStatement, northStar, targetState, competitivePositioning }, maturityAssessment: { dimensions: [{ dimension, currentScore (0-5), targetScore, gapPriority ("Critical"|"High"|"Medium"), keyFindings: [], quickWins: [] }] }, technologyRoadmap: { initiatives: [{ name, category ("Infrastructure"|"Data & AI"|"Applications"|"Security"|"Process"|"Culture"), description, priority ("P0"|"P1"|"P2"), investment, timeline, expectedROI, dependencies: [], risks: [], successMetrics: [] }] }, aiStrategy: { aiOpportunities: [{ useCase, businessValue, technicalComplexity ("Low"|"Medium"|"High"), dataRequirements: [], buildVsBuy, timeToValue, roi }], dataFoundationNeeds: [], mlPlatformRecommendation, governanceFramework: [] }, cloudStrategy: { recommendedModel ("Public"|"Private"|"Hybrid"|"Multi-Cloud"), migrationApproach, workloads: [{ workload, currentState, targetState, migrationComplexity, priority }], costOptimization: [], securityConsiderations: [] }, securityAndCompliance: { currentGaps: [], priorityActions: [], complianceRequirements: [], zeroTrustRoadmap: [], incidentResponsePlan: [] }, changeManagement: { stakeholderMap: [{ stakeholder, currentSentiment, influenceLevel, engagementStrategy }], communicationPlan: [], trainingNeeds: [], resistanceFactors: [], successFactors: [] }, dataStrategy: { dataGovernance: [], qualityInitiatives: [], analyticsMaturity: { current: string, target: string }, keyDataProducts: [], dataMonetization: [] }, vendorStrategy: { makeVsBuy: [], keyPartnerships: [], vendorConsolidation: [], negotiationLeverage: [] }, implementationRoadmap: [{ phase, timeline, initiatives: [], investment, milestones: [], risksAndMitigations: [] }], quickWins: [] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.70 AI Organizational Design & Workforce Planning Engine ---
 app.post('/api/org-design', requireAuth, async (req: AuthRequest, res) => {
   try {
