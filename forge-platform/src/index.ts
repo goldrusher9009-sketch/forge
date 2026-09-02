@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.50 Product-Led Growth Engine ---
+app.post('/api/plg-engine', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, currentModel, freeUsers, paidUsers, conversionRate, timeToValue, activationRate, retentionD30, nps, topFeatures, viralCoefficient, arpu, targetMarket, competitors, goals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a PLG (Product-Led Growth) strategy expert. Design a comprehensive PLG engine for this company.
+Company: ${company}, Product: ${product}, Industry: ${industry}, Current Model: ${currentModel}, Free Users: ${freeUsers}, Paid Users: ${paidUsers}, Conversion Rate: ${conversionRate}%, Time to Value: ${timeToValue}, Activation Rate: ${activationRate}%, D30 Retention: ${retentionD30}%, NPS: ${nps}, Top Features: ${topFeatures}, Viral Coefficient: ${viralCoefficient}, ARPU: ${arpu}, Target Market: ${targetMarket}, Competitors: ${competitors}, Goals: ${goals}.
+Return JSON: { engineTitle, executiveSummary, plgScore (0-100), plgMaturity ("Exploring"/"Building"/"Scaling"/"Optimizing"), productExperience: { onboardingAudit: [{step, currentState, improvement, impact}], timeToValueAnalysis, activationMilestones: [{milestone, trigger, currentRate, targetRate, tactics}], ahaMonent }, freeModelDesign: { tierName, includedFeatures: [{feature, reason}], excludedFeatures: [{feature, reason, gatingLogic}], usageLimits: [{dimension, limit, rationale}], upgradePrompts: [{trigger, message, placement}] }, conversionPlaybook: { conversionTriggers: [{trigger, signal, action, expectedLift}], upgradeFlow, pricingPageOptimization, trialDesign }, viralGrowth: { currentK, targetK, viralLoops: [{loop, mechanic, implementation, expectedK}], referralProgram, networkEffects: [{type, implementation, monetization}] }, retentionEngine: { retentionCurve, habitFormation: [{habit, trigger, reward, implementation}], featureAdoption: [{feature, adoptionRate, nudges}], reengagementFlows: [{segment, trigger, sequence, expectedRecovery}] }, expansionRevenue: { expansionTriggers: [{trigger, signal, upsellOffer, expectedConversion}], seatExpansion, featureUpsells, usageBasedExpansion }, dataInfrastructure: { keyMetrics: [{metric, definition, target, currentGap}], instrumentationPlan, experimentationFramework }, growthExperiments: [{hypothesis, experiment, successMetric, expectedImpact, effort}], competitivePLG: [{competitor, plgApproach, ourDifferentiation, counterTactics}], implementationRoadmap: [{phase, duration, initiatives, successCriteria}], quickWins: [{action, impact, effort, timeline}] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.49 Revenue Intelligence Platform ---
 app.post('/api/revenue-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, currentARR, growthRate, churnRate, nrr, ltv, cac, salesCycle, dealSize, pipelineCoverage, winRate, topSegments, productLines, geographies, competitiveLandscape, pricingModel, expansionMotion, goals } = req.body;
