@@ -39500,6 +39500,95 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.07 AI Sales Intelligence & Revenue Acceleration Engine ---
+app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyProfile, productOffering, targetSegment, currentRevenue, salesTeamSize, averageDealSize, salesCycle, winRate, topCompetitors } = req.body;
+  const p = `You are an elite sales strategy consultant and revenue acceleration expert. Analyze this sales organization and generate a comprehensive intelligence report.
+
+Company: ${companyProfile || 'B2B SaaS company'}
+Product: ${productOffering || 'enterprise software platform'}
+Target Segment: ${targetSegment || 'mid-market to enterprise'}
+Current ARR: ${currentRevenue || '$1M-$10M'}
+Sales Team: ${salesTeamSize || '5-20 reps'}
+Avg Deal Size: ${averageDealSize || '$10K-$50K'}
+Sales Cycle: ${salesCycle || '30-90 days'}
+Win Rate: ${winRate || '20-30%'}
+Competitors: ${topCompetitors || 'competitive market'}
+
+Return a JSON object with this exact structure:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "revenueHealthScore": number 0-100,
+  "growthVelocity": "Accelerating|Stable|Decelerating",
+  "revenueModel": {
+    "currentARR": "string",
+    "arrTarget": "string",
+    "revenueBreakdown": { "newBusiness": "string", "expansion": "string", "renewal": "string" },
+    "revenueLeakage": ["string"]
+  },
+  "icp": {
+    "primaryProfile": "string",
+    "firmographics": { "companySize": "string", "industry": "string", "geography": "string", "techStack": "string" },
+    "buyingSignals": ["string"],
+    "disqualifiers": ["string"],
+    "estimatedMarketSize": "string"
+  },
+  "pipelineAnalysis": {
+    "healthScore": number 0-100,
+    "coverageRatio": "string",
+    "velocityByStage": [{ "stage": "string", "avgDays": number, "conversionRate": "string", "bottleneck": "string" }],
+    "atRiskDeals": ["string"],
+    "accelerationOpportunities": ["string"]
+  },
+  "salesPlaybooks": [
+    { "playbook": "string", "targetPersona": "string", "openingHook": "string", "discoveryQuestions": ["string"], "valueProps": ["string"], "objectionHandlers": [{ "objection": "string", "response": "string" }], "closingTactics": ["string"] }
+  ],
+  "accountIntelligence": {
+    "priorityAccounts": [{ "account": "string", "reason": "string", "entryStrategy": "string", "contacts": ["string"] }],
+    "expansionOpportunities": [{ "segment": "string", "potential": "string", "approach": "string" }],
+    "atRiskAccounts": [{ "signal": "string", "savePlay": "string" }]
+  },
+  "competitiveWinStrategies": [
+    { "competitor": "string", "ourStrengths": ["string"], "theirWeaknesses": ["string"], "winTactics": ["string"], "lossReasons": ["string"] }
+  ],
+  "revenueAccelerators": [
+    { "lever": "string", "category": "Pipeline|Conversion|Expansion|Retention", "currentBaseline": "string", "targetImprovement": "string", "implementationSteps": ["string"], "revenueImpact": "string" }
+  ],
+  "salesEnablement": {
+    "contentGaps": ["string"],
+    "trainingNeeds": ["string"],
+    "toolRecommendations": ["string"],
+    "processImprovements": ["string"]
+  },
+  "forecastIntelligence": {
+    "quarterForecast": "string",
+    "yearForecast": "string",
+    "confidenceLevel": "High|Medium|Low",
+    "keyAssumptions": ["string"],
+    "upside": "string",
+    "downside": "string"
+  },
+  "metrics": [
+    { "metric": "string", "current": "string", "benchmark": "string", "target": "string", "priority": "Critical|High|Medium" }
+  ],
+  "roadmap": [
+    { "initiative": "string", "timeframe": "string", "owner": "string", "expectedImpact": "string" }
+  ],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.06 AI Product Roadmap & Innovation Strategy Engine ---
 app.post('/api/product-roadmap', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
