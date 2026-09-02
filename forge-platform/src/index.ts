@@ -39500,6 +39500,45 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.78 AI Competitive Moat & Defensibility Analyzer ---
+app.post('/api/moat-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, industry, businessModel, currentAdvantages, competitors, stage } = req.body;
+    const p = `You are a competitive strategy expert. Analyze the competitive moat and defensibility of this business.
+Company: ${company || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Business Model: ${businessModel || 'Unknown'}
+Current Advantages: ${currentAdvantages || 'Unknown'}
+Key Competitors: ${competitors || 'Unknown'}
+Stage: ${stage || 'Unknown'}
+Return ONLY valid JSON:
+{
+  "moatTitle": "string",
+  "executiveSummary": "string",
+  "moatStrengthScore": 0-100,
+  "moatDurability": "Fragile|Weak|Moderate|Strong|Exceptional",
+  "primaryMoatType": "Network Effects|Switching Costs|Cost Advantage|Intangible Assets|Efficient Scale|Data Moat|Regulatory|Brand",
+  "moatSources": [{"source": "string", "strength": "Weak|Moderate|Strong", "timeToReplicate": "string", "evidence": "string"}],
+  "networkEffectsAnalysis": "string",
+  "switchingCostsAnalysis": "string",
+  "dataAdvantageAnalysis": "string",
+  "brandMoatAnalysis": "string",
+  "competitorThreatMatrix": [{"competitor": "string", "threatLevel": "Low|Medium|High|Critical", "attackVector": "string", "timeToThreat": "string", "mitigationStrategy": "string"}],
+  "moatErosionRisks": [{"risk": "string", "probability": "Low|Medium|High", "impact": "string", "counterStrategy": "string"}],
+  "widening Strategies": [{"strategy": "string", "moatType": "string", "effort": "Low|Medium|High", "impact": "string", "timeline": "string"}],
+  "investmentPriorities": "string",
+  "competitorResponsePlaybook": "string",
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.77 AI Product-Market Fit Analyzer ---
 app.post('/api/pmf-analyzer', requireAuth, async (req: AuthRequest, res) => {
   try {
