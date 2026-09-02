@@ -597,6 +597,78 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.76 AI Fundraising & Investor Relations Command ---
+const FUNDING_STAGE_COLOR: Record<string,string> = { 'Bootstrapped':'bg-gray-600','Angel':'bg-yellow-700','Pre-Seed':'bg-orange-700','Seed':'bg-blue-700','Series A':'bg-purple-700','Series B':'bg-green-700','Growth':'bg-teal-700','Strategic':'bg-red-700' };
+function FundraisingCommandPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ companyStage:'', industry:'', currentRevenue:'', targetRaise:'', useOfFunds:'', teamBackground:'', existingTraction:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/fundraising-command`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">💎 Fundraising & Investor Relations Command</h2>
+      <div className="grid grid-cols-1 gap-3">
+        {[['companyStage','Company Stage (e.g. Pre-Seed, Series A)'],['industry','Industry & Sub-sector'],['currentRevenue','Current Revenue / ARR (e.g. $500K ARR)'],['targetRaise','Target Raise Amount (e.g. $3M Seed)'],['useOfFunds','Use of Funds (e.g. 60% engineering, 30% GTM, 10% ops)'],['teamBackground','Team Background (e.g. 2 ex-Google founders, 5 years domain exp)'],['existingTraction','Existing Traction (e.g. 50 customers, 200% YoY growth)']].map(([k,ph])=>(
+          <input key={k} className="bg-gray-800 text-white rounded p-2 text-sm" placeholder={ph} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-violet-600 hover:bg-violet-700 text-white px-4 py-2 rounded text-sm font-semibold">{loading?'Building...':'Build Fundraising Strategy'}</button>
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {result && (
+        <div className="space-y-3 mt-4">
+          <div className="bg-gray-800 rounded p-3">
+            <h3 className="font-bold text-white text-lg">{result.fundraisingTitle}</h3>
+            <div className="flex gap-2 mt-2 flex-wrap">
+              <span className="bg-violet-700 text-white text-xs px-2 py-1 rounded">Readiness: {result.fundraisingReadinessScore}/100</span>
+              {result.fundingStrategy && <span className={`${FUNDING_STAGE_COLOR[result.fundingStrategy]||'bg-gray-600'} text-white text-xs px-2 py-1 rounded`}>{result.fundingStrategy}</span>}
+              {result.valuationRange && <span className="bg-yellow-700 text-white text-xs px-2 py-1 rounded">Val: {result.valuationRange}</span>}
+            </div>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+          </div>
+          {result.idealInvestorProfile?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <h4 className="font-semibold text-white mb-2">🎯 Ideal Investor Profile</h4>
+              <div className="space-y-2">
+                {result.idealInvestorProfile.map((inv:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2">
+                    <p className="text-white text-sm font-medium">{inv.investorType} — {inv.focus}</p>
+                    <p className="text-gray-300 text-xs mt-1">Targets: {inv.targetFirms}</p>
+                    <p className="text-gray-400 text-xs">Approach: {inv.approachStrategy}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.commonObjectionsAndResponses && (
+            <div className="bg-gray-800 rounded p-3">
+              <h4 className="font-semibold text-white mb-1">🛡️ Objections & Responses</h4>
+              <p className="text-gray-300 text-sm whitespace-pre-line">{result.commonObjectionsAndResponses}</p>
+            </div>
+          )}
+          {[['pitchNarrative','📖 Pitch Narrative'],['keyMetricsToHighlight','📊 Key Metrics'],['dueDiligencePrep','🔍 Due Diligence Prep'],['termSheetConsiderations','📋 Term Sheet'],['investorOutreachSequence','📧 Outreach Sequence'],['narrativePositioning','💬 Narrative Positioning'],['dataRoomChecklist','📁 Data Room'],['closingTimeline','📅 Closing Timeline']].map(([k,label])=> result[k] ? (
+            <div key={k} className="bg-gray-800 rounded p-3"><h4 className="font-semibold text-white mb-1">{label}</h4><p className="text-gray-300 text-sm">{result[k]}</p></div>
+          ) : null)}
+          {result.quickWins?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <h4 className="font-semibold text-white mb-2">⚡ Quick Wins</h4>
+              <ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-violet-400">→</span>{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.75 AI Customer Success & Retention Engine ---
 const CHURN_RISK_COLOR: Record<string,string> = { 'Low':'bg-green-700','Medium':'bg-yellow-700','High':'bg-orange-700','Critical':'bg-red-700' };
 function CSRetentionPanel({ api }: { api: string }) {
@@ -12042,7 +12114,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -12233,6 +12305,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'culturetransform', label: '🌱 Culture Transform' },
     { id: 'gtmplanner', label: '🚀 GTM Planner' },
     { id: 'csretention', label: '🎯 CS Retention' },
+    { id: 'fundraisingcmd', label: '💎 Fundraising' },
   ];
 
   return (
@@ -12363,6 +12436,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'culturetransform' && <CultureTransformPanel api={api} />}
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
+        {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
@@ -12403,6 +12477,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'culturetransform' && <CultureTransformPanel api={api} />}
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
+        {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
@@ -12426,6 +12501,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'culturetransform' && <CultureTransformPanel api={api} />}
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
+        {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}

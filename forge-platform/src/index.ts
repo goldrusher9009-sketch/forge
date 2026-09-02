@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.76 AI Fundraising & Investor Relations Command ---
+app.post('/api/fundraising-command', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { companyStage, industry, currentRevenue, targetRaise, useOfFunds, teamBackground, existingTraction } = req.body;
+    const p = `You are a venture capital and fundraising expert. Build fundraising strategy for: Stage: ${companyStage}, Industry: ${industry}, Revenue: ${currentRevenue}, Target Raise: ${targetRaise}, Use of Funds: ${useOfFunds}, Team: ${teamBackground}, Traction: ${existingTraction}. Return JSON: { fundraisingTitle, executiveSummary, fundraisingReadinessScore (0-100), fundingStrategy ("Bootstrapped"|"Angel"|"Pre-Seed"|"Seed"|"Series A"|"Series B"|"Growth"|"Strategic"), valuationRange, idealInvestorProfile (array of {investorType, focus, targetFirms, approachStrategy}), pitchNarrative, keyMetricsToHighlight, dueDiligencePrep, termSheetConsiderations, investorOutreachSequence, narrativePositioning, commonObjectionsAndResponses, dataRoomChecklist, closingTimeline, quickWins (array of strings) }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.75 AI Customer Success & Retention Engine ---
 app.post('/api/cs-retention', requireAuth, async (req: AuthRequest, res) => {
   try {
