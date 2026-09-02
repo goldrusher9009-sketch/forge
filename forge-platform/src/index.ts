@@ -39500,6 +39500,55 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.89 AI Product Pricing Intelligence Engine ---
+app.post('/api/pricing-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, currentPrice, businessModel, targetCustomer, cogs, competitorPricing, valueMetric, stage, arpu, churnRate, pricingGoal } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class SaaS pricing strategist. Analyze this product and deliver comprehensive pricing intelligence.
+
+Product: ${product}
+Current Price: ${currentPrice || 'Not set'}
+Business Model: ${businessModel || 'SaaS'}
+Target Customer: ${targetCustomer}
+COGS: ${cogs || 'Unknown'}
+Competitor Pricing: ${competitorPricing || 'Unknown'}
+Value Metric: ${valueMetric || 'Not defined'}
+Stage: ${stage || 'Growth'}
+Current ARPU: ${arpu || 'Unknown'}
+Churn Rate: ${churnRate || 'Unknown'}
+Pricing Goal: ${pricingGoal || 'Maximize revenue'}
+
+Return ONLY valid JSON:
+{
+  "pricingTitle": "string",
+  "executiveSummary": "string",
+  "pricingHealthScore": 0-100,
+  "recommendedModel": "Per Seat|Usage-Based|Flat Rate|Tiered|Freemium|Hybrid|Outcome-Based",
+  "valueMetricRecommendation": "string",
+  "recommendedTiers": [{ "name": "string", "price": "string", "billingPeriod": "Monthly|Annual", "targetSegment": "string", "features": ["string"], "valueDriver": "string", "conversionRole": "Acquisition|Expansion|Retention" }],
+  "psychologicalPricingTactics": ["string"],
+  "annualDiscountStrategy": { "discount": "string", "cashFlowImpact": "string", "conversionLift": "string" },
+  "expansionRevenueStrategy": { "mechanism": "string", "triggers": ["string"], "expectedNdrImpact": "string" },
+  "freemiumAnalysis": { "recommended": true, "freeTierLimits": ["string"], "conversionLevers": ["string"], "riskFactors": ["string"] },
+  "competitorPositioning": [{ "competitor": "string", "theirPrice": "string", "yourAdvantage": "string", "pricingGap": "string" }],
+  "priceElasticityInsights": { "elasticity": "Inelastic|Somewhat Inelastic|Elastic|Highly Elastic", "riskOfIncrease": "Low|Medium|High", "opportunityToRaise": "string" },
+  "revenueProjections": [{ "scenario": "string", "mrr": "string", "arr": "string", "assumption": "string" }],
+  "packagingRecommendations": ["string"],
+  "winbackPricing": "string",
+  "enterprisePricingGuidance": "string",
+  "implementationRoadmap": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.88 AI Go-to-Market Strategy Builder ---
 app.post('/api/gtm-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
