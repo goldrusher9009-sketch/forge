@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.15 Executive Coaching & Leadership Development ---
+app.post('/api/exec-coaching', requireAuth, async (req: AuthRequest, res) => {
+  const { coacheeRole, industry, yearsExperience, currentChallenges, leadershipStyle, teamSize, organizationSize, goals, recentFeedback, strengths, developmentAreas, coachingFocus, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a world-class executive coach with deep expertise in leadership development. Provide a comprehensive executive coaching session.
+Coachee Role: ${coacheeRole} | Industry: ${industry} | Experience: ${yearsExperience} years
+Team Size: ${teamSize} | Org Size: ${organizationSize}
+Leadership Style: ${leadershipStyle}
+Current Challenges: ${currentChallenges}
+Goals: ${goals}
+Recent Feedback: ${recentFeedback}
+Strengths: ${strengths}
+Development Areas: ${developmentAreas}
+Coaching Focus: ${coachingFocus}
+
+Return JSON: { sessionTitle, executiveSummary, leadershipProfile: { dominantStyle, blindspots, superpowers, adaptabilityScore }, situationalAssessment, developmentPlan: { focus, timeline, milestones: [{ milestone, targetDate, actions, successMetrics }] }, coachingInsights: [{ insight, evidence, recommendation, priority }], leadershipFrameworks: [{ framework, application, practiceExercises }], actionPlan: { week1, month1, quarter1, keyHabits }, communicationStrategies: [{ scenario, currentApproach, recommendedApproach, script }], stakeholderManagement: [{ stakeholder, relationship, strategy, quickWin }], mindsetShifts: [{ currentBelief, reframedBelief, practiceMethod }], reflectionQuestions, successMetrics, nextSessionAgenda }`;
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.14 Negotiation Intelligence Coach ---
 app.post('/api/negotiation-coach', requireAuth, async (req: AuthRequest, res) => {
   const { negotiationType, yourRole, counterpartyRole, industry, dealValue, yourGoals, counterpartyGoals, yourBatna, counterpartyBatna, keyIssues, currentStage, historicalContext, constraints, provider = 'anthropic' } = req.body;

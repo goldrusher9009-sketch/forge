@@ -597,6 +597,139 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.15 Executive Coaching & Leadership Development ---
+const PRIORITY_BADGE: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-orange-800','Medium':'bg-yellow-800','Low':'bg-gray-700' };
+function ExecCoachingPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ coacheeRole:'', industry:'', yearsExperience:'', currentChallenges:'', leadershipStyle:'Transformational', teamSize:'', organizationSize:'', goals:'', recentFeedback:'', strengths:'', developmentAreas:'', coachingFocus:'Performance & Impact', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'profile'|'plan'|'insights'|'actions'|'stakeholders'|'mindset'|'reflection'>('profile');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/exec-coaching`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🎯 Executive Coaching Session</h2>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {[['coacheeRole','Your Role'],['industry','Industry'],['yearsExperience','Years Experience'],['teamSize','Team Size'],['organizationSize','Org Size'],['leadershipStyle','Leadership Style'],['coachingFocus','Coaching Focus']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} /></div>
+        ))}
+      </div>
+      {[['currentChallenges','Current Challenges'],['goals','Leadership Goals'],['recentFeedback','Recent 360° Feedback'],['strengths','Key Strengths'],['developmentAreas','Development Areas']].map(([k,l])=>(
+        <div key={k} className="mb-2"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-indigo-700 hover:bg-indigo-600 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Coaching…':'Start Coaching Session'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded p-4 mb-4">
+            <p className="text-white font-bold mb-1">{result.sessionTitle}</p>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['profile','plan','insights','actions','stakeholders','mindset','reflection'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-indigo-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='profile' && result.leadershipProfile && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3 grid grid-cols-2 gap-3">
+                <div><p className="text-gray-400 text-xs mb-1">Dominant Style</p><p className="text-white text-sm">{result.leadershipProfile.dominantStyle}</p></div>
+                <div><p className="text-gray-400 text-xs mb-1">Adaptability</p><p className="text-yellow-300 text-sm">{result.leadershipProfile.adaptabilityScore}/10</p></div>
+              </div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-green-400 text-xs font-bold mb-2">Superpowers</p><div className="flex flex-wrap gap-1">{(result.leadershipProfile.superpowers||[]).map((s:string,i:number)=><span key={i} className="bg-green-900 text-green-200 text-xs px-2 py-0.5 rounded">{s}</span>)}</div></div>
+              <div className="bg-gray-800 rounded p-3"><p className="text-orange-400 text-xs font-bold mb-2">Blind Spots</p><div className="flex flex-wrap gap-1">{(result.leadershipProfile.blindspots||[]).map((s:string,i:number)=><span key={i} className="bg-orange-900 text-orange-200 text-xs px-2 py-0.5 rounded">{s}</span>)}</div></div>
+              {result.situationalAssessment && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-1">Situational Assessment</p><p className="text-gray-300 text-sm">{result.situationalAssessment}</p></div>}
+            </div>
+          )}
+          {subtab==='plan' && result.developmentPlan && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3 mb-2"><p className="text-white font-medium">{result.developmentPlan.focus}</p><p className="text-gray-400 text-xs">Timeline: {result.developmentPlan.timeline}</p></div>
+              {(result.developmentPlan.milestones||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3 border-l-4 border-indigo-700">
+                  <div className="flex justify-between mb-2"><p className="text-white text-sm font-medium">{m.milestone}</p><span className="text-gray-400 text-xs">{m.targetDate}</span></div>
+                  <ul className="mb-2">{(m.actions||[]).slice(0,3).map((a:string,j:number)=><li key={j} className="text-gray-300 text-xs">• {a}</li>)}</ul>
+                  <p className="text-green-300 text-xs">Success: {(m.successMetrics||[]).join(', ')}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='insights' && (
+            <div className="space-y-2">
+              {(result.coachingInsights||[]).map((ins:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex justify-between mb-1"><p className="text-white font-medium text-sm">{ins.insight}</p><span className={`${PRIORITY_BADGE[ins.priority]||'bg-gray-700'} text-white text-xs px-2 py-0.5 rounded`}>{ins.priority}</span></div>
+                  {ins.evidence && <p className="text-gray-400 text-xs mb-1">Evidence: {ins.evidence}</p>}
+                  <p className="text-indigo-300 text-sm">{ins.recommendation}</p>
+                </div>
+              ))}
+              {(result.leadershipFrameworks||[]).map((f:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-yellow-300 text-xs font-bold mb-1">{f.framework}</p>
+                  <p className="text-gray-300 text-xs mb-2">{f.application}</p>
+                  <ul>{(f.practiceExercises||[]).slice(0,2).map((e:string,j:number)=><li key={j} className="text-indigo-300 text-xs">• {e}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='actions' && result.actionPlan && (
+            <div className="space-y-3">
+              {[['week1','This Week'],['month1','Month 1'],['quarter1','Quarter 1']].map(([k,l])=>result.actionPlan[k] && (
+                <div key={k} className="bg-gray-800 rounded p-3"><p className="text-indigo-300 text-xs font-bold mb-2">{l}</p><p className="text-gray-300 text-sm">{Array.isArray(result.actionPlan[k])?result.actionPlan[k].join('\n'):result.actionPlan[k]}</p></div>
+              ))}
+              {(result.actionPlan.keyHabits||[]).length > 0 && <div className="bg-gray-800 rounded p-3"><p className="text-green-400 text-xs font-bold mb-2">Key Habits to Build</p><ul>{result.actionPlan.keyHabits.map((h:string,i:number)=><li key={i} className="text-gray-300 text-xs">• {h}</li>)}</ul></div>}
+            </div>
+          )}
+          {subtab==='stakeholders' && (
+            <div className="space-y-2">
+              {(result.stakeholderManagement||[]).map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-white font-medium text-sm mb-1">{s.stakeholder}</p>
+                  <p className="text-gray-400 text-xs mb-1">Relationship: {s.relationship}</p>
+                  <p className="text-gray-300 text-xs mb-1">Strategy: {s.strategy}</p>
+                  <p className="text-green-300 text-xs">Quick Win: {s.quickWin}</p>
+                </div>
+              ))}
+              {(result.communicationStrategies||[]).map((c:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-yellow-300 text-xs font-bold mb-1">Scenario: {c.scenario}</p>
+                  <p className="text-red-300 text-xs mb-1">Current: {c.currentApproach}</p>
+                  <p className="text-green-300 text-xs mb-1">Recommended: {c.recommendedApproach}</p>
+                  {c.script && <p className="text-indigo-300 text-xs italic">"{c.script}"</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='mindset' && (
+            <div className="space-y-2">
+              {(result.mindsetShifts||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-red-300 text-xs mb-1">Current: "{m.currentBelief}"</p>
+                  <p className="text-green-300 text-xs mb-1">Reframed: "{m.reframedBelief}"</p>
+                  <p className="text-indigo-300 text-xs">Practice: {m.practiceMethod}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='reflection' && (
+            <div className="space-y-3">
+              {(result.reflectionQuestions||[]).map((q:string,i:number)=><div key={i} className="bg-gray-800 rounded p-3"><p className="text-white text-sm">{i+1}. {q}</p></div>)}
+              {result.successMetrics && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Success Metrics</p>{Array.isArray(result.successMetrics)?result.successMetrics.map((m:string,i:number)=><p key={i} className="text-green-300 text-xs">• {m}</p>):<p className="text-green-300 text-xs">{result.successMetrics}</p>}</div>}
+              {result.nextSessionAgenda && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Next Session Agenda</p><p className="text-gray-300 text-sm">{result.nextSessionAgenda}</p></div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.14 Negotiation Intelligence Coach ---
 const POWER_COLOR: Record<string,string> = { 'High':'text-green-400','Balanced':'text-yellow-400','Low':'text-red-400' };
 const PRIORITY_COLOR: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-orange-800','Medium':'bg-yellow-800','Low':'bg-gray-700' };
@@ -8014,7 +8147,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'|'execcoaching'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8114,6 +8247,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'esgreport', label: '🌱 ESG Report' },
     { id: 'innovationsprint', label: '💡 Innovation Sprint' },
     { id: 'negotiationcoach', label: '🤝 Negotiation Coach' },
+    { id: 'execcoaching', label: '🎯 Executive Coaching' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -8265,6 +8399,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'innovationsprint' && <InnovationSprintPanel api={api} />}
         {tab === 'negotiationcoach' && <NegotiationCoachPanel api={api} />}
+        {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
