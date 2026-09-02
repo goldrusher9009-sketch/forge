@@ -597,6 +597,112 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.92 Fundraising Strategy Generator ---
+function FundraisingStrategyPanel({ api }: { api: string }) {
+  const [company, setCompany] = React.useState('');
+  const [stage, setStage] = React.useState('Seed');
+  const [amount, setAmount] = React.useState('');
+  const [useOfFunds, setUseOfFunds] = React.useState('');
+  const [traction, setTraction] = React.useState('');
+  const [industry, setIndustry] = React.useState('');
+  const [timeline, setTimeline] = React.useState('6 months');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('investors');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/fundraising-strategy`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ company, stage, amount, useOfFunds, traction, industry, timeline }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const tabs = [['investors','🎯 Investors'],['timeline','📅 Timeline'],['objections','💬 Objections'],['diligence','🔍 Due Diligence']];
+  return (
+    <div style={{ padding: 24, maxWidth: 960 }}>
+      <h2 style={{ marginBottom: 4 }}>💸 Fundraising Strategy Generator</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Build a complete fundraising playbook with investor targeting, pitch narrative, and objection handling.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[['Company', company, setCompany, 'e.g. Forge AI'], ['Stage', stage, setStage, 'Pre-Seed / Seed / Series A / B'], ['Amount Seeking', amount, setAmount, 'e.g. $2M'], ['Use of Funds', useOfFunds, setUseOfFunds, 'e.g. 50% eng, 30% sales, 20% ops'], ['Current Traction', traction, setTraction, 'e.g. $50k MRR, 200 customers, 3x YoY'], ['Industry', industry, setIndustry, 'e.g. B2B SaaS / AI / Fintech'], ['Timeline', timeline, setTimeline, 'e.g. 6 months']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading || !company} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Building...' : 'Generate Fundraising Strategy'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ background: '#1a1a2e', borderRadius: 10, padding: 20, marginBottom: 20 }}>
+            <h3 style={{ margin: '0 0 8px' }}>{result.strategyTitle}</h3>
+            <p style={{ color: '#ccc', fontSize: 13, margin: '0 0 12px' }}>{result.roundSummary}</p>
+            <div style={{ background: '#111827', borderRadius: 8, padding: 12 }}>
+              <div style={{ fontWeight: 600, color: '#facc15', marginBottom: 6, fontSize: 13 }}>Pitch Narrative</div>
+              <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.pitchNarrative}</p>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            {tabs.map(([id, label]) => (
+              <button key={id} onClick={() => setActiveTab(id)} style={{ padding: '6px 14px', background: activeTab === id ? '#7c3aed' : '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>{label}</button>
+            ))}
+          </div>
+          {activeTab === 'investors' && (
+            <div>
+              <div style={{ background: '#111827', borderRadius: 8, padding: 14, marginBottom: 12 }}>
+                <div style={{ fontWeight: 600, color: '#34d399', marginBottom: 6 }}>Key Metrics to Highlight</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>{result.keyMetricsToHighlight?.map((m: string, i: number) => <span key={i} style={{ background: '#1a1a2e', padding: '4px 10px', borderRadius: 4, color: '#ccc', fontSize: 12 }}>{m}</span>)}</div>
+              </div>
+              {result.targetInvestorTypes?.map((inv: any, i: number) => (
+                <div key={i} style={{ background: '#111827', borderRadius: 8, padding: 14, marginBottom: 10 }}>
+                  <div style={{ fontWeight: 700, color: '#60a5fa', marginBottom: 4 }}>{inv.type}</div>
+                  <div style={{ color: '#aaa', fontSize: 13, marginBottom: 6 }}>{inv.why}</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>{inv.examples?.map((e: string, j: number) => <span key={j} style={{ background: '#1a1a2e', padding: '2px 8px', borderRadius: 4, fontSize: 11, color: '#888' }}>{e}</span>)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeTab === 'timeline' && (
+            <div>{result.fundingTimeline?.map((t: any, i: number) => (
+              <div key={i} style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid #222' }}>
+                <div style={{ minWidth: 60, color: '#7c3aed', fontWeight: 600, fontSize: 12 }}>{t.week}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>{t.milestone}</div>
+                  <div style={{ color: '#aaa', fontSize: 12 }}>{t.action}</div>
+                </div>
+              </div>
+            ))}</div>
+          )}
+          {activeTab === 'objections' && (
+            <div>{result.commonObjections?.map((o: any, i: number) => (
+              <div key={i} style={{ background: '#111827', borderRadius: 8, padding: 14, marginBottom: 10 }}>
+                <div style={{ fontWeight: 600, color: '#f87171', marginBottom: 6 }}>❓ {o.objection}</div>
+                <div style={{ color: '#ccc', fontSize: 13 }}>✅ {o.response}</div>
+              </div>
+            ))}</div>
+          )}
+          {activeTab === 'diligence' && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div style={{ background: '#111827', borderRadius: 8, padding: 14 }}>
+                <div style={{ fontWeight: 600, color: '#34d399', marginBottom: 8 }}>📁 DD Prep Checklist</div>
+                <ul style={{ margin: 0, paddingLeft: 16 }}>{result.dueDiligencePrep?.map((d: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 13, marginBottom: 6 }}>{d}</li>)}</ul>
+              </div>
+              <div style={{ background: '#111827', borderRadius: 8, padding: 14 }}>
+                <div style={{ fontWeight: 600, color: '#facc15', marginBottom: 8 }}>🔄 Alternative Options</div>
+                <ul style={{ margin: 0, paddingLeft: 16 }}>{result.alternativeOptions?.map((a: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 13, marginBottom: 6 }}>{a}</li>)}</ul>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.91 Market Entry Strategy Generator ---
 const RISK_COLOR2: Record<string,string> = { high: '#ef4444', medium: '#f59e0b', low: '#34d399' };
 function MarketEntryPanel({ api }: { api: string }) {
@@ -5372,7 +5478,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -5449,6 +5555,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'fundraisingstrategy', label: '💸 Fundraising' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -5577,6 +5684,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'fundraisingstrategy' && <FundraisingStrategyPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}

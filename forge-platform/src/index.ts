@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.92 Fundraising Strategy Generator ---
+app.post('/api/fundraising-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, stage, amount, useOfFunds, traction, industry, timeline, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a fundraising strategy for ${company || 'the startup'}.
+Stage: ${stage || 'Seed'}
+Amount seeking: ${amount || '$1M'}
+Use of funds: ${useOfFunds || 'product, team, growth'}
+Current traction: ${traction || 'early stage'}
+Industry: ${industry || 'SaaS'}
+Timeline: ${timeline || '6 months'}
+Return JSON: { strategyTitle: string, roundSummary: string, targetInvestorTypes: [{type:string,why:string,examples:string[]}], pitchNarrative: string, keyMetricsToHighlight: string[], fundingTimeline: [{milestone:string,week:string,action:string}], outreachStrategy: string, dueDiligencePrep: string[], commonObjections: [{objection:string,response:string}], termSheetConsiderations: string[], alternativeOptions: string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.91 Market Entry Strategy Generator ---
 app.post('/api/market-entry', requireAuth, async (req: AuthRequest, res) => {
   try {
