@@ -597,6 +597,89 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.59 Cold Email Personalizer ---
+function ColdEmailPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ prospect_name: '', prospect_company: '', prospect_role: '', your_offer: '', pain_point: '', tone: 'professional and direct' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [selVariant, setSelVariant] = useState(0);
+  const [copied, setCopied] = useState(false);
+  const submit = async () => {
+    if (!form.prospect_name.trim() || !form.your_offer.trim()) return;
+    setLoading(true); setError(''); setResult(null); setSelVariant(0);
+    try {
+      const r = await fetch(`${api.base}/api/cold-email`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  const email = result?.emails?.[selVariant];
+  const copy = () => {
+    if (!email) return;
+    navigator.clipboard.writeText(`Subject: ${email.subject}\n\n${email.body}`);
+    setCopied(true); setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>🎯 Cold Email Personalizer</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Prospect name *" value={form.prospect_name} onChange={e => setForm(f => ({ ...f, prospect_name: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Company" value={form.prospect_company} onChange={e => setForm(f => ({ ...f, prospect_company: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Role / title" value={form.prospect_role} onChange={e => setForm(f => ({ ...f, prospect_role: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      </div>
+      <input placeholder="Your offer / what you're selling *" value={form.your_offer} onChange={e => setForm(f => ({ ...f, your_offer: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Main pain point to address" value={form.pain_point} onChange={e => setForm(f => ({ ...f, pain_point: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Tone" value={form.tone} onChange={e => setForm(f => ({ ...f, tone: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      </div>
+      <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+        {loading ? 'Writing...' : 'Generate Emails'}
+      </button>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            {(result.emails || []).map((_: any, i: number) => (
+              <button key={i} onClick={() => setSelVariant(i)} style={{ padding: '4px 10px', background: selVariant === i ? '#7c3aed' : '#1a1a2e', border: `1px solid ${selVariant === i ? '#7c3aed' : '#333'}`, borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12 }}>
+                {result.emails[i].variant}
+              </button>
+            ))}
+          </div>
+          {email && (
+            <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 700 }}>Subject: {email.subject}</div>
+                <button onClick={copy} style={{ padding: '3px 10px', background: copied ? '#4ade80' : '#333', border: 'none', borderRadius: 4, color: '#fff', cursor: 'pointer', fontSize: 11 }}>{copied ? '✓ Copied' : 'Copy'}</button>
+              </div>
+              <pre style={{ fontSize: 13, whiteSpace: 'pre-wrap', fontFamily: 'inherit', lineHeight: 1.6, margin: 0 }}>{email.body}</pre>
+              <div style={{ fontSize: 11, color: '#888', marginTop: 8 }}>{email.word_count} words · Best for: {email.best_for}</div>
+            </div>
+          )}
+          {(result.follow_up_sequence || []).length > 0 && (
+            <div>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 6 }}>FOLLOW-UP SEQUENCE</div>
+              {result.follow_up_sequence.map((f: any, i: number) => (
+                <div key={i} style={{ background: '#1a1a2e', padding: 8, borderRadius: 6, marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, color: '#a78bfa', marginBottom: 2 }}>Day {f.day}: {f.subject}</div>
+                  <div style={{ fontSize: 12 }}>{f.body}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {(result.tips || []).length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              {result.tips.map((t: string, i: number) => <div key={i} style={{ fontSize: 12, color: '#888' }}>💡 {t}</div>)}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.58 Newsletter Builder ---
 function NewsletterPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ topic: '', bullets: '', audience: '', tone: 'professional yet conversational' });
@@ -3347,7 +3430,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3400,6 +3483,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'headline', label: '📰 Headlines' },
     { id: 'threadwriter', label: '🧵 Threads' },
     { id: 'newsletter', label: '📧 Newsletter' },
+    { id: 'coldemail', label: '🎯 Cold Email' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3495,6 +3579,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'headline' && <HeadlinePanel api={api} />}
         {tab === 'threadwriter' && <ThreadWriterPanel api={api} />}
         {tab === 'newsletter' && <NewsletterPanel api={api} />}
+        {tab === 'coldemail' && <ColdEmailPanel api={api} />}
       </div>
     </div>
   );

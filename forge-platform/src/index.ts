@@ -39418,6 +39418,26 @@ app.post('/api/newsletter-build', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.59 Cold Email Personalizer — write personalized cold outreach emails
+app.post('/api/cold-email', requireAuth, async (req: any, res: any) => {
+  try {
+    const { prospect_name, prospect_company, prospect_role, your_offer, pain_point, tone } = req.body;
+    if (!prospect_name || !your_offer) return res.status(400).json({ error: 'prospect_name and your_offer required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a cold email expert. Write 3 personalized cold email variations.\nProspect: ${prospect_name} at ${prospect_company || 'their company'} (${prospect_role || 'decision maker'})\nYour offer: ${your_offer}\nPain point to address: ${pain_point || 'not specified'}\nTone: ${tone || 'professional and direct'}\n\nReturn ONLY JSON:\n{"emails":[{"variant":"Short & Punchy","subject":"Email subject line","body":"Hi ${prospect_name},\\n\\n[email body - 3-4 sentences max]\\n\\n[CTA sentence]\\n\\n[Your name]","word_count":60,"best_for":"busy executives"},{"variant":"Problem-Agitate-Solve","subject":"Email subject line","body":"Hi ${prospect_name},\\n\\n[longer body 5-6 sentences using PAS formula]\\n\\n[CTA]\\n\\n[Your name]","word_count":100,"best_for":"pain-aware prospects"},{"variant":"Social Proof","subject":"Email subject line","body":"Hi ${prospect_name},\\n\\n[body with social proof angle]\\n\\n[CTA]\\n\\n[Your name]","word_count":80,"best_for":"skeptical prospects"}],"follow_up_sequence":[{"day":3,"subject":"Follow-up subject","body":"Short 2-sentence follow-up"},{"day":7,"subject":"Last follow-up","body":"Short breakup email"}],"tips":["tip1","tip2"]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
