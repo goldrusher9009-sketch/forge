@@ -597,6 +597,66 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.24 Brand Audit Report ---
+const BRAND_SCORE_COLOR = (s:number) => s>=8?'text-green-400':s>=6?'text-yellow-400':'text-red-400';
+function BrandAuditPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', targetAudience:'', currentTagline:'', brandValues:'', competitors:'', channels:'', foundedYear:'', recentFeedback:'', brandGoals:'', geography:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState('health');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/brand-audit`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">🎨 Brand Audit Report</h2><p className="text-gray-400 text-sm mt-1">Comprehensive brand health assessment with identity, messaging, digital presence, and competitive positioning</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme Inc')} {F('Industry','industry','B2B SaaS / FinTech...')}
+            {F('Target Audience','targetAudience','CTOs at Series B startups')} {F('Current Tagline','currentTagline','Your words here')}
+            {F('Brand Values','brandValues','Innovation, Transparency, Speed')} {F('Key Competitors','competitors','Salesforce, HubSpot, Notion')}
+            {F('Active Channels','channels','LinkedIn, Twitter, Blog, Email')} {F('Founded Year','foundedYear','2019')}
+            {F('Recent Customer Feedback','recentFeedback','Confusing messaging, love the product')} {F('Brand Goals','brandGoals','Increase enterprise awareness')}
+            {F('Geography','geography','North America / Global')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Auditing brand...' : 'Run Brand Audit'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.auditTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><div className="flex items-center gap-4"><div className="text-center"><p className={`text-4xl font-black ${BRAND_SCORE_COLOR(result.overallBrandScore||0)}`}>{result.overallBrandScore}/10</p><p className="text-gray-400 text-xs">Brand Score</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Audit</button></div></div>
+          {/* View Nav */}
+          <div className="flex gap-2 flex-wrap">{['health','identity','messaging','digital','competitive','gaps','roadmap'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Brand Health Dimensions */}
+          {view==='health' && result.brandHealthDimensions?.length>0 && <div className="space-y-4">{result.brandHealthDimensions.map((d:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center justify-between mb-2"><p className="text-white font-semibold">{d.dimension}</p><span className={`text-xl font-bold ${BRAND_SCORE_COLOR(d.score)}`}>{d.score}/10</span></div><div className="h-2 bg-gray-700 rounded-full mb-3"><div className="h-full rounded-full" style={{width:`${(d.score/10)*100}%`,backgroundColor:d.score>=8?'#22c55e':d.score>=6?'#eab308':'#ef4444'}}/></div><p className="text-gray-300 text-sm">{d.findings}</p><p className="text-blue-300 text-xs mt-1">{d.recommendations}</p></div>)}</div>}
+          {/* Brand Identity */}
+          {view==='identity' && result.brandIdentity && <div className="space-y-4"><div className="grid grid-cols-3 gap-3">{[['Clarity',result.brandIdentity.clarity],['Consistency',result.brandIdentity.consistency],['Authenticity',result.brandIdentity.authenticity]].map(([l,v])=><div key={l as string} className="bg-gray-800 rounded-xl p-4 text-center"><p className="text-gray-400 text-xs mb-1">{l}</p><p className="text-white text-lg font-bold">{v}</p></div>)}</div><div className="grid grid-cols-2 gap-4"><div className="bg-gray-800 rounded-xl p-4"><h4 className="text-green-400 font-semibold mb-2">Strengths</h4><ul className="space-y-1">{(result.brandIdentity.strengths||[]).map((s:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">✓</span>{s}</li>)}</ul></div><div className="bg-gray-800 rounded-xl p-4"><h4 className="text-red-400 font-semibold mb-2">Weaknesses</h4><ul className="space-y-1">{(result.brandIdentity.weaknesses||[]).map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-red-400">✗</span>{w}</li>)}</ul></div></div></div>}
+          {/* Messaging Audit */}
+          {view==='messaging' && result.messagingAudit && <div className="space-y-4"><div className="grid grid-cols-2 gap-3">{[['Tagline Effectiveness',result.messagingAudit.taglineEffectiveness],['Message Clarity',result.messagingAudit.keyMessageClarity],['Tone Consistency',result.messagingAudit.toneConsistency],['Audience Alignment',result.messagingAudit.audienceAlignment]].map(([l,v])=><div key={l as string} className="bg-gray-800 rounded-xl p-3"><p className="text-gray-400 text-xs">{l}</p><p className="text-white font-semibold mt-1">{v}</p></div>)}</div>{result.messagingAudit.gaps?.length>0 && <div className="bg-red-900/30 rounded-xl p-4"><h4 className="text-red-400 font-semibold mb-2">Messaging Gaps</h4><ul className="space-y-1">{result.messagingAudit.gaps.map((g:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-red-400">⚠</span>{g}</li>)}</ul></div>}</div>}
+          {/* Digital Presence */}
+          {view==='digital' && result.digitalPresence?.length>0 && <div className="space-y-3">{result.digitalPresence.map((c:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center justify-between mb-2"><p className="text-white font-semibold">{c.channel}</p><div className="flex gap-3 items-center"><span className={`text-sm font-bold ${BRAND_SCORE_COLOR(c.score)}`}>{c.score}/10</span><span className={`text-xs px-2 py-0.5 rounded ${c.priority==='High'?'bg-red-800 text-red-200':c.priority==='Medium'?'bg-yellow-800 text-yellow-200':'bg-gray-700 text-gray-300'}`}>{c.priority}</span></div></div><div className="grid grid-cols-2 gap-3 text-xs"><div><p className="text-green-400 mb-1">Strength</p><p className="text-gray-300">{c.strength}</p></div><div><p className="text-red-400 mb-1">Weakness</p><p className="text-gray-300">{c.weakness}</p></div></div></div>)}</div>}
+          {/* Competitive Positioning */}
+          {view==='competitive' && result.competitivePositioning && <div className="space-y-4"><div className="grid grid-cols-2 gap-4"><div className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs mb-1">Current Position</p><p className="text-white">{result.competitivePositioning.currentPosition}</p></div><div className="bg-blue-900/40 rounded-xl p-4"><p className="text-gray-400 text-xs mb-1">Desired Position</p><p className="text-white">{result.competitivePositioning.desiredPosition}</p></div></div>{result.competitivePositioning.whitespace?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-green-400 font-semibold mb-2">Whitespace Opportunities</h4><ul className="space-y-1">{result.competitivePositioning.whitespace.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">✦</span>{w}</li>)}</ul></div>}{result.competitivePositioning.threats?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-red-400 font-semibold mb-2">Threats</h4><ul className="space-y-1">{result.competitivePositioning.threats.map((t:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-red-400">⚡</span>{t}</li>)}</ul></div>}</div>}
+          {/* Gaps */}
+          {view==='gaps' && <div className="space-y-3">{result.quickWins?.length>0 && <div className="bg-green-900/30 rounded-xl p-4"><h4 className="text-green-400 font-semibold mb-2">⚡ Quick Wins</h4><ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">✓</span>{w}</li>)}</ul></div>}{result.brandGaps?.map((g:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-1"><p className="text-white font-semibold">{g.gap}</p><div className="flex gap-2 text-xs"><span className={g.urgency==='High'?'text-red-400':'text-yellow-400'}>{g.urgency}</span><span className="text-gray-400">{g.impact}</span></div></div><p className="text-blue-300 text-xs">{g.recommendation}</p></div>)}</div>}
+          {/* Roadmap */}
+          {view==='roadmap' && result.strategicRoadmap?.length>0 && <div className="space-y-4">{result.strategicRoadmap.map((ph:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center gap-3 mb-3"><span className="bg-blue-600 text-white text-xs px-3 py-1 rounded-full">{ph.phase}</span><span className="text-gray-400 text-xs">{ph.timeline}</span></div><ul className="space-y-1 mb-3">{(ph.actions||[]).map((a:string,j:number)=><li key={j} className="text-gray-300 text-sm flex gap-2"><span className="text-blue-400">→</span>{a}</li>)}</ul><div className="flex gap-2 flex-wrap">{(ph.kpis||[]).map((k:string,j:number)=><span key={j} className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded">{k}</span>)}</div></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.23 Customer Journey Mapping ---
 const EMOTION_BAR: Record<number,string> = {};
 const EFFORT_COLOR: Record<string,string> = { 'Low':'text-green-400','Medium':'text-yellow-400','High':'text-red-400' };
@@ -8876,7 +8936,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8974,6 +9034,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'brandaudit', label: '🎨 Brand Audit' },
     { id: 'journeymapping', label: '🗺️ Journey Map' },
     { id: 'salesforecasting', label: '📈 Sales Forecast' },
     { id: 'productlaunch', label: '🚀 Product Launch' },
@@ -9134,6 +9195,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'brandaudit' && <BrandAuditPanel api={api} />}
         {tab === 'journeymapping' && <JourneyMappingPanel api={api} />}
         {tab === 'salesforecasting' && <SalesForecastingPanel api={api} />}
         {tab === 'productlaunch' && <ProductLaunchPanel api={api} />}

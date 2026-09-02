@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.24 Brand Audit Report ---
+app.post('/api/brand-audit', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, targetAudience, currentTagline, brandValues, competitors, channels, foundedYear, recentFeedback, brandGoals, geography } = req.body;
+  const userId = req.user!.id;
+  const anthropicKey = await getUserKey(userId, 'anthropic', true);
+  const openaiKey = await getUserKey(userId, 'openai', true);
+  const key = anthropicKey || openaiKey;
+  const provider = anthropicKey ? 'anthropic' : 'openai';
+  if (!key) return res.status(402).json({ error: 'API key required' });
+  const p = `You are a top brand strategist. Produce a comprehensive brand audit report.
+Company: ${company||'Startup'} | Industry: ${industry||'Technology'} | Target Audience: ${targetAudience||'SMBs'}
+Current Tagline: ${currentTagline||'Not specified'} | Brand Values: ${brandValues||'Not specified'}
+Competitors: ${competitors||'Not specified'} | Channels: ${channels||'Web, social, email'}
+Founded: ${foundedYear||'Not specified'} | Recent Feedback: ${recentFeedback||'Not specified'}
+Brand Goals: ${brandGoals||'Build awareness'} | Geography: ${geography||'North America'}
+Return ONLY valid JSON: { auditTitle, executiveSummary, overallBrandScore, brandHealthDimensions: [{ dimension, score, findings, recommendations }], brandIdentity: { strengths: [string], weaknesses: [string], clarity, consistency, authenticity }, messagingAudit: { taglineEffectiveness, keyMessageClarity, toneConsistency, audienceAlignment, gaps: [string] }, visualIdentity: { consistency, memorability, modernness, recommendations: [string] }, digitalPresence: [{ channel, strength, weakness, score, priority }], competitivePositioning: { currentPosition, desiredPosition, whitespace: [string], threats: [string] }, audiencePerception: { awarenessLevel, sentimentSummary, topAssociations: [string], misalignments: [string] }, brandGaps: [{ gap, impact, urgency, recommendation }], quickWins: [string], strategicRoadmap: [{ phase, actions: [string], timeline, kpis: [string] }], brandScorecard: [{ metric, current, target }] }`;
+  try {
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.23 Customer Journey Mapping ---
 app.post('/api/journey-mapping', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, persona, journeyType, currentPainPoints, channels, competitorExperience, businessGoal, teamOwners } = req.body;
