@@ -39500,6 +39500,32 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.03 Digital Transformation Roadmap ---
+app.post('/api/digital-transform', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, industry, currentState, targetState, budget, timeframe, teamSize, painPoints, priorities, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a digital transformation roadmap for ${company || 'the organization'}.
+Industry: ${industry || 'not specified'}
+Current state: ${currentState || 'not specified'}
+Target state: ${targetState || 'not specified'}
+Budget: ${budget || 'not specified'}
+Timeframe: ${timeframe || '3 years'}
+Team size: ${teamSize || 'not specified'}
+Pain points: ${painPoints || 'not specified'}
+Priorities: ${priorities || 'not specified'}
+Return JSON: { roadmapTitle: string, executiveSummary: string, maturityAssessment:{currentScore:number,targetScore:number,dimensions:[{dimension:string,current:number,target:number,gap:string}]}, strategicPillars:[{pillar:string,description:string,businessValue:string}], phases:[{phase:string,timeline:string,theme:string,objectives:string[],initiatives:[{initiative:string,pillar:string,effort:'Low'|'Medium'|'High',impact:'Low'|'Medium'|'High',cost:string,owner:string,dependencies:string[],kpis:string[]}],milestones:string[],budget:string,risks:string[]}], technologyStack:[{category:string,current:string,target:string,rationale:string,priority:'Critical'|'High'|'Medium'}], changeManagement:{culturalShifts:string[],trainingPlan:string[],communicationStrategy:string,resistanceFactors:string[]}, governanceModel:{steeringCommittee:string[],decisionFramework:string,reviewCadence:string}, investmentSummary:{totalBudget:string,byPhase:Record<string,string>,expectedROI:string,paybackPeriod:string}, successMetrics:[{metric:string,baseline:string,target:string,measurementMethod:string}], quickWins:string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.02 Vendor Evaluation Framework ---
 app.post('/api/vendor-eval', requireAuth, async (req: AuthRequest, res) => {
   try {

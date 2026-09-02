@@ -597,6 +597,130 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.03 Digital Transformation Roadmap ---
+const EFFORT_COLOR: Record<string,string> = { 'Low':'text-green-400','Medium':'text-yellow-400','High':'text-red-400' };
+const TECH_PRIORITY_COLOR: Record<string,string> = { 'Critical':'text-red-400','High':'text-orange-400','Medium':'text-yellow-400' };
+function DigitalTransformPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', currentState:'', targetState:'', budget:'', timeframe:'3 years', teamSize:'', painPoints:'', priorities:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'overview'|'phases'|'technology'|'change'|'metrics'>('overview');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/digital-transform`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🚀 Digital Transformation Roadmap</h2>
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {[['company','Company Name'],['industry','Industry'],['timeframe','Timeframe'],['budget','Budget'],['teamSize','Team Size']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+        ))}
+        <div><label className="text-xs text-gray-400">Provider</label><select className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      </div>
+      {[['currentState','Current State Description'],['targetState','Target State / Vision'],['painPoints','Key Pain Points'],['priorities','Transformation Priorities']].map(([k,l])=>(
+        <div key={k} className="mb-3"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <button onClick={run} disabled={loading} className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Building…':'Build Roadmap'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded-lg p-4 mb-4">
+            <p className="text-white font-bold text-base mb-1">{result.roadmapTitle}</p>
+            <p className="text-gray-300 text-sm mb-3">{result.executiveSummary}</p>
+            {result.maturityAssessment && (
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <div className="text-center"><p className="text-xs text-gray-400">Current Maturity</p><p className="text-3xl font-bold text-red-400">{result.maturityAssessment.currentScore}<span className="text-gray-500 text-lg">/10</span></p></div>
+                <div className="text-center"><p className="text-xs text-gray-400">Target Maturity</p><p className="text-3xl font-bold text-green-400">{result.maturityAssessment.targetScore}<span className="text-gray-500 text-lg">/10</span></p></div>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['overview','phases','technology','change','metrics'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs capitalize ${subtab===s?'bg-indigo-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s}</button>)}
+          </div>
+          {subtab==='overview' && (
+            <div className="space-y-3">
+              {(result.strategicPillars||[]).length>0 && <div className="grid grid-cols-1 gap-2">{result.strategicPillars.map((p:any,i:number)=><div key={i} className="bg-gray-800 rounded p-3"><p className="text-indigo-400 font-medium text-sm mb-1">{p.pillar}</p><p className="text-gray-300 text-xs mb-1">{p.description}</p><p className="text-green-300 text-xs">Value: {p.businessValue}</p></div>)}</div>}
+              {(result.quickWins||[]).length>0 && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">⚡ Quick Wins</p><ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-green-300 text-xs">• {w}</li>)}</ul></div>}
+              {result.investmentSummary && <div className="bg-gray-800 rounded p-3 grid grid-cols-2 gap-3">{[['Total Budget',result.investmentSummary.totalBudget],['Expected ROI',result.investmentSummary.expectedROI],['Payback Period',result.investmentSummary.paybackPeriod]].map(([l,v])=><div key={l}><p className="text-xs text-gray-400">{l}</p><p className="text-white font-medium text-sm">{v}</p></div>)}</div>}
+            </div>
+          )}
+          {subtab==='phases' && (
+            <div className="space-y-4">
+              {(result.phases||[]).map((ph:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div><p className="text-white font-bold">{ph.phase}</p><p className="text-gray-400 text-xs">{ph.timeline} · {ph.theme}</p></div>
+                    <span className="text-xs text-indigo-300 bg-indigo-900/40 px-2 py-1 rounded">{ph.budget}</span>
+                  </div>
+                  <div className="space-y-2 mt-3">
+                    {(ph.initiatives||[]).map((init:any,j:number)=>(
+                      <div key={j} className="bg-gray-700/50 rounded p-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-white text-xs font-medium">{init.initiative}</p>
+                          <div className="flex gap-2"><span className={`text-xs ${EFFORT_COLOR[init.effort]||'text-gray-400'}`}>Effort:{init.effort}</span><span className={`text-xs ${EFFORT_COLOR[init.impact]||'text-gray-400'}`}>Impact:{init.impact}</span></div>
+                        </div>
+                        {init.kpis&&init.kpis.length>0&&<p className="text-gray-400 text-xs">KPIs: {init.kpis.join(', ')}</p>}
+                      </div>
+                    ))}
+                  </div>
+                  {(ph.milestones||[]).length>0 && <div className="mt-2"><p className="text-xs text-gray-400 mb-1">Milestones</p><ul className="space-y-0.5">{ph.milestones.map((m:string,j:number)=><li key={j} className="text-gray-300 text-xs">🏁 {m}</li>)}</ul></div>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='technology' && (
+            <div className="space-y-2">
+              {(result.technologyStack||[]).map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-white font-medium text-sm">{t.category}</p>
+                    <span className={`text-xs ${TECH_PRIORITY_COLOR[t.priority]||'text-gray-400'}`}>{t.priority}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-300 mb-1">
+                    <div><span className="text-gray-400">Current: </span>{t.current}</div>
+                    <div><span className="text-gray-400">Target: </span>{t.target}</div>
+                  </div>
+                  <p className="text-gray-400 text-xs">{t.rationale}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='change' && result.changeManagement && (
+            <div className="space-y-3">
+              {[['Cultural Shifts',result.changeManagement.culturalShifts,'text-purple-300'],['Training Plan',result.changeManagement.trainingPlan,'text-blue-300'],['Resistance Factors',result.changeManagement.resistanceFactors,'text-red-300']].map(([label,items,color])=>(
+                <div key={label as string} className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">{label}</p><ul className="space-y-1">{(items as string[]).map((it,i)=><li key={i} className={`text-xs ${color}`}>• {it}</li>)}</ul></div>
+              ))}
+              {result.changeManagement.communicationStrategy && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-1">Communication Strategy</p><p className="text-gray-300 text-xs">{result.changeManagement.communicationStrategy}</p></div>}
+              {result.governanceModel && <div className="bg-gray-800 rounded p-3"><p className="text-xs text-gray-400 mb-2">Governance</p><p className="text-gray-300 text-xs mb-1">{result.governanceModel.decisionFramework}</p><p className="text-gray-400 text-xs">Review: {result.governanceModel.reviewCadence}</p></div>}
+            </div>
+          )}
+          {subtab==='metrics' && (
+            <div className="space-y-2">
+              {(result.successMetrics||[]).map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-white font-medium text-sm mb-1">{m.metric}</p>
+                  <div className="grid grid-cols-3 gap-2 text-xs text-gray-300">
+                    <div><span className="text-gray-400">Baseline: </span>{m.baseline}</div>
+                    <div><span className="text-gray-400">Target: </span>{m.target}</div>
+                    <div><span className="text-gray-400">Method: </span>{m.measurementMethod}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.02 Vendor Evaluation Framework ---
 const VENDOR_REC_COLOR: Record<string,string> = { 'Strongly Recommend':'text-green-400','Recommend':'text-blue-400','Neutral':'text-yellow-400','Not Recommend':'text-red-400' };
 function VendorEvalPanel({ api }: { api: string }) {
@@ -6660,7 +6784,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -6748,6 +6872,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'digitaltransform', label: '🚀 Digital Transform' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -6887,6 +7012,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
