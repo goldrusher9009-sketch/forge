@@ -39500,6 +39500,64 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.48 AI Financial Modeling & Scenario Planning Engine ---
+app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, currentRevenue, revenueGrowthRate, grossMargin, operatingExpenses, headcount, burnRate, currentCash, fundingStage, businessModel, keyMetrics, timeHorizon } = req.body;
+  const p = `You are a world-class CFO and financial modeling expert. Build a comprehensive financial model with scenario analysis for this company.
+
+Company: ${companyName}
+Industry: ${industry}
+Current ARR/Revenue: ${currentRevenue}
+Revenue Growth Rate: ${revenueGrowthRate}
+Gross Margin: ${grossMargin}
+Operating Expenses: ${operatingExpenses}
+Headcount: ${headcount}
+Monthly Burn Rate: ${burnRate}
+Current Cash: ${currentCash}
+Funding Stage: ${fundingStage}
+Business Model: ${businessModel}
+Key Metrics: ${keyMetrics}
+Time Horizon: ${timeHorizon}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "Financial Model for [Company]",
+  "executiveSummary": "...",
+  "financialHealthScore": 0-100,
+  "runway": "X months",
+  "burnMultiple": 0.0,
+  "revenueQuality": "Excellent|Good|Fair|Poor",
+  "biggestFinancialRisk": "...",
+  "topPriority": "...",
+  "unitEconomics": { "ltv": "$X", "cac": "$X", "ltvCacRatio": 0.0, "paybackPeriod": "X months", "grossMarginTrend": "...", "netRevenueRetention": "X%", "magicNumber": 0.0 },
+  "scenarios": [
+    { "name": "Bear Case", "color": "red", "assumption": "...", "revenueY1": "$X", "revenueY2": "$X", "revenueY3": "$X", "ebitdaY3": "$X", "headcountY3": X, "fundingNeeded": "$X", "exitValuation": "$X", "keyRisk": "..." },
+    { "name": "Base Case", "color": "blue", "assumption": "...", "revenueY1": "$X", "revenueY2": "$X", "revenueY3": "$X", "ebitdaY3": "$X", "headcountY3": X, "fundingNeeded": "$X", "exitValuation": "$X", "keyRisk": "..." },
+    { "name": "Bull Case", "color": "green", "assumption": "...", "revenueY1": "$X", "revenueY2": "$X", "revenueY3": "$X", "ebitdaY3": "$X", "headcountY3": X, "fundingNeeded": "$X", "exitValuation": "$X", "keyRisk": "..." }
+  ],
+  "plForecast": [
+    { "period": "Q1 Y1", "revenue": "$X", "cogs": "$X", "grossProfit": "$X", "opex": "$X", "ebitda": "$X", "netIncome": "$X", "cashBalance": "$X" }
+  ],
+  "kpiDashboard": [
+    { "metric": "...", "current": "...", "target": "...", "benchmark": "...", "status": "On Track|Behind|Critical" }
+  ],
+  "fundingStrategy": { "recommendedRound": "...", "targetAmount": "$X", "optimalTiming": "...", "useOfFunds": [], "dilutionRange": "X-X%", "investorProfile": "...", "valuationRange": "$X-$X" },
+  "costOptimization": [ { "category": "...", "currentSpend": "$X", "optimizedSpend": "$X", "saving": "$X", "action": "...", "timeline": "..." } ],
+  "revenueLevers": [ { "lever": "...", "currentImpact": "$X/yr", "potentialImpact": "$X/yr", "effort": "Low|Medium|High", "timeToImpact": "...", "action": "..." } ],
+  "quickWins": []
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!json) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.47 AI Legal & Contract Intelligence Engine ---
 app.post('/api/legal-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
