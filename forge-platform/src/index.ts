@@ -39500,6 +39500,24 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.73 Webinar Script Writer ---
+app.post('/api/webinar-script', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { title, duration, topic, audience, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a complete webinar script for: "${title}"
+Duration: ${duration || '60 minutes'}
+Topic: ${topic || title}
+Audience: ${audience || 'professionals'}
+Include: Welcome & housekeeping (5min), Presenter intro, Agenda overview, Main content sections with timestamps, Q&A prompts, Polls/engagement moments, Closing & CTA. Use [SLIDE X] cues and PRESENTER: labels. Conversational but professional tone.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    res.json({ success: true, script: (r.content || '').trim() });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.72 White Paper Generator ---
 app.post('/api/whitepaper', requireAuth, async (req: AuthRequest, res) => {
   try {
