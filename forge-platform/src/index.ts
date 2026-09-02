@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.51 AI Talent Intelligence ---
+app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, headcount, hiringPlan, openRoles, keyDepartments, attritionRate, timeToHire, costPerHire, offerAcceptRate, topCompetitors, salaryBenchmark, remotePolicy, diversityGoals, talentBrand, techStack, culture, painPoints } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a talent intelligence expert and future-of-work strategist. Build a comprehensive talent intelligence report.
+Company: ${company}, Industry: ${industry}, Headcount: ${headcount}, Hiring Plan: ${hiringPlan}, Open Roles: ${openRoles}, Key Departments: ${keyDepartments}, Attrition Rate: ${attritionRate}%, Time to Hire: ${timeToHire} days, Cost per Hire: ${costPerHire}, Offer Accept Rate: ${offerAcceptRate}%, Top Competitors: ${topCompetitors}, Salary Benchmark: ${salaryBenchmark}, Remote Policy: ${remotePolicy}, Diversity Goals: ${diversityGoals}, Talent Brand: ${talentBrand}, Tech Stack: ${techStack}, Culture: ${culture}, Pain Points: ${painPoints}.
+Return JSON: { reportTitle, executiveSummary, talentScore (0-100), talentHealthRating ("Elite"/"Strong"/"Average"/"At Risk"), talentMarketAnalysis: { supplyDemandRatio, hotSkills: [{skill, demandLevel, supplyLevel, salaryPremium, sourceStrategy}], emergingRoles: [{role, whyNow, hiringTimeline, buildVsBuy}], talentGaps: [{gap, severity, impact, solution}] }, hiringIntelligence: { pipelineHealth: [{role, candidatesInPipe, qualityScore, bottleneck, fix}], sourcingChannels: [{channel, effectiveness, costPerApply, qualityScore, recommendation}], interviewProcess: {currentState, optimizations: [{step, change, expectedImpact}]}, offerStrategy: {currentAcceptRate, benchmarkRate, improvements: [{lever, action, expectedLift}]} }, competitiveTalent: { talentWars: [{competitor, hiringSurge, rolesTargeted, counterStrategy}], compensationBenchmark: [{role, ourComp, marketMedian, gap, recommendation}], evpDifferentiation: [{dimension, ourStrength, competitorWeakness, messagingAngle}] }, retentionIntelligence: { flightRiskProfile: [{segment, riskLevel, triggers, retentionTactics}], engagementDrivers: [{driver, currentScore, benchmarkScore, initiatives}], careerPathways: [{role, nextSteps, skillsNeeded, timeframe}] }, diversityIntelligence: { currentState, gaps: [{dimension, current, target, tactics}], inclusionPrograms: [{program, impact, implementation}], biasAudit: [{stage, biasRisk, mitigation}] }, talentBrand: { currentPerception, employerBrandScore, strengthAreas, improvementAreas, campaignIdeas: [{campaign, channel, expectedReach, goal}] }, futureOfWork: { automationRisk: [{role, riskLevel, timeframe, reskilling}], skillsEvolution: [{currentSkill, futureDemand, actionNeeded}], workModel: {recommendation, rationale, implementationSteps} }, talentROI: { totalHiringCost, attritionCost, productivityGap, investmentRecommendations: [{area, investment, expectedReturn}] }, actionPlan: [{priority, initiative, owner, timeline, successMetric}], quickWins: [{action, impact, effort, timeline}] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.50 Product-Led Growth Engine ---
 app.post('/api/plg-engine', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, currentModel, freeUsers, paidUsers, conversionRate, timeToValue, activationRate, retentionD30, nps, topFeatures, viralCoefficient, arpu, targetMarket, competitors, goals } = req.body;
