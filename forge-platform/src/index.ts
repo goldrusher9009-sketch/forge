@@ -39315,6 +39315,26 @@ app.post('/api/changelog', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.54 Brand Voice Analyzer — analyze and codify brand voice from sample content
+app.post('/api/brand-voice', requireAuth, async (req: any, res: any) => {
+  try {
+    const { samples, brand } = req.body;
+    if (!samples || samples.trim().length < 50) return res.status(400).json({ error: 'content samples required (min 50 chars)' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are a brand strategist. Analyze this content and extract the brand voice:\nBrand: ${brand||'Unknown'}\nContent samples: ${samples.slice(0,2000)}\n\nReturn ONLY JSON:\n{"brand":"${brand||'Unknown'}","voice_summary":"2-sentence brand voice summary","personality_traits":["trait1","trait2","trait3","trait4"],"tone":{"primary":"main tone adjective","secondary":"secondary tone","avoid":"tone to avoid"},"vocabulary":{"preferred":["word1","word2","word3"],"avoid":["word1","word2"]},"sentence_style":"Short and punchy / Long and detailed / Mixed","writing_rules":["Rule 1: Always do X","Rule 2: Never do Y","Rule 3: Prefer X over Y"],"examples":{"good":"Example sentence in brand voice","bad":"Example sentence that doesn't match"},"audience":"target audience description","differentiator":"what makes this voice unique","content_pillars":["topic1","topic2","topic3"],"do_dont":[{"do":"specific do","dont":"specific dont"},{"do":"another do","dont":"another dont"}]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

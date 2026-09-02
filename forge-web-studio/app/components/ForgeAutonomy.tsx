@@ -597,6 +597,73 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.54 Brand Voice Analyzer ---
+function BrandVoicePanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ samples: '', brand: '' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const submit = async () => {
+    if (!form.samples.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api.base}/api/brand-voice`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>🎨 Brand Voice Analyzer</h3>
+      <p style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>Paste sample content to extract and codify your brand voice.</p>
+      <input placeholder="Brand name (optional)" value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <textarea placeholder="Paste content samples (emails, blog posts, social copy, etc.) — at least 50 characters" value={form.samples} onChange={e => setForm(f => ({ ...f, samples: e.target.value }))} rows={6} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+        {loading ? 'Analyzing...' : 'Analyze Brand Voice'}
+      </button>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <h4 style={{ fontSize: 13, marginBottom: 8 }}>Brand: {result.brand}</h4>
+          <p style={{ fontSize: 12, background: '#1a1a2e', padding: 10, borderRadius: 6, marginBottom: 8 }}>{result.voice_summary}</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6 }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>PERSONALITY</div>
+              {(result.personality_traits || []).map((t: string, i: number) => <div key={i} style={{ fontSize: 12, padding: '2px 0' }}>• {t}</div>)}
+            </div>
+            <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6 }}>
+              <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>TONE</div>
+              <div style={{ fontSize: 12 }}>Primary: {result.tone?.primary}</div>
+              <div style={{ fontSize: 12 }}>Secondary: {result.tone?.secondary}</div>
+              <div style={{ fontSize: 12, color: '#f87171' }}>Avoid: {result.tone?.avoid}</div>
+            </div>
+          </div>
+          <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6, marginBottom: 8 }}>
+            <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>WRITING RULES</div>
+            {(result.writing_rules || []).map((r: string, i: number) => <div key={i} style={{ fontSize: 12, padding: '2px 0' }}>• {r}</div>)}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+            <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6 }}>
+              <div style={{ fontSize: 11, color: '#4ade80', marginBottom: 4 }}>✓ GOOD EXAMPLE</div>
+              <div style={{ fontSize: 12, fontStyle: 'italic' }}>{result.examples?.good}</div>
+            </div>
+            <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6 }}>
+              <div style={{ fontSize: 11, color: '#f87171', marginBottom: 4 }}>✗ BAD EXAMPLE</div>
+              <div style={{ fontSize: 12, fontStyle: 'italic' }}>{result.examples?.bad}</div>
+            </div>
+          </div>
+          <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6 }}>
+            <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>CONTENT PILLARS</div>
+            <div style={{ fontSize: 12 }}>{(result.content_pillars || []).join(' · ')}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.53 Changelog Generator ---
 function ChangelogPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ commits: '', version: '', product: '' });
@@ -3011,7 +3078,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3059,6 +3126,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'userstories', label: '📋 Stories' },
     { id: 'apidocs', label: '📖 API Docs' },
     { id: 'changelog', label: '📝 Changelog' },
+    { id: 'brandvoice', label: '🎨 Brand Voice' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3149,6 +3217,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'userstories' && <UserStoriesPanel api={api} />}
         {tab === 'apidocs' && <ApiDocsPanel api={api} />}
         {tab === 'changelog' && <ChangelogPanel api={api} />}
+        {tab === 'brandvoice' && <BrandVoicePanel api={api} />}
       </div>
     </div>
   );
