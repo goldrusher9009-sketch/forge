@@ -39500,6 +39500,23 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.26 AI Supply Chain Resilience & Risk Engine ---
+app.post('/api/supply-chain-resilience', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { industry, companySize, productType, geographies, supplierCount, currentRisks, disruptions, goals } = req.body;
+  const p = `You are a supply chain resilience expert. Build a comprehensive risk and resilience framework.
+Company: Industry=${industry}, Size=${companySize}, Product=${productType}, Geographies=${geographies}, Suppliers=${supplierCount}, Risks=${currentRisks}, Disruptions=${disruptions}, Goals=${goals}
+Return JSON: { reportTitle, executiveSummary, resilienceScore (0-100), riskLevel, primaryVulnerability, riskAssessment: [ { risk, category, likelihood, impact, riskScore, mitigation } ], supplierStrategy: { diversificationPlan, nearshoring, regionalization, dualSourcing, supplierDevelopment }, inventoryOptimization: { safetyStock, bufferStrategy, jitBalance, warehouseNetwork, demandPlanning }, digitalInfrastructure: [ { technology, purpose, priority, implementation } ], contingencyPlans: [ { scenario, trigger, response, recoveryTime, cost } ], complianceRisk: [ { regulation, jurisdiction, gap, action, deadline } ], costImpact: { resilienceInvestment, riskExposureReduction, operationalSavings, roi }, kpis: [ { metric, current, target, timeline } ], roadmap: [ { phase, initiative, timeline, investment, outcome } ], quickWins: [ { win, effort, impact, timeline } ] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'No JSON' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.25 AI Financial Modeling & Scenario Planning Engine ---
 app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
