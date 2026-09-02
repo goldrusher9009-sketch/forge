@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.30 Partnership & Alliance Strategy ---
+app.post('/api/partnership-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, product, targetPartners, partnershipGoals, currentPartnerships, competitorPartnerships, geography, budget, teamSize, partnershipTypes } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Partnership & Business Development strategist. Generate a comprehensive partnership strategy for:
+Company: ${company}, Industry: ${industry}, Product: ${product}
+Target Partners: ${targetPartners}, Goals: ${partnershipGoals}
+Current Partnerships: ${currentPartnerships}, Competitor Partnerships: ${competitorPartnerships}
+Geography: ${geography}, Budget: ${budget}, Team Size: ${teamSize}
+Partnership Types Interested In: ${partnershipTypes}
+
+Return JSON: { strategyTitle, executiveSummary, partnershipVision, partnershipTypes: [{ type, description, examples, revenueModel, effort, timeToValue }], targetPartnerProfiles: [{ category, idealPartnerDescription, mustHaves, niceToHaves, redFlags, estimatedCount }], topPartnerTargets: [{ name, category, fitScore, rationale, potentialValue, approach, keyContact }], partnerProgram: { tiers: [{ name, criteria, benefits, requirements, revenueShare }], enablementPlan, certificationPath }, outreachPlaybook: [{ stage, action, template, timing, owner }], partnerValueProposition: { forPartner, forCustomers, forUs, jointValueStatement }, negotiationFramework: { mustHaves, niceToHaves, walkAways, dealStructures }, goToMarketMotions: [{ motion, description, activities, metrics }], partnerEcosystemMap: { categories: [{ name, partners, ourRole, revenueImpact }] }, successMetrics: [{ metric, target, measurement }], roadmap: [{ quarter, milestones, partnerCount, revenueTarget }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.29 Customer Success Playbook ---
 app.post('/api/cs-playbook', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, customerSegments, avgContractValue, churnRate, npsScore, teamSize, currentTools, topChurnReasons, successMilestones, expansionGoals } = req.body;

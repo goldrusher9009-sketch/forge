@@ -597,6 +597,66 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.30 Partnership & Alliance Strategy ---
+const FIT_COLOR = (score: string) => { const n = parseInt(score); if (n>=80) return 'text-green-400'; if (n>=60) return 'text-yellow-400'; return 'text-red-400'; };
+function PartnershipStrategyPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', product:'', targetPartners:'', partnershipGoals:'', currentPartnerships:'', competitorPartnerships:'', geography:'', budget:'', teamSize:'', partnershipTypes:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState('targets');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/partnership-strategy`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">🤝 Partnership & Alliance Strategy</h2><p className="text-gray-400 text-sm mt-1">Partner program design, target profiles, outreach playbook, GTM motions & ecosystem map</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme Inc')} {F('Industry','industry','B2B SaaS')}
+            {F('Product','product','CRM Platform')} {F('Target Partners','targetPartners','System integrators, VARs, ISVs')}
+            {F('Partnership Goals','partnershipGoals','25% revenue via partners in 12mo')} {F('Current Partnerships','currentPartnerships','Salesforce AppExchange, AWS')}
+            {F('Competitor Partnerships','competitorPartnerships','HubSpot + Google, Monday + Zapier')} {F('Geography','geography','US, EMEA')}
+            {F('Budget','budget','$500K partnership budget')} {F('Team Size','teamSize','2 partner managers')}
+            {F('Partnership Types','partnershipTypes','Resellers, Tech integrations, Co-sell')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Building partnership strategy...' : 'Generate Partnership Strategy'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.strategyTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Strategy</button></div>
+          {result.partnershipVision && <div className="bg-blue-900/30 border border-blue-700/50 rounded-xl p-4"><p className="text-blue-300 text-sm italic">"{result.partnershipVision}"</p></div>}
+          <div className="flex gap-2 flex-wrap">{['targets','types','program','outreach','gtm','ecosystem','roadmap'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Top Targets */}
+          {view==='targets' && result.topPartnerTargets?.length>0 && <div className="space-y-3">{result.topPartnerTargets.map((t:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-start mb-2"><div><p className="text-white font-semibold">{t.name}</p><p className="text-gray-400 text-xs">{t.category}</p></div><div className="text-right"><p className={`text-lg font-bold ${FIT_COLOR(t.fitScore)}`}>{t.fitScore}</p><p className="text-gray-500 text-xs">fit score</p></div></div><p className="text-gray-300 text-sm mb-2">{t.rationale}</p><div className="flex gap-4 text-xs"><span className="text-green-400">{t.potentialValue}</span><span className="text-blue-300">{t.approach}</span></div></div>)}</div>}
+          {/* Partnership Types */}
+          {view==='types' && result.partnershipTypes?.length>0 && <div className="space-y-3">{result.partnershipTypes.map((t:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{t.type}</p><div className="flex gap-2 text-xs"><span className="text-yellow-400">{t.effort}</span><span className="text-green-400">{t.timeToValue}</span></div></div><p className="text-gray-300 text-sm mb-1">{t.description}</p><p className="text-blue-300 text-xs">{t.revenueModel}</p></div>)}</div>}
+          {/* Program */}
+          {view==='program' && result.partnerProgram?.tiers?.length>0 && <div className="space-y-3">{result.partnerProgram.tiers.map((t:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-bold text-lg">{t.name}</p><span className="text-green-400 text-sm">{t.revenueShare}</span></div><div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-gray-500 mb-1">Benefits</p><p className="text-gray-300">{t.benefits}</p></div><div><p className="text-gray-500 mb-1">Requirements</p><p className="text-gray-300">{t.requirements}</p></div></div></div>)}</div>}
+          {/* Outreach */}
+          {view==='outreach' && result.outreachPlaybook?.length>0 && <div className="space-y-2">{result.outreachPlaybook.map((o:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3"><div className="flex justify-between items-center mb-1"><p className="text-white text-sm font-medium">{o.stage}</p><div className="flex gap-2 text-xs"><span className="text-gray-400">{o.timing}</span><span className="text-blue-300">{o.owner}</span></div></div><p className="text-gray-300 text-sm">{o.action}</p></div>)}</div>}
+          {/* GTM */}
+          {view==='gtm' && result.goToMarketMotions?.length>0 && <div className="space-y-3">{result.goToMarketMotions.map((g:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><p className="text-white font-semibold mb-1">{g.motion}</p><p className="text-gray-300 text-sm mb-2">{g.description}</p><div className="grid grid-cols-2 gap-2 text-xs"><div><p className="text-gray-500">Activities</p><p className="text-gray-300">{g.activities}</p></div><div><p className="text-gray-500">Metrics</p><p className="text-green-400">{g.metrics}</p></div></div></div>)}</div>}
+          {/* Ecosystem */}
+          {view==='ecosystem' && result.partnerEcosystemMap?.categories?.length>0 && <div className="space-y-3">{result.partnerEcosystemMap.categories.map((c:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{c.name}</p><span className="text-green-400 text-xs">{c.revenueImpact}</span></div><p className="text-gray-400 text-xs mb-1">Our Role: {c.ourRole}</p><p className="text-gray-300 text-sm">{c.partners}</p></div>)}</div>}
+          {/* Roadmap */}
+          {view==='roadmap' && result.roadmap?.length>0 && <div className="space-y-3">{result.roadmap.map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-bold">{r.quarter}</p><div className="flex gap-3 text-xs"><span className="text-blue-400">{r.partnerCount} partners</span><span className="text-green-400">{r.revenueTarget}</span></div></div><p className="text-gray-300 text-sm">{r.milestones}</p></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.29 Customer Success Playbook ---
 const CS_RISK_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400','Critical':'text-red-500' };
 const CS_SEV_BG: Record<string,string> = { 'P1':'bg-red-900/50','P2':'bg-orange-900/40','P3':'bg-yellow-900/30','P4':'bg-gray-700','Critical':'bg-red-900/60' };
@@ -9260,7 +9320,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9358,6 +9418,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'partnershipstrat', label: '🤝 Partnership Strategy' },
     { id: 'csplaybook2', label: '🎯 CS Playbook' },
     { id: 'contentcalendar', label: '📅 Content Calendar' },
     { id: 'competitiveintel', label: '🔍 Competitive Intel' },
@@ -9524,6 +9585,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'partnershipstrat' && <PartnershipStrategyPanel api={api} />}
         {tab === 'csplaybook2' && <CSPlaybookPanel api={api} />}
         {tab === 'contentcalendar' && <ContentCalendarPanel api={api} />}
         {tab === 'competitiveintel' && <CompetitiveIntelPanel api={api} />}
