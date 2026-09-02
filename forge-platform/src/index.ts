@@ -39500,6 +39500,44 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.80 AI Board Meeting Preparation Suite ---
+app.post('/api/board-prep', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, stage, meetingType, keyMetrics, challenges, decisions, boardComposition } = req.body;
+    const p = `You are a board meeting strategist and investor relations expert. Create a comprehensive board meeting preparation package.
+Company: ${company || 'Unknown'}
+Stage: ${stage || 'Series A'}
+Meeting Type: ${meetingType || 'Quarterly Board Meeting'}
+Key Metrics: ${keyMetrics || 'Unknown'}
+Current Challenges: ${challenges || 'Unknown'}
+Decisions Needed: ${decisions || 'Unknown'}
+Board Composition: ${boardComposition || 'Unknown'}
+Return ONLY valid JSON:
+{
+  "boardPrepTitle": "string",
+  "executiveSummary": "string",
+  "meetingReadinessScore": 0-100,
+  "narrativeFramework": "string",
+  "agendaItems": [{"item": "string", "duration": "string", "presenter": "string", "type": "Update|Decision|Discussion|Approval", "keyPoints": ["string"]}],
+  "kpiDashboard": [{"metric": "string", "current": "string", "target": "string", "trend": "Up|Down|Flat", "commentary": "string"}],
+  "decisionsRequired": [{"decision": "string", "recommendation": "string", "options": ["string"], "risks": "string", "timeline": "string"}],
+  "toughQuestionsPrep": [{"question": "string", "suggestedAnswer": "string", "supportingData": "string"}],
+  "investorNarrativeArc": "string",
+  "financialHighlights": "string",
+  "riskRegisterUpdate": [{"risk": "string", "status": "New|Escalated|Mitigated|Closed", "owner": "string", "update": "string"}],
+  "nextQuarterGuidance": "string",
+  "followUpActions": ["string"],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.79 AI Executive Compensation & Equity Designer ---
 app.post('/api/exec-comp', requireAuth, async (req: AuthRequest, res) => {
   try {
