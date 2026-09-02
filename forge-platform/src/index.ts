@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.54 Financial Modeling & Scenario Planner ---
+app.post('/api/financial-modeler', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, currentRevenue, revenueGrowth, grossMargin, operatingExpenses, ebitda, cashOnHand, burnRate, headcount, capex, debtLevel, fundingStage, useOfFunds, revenueModel, customerCount, arpu, churnRate, marketSize, competitorRevenues, strategicGoals, timeHorizon } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a CFO-level financial modeling expert and strategic finance advisor. Build a comprehensive financial model and scenario analysis.
+Company: ${company}, Industry: ${industry}, Current Revenue: ${currentRevenue}, Revenue Growth: ${revenueGrowth}%, Gross Margin: ${grossMargin}%, OpEx: ${operatingExpenses}, EBITDA: ${ebitda}, Cash: ${cashOnHand}, Burn Rate: ${burnRate}/mo, Headcount: ${headcount}, CapEx: ${capex}, Debt: ${debtLevel}, Funding Stage: ${fundingStage}, Use of Funds: ${useOfFunds}, Revenue Model: ${revenueModel}, Customers: ${customerCount}, ARPU: ${arpu}, Churn: ${churnRate}%, Market Size: ${marketSize}, Competitor Revenues: ${competitorRevenues}, Goals: ${strategicGoals}, Horizon: ${timeHorizon}.
+Return JSON: { modelTitle, executiveSummary, financialHealthScore (0-100), financialHealthRating ("Excellent"/"Good"/"Fair"/"Critical"), incomeStatement: { years: string[], revenue: number[], grossProfit: number[], operatingIncome: number[], netIncome: number[], ebitda: number[] }, cashFlowModel: { quarters: string[], operatingCF: number[], investingCF: number[], financingCF: number[], netCashFlow: number[], endingCash: number[] }, scenarios: [{ scenarioName, probability, keyAssumptions: string[], revenueImpact, ebitdaImpact, cashRunway, breakeven, risks: string[], mitigations: string[] }], unitEconomics: { cac, ltv, ltvCacRatio, paybackPeriod, grossMarginPerCustomer, contributionMargin, breakEvenCustomers }, growthModel: { revenueDrivers: [{driver, currentValue, projectedGrowth, revenueImpact, confidence}], growthLevers: [{lever, investment, expectedROI, timeline, riskLevel}] }, fundingAnalysis: { currentRunway, additionalFundingNeeded, optimalFundingAmount, fundingTiming, dilutionAnalysis, valuationRanges: [{method, low, mid, high}], investorROIScenarios: [{scenario, investorReturn, multiple, irr}] }, costStructure: { fixedCosts: [{category, amount, percentRevenue, scalability}], variableCosts: [{category, amount, percentRevenue, driver}], costOptimizations: [{area, currentCost, targetCost, savings, timeline}] }, kpiDashboard: [{metric, current, target, industry, status, trend}], sensitivityAnalysis: [{variable, baseCase, optimistic, pessimistic, revenueImpact}], strategicOptions: [{option, capitalRequired, expectedReturn, riskLevel, timeToValue, recommendation}], quickWins: [{action, financialImpact, effort, timeline}] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.53 AI Legal Contract Intelligence ---
 app.post('/api/contract-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const { contractType, parties, jurisdiction, contractValue, duration, keyTerms, liabilities, indemnification, terminationClauses, ipOwnership, confidentiality, disputeResolution, governingLaw, paymentTerms, deliverables, penalties, warranties, unusualClauses, negotiationPriorities, context } = req.body;
