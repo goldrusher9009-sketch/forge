@@ -39500,6 +39500,32 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.62 AI Brand Architecture & Positioning Engine ---
+app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, foundingYear, missionStatement, currentTagline, primaryProducts, targetAudiences, currentBrandPerception, competitors, brandStrengths, brandWeaknesses, brandPersonality, coreValues, pricePositioning, geographicScope, growthStage, marketingBudget, brandGoals } = req.body;
+    const p = `You are a brand strategy expert. Generate a comprehensive brand architecture & positioning strategy.
+Company: ${companyName}, Industry: ${industry}, Founded: ${foundingYear}
+Mission: ${missionStatement}, Tagline: ${currentTagline}
+Products: ${primaryProducts}, Audiences: ${targetAudiences}
+Current Perception: ${currentBrandPerception}, Competitors: ${competitors}
+Strengths: ${brandStrengths}, Weaknesses: ${brandWeaknesses}
+Personality: ${brandPersonality}, Values: ${coreValues}
+Price Positioning: ${pricePositioning}, Geographic Scope: ${geographicScope}
+Growth Stage: ${growthStage}, Marketing Budget: ${marketingBudget}
+Brand Goals: ${brandGoals}
+
+Return JSON: { reportTitle, executiveSummary, brandHealthScore (0-100), brandHealthStatus ("Strong"/"Developing"/"Weak"/"Critical"), positioningStrength, differentiationScore, brandDNA { coreEssence, brandPromise, brandPersonality:[{trait, description, doExample, dontExample}], brandValues:[{value, meaning, behavioralExpression}], brandArchetype, archetypeDescription }, positioningStrategy { currentPosition, targetPosition, positioningStatement, valueProposition, uniqueDifferentiators:[], keyMessages:{primary, secondary:[], proof:[]} }, audienceArchitecture:[{segment, size, psychographics, painPoints:[], desiredOutcomes:[], messagingAngle, channelPreference:[]}], competitiveLandscape:{perceptualMap:{xAxis,yAxis,positioning:[]}, whitespace:[], threats:[], opportunities:[]}, brandExpression:{namingStrategy, taglineOptions:[{tagline,rationale}], visualIdentityGuidance:{colorPsychology, typographyDirection, imageryStyle, designPrinciples:[]}, toneOfVoice:{adjectives:[],dos:[],donts:[]}}, brandArchitecture:{model,rationale,subBrands:[{name,relationship,audience,role}],namingConventions}, contentStrategy:{pillars:[{pillar,description,contentTypes:[],keyTopics:[]}],editorialCalendar:{cadence,channelMix:[{channel,frequency,contentType}]}}, brandActivationRoadmap:[{phase,duration,initiatives:[],kpis:[]}], measuringBrandEquity:{trackingMetrics:[],researchCadence,tools:[]}, quickWins:[] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid AI response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.61 AI Customer Success & Churn Prevention Engine ---
 app.post('/api/customer-success', requireAuth, async (req: AuthRequest, res) => {
   try {
