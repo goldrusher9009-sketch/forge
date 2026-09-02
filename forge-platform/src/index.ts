@@ -39500,6 +39500,83 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.42 AI Talent Intelligence & Workforce Planning Engine ---
+app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, headcount, roles, challenges, budget, growthPlans, competitorTalent } = req.body;
+  const p = `You are a world-class CHRO and talent intelligence strategist. Create a comprehensive talent intelligence and workforce planning report.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Current Headcount: ${headcount || 'Unknown'}
+Key Roles/Departments: ${roles || 'Unknown'}
+Talent Challenges: ${challenges || 'Unknown'}
+Talent Budget: ${budget || 'Unknown'}
+Growth Plans: ${growthPlans || 'Unknown'}
+Competitor Talent Strategy: ${competitorTalent || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Talent Intelligence Report for [company]",
+  "executiveSummary": "3-sentence talent landscape assessment and workforce strategy",
+  "talentScore": <number 0-100>,
+  "talentMaturity": "Reactive|Developing|Strategic|Optimized|Predictive",
+  "criticalSkillGap": "most urgent skill gap to address",
+  "topRetentionRisk": "highest retention risk factor",
+  "estimatedAttritionCost": "annual cost estimate of attrition",
+  "talentAudit": {
+    "acquisition": { "score": <0-100>, "strengths": ["strength 1"], "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "retention": { "score": <0-100>, "strengths": ["strength 1"], "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "development": { "score": <0-100>, "strengths": ["strength 1"], "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "culture": { "score": <0-100>, "strengths": ["strength 1"], "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "compensation": { "score": <0-100>, "strengths": ["strength 1"], "gaps": ["gap 1"], "priority": "High/Medium/Low" },
+    "dei": { "score": <0-100>, "strengths": ["strength 1"], "gaps": ["gap 1"], "priority": "High/Medium/Low" }
+  },
+  "criticalRoles": [
+    { "role": "role title", "urgency": "Immediate/6 months/12 months", "difficulty": "High/Medium/Low", "marketSalary": "market rate", "hiringStrategy": "strategy", "alternativeApproach": "alternative" }
+  ],
+  "retentionStrategy": [
+    { "segment": "employee segment", "retentionRisk": "High/Medium/Low", "keyMotivators": ["motivator 1"], "retentionTactics": ["tactic 1"], "estimatedCost": "cost" }
+  ],
+  "learningDevelopment": {
+    "skillGaps": ["gap 1", "gap 2"],
+    "upskillPrograms": ["program 1", "program 2"],
+    "leadershipPipeline": "pipeline strategy",
+    "learningPlatforms": ["platform 1"],
+    "budget": "L&D budget recommendation"
+  },
+  "recruitingStrategy": {
+    "sourcingChannels": ["channel 1", "channel 2"],
+    "employerBranding": "EVP and branding strategy",
+    "talentPipeline": "pipeline building approach",
+    "timeToHire": "target time-to-hire",
+    "costPerHire": "target cost-per-hire"
+  },
+  "workforceAnalytics": {
+    "keyMetrics": ["metric 1", "metric 2"],
+    "predictiveIndicators": ["indicator 1"],
+    "hrisRecommendations": ["tool 1"],
+    "reportingCadence": "reporting structure"
+  },
+  "compensationBenchmarks": [
+    { "role": "role", "marketP50": "median salary", "recommendedRange": "salary range", "equityComponent": "equity recommendation", "totalComp": "total package" }
+  ],
+  "workforcePlan": [
+    { "quarter": "Q1/Q2/Q3/Q4", "headcountAdditions": <number>, "keyHires": ["role 1"], "budget": "cost estimate", "milestone": "key milestone" }
+  ],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.41 AI Digital Transformation & Technology Modernization Engine ---
 app.post('/api/digital-transformation', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
