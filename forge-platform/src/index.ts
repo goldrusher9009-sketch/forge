@@ -39500,6 +39500,25 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.08 Change Management Planner ---
+app.post('/api/change-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, changeType, changeDescription, scope, affectedEmployees, timeline, sponsorName, currentCulture, resistanceFactors, successMetrics, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an expert organizational change management consultant (Kotter, ADKAR, Prosci). Create a comprehensive change management plan.
+Company: ${company} | Industry: ${industry} | Change Type: ${changeType}
+Change Description: ${changeDescription}
+Scope: ${scope} | Affected Employees: ${affectedEmployees} | Timeline: ${timeline}
+Sponsor: ${sponsorName} | Current Culture: ${currentCulture}
+Resistance Factors: ${resistanceFactors} | Success Metrics: ${successMetrics}
+Return JSON: { planTitle, executiveSummary, changeOverview:{ changeType, businessCase, urgency, vision, successCriteria }, stakeholderAnalysis:[{ group, count, impactLevel:'High'|'Medium'|'Low', supportLevel:'Champion'|'Supporter'|'Neutral'|'Skeptic'|'Resistor', keyInfluencers:string[], concerns:string[], engagementStrategy }], adkarAssessment:{ awareness:{ currentLevel, targetLevel, gaps, actions:string[] }, desire:{ currentLevel, targetLevel, gaps, actions:string[] }, knowledge:{ currentLevel, targetLevel, gaps, actions:string[] }, ability:{ currentLevel, targetLevel, gaps, actions:string[] }, reinforcement:{ currentLevel, targetLevel, gaps, actions:string[] } }, phases:[{ phase, name, timeline, objectives:string[], activities:[{ activity, owner, audience, method, timing, successIndicator }], milestones:string[], risks:string[] }], communicationPlan:[{ audience, message, channel, frequency, owner, timing, callToAction }], trainingPlan:[{ audience, topic, format, duration, timing, deliveredBy, successCriteria }], resistanceManagement:{ anticipatedResistance:string[], rootCauses:string[], mitigationStrategies:string[], escalationProcess }, sponsorshipRoadmap:{ sponsorActivities:string[], coalitionBuilding:string[], visibleActions:string[] }, sustainabilityPlan:{ reinforcementMechanisms:string[], quickWins:string[], celebrationMilestones:string[], embeddingStrategies:string[] }, readinessAssessment:{ overallReadinessScore:number, riskLevel:'Low'|'Medium'|'High'|'Critical', keyRisks:string[], goNoGoRecommendation }, metrics:[{ metric, baseline, target, measurementMethod, frequency }] }`;
+    const result = await callLLM(provider, key, null as any, [{ role:'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.07 Business Continuity Plan Generator ---
 app.post('/api/bcp', requireAuth, async (req: AuthRequest, res) => {
   try {
