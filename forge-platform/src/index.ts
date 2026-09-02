@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.76 Sales Proposal Generator ---
+app.post('/api/sales-proposal', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { clientName, clientProblem, solution, pricing, timeline, companyName, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a professional sales proposal for ${clientName || 'the client'}.
+Our company: ${companyName || 'Our Company'}
+Client problem: ${clientProblem || 'not specified'}
+Our solution: ${solution || 'not specified'}
+Pricing: ${pricing || 'to be discussed'}
+Timeline: ${timeline || '30 days'}
+Include: executive summary, problem statement, proposed solution, deliverables, timeline, investment/pricing, next steps, and a compelling close. Write in a professional, persuasive tone.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    res.json({ success: true, proposal: r.content || '' });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.75 Blog Outline Generator ---
 app.post('/api/blog-outline', requireAuth, async (req: AuthRequest, res) => {
   try {

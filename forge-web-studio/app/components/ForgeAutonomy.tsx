@@ -597,6 +597,49 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.76 Sales Proposal Generator ---
+function SalesProposalPanel({ api }: { api: string }) {
+  const [clientName, setClientName] = React.useState('');
+  const [companyName, setCompanyName] = React.useState('');
+  const [clientProblem, setClientProblem] = React.useState('');
+  const [solution, setSolution] = React.useState('');
+  const [pricing, setPricing] = React.useState('');
+  const [timeline, setTimeline] = React.useState('30 days');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    const r = await fetch(`${api}/api/sales-proposal`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ clientName, companyName, clientProblem, solution, pricing, timeline }) });
+    const d = await r.json(); setResult(d.proposal || d.error || ''); setLoading(false);
+  };
+  const copy = () => navigator.clipboard.writeText(result);
+  return (
+    <div style={{ padding: 24, maxWidth: 700 }}>
+      <h2>💼 Sales Proposal Generator</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Client/Company name" value={clientName} onChange={e => setClientName(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Your company name" value={companyName} onChange={e => setCompanyName(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      </div>
+      <textarea placeholder="Client's problem or pain point" value={clientProblem} onChange={e => setClientProblem(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <textarea placeholder="Your proposed solution" value={solution} onChange={e => setSolution(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 12 }}>
+        <input placeholder="Pricing (e.g. $5,000/mo)" value={pricing} onChange={e => setPricing(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Timeline" value={timeline} onChange={e => setTimeline(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      </div>
+      <button onClick={run} disabled={loading || !clientName} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Writing...' : 'Generate Proposal'}</button>
+      {result && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ color: '#a78bfa', fontWeight: 600 }}>Proposal</span>
+            <button onClick={copy} style={{ padding: '4px 12px', borderRadius: 6, background: '#374151', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12 }}>Copy</button>
+          </div>
+          <pre style={{ background: '#1e1e2e', borderRadius: 8, padding: 16, color: '#e2e8f0', whiteSpace: 'pre-wrap', fontSize: 13 }}>{result}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.75 Blog Outline Generator ---
 function BlogOutlinePanel({ api }: { api: string }) {
   const [topic, setTopic] = React.useState('');
@@ -4223,7 +4266,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4293,6 +4336,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'webinarscript', label: '🎤 Webinar Script' },
     { id: 'socialaudit', label: '📊 Social Audit' },
     { id: 'blogoutline', label: '📝 Blog Outline' },
+    { id: 'salesproposal', label: '💼 Sales Proposal' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4405,6 +4449,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'webinarscript' && <WebinarScriptPanel api={api} />}
         {tab === 'socialaudit' && <SocialAuditPanel api={api} />}
         {tab === 'blogoutline' && <BlogOutlinePanel api={api} />}
+        {tab === 'salesproposal' && <SalesProposalPanel api={api} />}
       </div>
     </div>
   );
