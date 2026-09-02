@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.27 Competitive Intelligence Dashboard ---
+app.post('/api/competitive-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, competitors, productCategory, targetMarket, geographies, strengths, weaknesses, recentMoves, analysisGoal } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a competitive intelligence analyst. Generate a comprehensive competitive intelligence dashboard for:
+Company: ${company}
+Industry: ${industry}
+Product Category: ${productCategory}
+Target Market: ${targetMarket}
+Geographies: ${geographies}
+Known Competitors: ${competitors}
+Our Strengths: ${strengths}
+Our Weaknesses: ${weaknesses}
+Recent Competitor Moves: ${recentMoves}
+Analysis Goal: ${analysisGoal}
+
+Return JSON: { dashboardTitle, executiveSummary, overallCompetitivePosition, competitors: [{ name, tier, marketShare, fundingStage, keyProducts, pricing, targetCustomer, recentMoves, strengths, weaknesses, threatLevel, opportunityScore }], swotMatrix: { ourStrengths, ourWeaknesses, opportunities, threats }, battlecards: [{ competitor, headline, ourAdvantages, theirAdvantages, whenWeWin, whenWeLose, objectionHandlers, talkingPoints }], marketDynamics: { growthRate, maturityStage, keyTrends, disruptors, regulatoryFactors }, whitespaceOpportunities: [{ opportunity, size, difficulty, timeToCapture, competitorGap }], winLossInsights: { winRateEstimate, topWinReasons, topLossReasons, keyBattlegrounds }, strategicRecommendations: [{ priority, action, rationale, timeframe, expectedImpact }], monitoringAlerts: [{ competitor, signal, implication, urgency }], competitiveScorecard: [{ dimension, us, topCompetitor, gap, trend }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.26 Financial Modeling & Scenario Analysis ---
 app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, businessModel, currentRevenue, cogs, grossMargin, opex, burnRate, runway, growthRate, churnRate, ltv, cac, forecastPeriod, fundingStage } = req.body;
