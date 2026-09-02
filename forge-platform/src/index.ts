@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.49 Revenue Intelligence Platform ---
+app.post('/api/revenue-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, currentARR, growthRate, churnRate, nrr, ltv, cac, salesCycle, dealSize, pipelineCoverage, winRate, topSegments, productLines, geographies, competitiveLandscape, pricingModel, expansionMotion, goals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a revenue intelligence expert and SaaS growth strategist. Analyze the following revenue data and provide comprehensive intelligence.
+Company: ${company}, Industry: ${industry}, Current ARR: ${currentARR}, Growth Rate: ${growthRate}%, Churn Rate: ${churnRate}%, NRR: ${nrr}%, LTV: ${ltv}, CAC: ${cac}, Sales Cycle: ${salesCycle}, Average Deal Size: ${dealSize}, Pipeline Coverage: ${pipelineCoverage}x, Win Rate: ${winRate}%, Top Segments: ${topSegments}, Product Lines: ${productLines}, Geographies: ${geographies}, Competitive Landscape: ${competitiveLandscape}, Pricing Model: ${pricingModel}, Expansion Motion: ${expansionMotion}, Goals: ${goals}.
+Return JSON: { platformTitle, executiveSummary, revenueScore (0-100), healthRating ("Hypergrowth"/"Healthy"/"At Risk"/"Critical"), revenueMetrics: [{metric, current, benchmark, status ("Above"/"At"/"Below"), insight}], cohortAnalysis: [{cohort, arr, growthRate, churnRate, nrr, ltvCac, health}], segmentPerformance: [{segment, arr, growthRate, winRate, averageDealSize, salesCycle, profitability, recommendation}], pipelineIntelligence: {coverageAnalysis, qualityScore, bottlenecks: [{stage, conversionRate, dropoffReason, fix}], forecastAccuracy, risks}, expansionRevenue: {currentNRR, nrrDrivers: [{driver, impact, tactics}], expansionPlaybook: [{motion, targetSegment, trigger, playbook, expectedLift}]}, churnIntelligence: {churnBreakdown: [{reason, percentage, preventable, intervention}], atRiskAccounts: [{profile, signals, action}], retentionPlaybook}, pricingIntelligence: {pricePositioning, valueCapture, pricingGaps: [{gap, opportunity, recommendation}], packagingRecommendation}, growthLevers: [{lever, currentState, opportunity, expectedImpact, effort ("Low"/"Medium"/"High"), timeToImpact, playbook}], competitiveIntelligence: {winLossAnalysis: [{competitor, winRate, lossReasons, counterStrategies}], marketPosition, differentiators, vulnerabilities}, revenueOperations: {processGaps: [{area, gap, fix, impact}], toolingRecommendations, revopsRoadmap: [{quarter, initiative, expectedImpact}]}, forecastModel: {bestCase, baseCase, worstCase, keyAssumptions, riskFactors}, quickWins: [{action, impact, effort, timeline}] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.48 ESG & Sustainability Report Builder ---
 app.post('/api/esg-report-builder', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, reportingYear, revenue, employees, energyConsumption, ghgEmissions, waterUsage, wasteGenerated, renewableEnergyPct, diversityMetrics, safetyIncidents, communityInvestment, boardComposition, executivePay, supplyChainStandards, certifications, frameworks, goals } = req.body;
