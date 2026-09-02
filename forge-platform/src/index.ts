@@ -39500,6 +39500,82 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.65 AI Investor Relations & Fundraising Command Center ---
+app.post('/api/investor-relations', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const { companyName, stage, industry, foundingYear, currentARR, growthRate, burnRate, runway, headcount, totalRaised, lastRoundSize, lastRoundValuation, lastRoundDate, useOfFunds, targetRaiseAmount, targetValuation, fundraisingTimeline, investorType, keyMetrics, competitiveAdvantage, founders, boardMembers, keyRisks, exitStrategy } = req.body;
+    const p = `You are a world-class investor relations strategist and fundraising advisor. Analyze this company's profile and create a comprehensive IR & fundraising command center.
+
+Company: ${companyName}, Stage: ${stage}, Industry: ${industry}, Founded: ${foundingYear}
+Current ARR: ${currentARR}, Growth Rate: ${growthRate}, Burn Rate: ${burnRate}, Runway: ${runway}
+Headcount: ${headcount}, Total Raised: ${totalRaised}, Last Round: ${lastRoundSize} at ${lastRoundValuation} (${lastRoundDate})
+Target Raise: ${targetRaiseAmount} at ${targetValuation}, Timeline: ${fundraisingTimeline}
+Investor Type: ${investorType}, Key Metrics: ${keyMetrics}, Advantage: ${competitiveAdvantage}
+Founders: ${founders}, Board: ${boardMembers}, Risks: ${keyRisks}, Exit: ${exitStrategy}
+
+Return JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "fundraisingReadinessScore": number (0-100),
+  "fundraisingReadinessStatus": "Ready|Nearly Ready|Not Ready",
+  "impliedValuationRange": {"low":"string","mid":"string","high":"string","methodology":"string"},
+  "keyStrengths": ["string"],
+  "keyWeaknesses": ["string"],
+  "narrativeFramework": {
+    "elevatorPitch": "string (30 sec)",
+    "problemStatement": "string",
+    "solutionStatement": "string",
+    "marketOpportunity": "string",
+    "businessModel": "string",
+    "tractionHighlights": ["string"],
+    "whyNow": "string",
+    "unfairAdvantage": "string",
+    "visionStatement": "string"
+  },
+  "targetInvestorList": [
+    {"firm":"string","tier":"Lead|Co-lead|Fill","focus":"string","checkSize":"string","relevantPortfolio":["string"],"warmIntroPath":"string","pitchAngle":"string","likelihood":"High|Medium|Low"}
+  ],
+  "fundraisingTimeline": [
+    {"week":"string","milestones":["string"],"materials":["string"],"targets":["string"]}
+  ],
+  "dataRoomChecklist": [
+    {"category":"string","documents":["string"],"priority":"Critical|High|Medium","status":"Ready|Draft|Missing"}
+  ],
+  "metricsNarrative": {
+    "northStarMetric": "string",
+    "tier1Metrics": [{"metric":"string","value":"string","benchmark":"string","trend":"string","story":"string"}],
+    "tier2Metrics": [{"metric":"string","value":"string","context":"string"}],
+    "unitEconomics": {"cac":"string","ltv":"string","ltvCacRatio":"string","paybackPeriod":"string","grossMargin":"string","netRevenueRetention":"string"}
+  },
+  "objectionHandlers": [
+    {"objection":"string","category":"Market|Team|Traction|Valuation|Competition|Timing","response":"string","supportingData":"string"}
+  ],
+  "termSheetGuidance": {
+    "recommendedStructure": "string",
+    "keyTermsToNegotiate": [{"term":"string","yourPosition":"string","reason":"string","redline":"string"}],
+    "termsToAvoid": ["string"],
+    "proInvestorTermsToWatch": ["string"]
+  },
+  "postRoundStrategy": {
+    "milestones100Days": ["string"],
+    "boardCadence": "string",
+    "investorUpdates": "string",
+    "nextRoundPrep": "string"
+  },
+  "riskMitigation": [{"risk":"string","severity":"Critical|High|Medium","mitigation":"string","proofPoint":"string"}],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.64 AI Product Roadmap & Prioritization Engine ---
 app.post('/api/product-roadmap', requireAuth, async (req: AuthRequest, res) => {
   try {
