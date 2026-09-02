@@ -39500,6 +39500,79 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.46 AI Sales Intelligence & Pipeline Acceleration Engine ---
+app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, product, currentARR, dealSize, salesCycle, winRate, competitors, targetMarket, salesTeamSize } = req.body;
+  const p = `You are a world-class Chief Revenue Officer and sales strategy expert. Create a comprehensive sales intelligence and pipeline acceleration report.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Product/Service: ${product || 'Unknown'}
+Current ARR: ${currentARR || 'Unknown'}
+Average Deal Size: ${dealSize || 'Unknown'}
+Sales Cycle: ${salesCycle || 'Unknown'}
+Win Rate: ${winRate || 'Unknown'}
+Competitors: ${competitors || 'Unknown'}
+Target Market: ${targetMarket || 'Unknown'}
+Sales Team Size: ${salesTeamSize || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Sales Intelligence Report for [company]",
+  "executiveSummary": "3-sentence sales performance assessment and growth opportunity",
+  "salesScore": <number 0-100>,
+  "salesMaturity": "Reactive|Process-Driven|Data-Informed|Predictive|AI-Powered",
+  "biggestPipelineLeak": "largest deal loss cause",
+  "fastestWinOpportunity": "quickest path to more closed deals",
+  "revenueUplift": "estimated revenue increase from full program",
+  "salesAudit": {
+    "prospecting": { "score": <0-100>, "finding": "assessment", "fix": "improvement" },
+    "discovery": { "score": <0-100>, "finding": "assessment", "fix": "improvement" },
+    "demoPitch": { "score": <0-100>, "finding": "assessment", "fix": "improvement" },
+    "proposalNegotiation": { "score": <0-100>, "finding": "assessment", "fix": "improvement" },
+    "closingVelocity": { "score": <0-100>, "finding": "assessment", "fix": "improvement" },
+    "accountExpansion": { "score": <0-100>, "finding": "assessment", "fix": "improvement" }
+  },
+  "idealCustomerProfile": {
+    "firmographics": { "companySize": "ideal size", "revenue": "revenue range", "industry": "top industries", "geography": "key markets" },
+    "technographics": ["tool 1", "tool 2"],
+    "buyingSignals": ["signal 1", "signal 2"],
+    "decisionMakers": ["persona 1", "persona 2"],
+    "disqualifiers": ["red flag 1", "red flag 2"]
+  },
+  "salesPlaybooks": [
+    { "scenario": "sales scenario", "approach": "recommended approach", "keyMessages": ["message 1"], "objectionHandling": [{ "objection": "common objection", "response": "ideal response" }], "closingTactic": "closing technique" }
+  ],
+  "pipelineAcceleration": [
+    { "stage": "pipeline stage", "avgDaysStuck": <number>, "dropoffRate": "% that drop here", "accelerationTactic": "specific tactic to speed up", "tooling": "recommended tool", "expectedImpact": "days saved / win rate lift" }
+  ],
+  "competitiveBattlecards": [
+    { "competitor": "competitor name", "theirStrength": "their main selling point", "theirWeakness": "their main weakness", "winStrategy": "how to beat them", "landMines": ["trap to set 1"], "loseReason": "why you lose to them" }
+  ],
+  "revenueModel": {
+    "targetARR": "12-month ARR target",
+    "requiredDeals": <number>,
+    "pipelineNeeded": "pipeline coverage needed",
+    "headcountPlan": "sales hiring plan",
+    "quotaModel": "rep quota structure"
+  },
+  "salesTechStack": [
+    { "category": "tech category", "recommendation": "specific tool", "useCase": "how to use it", "estimatedROI": "ROI" }
+  ],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.45 AI Innovation & R&D Strategy Engine ---
 app.post('/api/innovation-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
