@@ -39500,6 +39500,23 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.29 AI Product-Led Growth & Monetization Engine ---
+app.post('/api/plg-monetization', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { productType, targetMarket, currentModel, monthlyActiveUsers, conversionRate, arpu, churnRate, growthGoals, competitors } = req.body;
+  const p = `You are a PLG and monetization strategy expert. Build a comprehensive product-led growth and monetization framework.
+Product: Type=${productType}, Market=${targetMarket}, Model=${currentModel}, MAU=${monthlyActiveUsers}, Conversion=${conversionRate}%, ARPU=${arpu}, Churn=${churnRate}%, Goals=${growthGoals}, Competitors=${competitors}
+Return JSON: { reportTitle, executiveSummary, plgScore (0-100), monetizationScore (0-100), primaryGrowthLever, plgFramework: { acquisitionEngine, activationPlaybook, retentionMechanics, revenueExpansion, referralProgram }, freeTrialStrategy: { model, duration, features[], limitations[], conversionTriggers[], upgradeMoments[] }, pricingArchitecture: { strategy, tiers: [ { name, price, features[], targetUser, conversionRole } ], packagingPrinciples[], valueMetric }, expansionRevenue: { netRevenueRetention, expansionMotions[], upsellTriggers[], crossSellOpportunities[], csPlaybook }, viralGrowthMechanics: [ { mechanic, type, coefficient, implementation } ], productActivation: { ahamoment, timeToValue, onboardingFlow[], featureAdoption[], successMilestones[] }, growthExperiments: [ { hypothesis, metric, test, expectedLift, priority } ], metrics: [ { name, current, target, benchmark, trend } ], thirtyDayPlan: [ { action, owner, metric, goal } ], quickWins: [ { win, effort, impact, timeline } ] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'No JSON' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.28 AI Regulatory Compliance & ESG Strategy Engine ---
 app.post('/api/compliance-esg', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
