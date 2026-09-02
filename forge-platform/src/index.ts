@@ -39500,6 +39500,90 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.67 AI Pricing Psychology & Revenue Optimization Engine ---
+app.post('/api/pricing-optimization', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const { companyName, productName, industry, currentPrice, pricingModel, revenueGoal, targetSegments, competitorPricing, cogs, grossMargin, churnRate, nps, salesCycle, dealSizes, expansionRevenue, geographies, pricingChallenges, strategicGoals } = req.body;
+    const p = `You are a world-class pricing strategist and behavioral economist. Analyze this company's pricing context and create a comprehensive AI-powered pricing optimization report using psychology, economics, and data.
+
+Company: ${companyName}, Product: ${productName}, Industry: ${industry}
+Current Price: ${currentPrice}, Model: ${pricingModel}, Revenue Goal: ${revenueGoal}
+Target Segments: ${targetSegments}, Competitor Pricing: ${competitorPricing}
+COGS: ${cogs}, Gross Margin: ${grossMargin}, Churn: ${churnRate}, NPS: ${nps}
+Sales Cycle: ${salesCycle}, Deal Sizes: ${dealSizes}, Expansion Revenue: ${expansionRevenue}
+Geographies: ${geographies}, Challenges: ${pricingChallenges}, Goals: ${strategicGoals}
+
+Return JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "pricingHealthScore": number (0-100),
+  "pricingHealthStatus": "Optimized|Good|Needs Work|Critical",
+  "estimatedRevenueUplift": "string",
+  "recommendedPricePoint": "string",
+  "psychologyPrinciples": [
+    {"principle":"string","application":"string","expectedImpact":"string","implementationTactic":"string"}
+  ],
+  "pricingModelAnalysis": {
+    "currentModelStrengths": ["string"],
+    "currentModelWeaknesses": ["string"],
+    "recommendedModel": "string",
+    "migrationPath": "string",
+    "migrationRisks": ["string"]
+  },
+  "tieringStrategy": {
+    "recommendedTiers": [
+      {"tierName":"string","targetSegment":"string","price":"string","billingCadence":"string","features":["string"],"positioning":"string","expectedConversionRate":"string","expectedARPU":"string","upsellPath":"string"}
+    ],
+    "freeTrialStrategy": "string",
+    "freemiumRecommendation": "string"
+  },
+  "valueMetricAnalysis": {
+    "currentValueMetric": "string",
+    "alternativeValueMetrics": [{"metric":"string","pros":["string"],"cons":["string"],"revenueImpact":"string"}],
+    "recommendedValueMetric": "string",
+    "rationale": "string"
+  },
+  "expansionRevenuePlaybook": {
+    "upsellTriggers": ["string"],
+    "crossSellOpportunities": ["string"],
+    "expansionMRRTarget": "string",
+    "netRevenueRetentionTarget": "string",
+    "expansionTactics": [{"tactic":"string","trigger":"string","expectedLift":"string"}]
+  },
+  "competitivePricingStrategy": {
+    "positioningVsCompetitors": "string",
+    "priceAnchoring": "string",
+    "competitiveResponse": [{"competitor":"string","theirPrice":"string","ourResponse":"string","rationale":"string"}],
+    "priceWarStrategy": "string"
+  },
+  "pricingExperiments": [
+    {"experiment":"string","hypothesis":"string","testGroup":"string","controlGroup":"string","metric":"string","duration":"string","expectedLift":"string","risk":"Low|Medium|High"}
+  ],
+  "discountingPolicy": {
+    "currentIssues": ["string"],
+    "recommendedPolicy": "string",
+    "approvalMatrix": [{"discountLevel":"string","approver":"string","conditions":"string"}],
+    "discountingGuardrails": ["string"]
+  },
+  "geographicPricingStrategy": [
+    {"region":"string","pricingAdjustment":"string","rationale":"string","localConsiderations":"string"}
+  ],
+  "implementationRoadmap": [
+    {"phase":"string","timeline":"string","actions":["string"],"expectedRevenueLift":"string","risk":"string"}
+  ],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.66 AI Partnership & Business Development Intelligence Engine ---
 app.post('/api/partnership-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
