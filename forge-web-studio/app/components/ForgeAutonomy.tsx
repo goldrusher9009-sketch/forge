@@ -597,6 +597,124 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.65 AI Executive Coaching & Leadership Accelerator ---
+const LEADERSHIP_ARCHETYPE_COLOR: Record<string,string> = { 'Visionary':'bg-purple-700','Executor':'bg-blue-700','Coach':'bg-green-700','Diplomat':'bg-teal-700','Innovator':'bg-orange-700','Strategist':'bg-indigo-700' };
+const DEV_LEVEL_COLOR: Record<string,string> = { 'Novice':'bg-gray-600','Developing':'bg-yellow-700','Proficient':'bg-blue-700','Advanced':'bg-green-700','Mastery':'bg-purple-700' };
+function ExecCoachingPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ role:'', industry:'', yearsExperience:'', currentChallenges:'', careerGoals:'', leadershipStyle:'', teamSize:'', feedback:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/exec-coaching`, { method:'POST', headers:{'Content-Type':'application/json',...( (typeof window!=='undefined'&&(window as any).__forgeToken) ? {'Authorization':`Bearer ${(window as any).__forgeToken}`} : {})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error||'Error');
+      setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">👔 AI Executive Coaching & Leadership Accelerator</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {([['role','Your Role','VP of Engineering'],['industry','Industry','Technology'],['yearsExperience','Years Experience','10 years'],['teamSize','Team Size','20 people'],['leadershipStyle','Leadership Style','Collaborative, data-driven'],['currentChallenges','Current Challenges','Scaling team, executive presence'],['careerGoals','Career Goals (3 years)','Become CTO'],['feedback','Recent Feedback (360)','Need better strategic communication']] as [string,string,string][]).map(([k,l,ph])=>(
+          <div key={k} className={k==='currentChallenges'||k==='careerGoals'||k==='feedback'?'col-span-2':''}>
+            <label className="text-xs text-gray-400 block mb-1">{l}</label>
+            <input className="w-full bg-gray-700 text-white px-2 py-1.5 rounded text-sm" placeholder={ph} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-medium disabled:opacity-50">{loading?'Analyzing…':'Generate Coaching Plan'}</button>
+      {error && <div className="text-red-400 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-4 mt-2">
+          <div className="bg-gray-800 rounded p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className={`px-2 py-1 rounded text-xs font-bold text-white ${LEADERSHIP_ARCHETYPE_COLOR[result.leadershipArchetype]||'bg-gray-600'}`}>{result.leadershipArchetype}</span>
+              <span className="text-gray-400 text-sm">Leadership Score: <span className="text-white font-bold">{result.leadershipScore}/100</span></span>
+            </div>
+            <h3 className="text-white font-bold text-lg">{result.coachingTitle}</h3>
+            <p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p>
+          </div>
+          {result.strengthsAssessment?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-green-400 font-semibold mb-2">💪 Core Strengths</h4>
+              <div className="space-y-2">{result.strengthsAssessment.map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="text-white font-medium text-sm">{s.strength}</div>
+                  <div className="text-gray-400 text-xs mt-1">{s.evidence}</div>
+                  <div className="text-purple-400 text-xs mt-1">Leverage: {s.leverageOpportunity}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.developmentAreas?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-yellow-400 font-semibold mb-2">📈 Development Areas</h4>
+              <div className="space-y-2">{result.developmentAreas.map((d:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-white font-medium text-sm">{d.area}</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs ${DEV_LEVEL_COLOR[d.currentLevel]||'bg-gray-600'}`}>{d.currentLevel}</span>
+                    <span className="text-gray-400 text-xs">→</span>
+                    <span className={`px-1.5 py-0.5 rounded text-xs ${DEV_LEVEL_COLOR[d.targetLevel]||'bg-gray-600'}`}>{d.targetLevel}</span>
+                  </div>
+                  <ul className="list-disc list-inside text-gray-400 text-xs space-y-0.5">{d.developmentActions?.map((a:string,j:number)=><li key={j}>{a}</li>)}</ul>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.executivePresence && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-blue-400 font-semibold mb-2">🎯 Executive Presence — Score: {result.executivePresence.score}/100</h4>
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                {[['Communication',result.executivePresence.communication],['Influencing',result.executivePresence.influencing],['Gravitas',result.executivePresence.gravitas]].map(([l,v])=>(
+                  <div key={l} className="bg-gray-700 rounded p-2"><div className="text-gray-400 text-xs">{l}</div><div className="text-white text-xs mt-0.5">{v}</div></div>
+                ))}
+              </div>
+              {result.executivePresence.improvements?.length>0 && <ul className="list-disc list-inside text-gray-400 text-xs space-y-0.5">{result.executivePresence.improvements.map((x:string,i:number)=><li key={i}>{x}</li>)}</ul>}
+            </div>
+          )}
+          {result.careerRoadmap?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-teal-400 font-semibold mb-2">🗺️ Career Roadmap</h4>
+              <div className="space-y-2">{result.careerRoadmap.map((m:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-white font-medium text-sm">{m.milestone}</span>
+                    <span className="text-teal-400 text-xs">{m.timeline}</span>
+                  </div>
+                  <ul className="list-disc list-inside text-gray-400 text-xs space-y-0.5">{m.keyActions?.slice(0,3).map((a:string,j:number)=><li key={j}>{a}</li>)}</ul>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.blindSpots?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-red-400 font-semibold mb-2">⚠️ Blind Spots</h4>
+              <div className="space-y-2">{result.blindSpots.map((b:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-2">
+                  <div className="text-white font-medium text-sm">{b.blindSpot}</div>
+                  <div className="text-gray-400 text-xs mt-1">Impact: {b.impact}</div>
+                  <div className="text-yellow-400 text-xs mt-1">Mitigation: {b.mitigation}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins?.length>0 && (
+            <div className="bg-gray-800 rounded p-4">
+              <h4 className="text-orange-400 font-semibold mb-2">⚡ Quick Wins</h4>
+              <ul className="list-disc list-inside text-gray-300 text-sm space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i}>{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.64 AI Product Launch Command Center ---
 const LAUNCH_RISK_COLOR: Record<string,string> = { 'Low':'bg-green-700','Moderate':'bg-yellow-700','High':'bg-orange-700','Critical':'bg-red-700' };
 const TASK_STATUS_COLOR: Record<string,string> = { 'Complete':'bg-green-700','In Progress':'bg-yellow-700','Not Started':'bg-gray-600' };
@@ -10993,7 +11111,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -11081,6 +11199,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'execcoaching', label: '👔 Exec Coaching' },
     { id: 'productlaunchcmd', label: '🚀 Launch Command' },
     { id: 'salesforecast2', label: '📈 Sales Forecast' },
     { id: 'brandaudit2', label: '🎨 Brand Audit' },
@@ -11116,6 +11235,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'execcoaching', label: '👔 Exec Coaching' },
     { id: 'productlaunchcmd', label: '🚀 Launch Command' },
     { id: 'salesforecast2', label: '📈 Sales Forecast' },
     { id: 'brandaudit2', label: '🎨 Brand Audit' },
@@ -11291,6 +11411,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
         {tab === 'salesforecast2' && <SalesForecastPanel api={api} />}
         {tab === 'brandaudit2' && <BrandAuditPanel api={api} />}
@@ -11320,6 +11441,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'digitaltransform' && <DigitalTransformPanel api={api} />}
+        {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
         {tab === 'salesforecast2' && <SalesForecastPanel api={api} />}
         {tab === 'brandaudit2' && <BrandAuditPanel api={api} />}
@@ -11332,6 +11454,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'execcoaching' && <ExecCoachingPanel api={api} />}
         {tab === 'productlaunchcmd' && <ProductLaunchCommandPanel api={api} />}
         {tab === 'salesforecast2' && <SalesForecastPanel api={api} />}
         {tab === 'brandaudit2' && <BrandAuditPanel api={api} />}

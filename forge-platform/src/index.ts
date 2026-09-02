@@ -39500,6 +39500,48 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.65 AI Executive Coaching & Leadership Accelerator ---
+app.post('/api/exec-coaching', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { role, industry, yearsExperience, currentChallenges, careerGoals, leadershipStyle, teamSize, feedback } = req.body;
+    const p = `You are an executive coach and leadership development expert. Generate a comprehensive executive coaching and leadership acceleration plan.
+Role: ${role || 'VP of Engineering'}
+Industry: ${industry || 'Technology'}
+Years Experience: ${yearsExperience || '10 years'}
+Current Challenges: ${currentChallenges || 'Scaling team, improving executive presence'}
+Career Goals: ${careerGoals || 'Become CTO within 3 years'}
+Leadership Style: ${leadershipStyle || 'Collaborative and data-driven'}
+Team Size: ${teamSize || '20 people'}
+Recent Feedback: ${feedback || 'Need to improve strategic communication'}
+
+Return JSON only:
+{
+  "coachingTitle": "string",
+  "executiveSummary": "string",
+  "leadershipScore": 0-100,
+  "leadershipArchetype": "Visionary|Executor|Coach|Diplomat|Innovator|Strategist",
+  "strengthsAssessment": [{ "strength": "string", "evidence": "string", "leverageOpportunity": "string" }],
+  "developmentAreas": [{ "area": "string", "currentLevel": "Novice|Developing|Proficient|Advanced|Mastery", "targetLevel": "Proficient|Advanced|Mastery", "developmentActions": ["string"] }],
+  "executivePresence": { "score": 0-100, "communication": "string", "influencing": "string", "gravitas": "string", "improvements": ["string"] },
+  "careerRoadmap": [{ "milestone": "string", "timeline": "string", "requiredSkills": ["string"], "keyActions": ["string"], "successMetrics": ["string"] }],
+  "coachingPlan": [{ "month": "string", "focus": "string", "practices": ["string"], "accountability": ["string"], "reflection": ["string"] }],
+  "blindSpots": [{ "blindSpot": "string", "impact": "string", "awareness": "string", "mitigation": "string" }],
+  "networkingStrategy": { "currentNetwork": "string", "targetConnections": ["string"], "communityInvolvement": ["string"], "thoughtLeadership": ["string"] },
+  "emotionalIntelligence": { "selfAwareness": 0-100, "selfRegulation": 0-100, "empathy": 0-100, "socialSkills": 0-100, "improvements": ["string"] },
+  "delegationFramework": { "currentStyle": "string", "optimalStyle": "string", "delegationMatrix": [{ "task": "string", "currentApproach": "string", "recommended": "string" }] },
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.64 AI Product Launch Command Center ---
 app.post('/api/product-launch-command', requireAuth, async (req: AuthRequest, res) => {
   try {
