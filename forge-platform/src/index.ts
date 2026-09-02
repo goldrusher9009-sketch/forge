@@ -39500,6 +39500,56 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.33 AI Operations Excellence & Process Intelligence Engine ---
+app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, teamSize, revenue, painPoints, maturityLevel } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const p = `You are an elite operations excellence and business process optimization expert. Generate a comprehensive ops excellence strategy for: Company: ${companyName||'Tech Company'}, Industry: ${industry||'SaaS'}, Team Size: ${teamSize||'50'}, Revenue: ${revenue||'$5M ARR'}, Pain Points: ${painPoints||'inefficient processes, poor visibility'}, Maturity Level: ${maturityLevel||'Developing'}.
+
+Return ONLY valid JSON:
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "opsScore": 72,
+  "maturityLevel": "string",
+  "topBottleneck": "string",
+  "estimatedWaste": "string",
+  "processAudit": [{"process":"string","currentState":"string","efficiency":"string","issue":"string","priority":"High|Medium|Low"}],
+  "automationOpportunities": [{"process":"string","tool":"string","effort":"string","roiEstimate":"string","timeline":"string"}],
+  "opsFramework": {
+    "methodology": "string",
+    "cadences": [{"cadence":"string","frequency":"string","participants":"string","output":"string"}],
+    "toolStack": [{"category":"string","recommended":"string","purpose":"string"}]
+  },
+  "metricsSystem": {
+    "northStarMetric": "string",
+    "operationalKPIs": [{"name":"string","current":"string","target":"string","owner":"string"}],
+    "dashboardStructure": "string"
+  },
+  "scalingInfrastructure": {
+    "currentConstraints": ["string"],
+    "scalingInitiatives": [{"initiative":"string","impact":"string","investment":"string","timeline":"string"}]
+  },
+  "teamEffectiveness": {
+    "structureRecommendation": "string",
+    "communicationOS": "string",
+    "decisionFramework": "string",
+    "hiringPriorities": ["string"]
+  },
+  "thirtyDayPlan": [{"week":"string","focus":"string","actions":["string"],"milestone":"string"}],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = typeof result === 'string' ? result : JSON.stringify(result);
+    let data: any = {};
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.32 AI Market Intelligence & Competitive Moat Engine ---
 app.post('/api/market-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
