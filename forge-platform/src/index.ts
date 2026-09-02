@@ -39500,6 +39500,66 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.47 AI Legal & Contract Intelligence Engine ---
+app.post('/api/legal-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, contractType, counterparty, contractValue, jurisdiction, contractDuration, keyObligations, specialClauses } = req.body;
+  const p = `You are a world-class legal intelligence analyst and contract risk advisor. Analyze this contract scenario and provide comprehensive legal intelligence.
+
+Company: ${companyName}
+Industry: ${industry}
+Contract Type: ${contractType}
+Counterparty: ${counterparty}
+Contract Value: ${contractValue}
+Jurisdiction: ${jurisdiction}
+Duration: ${contractDuration}
+Key Obligations: ${keyObligations}
+Special Clauses: ${specialClauses}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "Legal Intelligence Report for [Company]",
+  "executiveSummary": "...",
+  "riskScore": 0-100,
+  "riskLevel": "Low|Medium|High|Critical",
+  "biggestRisk": "...",
+  "mostUrgentAction": "...",
+  "estimatedExposure": "$X",
+  "contractRiskAudit": {
+    "liabilityLimitations": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "indemnification": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "terminationClauses": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "ipOwnership": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "disputeResolution": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "dataPrivacy": { "score": 0-100, "finding": "...", "recommendation": "..." }
+  },
+  "clauseAnalysis": [
+    { "clause": "...", "riskLevel": "Low|Medium|High|Critical", "currentLanguage": "...", "risk": "...", "redline": "...", "priority": "Must Fix|Should Fix|Nice to Fix" }
+  ],
+  "complianceChecklist": [
+    { "regulation": "...", "applicability": "Required|Recommended|Optional", "currentStatus": "Compliant|Partial|Gap", "action": "...", "deadline": "..." }
+  ],
+  "negotiationPlaybook": [
+    { "issue": "...", "ourPosition": "...", "fallbackPosition": "...", "walkawayPoint": "...", "tactic": "..." }
+  ],
+  "keyMilestones": [
+    { "date": "...", "milestone": "...", "obligation": "...", "consequence": "...", "owner": "..." }
+  ],
+  "exitStrategy": { "terminationRights": "...", "noticePeriod": "...", "penalties": "...", "bestExitScenario": "...", "recommendedExitTriggers": [] },
+  "benchmarkAnalysis": { "fairMarketRate": "...", "paymentTermsBenchmark": "...", "liabilityCapBenchmark": "...", "warrantyBenchmark": "...", "overallFairness": "Favorable|Market|Unfavorable" },
+  "quickWins": []
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!json) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.46 AI Sales Intelligence & Pipeline Acceleration Engine ---
 app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;

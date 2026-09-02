@@ -602,6 +602,188 @@ const TIER_COLOR: Record<string,string> = { 'Free':'bg-gray-700','Starter':'bg-b
 const GROWTH_LEVER_COLOR: Record<string,string> = { 'Viral':'bg-pink-800','Product':'bg-blue-800','Content':'bg-green-800','Paid':'bg-yellow-800','Community':'bg-purple-800' };
 const THREAT_COLOR: Record<string,string> = { High:'bg-red-100 text-red-700', Medium:'bg-yellow-100 text-yellow-700', Low:'bg-green-100 text-green-700' };
 const PRIORITY_COLOR3: Record<string,string> = { High:'text-red-600', Medium:'text-yellow-600', Low:'text-green-600' };
+const LI_RISK_COLOR = (s:number) => s>=80?'text-green-600':s>=60?'text-blue-600':s>=40?'text-yellow-600':'text-red-600';
+const LI_RISK_LEVEL: Record<string,string> = { Low:'bg-green-100 text-green-700', Medium:'bg-yellow-100 text-yellow-700', High:'bg-orange-100 text-orange-700', Critical:'bg-red-100 text-red-700' };
+const LI_PRIORITY_COLOR: Record<string,string> = { 'Must Fix':'bg-red-100 text-red-700', 'Should Fix':'bg-orange-100 text-orange-700', 'Nice to Fix':'bg-blue-100 text-blue-700' };
+function LegalIntelligencePanel({ api }:{ api:string }) {
+  const [form,setForm]=React.useState({ companyName:'',industry:'',contractType:'',counterparty:'',contractValue:'',jurisdiction:'',contractDuration:'',keyObligations:'',specialClauses:'' });
+  const [res,setRes]=React.useState<any>(null);
+  const [loading,setLoading]=React.useState(false);
+  const [error,setError]=React.useState('');
+  const [section,setSection]=React.useState('audit');
+  const submit=async()=>{
+    setLoading(true);setError('');setRes(null);
+    try{
+      const r=await fetch(`${api}/api/legal-intelligence`,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(form)});
+      if(!r.ok){const e=await r.json();throw new Error(e.error||'Failed');}
+      setRes(await r.json());
+    }catch(e:any){setError(e.message);}finally{setLoading(false);}
+  };
+  return (
+    <div className="space-y-6">
+      <div className="bg-gradient-to-r from-slate-700 to-indigo-700 rounded-xl p-6 text-white">
+        <h2 className="text-2xl font-bold mb-1">⚖️ AI Legal & Contract Intelligence</h2>
+        <p className="text-slate-200 text-sm">Contract risk audit, clause redlines, compliance, negotiation playbook & exit strategy</p>
+      </div>
+      {!res&&(<div className="bg-white rounded-xl border p-6 space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          {(['companyName','industry','contractType','counterparty','contractValue','contractDuration','jurisdiction'] as const).map(f=>(
+            <div key={f}><label className="block text-xs font-medium text-gray-600 mb-1 capitalize">{f.replace(/([A-Z])/g,' $1')}</label>
+            <input className="w-full border rounded-lg px-3 py-2 text-sm" value={form[f]} onChange={e=>setForm(p=>({...p,[f]:e.target.value}))} /></div>
+          ))}
+        </div>
+        <div><label className="block text-xs font-medium text-gray-600 mb-1">Key Obligations</label>
+          <textarea className="w-full border rounded-lg px-3 py-2 text-sm" rows={2} value={form.keyObligations} onChange={e=>setForm(p=>({...p,keyObligations:e.target.value}))} /></div>
+        <div><label className="block text-xs font-medium text-gray-600 mb-1">Special Clauses / Concerns</label>
+          <textarea className="w-full border rounded-lg px-3 py-2 text-sm" rows={2} value={form.specialClauses} onChange={e=>setForm(p=>({...p,specialClauses:e.target.value}))} /></div>
+        {error&&<div className="text-red-600 text-sm bg-red-50 rounded p-3">{error}</div>}
+        <button onClick={submit} disabled={loading} className="w-full bg-indigo-700 text-white py-3 rounded-xl font-semibold hover:bg-indigo-800 disabled:opacity-50">
+          {loading?'Analyzing Contract…':'Generate Legal Intelligence Report'}
+        </button>
+      </div>)}
+      {res&&(<div className="space-y-4">
+        <div className="bg-gradient-to-br from-slate-50 to-indigo-50 rounded-xl border border-indigo-200 p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-1">{res.reportTitle}</h3>
+          <p className="text-sm text-gray-700 mb-4">{res.executiveSummary}</p>
+          <div className="grid grid-cols-4 gap-3">
+            <div className="bg-white rounded-lg p-3 text-center border"><div className={`text-2xl font-bold ${LI_RISK_COLOR(res.riskScore)}`}>{res.riskScore}</div><div className="text-xs text-gray-500">Risk Score</div></div>
+            <div className="bg-white rounded-lg p-3 text-center border"><div className={`text-xs font-bold px-2 py-1 rounded-full inline-block ${LI_RISK_LEVEL[res.riskLevel]||'bg-gray-100 text-gray-700'}`}>{res.riskLevel}</div><div className="text-xs text-gray-500 mt-1">Risk Level</div></div>
+            <div className="bg-white rounded-lg p-3 text-center border"><div className="text-sm font-bold text-red-600">{res.estimatedExposure}</div><div className="text-xs text-gray-500">Exposure</div></div>
+            <div className="bg-white rounded-lg p-3 text-center border"><div className="text-xs font-bold text-indigo-600">{res.benchmarkAnalysis?.overallFairness}</div><div className="text-xs text-gray-500">Fairness</div></div>
+          </div>
+          <div className="mt-3 p-3 bg-red-50 rounded-lg border border-red-200">
+            <div className="text-xs font-semibold text-red-700">🚨 Biggest Risk:</div>
+            <div className="text-sm text-red-800">{res.biggestRisk}</div>
+          </div>
+          <div className="mt-2 p-3 bg-orange-50 rounded-lg border border-orange-200">
+            <div className="text-xs font-semibold text-orange-700">⚡ Most Urgent Action:</div>
+            <div className="text-sm text-orange-800">{res.mostUrgentAction}</div>
+          </div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {['audit','clauses','compliance','negotiation','milestones','exit','benchmark'].map(s=>(
+            <button key={s} onClick={()=>setSection(s)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${section===s?'bg-indigo-700 text-white':'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+              {s==='audit'?'🔍 Risk Audit':s==='clauses'?'📄 Clauses':s==='compliance'?'✅ Compliance':s==='negotiation'?'🤝 Negotiate':s==='milestones'?'📅 Milestones':s==='exit'?'🚪 Exit Strategy':'📊 Benchmark'}
+            </button>
+          ))}
+        </div>
+        {section==='audit'&&res.contractRiskAudit&&(<div className="bg-white rounded-xl border p-5">
+          <h4 className="font-semibold text-gray-800 mb-4">🔍 Contract Risk Audit</h4>
+          <div className="space-y-3">
+            {Object.entries(res.contractRiskAudit).map(([k,v]:any)=>(
+              <div key={k} className="border rounded-lg p-3">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700 capitalize">{k.replace(/([A-Z])/g,' $1')}</span>
+                  <div className="flex items-center gap-2"><div className="w-24 bg-gray-100 rounded-full h-2"><div className="bg-indigo-500 h-2 rounded-full" style={{width:`${v.score}%`}}></div></div><span className={`text-sm font-bold ${LI_RISK_COLOR(v.score)}`}>{v.score}</span></div>
+                </div>
+                <p className="text-xs text-gray-600 mb-1">{v.finding}</p>
+                <p className="text-xs text-indigo-600 font-medium">💡 {v.recommendation}</p>
+              </div>
+            ))}
+          </div>
+        </div>)}
+        {section==='clauses'&&res.clauseAnalysis?.length&&(<div className="bg-white rounded-xl border p-5">
+          <h4 className="font-semibold text-gray-800 mb-4">📄 Clause Analysis & Redlines</h4>
+          <div className="space-y-4">
+            {res.clauseAnalysis.map((cl:any,i:number)=>(
+              <div key={i} className="border rounded-xl p-4">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-medium text-sm text-gray-800">{cl.clause}</span>
+                  <div className="flex gap-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LI_RISK_LEVEL[cl.riskLevel]||'bg-gray-100 text-gray-700'}`}>{cl.riskLevel}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${LI_PRIORITY_COLOR[cl.priority]||'bg-gray-100 text-gray-700'}`}>{cl.priority}</span>
+                  </div>
+                </div>
+                <div className="bg-red-50 rounded p-2 mb-2 border border-red-100"><div className="text-xs text-red-600 font-medium mb-1">Current Language:</div><div className="text-xs text-gray-700 italic">"{cl.currentLanguage}"</div></div>
+                <div className="text-xs text-orange-700 mb-2">⚠️ Risk: {cl.risk}</div>
+                <div className="bg-green-50 rounded p-2 border border-green-100"><div className="text-xs text-green-600 font-medium mb-1">✏️ Suggested Redline:</div><div className="text-xs text-gray-700">"{cl.redline}"</div></div>
+              </div>
+            ))}
+          </div>
+        </div>)}
+        {section==='compliance'&&res.complianceChecklist?.length&&(<div className="bg-white rounded-xl border p-5">
+          <h4 className="font-semibold text-gray-800 mb-4">✅ Compliance Checklist</h4>
+          <div className="space-y-3">
+            {res.complianceChecklist.map((c:any,i:number)=>(
+              <div key={i} className="border rounded-lg p-3">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-medium text-sm text-gray-800">{c.regulation}</span>
+                  <div className="flex gap-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${c.currentStatus==='Compliant'?'bg-green-100 text-green-700':c.currentStatus==='Partial'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700'}`}>{c.currentStatus}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${c.applicability==='Required'?'bg-red-50 text-red-600':c.applicability==='Recommended'?'bg-blue-50 text-blue-600':'bg-gray-50 text-gray-600'}`}>{c.applicability}</span>
+                  </div>
+                </div>
+                <div className="text-xs text-gray-700 mb-1">🎯 {c.action}</div>
+                {c.deadline&&<div className="text-xs text-orange-600">⏰ Deadline: {c.deadline}</div>}
+              </div>
+            ))}
+          </div>
+        </div>)}
+        {section==='negotiation'&&res.negotiationPlaybook?.length&&(<div className="bg-white rounded-xl border p-5">
+          <h4 className="font-semibold text-gray-800 mb-4">🤝 Negotiation Playbook</h4>
+          <div className="space-y-4">
+            {res.negotiationPlaybook.map((n:any,i:number)=>(
+              <div key={i} className="border rounded-xl p-4">
+                <div className="font-semibold text-sm text-indigo-700 mb-3">{n.issue}</div>
+                <div className="grid grid-cols-3 gap-2 mb-3">
+                  <div className="bg-green-50 rounded p-2 border border-green-100"><div className="text-xs text-green-600 font-medium mb-1">Our Position</div><div className="text-xs text-gray-700">{n.ourPosition}</div></div>
+                  <div className="bg-yellow-50 rounded p-2 border border-yellow-100"><div className="text-xs text-yellow-600 font-medium mb-1">Fallback</div><div className="text-xs text-gray-700">{n.fallbackPosition}</div></div>
+                  <div className="bg-red-50 rounded p-2 border border-red-100"><div className="text-xs text-red-600 font-medium mb-1">Walk Away</div><div className="text-xs text-gray-700">{n.walkawayPoint}</div></div>
+                </div>
+                <div className="text-xs bg-indigo-50 text-indigo-700 rounded p-2">🎯 Tactic: {n.tactic}</div>
+              </div>
+            ))}
+          </div>
+        </div>)}
+        {section==='milestones'&&res.keyMilestones?.length&&(<div className="bg-white rounded-xl border p-5">
+          <h4 className="font-semibold text-gray-800 mb-4">📅 Key Contract Milestones</h4>
+          <div className="space-y-3">
+            {res.keyMilestones.map((m:any,i:number)=>(
+              <div key={i} className="border rounded-lg p-3">
+                <div className="flex justify-between items-start mb-1">
+                  <span className="font-medium text-sm text-gray-800">{m.milestone}</span>
+                  <span className="text-xs font-medium text-indigo-600">{m.date}</span>
+                </div>
+                <div className="text-xs text-gray-600 mb-1">📋 {m.obligation}</div>
+                <div className="flex justify-between text-xs"><span className="text-red-600">⚠️ {m.consequence}</span><span className="text-blue-600">👤 {m.owner}</span></div>
+              </div>
+            ))}
+          </div>
+        </div>)}
+        {section==='exit'&&res.exitStrategy&&(<div className="bg-white rounded-xl border p-5">
+          <h4 className="font-semibold text-gray-800 mb-4">🚪 Exit Strategy</h4>
+          <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-3">
+              {[['Termination Rights',res.exitStrategy.terminationRights],['Notice Period',res.exitStrategy.noticePeriod],['Penalties',res.exitStrategy.penalties]].map(([l,v]:any)=>(
+                <div key={l} className="bg-slate-50 rounded-lg p-3 border"><div className="text-xs text-slate-600 font-medium mb-1">{l}</div><div className="text-sm font-medium text-gray-800">{v}</div></div>
+              ))}
+            </div>
+            <div className="bg-green-50 rounded-lg p-3 border border-green-200"><div className="text-xs font-semibold text-green-700 mb-1">✅ Best Exit Scenario</div><div className="text-sm text-green-900">{res.exitStrategy.bestExitScenario}</div></div>
+            {res.exitStrategy.recommendedExitTriggers?.length&&(<div><div className="text-xs font-medium text-gray-600 mb-2">Exit Triggers to Monitor:</div><div className="flex flex-wrap gap-1">{res.exitStrategy.recommendedExitTriggers.map((t:string,i:number)=><span key={i} className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded">{t}</span>)}</div></div>)}
+          </div>
+        </div>)}
+        {section==='benchmark'&&res.benchmarkAnalysis&&(<div className="bg-white rounded-xl border p-5">
+          <h4 className="font-semibold text-gray-800 mb-4">📊 Market Benchmark Analysis</h4>
+          <div className="grid grid-cols-2 gap-3">
+            {[['Fair Market Rate',res.benchmarkAnalysis.fairMarketRate],['Payment Terms',res.benchmarkAnalysis.paymentTermsBenchmark],['Liability Cap',res.benchmarkAnalysis.liabilityCapBenchmark],['Warranty',res.benchmarkAnalysis.warrantyBenchmark],['Overall Fairness',res.benchmarkAnalysis.overallFairness]].map(([l,v]:any)=>(
+              <div key={l} className={`rounded-lg p-3 border ${v==='Favorable'?'bg-green-50 border-green-200':v==='Unfavorable'?'bg-red-50 border-red-200':'bg-slate-50'}`}>
+                <div className="text-xs text-gray-600 font-medium mb-1">{l}</div>
+                <div className={`text-sm font-bold ${v==='Favorable'?'text-green-700':v==='Unfavorable'?'text-red-700':'text-gray-800'}`}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </div>)}
+        {res.quickWins?.length&&(<div className="bg-green-50 rounded-xl border border-green-200 p-4">
+          <h4 className="font-semibold text-green-800 mb-3">⚡ Quick Wins (Do Before Signing)</h4>
+          <div className="space-y-2">{res.quickWins.map((w:string,i:number)=>(
+            <div key={i} className="flex items-start gap-2"><span className="text-green-500 font-bold text-sm">✓</span><span className="text-sm text-green-900">{w}</span></div>
+          ))}</div>
+        </div>)}
+        <button onClick={()=>{setRes(null);setForm({companyName:'',industry:'',contractType:'',counterparty:'',contractValue:'',jurisdiction:'',contractDuration:'',keyObligations:'',specialClauses:''}); }} className="w-full border border-gray-300 text-gray-600 py-2 rounded-xl text-sm hover:bg-gray-50">New Contract Analysis</button>
+      </div>)}
+    </div>
+  );
+}
 const SI_MATURITY_COLOR: Record<string,string> = { Reactive:'bg-red-100 text-red-700', 'Process-Driven':'bg-orange-100 text-orange-700', 'Data-Informed':'bg-yellow-100 text-yellow-700', Predictive:'bg-blue-100 text-blue-700', 'AI-Powered':'bg-green-100 text-green-700' };
 const SI_SCORE_COLOR = (s:number) => s>=80?'text-green-600':s>=60?'text-blue-600':s>=40?'text-yellow-600':'text-red-600';
 function SalesIntelligencePanel({ api }:{ api:string }) {
@@ -21086,7 +21268,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -21201,6 +21383,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
             { id: 'maintel', label: '🤝 M&A Intelligence' },
             { id: 'innovstrat', label: '💡 Innovation Strategy' },
             { id: 'talentintel', label: '🧠 Talent Intelligence' },
@@ -21226,6 +21409,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -21310,6 +21494,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
             { id: 'maintel', label: '🤝 M&A Intelligence' },
             { id: 'innovstrat', label: '💡 Innovation Strategy' },
             { id: 'talentintel', label: '🧠 Talent Intelligence' },
@@ -21335,6 +21520,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -21405,6 +21591,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
             { id: 'maintel', label: '🤝 M&A Intelligence' },
             { id: 'innovstrat', label: '💡 Innovation Strategy' },
             { id: 'talentintel', label: '🧠 Talent Intelligence' },
@@ -21430,6 +21617,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -21456,6 +21644,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
             { id: 'maintel', label: '🤝 M&A Intelligence' },
             { id: 'innovstrat', label: '💡 Innovation Strategy' },
             { id: 'talentintel', label: '🧠 Talent Intelligence' },
@@ -21481,6 +21670,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
     { id: 'prdgenerator', label: '📋 PRD Generator' },
     { id: 'fundraisingstrat', label: '💎 Fundraising Strategy' },
     { id: 'partnershipstrat', label: '🤝 Partnership Strategy' },
@@ -21557,6 +21747,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
             { id: 'maintel', label: '🤝 M&A Intelligence' },
             { id: 'innovstrat', label: '💡 Innovation Strategy' },
             { id: 'talentintel', label: '🧠 Talent Intelligence' },
@@ -21582,6 +21773,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           { id: 'cxoptimize5', label: '🎯 CX Optimization' },
           { id: 'innovationstrat6', label: '💡 Innovation Strategy' },
           { id: 'salesiq6', label: '💼 Sales Intelligence' },
+          { id: 'legaliq7', label: '⚖️ Legal Intelligence' },
     { id: 'brandarchitect', label: '🏷️ Brand Architecture' },
     { id: 'workforceplanner2', label: '👥 Workforce Plan' },
     { id: 'pricingintel3', label: '💰 Pricing Intel' },
@@ -21754,6 +21946,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -21779,6 +21972,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -21805,6 +21999,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -21830,6 +22025,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -21884,6 +22080,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -21909,6 +22106,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -21935,6 +22133,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -21960,6 +22159,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -22005,6 +22205,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22030,6 +22231,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -22056,6 +22258,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22081,6 +22284,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -22139,6 +22343,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22164,6 +22369,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -22214,6 +22420,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22239,6 +22446,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -22265,6 +22473,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22290,6 +22499,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -22335,6 +22545,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22360,6 +22571,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -22386,6 +22598,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22411,6 +22624,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -22469,6 +22683,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22494,6 +22709,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -22520,6 +22736,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22545,6 +22762,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
@@ -22590,6 +22808,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22615,6 +22834,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -22641,6 +22861,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22666,6 +22887,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'cxoptimizer' && <CXOptimizerPanel api={api} />}
         {tab === 'talentacq' && <TalentAcquisitionPanel api={api} />}
         {tab === 'crisiscommand' && <CrisisCommandPanel api={api} />}
@@ -22720,6 +22942,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22745,6 +22968,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'brandarchitect' && <BrandArchitecturePanel api={api} />}
         {tab === 'workforceplanner2' && <WorkforcePlanningPanel api={api} />}
         {tab === 'pricingintel3' && <PricingIntelligencePanel api={api} />}
@@ -22771,6 +22995,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
           {tab === 'maintel' && <MAIntelligencePanel api={api} />}
           {tab === 'innovstrat' && <InnovationStrategyPanel api={api} />}
           {tab === 'talentintel' && <TalentIntelligencePanel api={api} />}
@@ -22796,6 +23021,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'cxoptimize5' && <CXOptimizationPanel api={api} />}
       {tab === 'innovationstrat6' && <InnovationStrategyPanel api={api} />}
       {tab === 'salesiq6' && <SalesIntelligencePanel api={api} />}
+      {tab === 'legaliq7' && <LegalIntelligencePanel api={api} />}
         {tab === 'prdgenerator' && <PRDGeneratorPanel api={api} />}
         {tab === 'fundraisingstrat' && <FundraisingStrategyPanel api={api} />}
         {tab === 'partnershipstrat' && <PartnershipStrategyPanel api={api} />}
