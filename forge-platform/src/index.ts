@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.14 AI Product-Led Growth & PLG Optimization Engine ---
+app.post('/api/plg-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+  const { productType, currentModel, freeUserCount, paidUserCount, conversionRate, avgRevenuePerUser, topDropoffPoints, activationMetric, northStarMetric, competitorPLG } = req.body;
+  const p = `You are a PLG growth expert. Generate a comprehensive PLG optimization strategy.
+Product: type=${productType}, model=${currentModel}
+Users: free=${freeUserCount}, paid=${paidUserCount}, conversion=${conversionRate}
+Revenue: ARPU=${avgRevenuePerUser}, north star=${northStarMetric}
+Activation metric: ${activationMetric}, top dropoffs: ${topDropoffPoints}
+Competitor PLG: ${competitorPLG}
+
+Return JSON: { strategyTitle, executiveSummary, plgScore (0-100), conversionOpportunity, growthLever, plgFramework: { flywheel_description, viral_coefficient_target, time_to_value_target }, activationOptimization: { current_aha_moment, optimized_aha_moment, activation_sequence[], onboarding_experiments[] }, freemiumStrategy: { tier_structure[], upgrade_triggers[], paywall_placement, feature_gating_strategy }, viralMechanics: [{ mechanic, implementation, expected_k_factor, priority }] (5 items), conversionPlaybooks: [{ segment, trigger, message, channel, timing, expected_lift }] (5 entries), productAnalytics: { key_funnels[], segmentation_strategy, behavioral_cohorts[], experimentation_roadmap[] }, pricingOptimization: { current_gaps[], recommended_anchors[], expansion_revenue_plays[] }, growthExperiments: [{ hypothesis, test, metric, expected_impact, effort }] (8 items), retentionEngine: { habit_loops[], engagement_hooks[], churn_signals[], win_back_sequences[] }, metrics: [{ kpi, current, target, lever }] (10 items), thirtyDayPlan: [{ week, focus, experiments[], expected_outcome }] (4 weeks), quickWins: [] (5 items) }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    res.json(json ? JSON.parse(json) : { error: 'Parse failed', raw: text });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.13 AI Investor Relations & Capital Strategy Engine ---
 app.post('/api/investor-relations', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
