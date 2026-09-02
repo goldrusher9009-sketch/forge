@@ -39500,6 +39500,50 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.93 AI Product Launch Command Center ---
+app.post('/api/launch-command', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { productName, launchType, targetAudience, launchDate, teamSize, budget, keyFeatures, competitorLaunches, priorLaunchHistory, launchGoals } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class Product Launch Director who has led launches at top tech companies. Build a comprehensive product launch command center plan.
+
+Product: ${productName}
+Launch Type: ${launchType || 'New Feature'}
+Target Audience: ${targetAudience}
+Launch Date: ${launchDate || 'TBD'}
+Team Size: ${teamSize || 'Unknown'}
+Budget: ${budget || 'Unknown'}
+Key Features: ${keyFeatures || 'Not specified'}
+Competitor Launches: ${competitorLaunches || 'None known'}
+Prior Launch History: ${priorLaunchHistory || 'None'}
+Launch Goals: ${launchGoals || 'Drive adoption'}
+
+Return ONLY valid JSON:
+{
+  "launchTitle": "string",
+  "executiveSummary": "string",
+  "launchReadinessScore": 0-100,
+  "launchTier": "Tier 1 (Major)|Tier 2 (Significant)|Tier 3 (Minor)",
+  "launchNarrative": "string",
+  "preLaunchChecklist": [{ "category": "string", "item": "string", "owner": "string", "dueDate": "string", "status": "Not Started|In Progress|Done|Blocked" }],
+  "launchDayRunbook": [{ "time": "string", "action": "string", "owner": "string", "fallback": "string" }],
+  "announcementStrategy": { "pressRelease": "string", "blogPost": "string", "socialMedia": [{ "platform": "string", "message": "string", "timing": "string" }], "emailSequence": [{ "segment": "string", "subject": "string", "timing": "string" }] },
+  "influencerStrategy": { "targetProfiles": ["string"], "outreachScript": "string", "embargo": "string" },
+  "internalEnablement": { "salesBriefing": "string", "supportTraining": "string", "faqDoc": "string" },
+  "successMetrics": [{ "metric": "string", "target": "string", "measurement": "string", "dayOf": "string", "weekOne": "string", "monthOne": "string" }],
+  "riskMatrix": [{ "risk": "string", "probability": "High|Medium|Low", "impact": "High|Medium|Low", "mitigation": "string" }],
+  "postLaunchPlan": [{ "phase": "string", "actions": ["string"], "metrics": ["string"] }],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.92 AI Customer Retention & Churn Prevention Engine ---
 app.post('/api/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
