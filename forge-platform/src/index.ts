@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.26 Financial Modeling & Scenario Analysis ---
+app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, businessModel, currentRevenue, cogs, grossMargin, opex, burnRate, runway, growthRate, churnRate, ltv, cac, forecastPeriod, fundingStage } = req.body;
+  const userId = req.user!.id;
+  const anthropicKey = await getUserKey(userId, 'anthropic', true);
+  const openaiKey = await getUserKey(userId, 'openai', true);
+  const key = anthropicKey || openaiKey;
+  const provider = anthropicKey ? 'anthropic' : 'openai';
+  if (!key) return res.status(402).json({ error: 'API key required' });
+  const p = `You are a CFO-level financial modeler. Build a comprehensive financial model with scenarios.
+Company: ${company||'SaaS Startup'} | Industry: ${industry||'Technology'} | Model: ${businessModel||'Subscription SaaS'}
+Current Revenue: ${currentRevenue||'$1M ARR'} | COGS: ${cogs||'20%'} | Gross Margin: ${grossMargin||'80%'}
+OpEx: ${opex||'$200K/mo'} | Burn Rate: ${burnRate||'$150K/mo'} | Runway: ${runway||'18 months'}
+Growth Rate: ${growthRate||'10% MoM'} | Churn: ${churnRate||'2%/mo'} | LTV: ${ltv||'$15K'} | CAC: ${cac||'$5K'}
+Forecast Period: ${forecastPeriod||'24 months'} | Funding Stage: ${fundingStage||'Seed'}
+Return ONLY valid JSON: { modelTitle, executiveSummary, keyMetrics: [{ metric, current, target, status }], unitEconomics: { ltv, cac, ltvCacRatio, paybackPeriod, grossMargin, contributionMargin }, scenarios: [{ name, assumptions, [{ period, revenue, growth, grossProfit, opex, ebitda, cashFlow, headcount }] }], pnlSummary: [{ period, revenue, cogs, grossProfit, opex, ebitda, netIncome }], cashFlowProjection: [{ period, operatingCF, investingCF, financingCF, netCash, endingCash }], breakEvenAnalysis: { breakEvenRevenue, breakEvenDate, monthsToBreakEven, requiredGrowth }, fundingAnalysis: { currentRunway, nextRoundTrigger, recommendedRaiseAmount, optimalTiming, dilutionEstimate }, sensitivityAnalysis: [{ variable, base, pessimistic, optimistic, impact }], kpiDashboard: [{ kpi, current, month3, month6, month12 }], riskFactors: [{ risk, probability, financialImpact, mitigation }], recommendations: [{ priority, action, financialImpact, timeline }] }`;
+  try {
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4500 });
+    const text = typeof result === 'string' ? result : result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.25 Workforce Planning & Org Design ---
 app.post('/api/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, currentHeadcount, revenueTarget, growthStage, currentRoles, skillGaps, attritionRate, hiringBudget, timeHorizon, strategicPriorities, teamStructure } = req.body;

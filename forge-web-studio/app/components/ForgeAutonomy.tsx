@@ -597,6 +597,74 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.26 Financial Modeling & Scenario Analysis ---
+const FIN_STATUS_COLOR: Record<string,string> = { 'Good':'text-green-400','Warning':'text-yellow-400','Critical':'text-red-400','On Track':'text-green-400','Behind':'text-red-400','Ahead':'text-emerald-400' };
+const SCENARIO_BG: Record<string,string> = { 'Base':'bg-blue-900/40','Bear':'bg-red-900/40','Bull':'bg-green-900/40','Conservative':'bg-gray-700','Optimistic':'bg-green-900/40','Pessimistic':'bg-red-900/40' };
+function FinancialModelingPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', businessModel:'', currentRevenue:'', cogs:'', grossMargin:'', opex:'', burnRate:'', runway:'', growthRate:'', churnRate:'', ltv:'', cac:'', forecastPeriod:'', fundingStage:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState('overview');
+  const [activeScenario, setActiveScenario] = useState(0);
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/financial-modeling`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">💰 Financial Modeling & Scenario Analysis</h2><p className="text-gray-400 text-sm mt-1">P&L projections, cash flow, unit economics, scenarios, and funding analysis</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme SaaS')} {F('Industry','industry','B2B SaaS / FinTech...')}
+            {F('Business Model','businessModel','Subscription SaaS')} {F('Current Revenue','currentRevenue','$1.2M ARR')}
+            {F('COGS','cogs','20% of revenue')} {F('Gross Margin','grossMargin','80%')}
+            {F('Monthly OpEx','opex','$180K/mo')} {F('Burn Rate','burnRate','$120K/mo')}
+            {F('Runway','runway','18 months')} {F('Growth Rate','growthRate','12% MoM')}
+            {F('Monthly Churn','churnRate','1.8%')} {F('LTV','ltv','$18K')}
+            {F('CAC','cac','$4.5K')} {F('Forecast Period','forecastPeriod','24 months')}
+            {F('Funding Stage','fundingStage','Seed / Series A...')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Building financial model...' : 'Generate Financial Model'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.modelTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Model</button></div>
+          {/* Key Metrics */}
+          {result.keyMetrics?.length>0 && <div className="grid grid-cols-4 gap-2">{result.keyMetrics.slice(0,8).map((m:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-3"><p className="text-gray-400 text-xs">{m.metric}</p><p className="text-white font-bold mt-1">{m.current}</p><p className={`text-xs mt-0.5 ${FIN_STATUS_COLOR[m.status]||'text-gray-400'}`}>{m.status}</p></div>)}</div>}
+          {/* View Nav */}
+          <div className="flex gap-2 flex-wrap">{['overview','uniteconomics','scenarios','pnl','cashflow','breakeven','funding','risks'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Unit Economics */}
+          {view==='uniteconomics' && result.unitEconomics && <div className="grid grid-cols-3 gap-3">{[['LTV',result.unitEconomics.ltv],['CAC',result.unitEconomics.cac],['LTV:CAC',result.unitEconomics.ltvCacRatio],['Payback',result.unitEconomics.paybackPeriod],['Gross Margin',result.unitEconomics.grossMargin],['Contribution Margin',result.unitEconomics.contributionMargin]].map(([l,v])=><div key={l as string} className="bg-gray-800 rounded-xl p-4 text-center"><p className="text-gray-400 text-xs">{l}</p><p className="text-white text-xl font-bold mt-1">{v}</p></div>)}</div>}
+          {/* Scenarios */}
+          {view==='scenarios' && result.scenarios?.length>0 && <div><div className="flex gap-2 mb-4">{result.scenarios.map((s:any,i:number)=><button key={i} onClick={()=>setActiveScenario(i)} className={`text-xs px-3 py-2 rounded-lg transition ${activeScenario===i?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.name}</button>)}</div>{result.scenarios[activeScenario] && <div className={`${SCENARIO_BG[result.scenarios[activeScenario].name]||'bg-gray-800'} rounded-xl p-4`}><p className="text-gray-300 text-sm mb-3">{result.scenarios[activeScenario].assumptions}</p><div className="overflow-x-auto"><table className="w-full text-xs"><thead><tr className="text-gray-400 border-b border-gray-700">{['Period','Revenue','Growth','Gross Profit','OpEx','EBITDA','Cash Flow'].map(h=><th key={h} className="text-left py-2 pr-4">{h}</th>)}</tr></thead><tbody>{(result.scenarios[activeScenario].periods||result.scenarios[activeScenario].projection||[]).slice(0,8).map((p:any,i:number)=><tr key={i} className="border-b border-gray-700/50"><td className="py-2 pr-4 text-gray-300">{p.period}</td><td className="pr-4 text-white font-medium">{p.revenue}</td><td className="pr-4 text-green-400">{p.growth}</td><td className="pr-4 text-gray-300">{p.grossProfit}</td><td className="pr-4 text-gray-300">{p.opex}</td><td className={`pr-4 ${(p.ebitda||'').startsWith('-')?'text-red-400':'text-green-400'}`}>{p.ebitda}</td><td className={`${(p.cashFlow||'').startsWith('-')?'text-red-400':'text-green-400'}`}>{p.cashFlow}</td></tr>)}</tbody></table></div></div>}</div>}
+          {/* P&L */}
+          {view==='pnl' && result.pnlSummary?.length>0 && <div className="overflow-x-auto"><table className="w-full text-xs bg-gray-800 rounded-xl"><thead><tr className="text-gray-400 border-b border-gray-700">{['Period','Revenue','COGS','Gross Profit','OpEx','EBITDA','Net Income'].map(h=><th key={h} className="text-left p-3">{h}</th>)}</tr></thead><tbody>{result.pnlSummary.slice(0,12).map((p:any,i:number)=><tr key={i} className="border-b border-gray-700/50 hover:bg-gray-700/30"><td className="p-3 text-gray-300">{p.period}</td><td className="p-3 text-white font-medium">{p.revenue}</td><td className="p-3 text-red-300">{p.cogs}</td><td className="p-3 text-green-300">{p.grossProfit}</td><td className="p-3 text-orange-300">{p.opex}</td><td className={`p-3 font-medium ${(p.ebitda||'').startsWith('-')?'text-red-400':'text-green-400'}`}>{p.ebitda}</td><td className={`p-3 font-medium ${(p.netIncome||'').startsWith('-')?'text-red-400':'text-green-400'}`}>{p.netIncome}</td></tr>)}</tbody></table></div>}
+          {/* Cash Flow */}
+          {view==='cashflow' && result.cashFlowProjection?.length>0 && <div className="space-y-2">{result.cashFlowProjection.slice(0,12).map((c:any,i:number)=><div key={i} className="flex items-center justify-between bg-gray-800 rounded-lg px-4 py-2 text-sm"><span className="text-gray-300 w-20">{c.period}</span><span className="text-blue-300">Op: {c.operatingCF}</span><span className="text-yellow-300">Inv: {c.investingCF}</span><span className="text-purple-300">Fin: {c.financingCF}</span><span className={`font-bold ${(c.endingCash||'').startsWith('-')?'text-red-400':'text-green-400'}`}>End: {c.endingCash}</span></div>)}</div>}
+          {/* Break Even */}
+          {view==='breakeven' && result.breakEvenAnalysis && <div className="grid grid-cols-2 gap-4">{[['Break-Even Revenue',result.breakEvenAnalysis.breakEvenRevenue],['Break-Even Date',result.breakEvenAnalysis.breakEvenDate],['Months to Break-Even',result.breakEvenAnalysis.monthsToBreakEven],['Required Growth Rate',result.breakEvenAnalysis.requiredGrowth]].map(([l,v])=><div key={l as string} className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs">{l}</p><p className="text-white text-xl font-bold mt-1">{v}</p></div>)}</div>}
+          {/* Funding */}
+          {view==='funding' && result.fundingAnalysis && <div className="space-y-4"><div className="grid grid-cols-2 gap-4">{[['Current Runway',result.fundingAnalysis.currentRunway],['Recommended Raise',result.fundingAnalysis.recommendedRaiseAmount],['Optimal Timing',result.fundingAnalysis.optimalTiming],['Estimated Dilution',result.fundingAnalysis.dilutionEstimate]].map(([l,v])=><div key={l as string} className="bg-gray-800 rounded-xl p-4"><p className="text-gray-400 text-xs">{l}</p><p className="text-white font-bold mt-1">{v}</p></div>)}</div><div className="bg-yellow-900/30 rounded-xl p-4"><p className="text-yellow-400 text-xs mb-1">Next Round Trigger</p><p className="text-gray-300 text-sm">{result.fundingAnalysis.nextRoundTrigger}</p></div></div>}
+          {/* Risks */}
+          {view==='risks' && result.riskFactors?.length>0 && <div className="space-y-3">{result.riskFactors.map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-1"><p className="text-white font-semibold">{r.risk}</p><div className="flex gap-2 text-xs"><span className="text-orange-400">{r.probability}</span><span className="text-red-400">{r.financialImpact}</span></div></div><p className="text-blue-300 text-xs">{r.mitigation}</p></div>)}</div>}
+          {/* Overview = recommendations */}
+          {view==='overview' && result.recommendations?.length>0 && <div className="space-y-3">{result.recommendations.map((r:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center gap-2 mb-1"><span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded">{r.priority}</span><p className="text-white font-medium">{r.action}</p></div><div className="flex gap-4 text-xs text-gray-400"><span>{r.timeline}</span><span className="text-green-400">{r.financialImpact}</span></div></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.25 Workforce Planning & Org Design ---
 const RISK_LEVEL_COLOR: Record<string,string> = { 'High':'text-red-400','Medium':'text-yellow-400','Low':'text-green-400','Critical':'text-red-500' };
 function WorkforcePlanningPanel({ api }: { api: string }) {
@@ -8998,7 +9066,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9096,6 +9164,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'financialmodeling', label: '💰 Financial Model' },
     { id: 'workforceplanning', label: '👥 Workforce Plan' },
     { id: 'brandaudit', label: '🎨 Brand Audit' },
     { id: 'journeymapping', label: '🗺️ Journey Map' },
@@ -9258,6 +9327,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'financialmodeling' && <FinancialModelingPanel api={api} />}
         {tab === 'workforceplanning' && <WorkforcePlanningPanel api={api} />}
         {tab === 'brandaudit' && <BrandAuditPanel api={api} />}
         {tab === 'journeymapping' && <JourneyMappingPanel api={api} />}
