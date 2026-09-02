@@ -39500,6 +39500,23 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.25 AI Financial Modeling & Scenario Planning Engine ---
+app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { companyStage, revenue, growthRate, businessModel, industry, planningHorizon, objectives } = req.body;
+  const p = `You are a CFO and financial modeling expert. Build a comprehensive financial model and scenario planning framework.
+Company: Stage=${companyStage}, Revenue=${revenue}, Growth=${growthRate}%, Model=${businessModel}, Industry=${industry}, Horizon=${planningHorizon}, Goals=${objectives}
+Return JSON: { reportTitle, executiveSummary, financialHealthScore (0-100), primaryRisk, revenueModel, baseCase: { year1Revenue, year2Revenue, year3Revenue, growthRate, grossMargin, ebitda, burnRate, runway }, bullCase: { year1Revenue, year2Revenue, year3Revenue, growthRate, grossMargin, ebitda }, bearCase: { year1Revenue, year2Revenue, year3Revenue, growthRate, grossMargin, ebitda }, unitEconomics: { cac, ltv, ltvCacRatio, paybackMonths, grossMarginPercent, contributionMargin }, cashFlowModel: { operatingCashFlow, investingCashFlow, financingCashFlow, freeCashFlow, endingCash }, fundingStrategy: { recommendedRound, timing, amount, valuation, useOfFunds[], dilution }, kpiDashboard: [ { metric, current, target, benchmark } ], sensitivityAnalysis: [ { variable, lowImpact, highImpact, likelihood } ], scenarioTriggers: [ { scenario, trigger, probability, impact, response } ], costOptimization: [ { category, current, target, initiative, savings } ], metrics: [ { name, value, trend, status } ], thirtyDayActions: [ { action, owner, deadline, impact } ], quickWins: [ { win, effort, impact, timeline } ] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'No JSON' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.24 AI Talent Intelligence & People Analytics Engine ---
 app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
