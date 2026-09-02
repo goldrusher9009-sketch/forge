@@ -39500,6 +39500,26 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.68 Press Release Writer ---
+app.post('/api/press-release', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { headline, company, announcement, quote, contact, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a professional press release.
+Headline: ${headline}
+Company: ${company || 'Company Name'}
+Announcement: ${announcement}
+Executive quote: ${quote || 'auto-generate a realistic quote'}
+Contact info: ${contact || 'press@company.com'}
+Format: FOR IMMEDIATE RELEASE header, dateline, 4-5 paragraphs (lede, context, quote, details, boilerplate), ### ending. AP style.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1500 });
+    res.json({ success: true, release: (r.content || '').trim() });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.67 LinkedIn Post Generator ---
 app.post('/api/linkedin-post', requireAuth, async (req: AuthRequest, res) => {
   try {
