@@ -39500,6 +39500,91 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.58 AI Financial Modeling & Fundraising Engine ---
+app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, stage, businessModel, currentArr, monthlyBurn, cashOnHand, grossMargin, teamSize, revenueGrowthRate, fundraisingGoal, useOfFunds, previousRounds, targetInvestorType, pitchTimeline } = req.body;
+    const p = `You are a top-tier CFO and venture fundraising advisor. Build a comprehensive financial model and fundraising strategy for this company.
+
+Company: ${companyName}
+Industry: ${industry}
+Stage: ${stage}
+Business Model: ${businessModel}
+Current ARR: ${currentArr}
+Monthly Burn: ${monthlyBurn}
+Cash on Hand: ${cashOnHand}
+Gross Margin: ${grossMargin}
+Team Size: ${teamSize}
+Revenue Growth Rate: ${revenueGrowthRate}
+Fundraising Goal: ${fundraisingGoal}
+Use of Funds: ${useOfFunds}
+Previous Rounds: ${previousRounds}
+Target Investor Type: ${targetInvestorType}
+Pitch Timeline: ${pitchTimeline}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "Financial Model & Fundraising Strategy for [Company]",
+  "executiveSummary": "2-3 sentence overview",
+  "financialHealth": 0-100,
+  "fundraisingReadiness": "Strong|Ready|Needs Work|Not Ready",
+  "recommendedRoundSize": "string",
+  "targetValuation": "string",
+  "runwayMonths": number,
+  "unitEconomics": { "ltv": "string", "cac": "string", "ltvCacRatio": "string", "paybackMonths": "string", "contributionMargin": "string", "magicNumber": "string" },
+  "financialProjections": {
+    "scenarios": [
+      { "name": "Base|Bull|Bear", "year1Arr": "string", "year2Arr": "string", "year3Arr": "string", "year1Burn": "string", "year2Burn": "string", "profitableBy": "string", "assumptions": ["string"] }
+    ],
+    "keyMetricsToHit": [{ "metric": "string", "current": "string", "target": "string", "timeline": "string" }]
+  },
+  "fundraisingStrategy": {
+    "roundType": "string",
+    "targetAmount": "string",
+    "preMoneyValuation": "string",
+    "valuationJustification": ["string"],
+    "dilutionAnalysis": "string",
+    "roundStructure": "string",
+    "proRataRights": "string",
+    "closingTimeline": "string"
+  },
+  "investorTargeting": {
+    "idealInvestorProfile": "string",
+    "targetFunds": [{ "name": "string", "focus": "string", "checkSize": "string", "whyFit": "string", "approachStrategy": "string" }],
+    "warmIntroSources": ["string"],
+    "coldOutreachTactics": ["string"]
+  },
+  "pitchNarrative": {
+    "hook": "string",
+    "problemStatement": "string",
+    "solutionPositioning": "string",
+    "marketSizeFraming": "string",
+    "tractionHighlights": ["string"],
+    "whyNow": "string",
+    "competitiveMoat": "string",
+    "teamCredentialing": "string",
+    "useOfFundsStory": "string",
+    "visionStatement": "string"
+  },
+  "dueDiligencePrep": {
+    "dataRoomChecklist": ["string"],
+    "anticipatedQuestions": [{ "question": "string", "suggestedAnswer": "string" }],
+    "rednFlagMitigation": ["string"]
+  },
+  "termSheetGuidance": { "mustHaves": ["string"], "negotiableTerms": ["string"], "walkawayTerms": ["string"], "founderFriendlyStructures": ["string"] },
+  "alternativeCapitalSources": [{ "source": "string", "amount": "string", "pros": ["string"], "cons": ["string"] }],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Failed to parse response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.57 AI Legal & Compliance Risk Engine ---
 app.post('/api/legal-compliance', requireAuth, async (req: AuthRequest, res) => {
   try {
