@@ -39500,6 +39500,32 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.14 Negotiation Intelligence Coach ---
+app.post('/api/negotiation-coach', requireAuth, async (req: AuthRequest, res) => {
+  const { negotiationType, yourRole, counterpartyRole, industry, dealValue, yourGoals, counterpartyGoals, yourBatna, counterpartyBatna, keyIssues, currentStage, historicalContext, constraints, provider = 'anthropic' } = req.body;
+  try {
+    const key = await getUserKey(req.user!.id, provider, true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a master negotiation coach. Provide comprehensive negotiation intelligence for this scenario.
+Negotiation Type: ${negotiationType}
+Your Role: ${yourRole} | Counterparty: ${counterpartyRole}
+Industry: ${industry} | Deal Value: ${dealValue}
+Your Goals: ${yourGoals}
+Counterparty Goals: ${counterpartyGoals}
+Your BATNA: ${yourBatna}
+Counterparty BATNA: ${counterpartyBatna}
+Key Issues: ${keyIssues}
+Current Stage: ${currentStage}
+Historical Context: ${historicalContext}
+Constraints: ${constraints}
+
+Return JSON: { sessionTitle, situationAssessment: { powerBalance, urgencyLevel, trustLevel, complexityScore, analysis }, zopa: { yourFloor, counterpartyFloor, zopaExists, zopaRange, highValueIssues }, anchoringStrategy: { recommendedAnchor, rationale, framingTechniques }, issueMatrix: [{ issue, yourPriority, counterpartyPriority, tradeOpportunity, suggestedPosition, fallback }], tactics: [{ tactic, description, whenToUse, counterTo, example }], concessionStrategy: { approach, sequence: [{ concession, timing, expectedReciprocal, value }], redLines }, objectionHandlers: [{ objection, response, bridgeStatement }], openingScript, closingTechniques: [{ technique, script }], psychologicalInsights: [{ principle, application }], walkawayProtocol: { triggers, exitScript, preserveRelationship }, postNegotiationChecklist }`;
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json({ success: true, ...json });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.13 Innovation Sprint & Design Thinking Facilitator ---
 app.post('/api/innovation-sprint', requireAuth, async (req: AuthRequest, res) => {
   const { company, challenge, industry, teamSize, sprintDuration, targetUser, desiredOutcome, constraints, existingSolutions, successMetrics, provider = 'anthropic' } = req.body;

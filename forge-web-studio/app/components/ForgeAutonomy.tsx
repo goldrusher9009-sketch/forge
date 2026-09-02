@@ -597,6 +597,114 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.14 Negotiation Intelligence Coach ---
+const POWER_COLOR: Record<string,string> = { 'High':'text-green-400','Balanced':'text-yellow-400','Low':'text-red-400' };
+const PRIORITY_COLOR: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-orange-800','Medium':'bg-yellow-800','Low':'bg-gray-700' };
+function NegotiationCoachPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ negotiationType:'B2B Contract', yourRole:'', counterpartyRole:'', industry:'', dealValue:'', yourGoals:'', counterpartyGoals:'', yourBatna:'', counterpartyBatna:'', keyIssues:'', currentStage:'Opening', historicalContext:'', constraints:'', provider:'anthropic' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [subtab, setSubtab] = useState<'situation'|'zopa'|'issues'|'tactics'|'objections'|'scripts'|'psychology'>('situation');
+  const run = async () => {
+    setLoading(true); setErr(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/negotiation-coach`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok || !d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setErr(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 max-w-4xl mx-auto">
+      <h2 className="text-lg font-bold text-white mb-3">🤝 Negotiation Intelligence Coach</h2>
+      <div className="grid grid-cols-2 gap-3 mb-3">
+        {[['negotiationType','Negotiation Type'],['industry','Industry'],['dealValue','Deal Value'],['yourRole','Your Role'],['counterpartyRole','Counterparty Role'],['currentStage','Current Stage']].map(([k,l])=>(
+          <div key={k}><label className="text-xs text-gray-400">{l}</label><input className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} /></div>
+        ))}
+      </div>
+      {[['yourGoals','Your Goals'],['counterpartyGoals','Counterparty Goals (Estimated)'],['yourBatna','Your BATNA'],['counterpartyBatna','Counterparty BATNA (Estimated)'],['keyIssues','Key Issues at Stake'],['historicalContext','Historical Context'],['constraints','Constraints']].map(([k,l])=>(
+        <div key={k} className="mb-2"><label className="text-xs text-gray-400">{l}</label><textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm mt-1" rows={2} value={(form as any)[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={l} /></div>
+      ))}
+      <div className="mb-4"><label className="text-xs text-gray-400">Provider</label><select className="w-48 bg-gray-800 text-white rounded p-2 text-sm mt-1 ml-2" value={form.provider} onChange={e=>setForm(f=>({...f,provider:e.target.value}))}><option value="anthropic">Anthropic</option><option value="openai">OpenAI</option><option value="gemini">Gemini</option></select></div>
+      <button onClick={run} disabled={loading} className="bg-blue-700 hover:bg-blue-600 text-white px-5 py-2 rounded text-sm disabled:opacity-50">{loading?'Analyzing…':'Get Negotiation Intel'}</button>
+      {err && <p className="text-red-400 text-sm mt-2">{err}</p>}
+      {result && (
+        <div className="mt-5">
+          <div className="bg-gray-800 rounded p-4 mb-4">
+            <p className="text-white font-bold mb-2">{result.sessionTitle}</p>
+            {result.situationAssessment && <div className="flex gap-4 text-xs flex-wrap"><span className="text-gray-400">Power: <span className={POWER_COLOR[result.situationAssessment.powerBalance]||'text-white'}>{result.situationAssessment.powerBalance}</span></span><span className="text-gray-400">Urgency: <span className="text-white">{result.situationAssessment.urgencyLevel}</span></span><span className="text-gray-400">Trust: <span className="text-white">{result.situationAssessment.trustLevel}</span></span><span className="text-gray-400">Complexity: <span className="text-yellow-300">{result.situationAssessment.complexityScore}/10</span></span></div>}
+          </div>
+          <div className="flex gap-2 mb-4 flex-wrap">
+            {(['situation','zopa','issues','tactics','objections','scripts','psychology'] as const).map(s=><button key={s} onClick={()=>setSubtab(s)} className={`px-3 py-1 rounded text-xs ${subtab===s?'bg-blue-700 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.charAt(0).toUpperCase()+s.slice(1)}</button>)}
+          </div>
+          {subtab==='situation' && result.situationAssessment && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-3"><p className="text-gray-300 text-sm">{result.situationAssessment.analysis}</p></div>
+              {result.anchoringStrategy && <div className="bg-gray-800 rounded p-3"><p className="text-yellow-300 text-xs font-bold mb-1">Anchoring Strategy</p><p className="text-white text-sm mb-1">Recommended Anchor: {result.anchoringStrategy.recommendedAnchor}</p><p className="text-gray-400 text-xs">{result.anchoringStrategy.rationale}</p><div className="flex flex-wrap gap-1 mt-2">{(result.anchoringStrategy.framingTechniques||[]).map((t:string,i:number)=><span key={i} className="bg-gray-700 text-gray-300 text-xs px-2 py-0.5 rounded">{t}</span>)}</div></div>}
+              {result.zopa && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs font-bold mb-2">ZOPA Analysis</p><div className="flex gap-4 text-xs mb-2"><span className="text-green-300">Your Floor: {result.zopa.yourFloor}</span><span className="text-red-300">Their Floor: {result.zopa.counterpartyFloor}</span><span className={result.zopa.zopaExists?'text-green-400':'text-red-400'}>{result.zopa.zopaExists?'✓ ZOPA Exists':'✗ No ZOPA'}</span></div>{result.zopa.zopaRange && <p className="text-indigo-300 text-xs">Zone: {result.zopa.zopaRange}</p>}</div>}
+            </div>
+          )}
+          {subtab==='zopa' && result.zopa && (
+            <div className="space-y-3">
+              <div className="bg-gray-800 rounded p-4">{['yourFloor','counterpartyFloor','zopaRange'].map((k:string)=>result.zopa[k] && <div key={k} className="flex justify-between mb-2 border-b border-gray-700 pb-2"><span className="text-gray-400 text-sm capitalize">{k.replace(/([A-Z])/g,' $1')}</span><span className="text-white text-sm">{result.zopa[k]}</span></div>)}<div className="flex justify-between mb-2"><span className="text-gray-400 text-sm">ZOPA Exists</span><span className={result.zopa.zopaExists?'text-green-400':'text-red-400'}>{result.zopa.zopaExists?'Yes':'No'}</span></div></div>
+              {result.concessionStrategy && <div className="bg-gray-800 rounded p-3"><p className="text-yellow-300 text-xs font-bold mb-2">Concession Strategy: {result.concessionStrategy.approach}</p>{(result.concessionStrategy.sequence||[]).map((c:any,i:number)=><div key={i} className="border-l-2 border-blue-700 pl-2 mb-2"><p className="text-white text-xs">{c.concession}</p><p className="text-gray-400 text-xs">Timing: {c.timing} | Expect: {c.expectedReciprocal}</p></div>)}<p className="text-red-300 text-xs mt-2">Red Lines: {(result.concessionStrategy.redLines||[]).join(', ')}</p></div>}
+            </div>
+          )}
+          {subtab==='issues' && (
+            <div className="space-y-2">
+              {(result.issueMatrix||[]).map((issue:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center justify-between mb-2"><p className="text-white font-medium text-sm">{issue.issue}</p><div className="flex gap-2"><span className={`${PRIORITY_COLOR[issue.yourPriority]||'bg-gray-700'} text-white text-xs px-2 py-0.5 rounded`}>You: {issue.yourPriority}</span><span className={`${PRIORITY_COLOR[issue.counterpartyPriority]||'bg-gray-700'} text-gray-300 text-xs px-2 py-0.5 rounded`}>Them: {issue.counterpartyPriority}</span></div></div>
+                  {issue.tradeOpportunity && <p className="text-green-300 text-xs mb-1">Trade Opportunity: {issue.tradeOpportunity}</p>}
+                  <p className="text-indigo-300 text-xs">Position: {issue.suggestedPosition} | Fallback: {issue.fallback}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='tactics' && (
+            <div className="space-y-2">
+              {(result.tactics||[]).map((t:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-white font-medium text-sm mb-1">{t.tactic}</p>
+                  <p className="text-gray-300 text-xs mb-1">{t.description}</p>
+                  <p className="text-yellow-300 text-xs mb-1">When: {t.whenToUse}</p>
+                  {t.counterTo && <p className="text-red-300 text-xs mb-1">Counters: {t.counterTo}</p>}
+                  {t.example && <p className="text-indigo-300 text-xs italic">"{t.example}"</p>}
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='objections' && (
+            <div className="space-y-2">
+              {(result.objectionHandlers||[]).map((o:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <p className="text-red-300 text-xs mb-1">Objection: {o.objection}</p>
+                  <p className="text-green-300 text-xs mb-1">Response: {o.response}</p>
+                  <p className="text-indigo-300 text-xs">Bridge: {o.bridgeStatement}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {subtab==='scripts' && (
+            <div className="space-y-3">
+              {result.openingScript && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Opening Script</p><p className="text-white text-sm italic">"{result.openingScript}"</p></div>}
+              {(result.closingTechniques||[]).map((c:any,i:number)=><div key={i} className="bg-gray-800 rounded p-3"><p className="text-yellow-300 text-xs font-bold mb-1">{c.technique}</p><p className="text-gray-300 text-sm italic">"{c.script}"</p></div>)}
+              {result.walkawayProtocol && <div className="bg-gray-800 rounded p-3 border border-red-900"><p className="text-red-300 text-xs font-bold mb-2">Walk-Away Protocol</p><p className="text-gray-400 text-xs mb-1">Triggers: {(result.walkawayProtocol.triggers||[]).join(', ')}</p><p className="text-gray-300 text-sm italic mb-1">"{result.walkawayProtocol.exitScript}"</p><p className="text-indigo-300 text-xs">Preserve: {result.walkawayProtocol.preserveRelationship}</p></div>}
+            </div>
+          )}
+          {subtab==='psychology' && (
+            <div className="space-y-2">
+              {(result.psychologicalInsights||[]).map((p:any,i:number)=><div key={i} className="bg-gray-800 rounded p-3"><p className="text-yellow-300 text-xs font-bold mb-1">{p.principle}</p><p className="text-gray-300 text-sm">{p.application}</p></div>)}
+              {result.postNegotiationChecklist && Array.isArray(result.postNegotiationChecklist) && <div className="bg-gray-800 rounded p-3"><p className="text-gray-400 text-xs mb-2">Post-Negotiation Checklist</p>{result.postNegotiationChecklist.map((item:string,i:number)=><p key={i} className="text-gray-300 text-xs">☐ {item}</p>)}</div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.13 Innovation Sprint & Design Thinking Facilitator ---
 const PHASE_COLOR: Record<string,string> = { 'Understand':'bg-blue-800','Define':'bg-purple-800','Ideate':'bg-yellow-800','Prototype':'bg-orange-800','Test':'bg-green-800' };
 function InnovationSprintPanel({ api }: { api: string }) {
@@ -7906,7 +8014,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationsprint'|'negotiationcoach'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8005,6 +8113,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
     { id: 'innovationsprint', label: '💡 Innovation Sprint' },
+    { id: 'negotiationcoach', label: '🤝 Negotiation Coach' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -8155,6 +8264,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
         {tab === 'innovationsprint' && <InnovationSprintPanel api={api} />}
+        {tab === 'negotiationcoach' && <NegotiationCoachPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
