@@ -39275,6 +39275,26 @@ app.post('/api/user-stories', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.52 API Documentation Generator — generate API docs from endpoint descriptions
+app.post('/api/api-docs', requireAuth, async (req: any, res: any) => {
+  try {
+    const { endpoints, title, baseUrl } = req.body;
+    if (!endpoints || endpoints.trim().length < 10) return res.status(400).json({ error: 'endpoints description required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const p = `You are an API documentation expert. Generate comprehensive REST API documentation for:\nTitle: ${title||'API'}\nBase URL: ${baseUrl||'https://api.example.com'}\nEndpoints: ${endpoints.slice(0,1000)}\n\nReturn ONLY JSON:\n{"title":"${title||'API'}","version":"1.0.0","description":"API overview","base_url":"${baseUrl||'https://api.example.com'}","authentication":{"type":"Bearer Token","description":"Include Authorization: Bearer <token> in headers"},"endpoints":[{"method":"GET","path":"/example","summary":"Short summary","description":"Detailed description","parameters":[{"name":"param","in":"query","required":false,"type":"string","description":"param description"}],"request_body":null,"responses":[{"status":200,"description":"Success","example":{"id":1,"name":"example"}},{"status":404,"description":"Not found","example":{"error":"Not found"}}],"example_curl":"curl -X GET https://api.example.com/example -H \\"Authorization: Bearer token\\""}],"error_codes":[{"code":400,"meaning":"Bad Request"},{"code":401,"meaning":"Unauthorized"},{"code":404,"meaning":"Not Found"},{"code":500,"meaning":"Server Error"}],"rate_limiting":"100 requests per minute","changelog":[{"version":"1.0.0","date":"2025-01","changes":["Initial release"]}]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

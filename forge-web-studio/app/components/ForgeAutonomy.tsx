@@ -597,6 +597,111 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.52 API Docs Generator ---
+function ApiDocsPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ title: '', baseUrl: '', endpoints: '' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+  const [activeEp, setActiveEp] = useState<number|null>(null);
+
+  const generate = async () => {
+    if (!form.endpoints.trim()) return;
+    setLoading(true); setErr(''); setResult(null); setActiveEp(null);
+    try {
+      const r = await fetch(`${api.base}/api/api-docs`, {
+        method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Error');
+      setResult(d);
+    } catch(e: any) { setErr(e.message); }
+    setLoading(false);
+  };
+
+  const methodColor: Record<string, string> = { GET: '#22c55e', POST: '#3b82f6', PUT: '#f59e0b', PATCH: '#f59e0b', DELETE: '#ef4444' };
+
+  return (
+    <div>
+      <h3 style={{ color: '#e2e8f0', marginBottom: 8 }}>📖 API Docs Generator</h3>
+      <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>Generate comprehensive REST API documentation.</p>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+        <input value={form.title} onChange={e => setForm(f => ({...f, title: e.target.value}))} placeholder="API Title"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+        <input value={form.baseUrl} onChange={e => setForm(f => ({...f, baseUrl: e.target.value}))} placeholder="https://api.example.com"
+          style={{ flex: 1, background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: '6px 10px', fontSize: 13 }} />
+      </div>
+      <textarea value={form.endpoints} onChange={e => setForm(f => ({...f, endpoints: e.target.value}))}
+        placeholder="Describe your API endpoints, e.g.:\nGET /users — list all users\nPOST /users — create user with name and email\nDELETE /users/:id — delete user by ID" rows={5}
+        style={{ width: '100%', background: '#1e293b', color: '#e2e8f0', border: '1px solid #334155', borderRadius: 6, padding: 10, fontSize: 13, resize: 'vertical', boxSizing: 'border-box', marginBottom: 8 }} />
+      <button onClick={generate} disabled={loading || !form.endpoints.trim()}
+        style={{ background: '#0f766e', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Generating...' : 'Generate Docs'}
+      </button>
+      {err && <p style={{ color: '#f87171', marginTop: 8 }}>{err}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ background: '#0f172a', border: '1px solid #0f766e', borderRadius: 8, padding: 12, marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h4 style={{ color: '#2dd4bf', marginBottom: 4 }}>{result.title} <span style={{ color: '#64748b', fontSize: 11 }}>v{result.version}</span></h4>
+                <p style={{ color: '#94a3b8', fontSize: 12 }}>{result.description}</p>
+              </div>
+            </div>
+            <div style={{ background: '#1e293b', borderRadius: 4, padding: '4px 10px', marginTop: 8, fontSize: 12, color: '#38bdf8', fontFamily: 'monospace' }}>{result.base_url}</div>
+          </div>
+          {result.authentication && (
+            <div style={{ background: '#1e293b', borderRadius: 6, padding: 10, marginBottom: 10, borderLeft: '3px solid #f59e0b' }}>
+              <span style={{ color: '#f59e0b', fontSize: 12, fontWeight: 600 }}>🔐 Auth: </span>
+              <span style={{ color: '#e2e8f0', fontSize: 12 }}>{result.authentication.description}</span>
+            </div>
+          )}
+          <div style={{ marginBottom: 12 }}>
+            {result.endpoints?.map((ep: any, i: number) => (
+              <div key={i} style={{ marginBottom: 8 }}>
+                <div onClick={() => setActiveEp(activeEp === i ? null : i)}
+                  style={{ background: '#1e293b', borderRadius: activeEp === i ? '6px 6px 0 0' : 6, padding: '10px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ background: methodColor[ep.method]+'22', color: methodColor[ep.method], borderRadius: 4, padding: '2px 8px', fontSize: 11, fontWeight: 700, fontFamily: 'monospace', minWidth: 56, textAlign: 'center' }}>{ep.method}</span>
+                  <span style={{ color: '#e2e8f0', fontFamily: 'monospace', fontSize: 13 }}>{ep.path}</span>
+                  <span style={{ color: '#94a3b8', fontSize: 12, marginLeft: 'auto' }}>{ep.summary}</span>
+                </div>
+                {activeEp === i && (
+                  <div style={{ background: '#0f172a', borderRadius: '0 0 6px 6px', padding: 12, border: '1px solid #1e293b' }}>
+                    <p style={{ color: '#94a3b8', fontSize: 12, marginBottom: 10 }}>{ep.description}</p>
+                    {ep.parameters?.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ color: '#64748b', fontSize: 11, marginBottom: 6 }}>PARAMETERS</div>
+                        {ep.parameters.map((p: any, j: number) => (
+                          <div key={j} style={{ display: 'flex', gap: 8, fontSize: 12, marginBottom: 4 }}>
+                            <span style={{ color: '#38bdf8', fontFamily: 'monospace' }}>{p.name}</span>
+                            <span style={{ color: '#64748b' }}>{p.in}</span>
+                            <span style={{ color: p.required ? '#ef4444' : '#22c55e' }}>{p.required ? 'required' : 'optional'}</span>
+                            <span style={{ color: '#94a3b8' }}>{p.description}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {ep.responses?.map((resp: any, j: number) => (
+                      <div key={j} style={{ background: '#1e293b', borderRadius: 4, padding: 8, marginBottom: 4 }}>
+                        <span style={{ color: resp.status < 300 ? '#22c55e' : '#ef4444', fontWeight: 700, fontSize: 12 }}>{resp.status}</span>
+                        <span style={{ color: '#94a3b8', fontSize: 12, marginLeft: 8 }}>{resp.description}</span>
+                        {resp.example && <pre style={{ color: '#64748b', fontSize: 10, marginTop: 4, overflow: 'auto' }}>{JSON.stringify(resp.example, null, 2)}</pre>}
+                      </div>
+                    ))}
+                    {ep.example_curl && <pre style={{ background: '#020617', color: '#22c55e', borderRadius: 4, padding: 8, fontSize: 11, overflow: 'auto', marginTop: 8 }}>{ep.example_curl}</pre>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          {result.rate_limiting && <p style={{ color: '#64748b', fontSize: 12 }}>⚡ Rate limit: {result.rate_limiting}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.51 User Stories ---
 function UserStoriesPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ feature: '', persona: 'user', context: 'web app' });
@@ -2807,7 +2912,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -2853,6 +2958,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pitch', label: '🚀 Pitch Deck' },
     { id: 'okr', label: '🎯 OKRs' },
     { id: 'userstories', label: '📋 Stories' },
+    { id: 'apidocs', label: '📖 API Docs' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -2941,6 +3047,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pitch' && <PitchDeckPanel api={api} />}
         {tab === 'okr' && <OKRPanel api={api} />}
         {tab === 'userstories' && <UserStoriesPanel api={api} />}
+        {tab === 'apidocs' && <ApiDocsPanel api={api} />}
       </div>
     </div>
   );
