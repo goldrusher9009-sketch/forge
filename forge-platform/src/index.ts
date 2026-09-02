@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.03 AI Workforce Planning & People Analytics Engine ---
+app.post('/api/workforce-planning', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, currentHeadcount, departments, growthPlan, attritionRate, skillGaps, budgetConstraints, timeHorizon, strategicPriorities, remotePolicy, competitorTalent } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class Chief People Officer and workforce strategist. Build a comprehensive workforce planning report for ${companyName} in the ${industry} industry.
+Current headcount: ${currentHeadcount}. Departments: ${departments}. Growth plan: ${growthPlan}. Attrition rate: ${attritionRate}. Skill gaps: ${skillGaps}. Budget: ${budgetConstraints}. Time horizon: ${timeHorizon}. Priorities: ${strategicPriorities}. Remote policy: ${remotePolicy}. Competitor talent: ${competitorTalent}.
+Return ONLY valid JSON:
+{
+  "planTitle": "string",
+  "executiveSummary": "string",
+  "workforceHealthScore": 0-100,
+  "talentRiskLevel": "Critical|High|Medium|Low",
+  "headcountForecast": [{"period": "string", "headcount": 0, "netChange": 0, "hiringSurge": ["string"], "reductions": ["string"]}],
+  "departmentPlans": [{"department": "string", "currentSize": 0, "targetSize": 0, "keyRoles": ["string"], "skillPriorities": ["string"], "timeline": "string"}],
+  "skillGapAnalysis": [{"skill": "string", "urgency": "Critical|High|Medium|Low", "approach": "Hire|Develop|Outsource|Automate", "timeline": "string", "cost": "string"}],
+  "talentAcquisitionStrategy": {"sourcingChannels": ["string"], "employerBrand": "string", "timeToHire": "string", "costPerHire": "string", "diversityTargets": ["string"]},
+  "retentionStrategy": {"attritionRisk": "string", "retentionPrograms": ["string"], "compensationStrategy": "string", "careerDevelopment": ["string"], "culturalInitiatives": ["string"]},
+  "learningDevelopment": [{"program": "string", "targetAudience": "string", "skills": ["string"], "format": "string", "investment": "string"}],
+  "successionPlanning": [{"criticalRole": "string", "currentIncumbent": "string", "successors": ["string"], "readiness": "string", "developmentPlan": "string"}],
+  "workforceTransformation": {"automationOpportunities": ["string"], "redesignedRoles": ["string"], "newCapabilities": ["string"], "changeManagement": "string"},
+  "peopleAnalytics": {"keyMetrics": ["string"], "laggingIndicators": ["string"], "leadingIndicators": ["string"], "dashboardPriorities": ["string"]},
+  "budgetPlan": {"totalBudget": "string", "hiringCosts": "string", "l&dInvestment": "string", "technologyCosts": "string", "roi": "string"},
+  "roadmap": [{"phase": "string", "timeframe": "string", "actions": ["string"], "headcountImpact": "string"}],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.02 AI Pricing Intelligence & Strategy Engine ---
 app.post('/api/pricing-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
