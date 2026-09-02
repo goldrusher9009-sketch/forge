@@ -597,6 +597,147 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.99 AI Supply Chain Risk & Resilience Analyzer ---
+const RISK_LEVEL_COLOR2: Record<string,string> = { 'Critical':'bg-red-800','High':'bg-red-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
+const RESILIENCE_GAIN_COLOR: Record<string,string> = { 'High':'bg-green-700','Medium':'bg-yellow-700','Low':'bg-gray-700' };
+function SupplyChainRiskPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ companyName:'', industry:'', productCategories:'', geographicFootprint:'', supplierCount:'', topSuppliers:'', currentRisks:'', resilienceLevel:'Moderate', annualSpend:'', leadTimes:'', inventoryStrategy:'JIT', disruptionHistory:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [activeSection, setActiveSection] = React.useState('risks');
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/supply-chain-risk`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      setResult(await r.json());
+    } catch(e:any){setResult({error:e.message});}
+    setLoading(false);
+  };
+  const sections = [{ id:'risks', label:'⚠️ Risk Register' },{ id:'suppliers', label:'🏭 Suppliers' },{ id:'scenarios', label:'🎭 Scenarios' },{ id:'resilience', label:'🛡️ Resilience' },{ id:'roadmap', label:'🗺️ Roadmap' }];
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">⛓️ AI Supply Chain Risk & Resilience Analyzer</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Company Name" value={form.companyName} onChange={e=>setForm(f=>({...f,companyName:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Industry" value={form.industry} onChange={e=>setForm(f=>({...f,industry:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Product Categories" value={form.productCategories} onChange={e=>setForm(f=>({...f,productCategories:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Geographic Footprint" value={form.geographicFootprint} onChange={e=>setForm(f=>({...f,geographicFootprint:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Number of Suppliers" value={form.supplierCount} onChange={e=>setForm(f=>({...f,supplierCount:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Annual Supply Chain Spend" value={form.annualSpend} onChange={e=>setForm(f=>({...f,annualSpend:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Avg Lead Times" value={form.leadTimes} onChange={e=>setForm(f=>({...f,leadTimes:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Inventory Strategy (JIT/Buffer/Hybrid)" value={form.inventoryStrategy} onChange={e=>setForm(f=>({...f,inventoryStrategy:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Current Known Risks" value={form.currentRisks} onChange={e=>setForm(f=>({...f,currentRisks:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Top Suppliers (optional)" value={form.topSuppliers} onChange={e=>setForm(f=>({...f,topSuppliers:e.target.value}))} />
+      </div>
+      <button onClick={run} disabled={loading||!form.companyName} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50">{loading?'Analyzing Supply Chain...':'Analyze Supply Chain Risk'}</button>
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+      {result?.reportTitle && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded p-3">
+            <div className="flex items-center gap-3 flex-wrap mb-2">
+              <span className="text-white font-bold text-lg">{result.reportTitle}</span>
+              <span className={`text-xs text-white px-2 py-1 rounded ${RISK_LEVEL_COLOR2[result.overallRiskLevel]||'bg-gray-700'}`}>{result.overallRiskLevel} Risk</span>
+              <span className="text-xs text-gray-400">Resilience: <span className="text-white font-bold">{result.resilienceScore}/100</span></span>
+              <span className="text-xs text-red-400 font-bold">Value at Risk: {result.totalValueAtRisk}</span>
+            </div>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {sections.map(s=><button key={s.id} onClick={()=>setActiveSection(s.id)} className={`text-xs px-3 py-1 rounded ${activeSection===s.id?'bg-blue-600 text-white':'bg-gray-700 text-gray-300'}`}>{s.label}</button>)}
+          </div>
+          {activeSection==='risks' && result.riskRegister?.length > 0 && (
+            <div className="space-y-2">
+              {result.riskRegister.map((r:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`text-xs px-1 rounded text-white ${RISK_LEVEL_COLOR2[r.impact]||'bg-gray-700'}`}>{r.impact}</span>
+                    <span className="text-xs bg-gray-700 text-gray-300 px-1 rounded">{r.category}</span>
+                    <span className="text-white font-medium">{r.risk}</span>
+                    <span className="text-yellow-300 text-xs ml-auto">{r.financialExposure}</span>
+                  </div>
+                  <div className="text-green-300 text-xs mb-1">Mitigation: {r.mitigation}</div>
+                  <div className="text-orange-300 text-xs">Contingency: {r.contingency}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='suppliers' && result.supplierRiskAssessment?.length > 0 && (
+            <div className="space-y-2">
+              {result.supplierRiskAssessment.map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`text-xs px-1 rounded text-white ${RISK_LEVEL_COLOR2[s.riskLevel]||'bg-gray-700'}`}>{s.riskLevel}</span>
+                    <span className="text-white font-bold">{s.supplierTier}</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1 text-xs mb-1">
+                    <div className="text-gray-400">Concentration: <span className="text-white">{s.concentrationRisk}</span></div>
+                    <div className="text-gray-400">Geographic: <span className="text-white">{s.geographicRisk}</span></div>
+                  </div>
+                  <div className="text-blue-300 text-xs">Action: {s.actionRequired}</div>
+                  {s.alternativeSuppliers?.length > 0 && <div className="flex flex-wrap gap-1 mt-1">{s.alternativeSuppliers.map((alt:string,j:number)=><span key={j} className="text-xs bg-gray-700 text-green-300 px-1 rounded">{alt}</span>)}</div>}
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='scenarios' && result.scenarioAnalysis?.length > 0 && (
+            <div className="space-y-2">
+              {result.scenarioAnalysis.map((sc:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className={`text-xs px-1 rounded text-white ${sc.likelihood==='High'?'bg-red-700':sc.likelihood==='Medium'?'bg-yellow-700':'bg-green-700'}`}>{sc.likelihood}</span>
+                    <span className="text-white font-bold">{sc.scenario}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-xs mb-2">
+                    <div className="text-gray-400">Duration: <span className="text-white">{sc.impactDuration}</span></div>
+                    <div className="text-gray-400">Revenue Hit: <span className="text-red-400">{sc.revenueImpact}</span></div>
+                    <div className="text-gray-400">Recovery: <span className="text-blue-300">{sc.recoveryTime}</span></div>
+                  </div>
+                  <ul className="list-disc list-inside">{sc.preparednessPlan?.map((p:string,j:number)=><li key={j} className="text-gray-300 text-xs">{p}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='resilience' && result.resilienceStrategies?.length > 0 && (
+            <div className="space-y-2">
+              {result.resilienceStrategies.map((rs:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs px-1 rounded text-white ${RESILIENCE_GAIN_COLOR[rs.resilienceGain]||'bg-gray-700'}`}>{rs.resilienceGain} Gain</span>
+                    <span className="text-white font-bold">{rs.strategy}</span>
+                    <span className="text-yellow-300 text-xs ml-auto">{rs.cost}</span>
+                  </div>
+                  <p className="text-gray-300 text-xs mb-1">{rs.description}</p>
+                  <div className="text-blue-300 text-xs">Timeline: {rs.timeToImplement}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeSection==='roadmap' && result.implementationRoadmap?.length > 0 && (
+            <div className="space-y-2">
+              {result.implementationRoadmap.map((ph:any,i:number)=>(
+                <div key={i} className="bg-gray-800 rounded p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-blue-300 font-bold">{ph.phase}</span>
+                    <span className="text-gray-400 text-xs">{ph.duration}</span>
+                    <span className="text-yellow-300 text-xs ml-auto">{ph.investment}</span>
+                  </div>
+                  <ul className="list-disc list-inside">{ph.actions?.map((a:string,j:number)=><li key={j} className="text-gray-300 text-xs">{a}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.quickWins?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <div className="text-green-400 font-semibold text-sm mb-2">⚡ Quick Wins</div>
+              <ul className="list-disc list-inside space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm">{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.98 AI ESG & Sustainability Strategy Builder ---
 const ESG_PILLAR_COLOR: Record<string,string> = { 'Environmental':'bg-green-700','Social':'bg-blue-700','Governance':'bg-purple-700' };
 const ESG_PRIORITY_COLOR: Record<string,string> = { 'Critical':'bg-red-700','High':'bg-orange-700','Medium':'bg-yellow-700','Low':'bg-gray-700' };
@@ -14105,7 +14246,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -14192,6 +14333,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
@@ -14279,6 +14421,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
@@ -14333,6 +14476,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltransform2', label: '🚀 Digital Transform' },
     { id: 'revopscommand', label: '💹 RevOps Command' },
     { id: 'esgstrategy', label: '🌍 ESG Strategy' },
+    { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
@@ -14471,6 +14615,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -14503,6 +14648,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -14526,6 +14672,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -14579,6 +14726,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -14602,6 +14750,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -14638,6 +14787,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -14661,6 +14811,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -14693,6 +14844,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltransform2' && <DigitalTransformationPanel api={api} />}
         {tab === 'revopscommand' && <RevOpsCommandPanel api={api} />}
         {tab === 'esgstrategy' && <EsgStrategyPanel api={api} />}
+        {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}

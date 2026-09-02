@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.99 AI Supply Chain Risk & Resilience Analyzer ---
+app.post('/api/supply-chain-risk', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, productCategories, geographicFootprint, supplierCount, topSuppliers, currentRisks, resilienceLevel, annualSpend, leadTimes, inventoryStrategy, disruptionHistory } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class supply chain risk and resilience expert. Build a comprehensive supply chain risk analysis and resilience plan for: Company: ${companyName}, Industry: ${industry}, Products: ${productCategories}, Geography: ${geographicFootprint}, Supplier Count: ${supplierCount||'Unknown'}, Top Suppliers: ${topSuppliers||'Not specified'}, Current Risks: ${currentRisks}, Resilience Level: ${resilienceLevel||'Moderate'}, Annual Spend: ${annualSpend||'Unknown'}, Lead Times: ${leadTimes||'Unknown'}, Inventory Strategy: ${inventoryStrategy||'JIT'}, Disruption History: ${disruptionHistory||'None'}.
+Return ONLY valid JSON: { "reportTitle": string, "executiveSummary": string, "resilienceScore": number (0-100), "overallRiskLevel": "Critical"|"High"|"Medium"|"Low", "totalValueAtRisk": string, "riskRegister": [{ "risk": string, "category": "Geopolitical"|"Natural Disaster"|"Supplier"|"Logistics"|"Cyber"|"Regulatory"|"Financial"|"Pandemic", "probability": "High"|"Medium"|"Low", "impact": "Critical"|"High"|"Medium"|"Low", "affectedNodes": string[], "financialExposure": string, "mitigation": string, "contingency": string }], "supplierRiskAssessment": [{ "supplierTier": string, "riskLevel": "Critical"|"High"|"Medium"|"Low", "concentrationRisk": string, "geographicRisk": string, "financialRisk": string, "qualityRisk": string, "alternativeSuppliers": string[], "actionRequired": string }], "networkVulnerabilities": [{ "node": string, "vulnerability": string, "singlePointOfFailure": boolean, "remediation": string }], "resilienceStrategies": [{ "strategy": string, "description": string, "implementation": string[], "cost": string, "timeToImplement": string, "resilienceGain": "High"|"Medium"|"Low" }], "inventoryOptimization": { "currentStrategy": string, "recommendedStrategy": string, "safetyStockRecommendations": string[], "bufferLocations": string[], "totalInventoryInvestment": string }, "scenarioAnalysis": [{ "scenario": string, "likelihood": "High"|"Medium"|"Low", "impactDuration": string, "revenueImpact": string, "recoveryTime": string, "preparednessPlan": string[] }], "digitalResilienceTools": string[], "kpis": [{ "metric": string, "target": string, "current": string }], "implementationRoadmap": [{ "phase": string, "duration": string, "actions": string[], "investment": string }], "quickWins": string[] }`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = raw.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.98 AI ESG & Sustainability Strategy Builder ---
 app.post('/api/esg-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
