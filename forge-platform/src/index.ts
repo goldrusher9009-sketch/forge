@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.94 Change Management Plan Generator ---
+app.post('/api/change-mgmt', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, changeType, changeDescription, affectedGroups, timeline, sponsor, risks, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a change management plan for ${company || 'the organization'}.
+Change type: ${changeType || 'organizational change'}
+Description: ${changeDescription || 'not specified'}
+Affected groups: ${affectedGroups || 'all employees'}
+Timeline: ${timeline || '6 months'}
+Executive sponsor: ${sponsor || 'TBD'}
+Known risks: ${risks || 'resistance to change'}
+Return JSON: { planTitle: string, executiveSummary: string, changeOverview: {currentState:string,futureState:string,whyNow:string}, impactAssessment:[{group:string,impactLevel:'High'|'Medium'|'Low',primaryConcerns:string[],mitigationApproach:string}], phases:[{phase:string,timeline:string,objectives:string[],activities:string[],milestones:string[],successCriteria:string}], communicationPlan:[{audience:string,message:string,channel:string,frequency:string,owner:string}], trainingPlan:[{group:string,trainingType:string,duration:string,deliveryMethod:string}], resistanceManagement:[{resistanceType:string,likelihood:'High'|'Medium'|'Low',response:string}], successMetrics:[{metric:string,baseline:string,target:string,measurementMethod:string}], sustainabilityPlan:string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2800 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.93 KPI Dashboard Builder ---
 app.post('/api/kpi-dashboard', requireAuth, async (req: AuthRequest, res) => {
   try {

@@ -597,6 +597,120 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.94 Change Management Plan Generator ---
+const IMPACT_COLOR: Record<string,string> = { High:'text-red-400', Medium:'text-yellow-400', Low:'text-green-400' };
+const LIKELIHOOD_COLOR: Record<string,string> = { High:'bg-red-900/40 border-red-700', Medium:'bg-yellow-900/40 border-yellow-700', Low:'bg-green-900/40 border-green-700' };
+function ChangeMgmtPanel({ api }: { api: string }) {
+  const [company, setCompany] = useState('');
+  const [changeType, setChangeType] = useState('');
+  const [changeDescription, setChangeDescription] = useState('');
+  const [affectedGroups, setAffectedGroups] = useState('');
+  const [timeline, setTimeline] = useState('');
+  const [sponsor, setSponsor] = useState('');
+  const [risks, setRisks] = useState('');
+  const [provider, setProvider] = useState('anthropic');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/change-mgmt`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify({ company, changeType, changeDescription, affectedGroups, timeline, sponsor, risks, provider }) });
+      const d = await r.json();
+      if (!r.ok) setError(d.error || 'Error');
+      else setResult(d);
+    } catch(e:any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-800 rounded-lg p-4">
+        <h2 className="text-lg font-bold text-white mb-3">🔄 Change Management Plan</h2>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Company name" value={company} onChange={e=>setCompany(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Change type (e.g. ERP rollout, restructure)" value={changeType} onChange={e=>setChangeType(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Affected groups" value={affectedGroups} onChange={e=>setAffectedGroups(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Timeline (e.g. 6 months)" value={timeline} onChange={e=>setTimeline(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Executive sponsor" value={sponsor} onChange={e=>setSponsor(e.target.value)} />
+          <input className="bg-gray-700 text-white rounded px-3 py-2 text-sm" placeholder="Known risks" value={risks} onChange={e=>setRisks(e.target.value)} />
+        </div>
+        <textarea className="w-full bg-gray-700 text-white rounded px-3 py-2 text-sm mb-3" rows={2} placeholder="Change description" value={changeDescription} onChange={e=>setChangeDescription(e.target.value)} />
+        <div className="flex gap-2">
+          <select className="bg-gray-700 text-white rounded px-3 py-2 text-sm" value={provider} onChange={e=>setProvider(e.target.value)}>
+            {['anthropic','openai','gemini','groq'].map(p=><option key={p} value={p}>{p}</option>)}
+          </select>
+          <button onClick={run} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50">
+            {loading ? 'Generating…' : 'Generate Plan'}
+          </button>
+        </div>
+        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <h3 className="text-white font-bold text-lg">{result.planTitle}</h3>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+            {result.changeOverview && (
+              <div className="grid grid-cols-3 gap-3 mt-3">
+                {[['Current State',result.changeOverview.currentState,'text-red-400'],['Future State',result.changeOverview.futureState,'text-green-400'],['Why Now',result.changeOverview.whyNow,'text-yellow-400']].map(([l,v,c])=>(
+                  <div key={l as string} className="bg-gray-700 rounded p-2"><p className={`text-xs font-semibold ${c}`}>{l as string}</p><p className="text-gray-300 text-xs mt-1">{v as string}</p></div>
+                ))}
+              </div>
+            )}
+          </div>
+          {result.impactAssessment && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h4 className="text-white font-semibold mb-3">👥 Impact Assessment</h4>
+              <div className="space-y-2">
+                {result.impactAssessment.map((g:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-3">
+                    <div className="flex justify-between"><span className="text-white text-sm font-medium">{g.group}</span><span className={`text-xs font-bold ${IMPACT_COLOR[g.impactLevel]||'text-gray-400'}`}>{g.impactLevel}</span></div>
+                    <p className="text-gray-400 text-xs mt-1">Concerns: {(g.primaryConcerns||[]).join(', ')}</p>
+                    <p className="text-blue-300 text-xs mt-1">↗ {g.mitigationApproach}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.phases && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h4 className="text-white font-semibold mb-3">📅 Phases</h4>
+              <div className="space-y-3">
+                {result.phases.map((ph:any,i:number)=>(
+                  <div key={i} className="border border-gray-600 rounded p-3">
+                    <div className="flex justify-between mb-2"><span className="text-white font-medium text-sm">{ph.phase}</span><span className="text-gray-400 text-xs">{ph.timeline}</span></div>
+                    <p className="text-gray-400 text-xs">{ph.objectives?.join(' · ')}</p>
+                    <p className="text-green-400 text-xs mt-1">✓ {ph.successCriteria}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.resistanceManagement && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h4 className="text-white font-semibold mb-3">⚠️ Resistance Management</h4>
+              <div className="space-y-2">
+                {result.resistanceManagement.map((r:any,i:number)=>(
+                  <div key={i} className={`border rounded p-3 ${LIKELIHOOD_COLOR[r.likelihood]||'bg-gray-700'}`}>
+                    <div className="flex justify-between"><span className="text-white text-sm">{r.resistanceType}</span><span className="text-xs text-gray-400">{r.likelihood}</span></div>
+                    <p className="text-gray-300 text-xs mt-1">{r.response}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.sustainabilityPlan && (
+            <div className="bg-gray-800 rounded-lg p-4">
+              <h4 className="text-white font-semibold mb-2">🌱 Sustainability Plan</h4>
+              <p className="text-gray-300 text-sm">{result.sustainabilityPlan}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.93 KPI Dashboard Builder ---
 const KPI_VIZ_ICON: Record<string,string> = { 'line chart':'📈', 'bar chart':'📊', 'gauge':'🎯', 'number':'🔢', 'pie chart':'🥧', 'table':'📋' };
 const KPI_CAT_COLOR: Record<string,string> = { financial:'text-green-400', growth:'text-blue-400', operational:'text-yellow-400', customer:'text-pink-400', product:'text-purple-400' };
@@ -5593,7 +5707,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -5672,6 +5786,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
     { id: 'fundraisingstrategy', label: '💸 Fundraising' },
     { id: 'kpidashboard', label: '📊 KPI Dashboard' },
+    { id: 'changemgmt', label: '🔄 Change Mgmt' },
     { id: 'marketentry', label: '🌍 Market Entry' },
     { id: 'investorupdate', label: '📨 Investor Update' },
     { id: 'csplaybook', label: '🎯 CS Playbook' },
@@ -5802,6 +5917,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
         {tab === 'fundraisingstrategy' && <FundraisingStrategyPanel api={api} />}
         {tab === 'kpidashboard' && <KPIDashboardPanel api={api} />}
+        {tab === 'changemgmt' && <ChangeMgmtPanel api={api} />}
         {tab === 'marketentry' && <MarketEntryPanel api={api} />}
         {tab === 'investorupdate' && <InvestorUpdatePanel api={api} />}
         {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
