@@ -597,6 +597,54 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.77 Grant Proposal Writer ---
+function GrantProposalPanel({ api }: { api: string }) {
+  const [orgName, setOrgName] = React.useState('');
+  const [projectTitle, setProjectTitle] = React.useState('');
+  const [funder, setFunder] = React.useState('');
+  const [problem, setProblem] = React.useState('');
+  const [solution, setSolution] = React.useState('');
+  const [budget, setBudget] = React.useState('');
+  const [timeline, setTimeline] = React.useState('12 months');
+  const [impact, setImpact] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    const r = await fetch(`${api}/api/grant-proposal`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ orgName, projectTitle, funder, problem, solution, budget, timeline, impact }) });
+    const d = await r.json(); setResult(d.proposal || d.error || ''); setLoading(false);
+  };
+  const copy = () => navigator.clipboard.writeText(result);
+  const inp = (ph: string, val: string, set: (v:string)=>void, full=false) => (
+    <input placeholder={ph} value={val} onChange={e => set(e.target.value)} style={{ width: full?'100%':'auto', padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff', marginBottom: 8, boxSizing: 'border-box' as any }} />
+  );
+  return (
+    <div style={{ padding: 24, maxWidth: 700 }}>
+      <h2>🏛️ Grant Proposal Writer</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 0 }}>
+        {inp('Organization name', orgName, setOrgName)}
+        {inp('Project title', projectTitle, setProjectTitle)}
+        {inp('Funder / grant name', funder, setFunder)}
+        {inp('Budget requested', budget, setBudget)}
+      </div>
+      <input placeholder="Timeline (e.g. 12 months)" value={timeline} onChange={e => setTimeline(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff', marginBottom: 8 }} />
+      <textarea placeholder="Problem statement" value={problem} onChange={e => setProblem(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <textarea placeholder="Proposed solution" value={solution} onChange={e => setSolution(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 8, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <textarea placeholder="Expected impact / outcomes" value={impact} onChange={e => setImpact(e.target.value)} rows={2} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <button onClick={run} disabled={loading || !orgName} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Writing...' : 'Generate Proposal'}</button>
+      {result && (
+        <div style={{ marginTop: 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <span style={{ color: '#a78bfa', fontWeight: 600 }}>Grant Proposal</span>
+            <button onClick={copy} style={{ padding: '4px 12px', borderRadius: 6, background: '#374151', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 12 }}>Copy</button>
+          </div>
+          <pre style={{ background: '#1e1e2e', borderRadius: 8, padding: 16, color: '#e2e8f0', whiteSpace: 'pre-wrap', fontSize: 13 }}>{result}</pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.76 Sales Proposal Generator ---
 function SalesProposalPanel({ api }: { api: string }) {
   const [clientName, setClientName] = React.useState('');
@@ -4266,7 +4314,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4337,6 +4385,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'socialaudit', label: '📊 Social Audit' },
     { id: 'blogoutline', label: '📝 Blog Outline' },
     { id: 'salesproposal', label: '💼 Sales Proposal' },
+    { id: 'grantproposal', label: '🏛️ Grant Proposal' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4450,6 +4499,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'socialaudit' && <SocialAuditPanel api={api} />}
         {tab === 'blogoutline' && <BlogOutlinePanel api={api} />}
         {tab === 'salesproposal' && <SalesProposalPanel api={api} />}
+        {tab === 'grantproposal' && <GrantProposalPanel api={api} />}
       </div>
     </div>
   );

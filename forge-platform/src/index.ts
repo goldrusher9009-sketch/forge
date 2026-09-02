@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.77 Grant Proposal Writer ---
+app.post('/api/grant-proposal', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { orgName, projectTitle, problem, solution, budget, timeline, impact, funder, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a compelling grant proposal for the following:
+Organization: ${orgName || 'Our Organization'}
+Project Title: ${projectTitle || 'Community Impact Project'}
+Funder/Grant: ${funder || 'General Foundation'}
+Problem statement: ${problem || 'not specified'}
+Proposed solution: ${solution || 'not specified'}
+Budget requested: ${budget || 'not specified'}
+Project timeline: ${timeline || '12 months'}
+Expected impact: ${impact || 'not specified'}
+Include: executive summary, statement of need, project description, goals & objectives, evaluation plan, budget justification, organizational capacity, and conclusion. Be specific, data-driven, and compelling.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    res.json({ success: true, proposal: r.content || '' });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.76 Sales Proposal Generator ---
 app.post('/api/sales-proposal', requireAuth, async (req: AuthRequest, res) => {
   try {
