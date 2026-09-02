@@ -39500,6 +39500,23 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.63 Video Script Writer ---
+app.post('/api/video-script', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { topic, duration, style, platform, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a video script for a ${duration || '5-minute'} ${platform || 'YouTube'} video about "${topic}".
+Style: ${style || 'educational and engaging'}.
+Include: Hook (0:00-0:30), Introduction, Main content with timestamps, Call to action, Outro.
+Format as a proper script with [VISUAL] cues and NARRATOR lines.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    res.json({ success: true, script: (r.content || '').trim() });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

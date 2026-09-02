@@ -597,6 +597,44 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.63 Video Script Writer ---
+function VideoScriptPanel({ api }: { api: string }) {
+  const [topic, setTopic] = React.useState('');
+  const [duration, setDuration] = React.useState('5-minute');
+  const [platform, setPlatform] = React.useState('YouTube');
+  const [style, setStyle] = React.useState('educational');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/video-script`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ topic, duration, platform, style }) });
+      const d = await r.json();
+      setResult(d.script || d.error || 'Error');
+    } catch(e: any) { setResult(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>🎬 Video Script Writer</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
+        <input placeholder="Video topic" value={topic} onChange={e => setTopic(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <select value={duration} onChange={e => setDuration(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['1-minute','3-minute','5-minute','10-minute','15-minute','30-minute'].map(d => <option key={d} value={d}>{d}</option>)}
+        </select>
+        <select value={platform} onChange={e => setPlatform(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['YouTube','TikTok','Instagram Reels','LinkedIn','Twitter/X','Vimeo'].map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
+        <select value={style} onChange={e => setStyle(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }}>
+          {['educational','entertaining','documentary','tutorial','vlog','promotional'].map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <button onClick={run} disabled={loading || !topic} style={{ padding: '10px 20px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Writing...' : 'Write Script'}</button>
+      </div>
+      {result && <pre style={{ marginTop: 20, padding: 16, background: '#1a1a1a', borderRadius: 8, whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{result}</pre>}
+    </div>
+  );
+}
+
 // --- v8.62 Podcast Script Writer ---
 function PodcastScriptPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ topic: '', duration: '20', format: 'solo host', audience: '' });
@@ -3746,7 +3784,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3803,6 +3841,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'landingcopy', label: '🚀 Landing Copy' },
     { id: 'adcopy', label: '💰 Ad Copy' },
     { id: 'podscript', label: '🎙️ Podcast' },
+    { id: 'vidscript', label: '🎬 Video Script' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3902,6 +3941,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'landingcopy' && <LandingCopyPanel api={api} />}
         {tab === 'adcopy' && <AdCopyPanel api={api} />}
         {tab === 'podscript' && <PodcastScriptPanel api={api} />}
+        {tab === 'vidscript' && <VideoScriptPanel api={api} />}
       </div>
     </div>
   );
