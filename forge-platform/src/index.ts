@@ -39500,6 +39500,29 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.23 Customer Journey Mapping ---
+app.post('/api/journey-mapping', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, industry, persona, journeyType, currentPainPoints, channels, competitorExperience, businessGoal, teamOwners } = req.body;
+  const userId = req.user!.id;
+  const anthropicKey = await getUserKey(userId, 'anthropic', true);
+  const openaiKey = await getUserKey(userId, 'openai', true);
+  const key = anthropicKey || openaiKey;
+  const provider = anthropicKey ? 'anthropic' : 'openai';
+  if (!key) return res.status(402).json({ error: 'API key required' });
+  const p = `You are a CX strategy expert. Build a comprehensive customer journey map.
+Company: ${company||'B2B SaaS'} | Product: ${product||'Platform'} | Industry: ${industry||'Technology'}
+Persona: ${persona||'Decision-maker at mid-market company'} | Journey Type: ${journeyType||'B2B Purchase'}
+Current Pain Points: ${currentPainPoints||'Not specified'} | Channels: ${channels||'Web, email, sales'}
+Competitor Experience: ${competitorExperience||'Not specified'} | Business Goal: ${businessGoal||'Increase conversions'}
+Team Owners: ${teamOwners||'Marketing, Sales, CS'}
+Return ONLY valid JSON: { mapTitle, executiveSummary, persona: { name, role, goals, frustrations, techSavvy, decisionCriteria }, stages: [{ stage, duration, goal, actions: [string], touchpoints: [string], emotions: { label, score }, painPoints: [string], opportunities: [string], kpis: [string], owner }], momentsOfTruth: [{ stage, moment, impact, recommendation }], emotionCurve: [{ stage, score, label }], channelMap: [{ channel, stages: [string], effectiveness, recommendation }], gaps: [{ area, currentState, desiredState, priority }], quickWins: [string], improvements: [{ priority, initiative, stage, expectedImpact, effort, owner }], metrics: [{ metric, current, target }] }`;
+  try {
+    const result = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.22 Sales Forecasting & Pipeline Analysis ---
 app.post('/api/sales-forecasting', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, currentArr, pipelineValue, avgDealSize, salesCycle, winRate, teamSize, quota, forecastPeriod, topDeals, lostReasons, marketConditions } = req.body;

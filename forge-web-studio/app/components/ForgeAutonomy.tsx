@@ -597,6 +597,69 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.23 Customer Journey Mapping ---
+const EMOTION_BAR: Record<number,string> = {};
+const EFFORT_COLOR: Record<string,string> = { 'Low':'text-green-400','Medium':'text-yellow-400','High':'text-red-400' };
+function JourneyMappingPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', product:'', industry:'', persona:'', journeyType:'', currentPainPoints:'', channels:'', competitorExperience:'', businessGoal:'', teamOwners:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [activeStage, setActiveStage] = useState(0);
+  const [view, setView] = useState('stages');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/journey-mapping`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{'Authorization':`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error((await r.json()).error || r.statusText);
+      setResult(await r.json());
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const F = (label:string, k:keyof typeof form, ph:string='') => (
+    <div><label className="text-gray-400 text-xs block mb-1">{label}</label>
+    <input className="w-full bg-gray-700 text-white text-sm rounded px-3 py-2 border border-gray-600 focus:border-blue-500 outline-none" placeholder={ph} value={form[k]} onChange={e=>setForm(p=>({...p,[k]:e.target.value}))} /></div>
+  );
+  const getEmotionColor = (score:number) => score>=7?'text-green-400':score>=4?'text-yellow-400':'text-red-400';
+  return (
+    <div className="p-6 space-y-6">
+      <div><h2 className="text-2xl font-bold text-white">🗺️ Customer Journey Map</h2><p className="text-gray-400 text-sm mt-1">End-to-end journey visualization with emotion curve, pain points, and improvement opportunities</p></div>
+      {!result ? (
+        <div className="bg-gray-800 rounded-xl p-5 space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            {F('Company','company','Acme Inc')} {F('Product / Service','product','Analytics Platform')}
+            {F('Industry','industry','B2B SaaS / FinTech...')} {F('Customer Persona','persona','VP of Finance at mid-market SaaS')}
+            {F('Journey Type','journeyType','B2B Purchase / Onboarding / Support')} {F('Current Pain Points','currentPainPoints','Long sales cycle, poor onboarding')}
+            {F('Channels','channels','Web, email, Zoom, in-app')} {F('Competitor Experience','competitorExperience','Salesforce is easier to buy')}
+            {F('Business Goal','businessGoal','Reduce time-to-value')} {F('Team Owners','teamOwners','Marketing, Sales, CS, Product')}
+          </div>
+          <button onClick={run} disabled={loading} className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 text-white font-semibold rounded-lg transition">{loading ? 'Mapping journey...' : 'Generate Journey Map'}</button>
+          {error && <p className="text-red-400 text-sm">{error}</p>}
+        </div>
+      ) : (
+        <div className="space-y-5">
+          <div className="flex justify-between items-start"><div><h3 className="text-xl font-bold text-white">{result.mapTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div><button onClick={()=>setResult(null)} className="text-xs text-gray-400 hover:text-white border border-gray-600 rounded px-3 py-1">New Map</button></div>
+          {/* Persona */}
+          {result.persona && <div className="bg-gray-800 rounded-xl p-4"><div className="flex items-start gap-4"><div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-xl">👤</div><div><p className="text-white font-bold">{result.persona.name}</p><p className="text-blue-300 text-sm">{result.persona.role}</p><div className="flex gap-6 mt-2 text-xs"><div><p className="text-gray-400 mb-1">Goals</p>{(result.persona.goals||[]).map((g:string,i:number)=><p key={i} className="text-gray-300">• {g}</p>)}</div><div><p className="text-gray-400 mb-1">Frustrations</p>{(result.persona.frustrations||[]).map((f:string,i:number)=><p key={i} className="text-red-300">• {f}</p>)}</div><div><p className="text-gray-400 mb-1">Decision Criteria</p>{(result.persona.decisionCriteria||[]).map((d:string,i:number)=><p key={i} className="text-yellow-300">• {d}</p>)}</div></div></div></div></div>}
+          {/* Emotion Curve */}
+          {result.emotionCurve?.length>0 && <div className="bg-gray-800 rounded-xl p-4"><h4 className="text-white font-semibold mb-3">Emotion Curve</h4><div className="flex items-end gap-2 h-24">{result.emotionCurve.map((e:any,i:number)=><div key={i} className="flex-1 flex flex-col items-center gap-1"><div className="w-full rounded-t" style={{height:`${(e.score/10)*80}px`,backgroundColor:e.score>=7?'#22c55e':e.score>=4?'#eab308':'#ef4444'}}/><p className="text-gray-400 text-xs text-center leading-tight">{e.stage}</p></div>)}</div></div>}
+          {/* View Nav */}
+          <div className="flex gap-2 flex-wrap">{['stages','moments','channels','gaps','improvements'].map(v=><button key={v} onClick={()=>setView(v)} className={`text-xs px-3 py-1.5 rounded-lg capitalize transition ${view===v?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{v}</button>)}</div>
+          {/* Stages */}
+          {view==='stages' && result.stages?.length>0 && <div><div className="flex gap-2 mb-4 overflow-x-auto pb-1">{result.stages.map((s:any,i:number)=><button key={i} onClick={()=>setActiveStage(i)} className={`text-xs px-3 py-2 rounded-lg whitespace-nowrap transition ${activeStage===i?'bg-blue-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>{s.stage}</button>)}</div>
+          {result.stages[activeStage] && <div className="bg-gray-800 rounded-xl p-5 space-y-4"><div className="flex items-center justify-between"><div><p className="text-white text-lg font-bold">{result.stages[activeStage].stage}</p><p className="text-gray-400 text-xs">{result.stages[activeStage].duration} · Owner: {result.stages[activeStage].owner}</p></div><div className="text-right"><p className={`text-2xl font-bold ${getEmotionColor(result.stages[activeStage].emotions?.score||5)}`}>{result.stages[activeStage].emotions?.label}</p><p className="text-gray-400 text-xs">{result.stages[activeStage].emotions?.score}/10</p></div></div><p className="text-blue-200 text-sm">Goal: {result.stages[activeStage].goal}</p><div className="grid grid-cols-2 gap-4"><div><p className="text-gray-400 text-xs mb-2">Actions</p><ul className="space-y-1">{(result.stages[activeStage].actions||[]).map((a:string,i:number)=><li key={i} className="text-gray-300 text-xs flex gap-1"><span className="text-blue-400">→</span>{a}</li>)}</ul></div><div><p className="text-gray-400 text-xs mb-2">Touchpoints</p><ul className="space-y-1">{(result.stages[activeStage].touchpoints||[]).map((t:string,i:number)=><li key={i} className="text-gray-300 text-xs flex gap-1"><span className="text-purple-400">◦</span>{t}</li>)}</ul></div><div><p className="text-gray-400 text-xs mb-2">Pain Points</p><ul className="space-y-1">{(result.stages[activeStage].painPoints||[]).map((p:string,i:number)=><li key={i} className="text-red-300 text-xs flex gap-1"><span>⚠</span>{p}</li>)}</ul></div><div><p className="text-gray-400 text-xs mb-2">Opportunities</p><ul className="space-y-1">{(result.stages[activeStage].opportunities||[]).map((o:string,i:number)=><li key={i} className="text-green-300 text-xs flex gap-1"><span>✦</span>{o}</li>)}</ul></div></div></div>}</div>}
+          {/* Moments of Truth */}
+          {view==='moments' && result.momentsOfTruth?.length>0 && <div className="space-y-3">{result.momentsOfTruth.map((m:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4 border-l-4 border-yellow-500"><div className="flex items-center gap-2 mb-1"><span className="bg-yellow-600/40 text-yellow-300 text-xs px-2 py-0.5 rounded">{m.stage}</span><p className="text-white font-semibold">{m.moment}</p></div><p className="text-gray-400 text-xs mb-2">Impact: {m.impact}</p><p className="text-green-300 text-xs">{m.recommendation}</p></div>)}</div>}
+          {/* Channels */}
+          {view==='channels' && result.channelMap?.length>0 && <div className="space-y-3">{result.channelMap.map((c:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{c.channel}</p><span className="text-xs text-gray-400">{c.effectiveness}</span></div><div className="flex gap-2 flex-wrap mb-2">{(c.stages||[]).map((s:string,j:number)=><span key={j} className="bg-blue-800/50 text-blue-200 text-xs px-2 py-0.5 rounded">{s}</span>)}</div><p className="text-gray-400 text-xs">{c.recommendation}</p></div>)}</div>}
+          {/* Gaps */}
+          {view==='gaps' && result.gaps?.length>0 && <div className="space-y-3">{result.gaps.map((g:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex justify-between items-center mb-2"><p className="text-white font-semibold">{g.area}</p><span className={`text-xs ${g.priority==='High'?'text-red-400':g.priority==='Medium'?'text-yellow-400':'text-green-400'}`}>{g.priority}</span></div><div className="grid grid-cols-2 gap-3 text-xs"><div><p className="text-gray-500 mb-1">Current State</p><p className="text-red-300">{g.currentState}</p></div><div><p className="text-gray-500 mb-1">Desired State</p><p className="text-green-300">{g.desiredState}</p></div></div></div>)}</div>}
+          {/* Improvements */}
+          {view==='improvements' && <div className="space-y-3">{result.quickWins?.length>0 && <div className="bg-green-900/30 rounded-xl p-4"><h4 className="text-green-400 font-semibold mb-2">⚡ Quick Wins</h4><ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-green-400">✓</span>{w}</li>)}</ul></div>}{result.improvements?.map((imp:any,i:number)=><div key={i} className="bg-gray-800 rounded-xl p-4"><div className="flex items-center gap-2 mb-1"><span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded">{imp.priority}</span><p className="text-white font-medium">{imp.initiative}</p></div><div className="flex gap-4 text-xs text-gray-400"><span>Stage: {imp.stage}</span><span className={EFFORT_COLOR[imp.effort]||'text-gray-400'}>Effort: {imp.effort}</span><span>Owner: {imp.owner}</span></div><p className="text-green-400 text-xs mt-1">{imp.expectedImpact}</p></div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
 // --- v9.22 Sales Forecasting & Pipeline Analysis ---
 const TREND_COLOR: Record<string,string> = { 'Up':'text-green-400','Down':'text-red-400','Stable':'text-yellow-400','Increasing':'text-green-400','Decreasing':'text-red-400' };
 function SalesForecastingPanel({ api }: { api: string }) {
@@ -8813,7 +8876,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -8911,6 +8974,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'journeymapping', label: '🗺️ Journey Map' },
     { id: 'salesforecasting', label: '📈 Sales Forecast' },
     { id: 'productlaunch', label: '🚀 Product Launch' },
     { id: 'marketsizing', label: '📊 Market Sizing' },
@@ -9070,6 +9134,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'journeymapping' && <JourneyMappingPanel api={api} />}
         {tab === 'salesforecasting' && <SalesForecastingPanel api={api} />}
         {tab === 'productlaunch' && <ProductLaunchPanel api={api} />}
         {tab === 'marketsizing' && <MarketSizingPanel api={api} />}
