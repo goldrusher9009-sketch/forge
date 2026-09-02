@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.75 AI Customer Success & Retention Engine ---
+app.post('/api/cs-retention', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { productType, customerSegment, currentChurnRate, avgContractValue, csTeamSize, topChurnReasons, npsScore } = req.body;
+    const p = `You are a customer success expert. Build retention strategy for: Product: ${productType}, Segment: ${customerSegment}, Churn Rate: ${currentChurnRate}, ACV: ${avgContractValue}, CS Team: ${csTeamSize}, Churn Reasons: ${topChurnReasons}, NPS: ${npsScore}. Return JSON: { retentionTitle, executiveSummary, retentionHealthScore (0-100), churnRiskLevel ("Critical"|"High"|"Medium"|"Low"), healthScoringModel (array of {signal, weight, threshold, action}), segmentedPlaybooks (array of {segment, riskProfile, engagementCadence, interventionTriggers}), onboardingOptimization, expansionRevenueOpportunities, qbrFramework, voiceOfCustomerProgram, churnPreventionTactics, renewalPlaybook, advocacyProgram, teamStructureRecommendation, technologyStack, quickWins (array of strings) }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.74 AI Market Expansion & Go-To-Market Planner ---
 app.post('/api/gtm-planner', requireAuth, async (req: AuthRequest, res) => {
   try {
