@@ -39500,6 +39500,100 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.06 AI Product Roadmap & Innovation Strategy Engine ---
+app.post('/api/product-roadmap', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { productDescription, targetMarket, currentStage, teamSize, timeHorizon, constraints, competitors, userFeedback } = req.body;
+  const p = `You are an expert product strategist and innovation consultant. Analyze this product and create a comprehensive roadmap and innovation strategy.
+
+Product: ${productDescription || 'B2B SaaS platform'}
+Target Market: ${targetMarket || 'SMB to enterprise'}
+Current Stage: ${currentStage || 'growth'}
+Team Size: ${teamSize || '10-50'}
+Time Horizon: ${timeHorizon || '18 months'}
+Constraints: ${constraints || 'standard budget'}
+Competitors: ${competitors || 'competitive market'}
+User Feedback: ${userFeedback || 'feature requests and pain points'}
+
+Return a JSON object with this exact structure:
+{
+  "roadmapTitle": "string",
+  "executiveSummary": "string",
+  "innovationScore": number 0-100,
+  "strategicTheme": "string",
+  "productVision": {
+    "statement": "string",
+    "northStar": "string",
+    "successMetrics": ["string"]
+  },
+  "marketOpportunity": {
+    "tam": "string",
+    "sam": "string",
+    "som": "string",
+    "growthRate": "string",
+    "keyTrends": ["string"]
+  },
+  "userPersonas": [
+    { "name": "string", "role": "string", "painPoints": ["string"], "goals": ["string"], "priority": "Primary|Secondary|Tertiary" }
+  ],
+  "featureRoadmap": [
+    { "feature": "string", "description": "string", "phase": "Now|Next|Later", "effort": "Low|Medium|High", "impact": "Low|Medium|High", "userStory": "string", "successMetric": "string" }
+  ],
+  "innovationInitiatives": [
+    { "initiative": "string", "type": "Incremental|Adjacent|Transformational", "description": "string", "timeframe": "string", "investmentLevel": "string", "expectedReturn": "string" }
+  ],
+  "technicalDebt": [
+    { "area": "string", "severity": "Critical|High|Medium|Low", "impact": "string", "remediation": "string", "effort": "string" }
+  ],
+  "growthLevers": [
+    { "lever": "string", "mechanism": "string", "potentialImpact": "string", "timeToValue": "string" }
+  ],
+  "competitiveDifferentiation": {
+    "coreAdvantages": ["string"],
+    "moats": ["string"],
+    "vulnerabilities": ["string"],
+    "counterStrategies": ["string"]
+  },
+  "platformStrategy": {
+    "ecosystemPlay": "string",
+    "partnerOpportunities": ["string"],
+    "apiStrategy": "string",
+    "marketplaceOpportunity": "string"
+  },
+  "aiMlOpportunities": [
+    { "opportunity": "string", "useCase": "string", "feasibility": "High|Medium|Low", "businessValue": "string" }
+  ],
+  "goToMarketEvolution": {
+    "currentMotion": "string",
+    "nextEvolution": "string",
+    "expansionStrategy": "string",
+    "pricingEvolution": "string"
+  },
+  "resourcePlan": {
+    "hiringPriorities": ["string"],
+    "toolingInvestments": ["string"],
+    "partnershipNeeds": ["string"],
+    "budgetAllocation": "string"
+  },
+  "riskRegister": [
+    { "risk": "string", "likelihood": "High|Medium|Low", "impact": "High|Medium|Low", "mitigation": "string" }
+  ],
+  "milestones": [
+    { "milestone": "string", "targetDate": "string", "successCriteria": "string", "dependencies": ["string"] }
+  ],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.05 AI Financial Modeling & Forecasting Engine ---
 app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
