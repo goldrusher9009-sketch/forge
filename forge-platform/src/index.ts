@@ -39500,6 +39500,22 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.52 AI Customer Success & Churn Prevention Engine ---
+app.post('/api/customer-success', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, product, customerCount, avgContractValue, currentChurnRate, npsScore, supportTicketsPerMonth, avgOnboardingDays, topChurnReasons, topSegments, expansionRate, csTeamSize } = req.body;
+  const p = `You are an elite Customer Success strategist. Generate a comprehensive Customer Success & Churn Prevention report for: Company=${companyName}, Product=${product}, Customers=${customerCount}, ACV=${avgContractValue}, Churn Rate=${currentChurnRate}, NPS=${npsScore}, Support Tickets/Month=${supportTicketsPerMonth}, Avg Onboarding Days=${avgOnboardingDays}, Top Churn Reasons=${topChurnReasons}, Top Segments=${topSegments}, Expansion Rate=${expansionRate}, CS Team Size=${csTeamSize}.
+Return ONLY valid JSON: { "reportTitle": string, "executiveSummary": string, "healthScore": number, "churnRisk": "Critical"|"High"|"Medium"|"Low", "revenueAtRisk": string, "estimatedSavings": string, "churnAnalysis": { "primaryDrivers": [{ "driver": string, "impact": string, "prevalence": string, "fix": string }], "earlyWarningSignals": string[], "predictiveIndicators": string[] }, "customerSegments": [{ "segment": string, "size": string, "healthScore": number, "churnRisk": string, "ltv": string, "nps": number, "topNeed": string, "playbook": string }], "onboardingOptimization": { "currentScore": number, "targetScore": number, "criticalMilestones": [{ "milestone": string, "targetDay": string, "currentDay": string, "impact": string }], "onboardingPlaybook": string[] }, "healthScoreFramework": { "metrics": [{ "metric": string, "weight": string, "currentBenchmark": string, "redFlag": string, "greenFlag": string }], "scoringLogic": string, "automationOpportunities": string[] }, "retentionPlaybooks": [{ "scenario": string, "trigger": string, "actions": string[], "expectedOutcome": string, "timeline": string }], "expansionPlaybook": { "currentNRR": string, "targetNRR": string, "expansionMotions": string[], "upsellSignals": string[], "crossSellOpportunities": string[] }, "qbrTemplate": { "agenda": string[], "keyMetrics": string[], "successStories": string, "renewalStrategy": string, "expansionAsk": string }, "csTeamOptimization": { "currentCapacity": string, "recommendedStructure": string, "toolStack": string[], "automationWins": string[], "hiringPriority": string }, "quickWins": string[] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : (result as any)?.content?.[0]?.text || JSON.stringify(result);
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.51 AI Product-Market Fit & Growth Engine ---
 app.post('/api/pmf-growth', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
