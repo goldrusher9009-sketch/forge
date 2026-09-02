@@ -597,6 +597,70 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.55 Content Calendar Generator ---
+function ContentCalPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ topic: '', weeks: '4', channels: 'Blog, Twitter/X, LinkedIn, Email Newsletter', goals: '' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const submit = async () => {
+    if (!form.topic.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api.base}/api/content-calendar`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  const channelColors: Record<string, string> = { Blog: '#7c3aed', 'Twitter/X': '#1d9bf0', LinkedIn: '#0077b5', 'Email Newsletter': '#16a34a', Instagram: '#e1306c', YouTube: '#ff0000' };
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>📅 Content Calendar Generator</h3>
+      <input placeholder="Topic / niche (e.g. SaaS growth, AI tools, personal finance)" value={form.topic} onChange={e => setForm(f => ({ ...f, topic: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <div>
+          <label style={{ fontSize: 11, color: '#888' }}>Weeks (1–8)</label>
+          <input type="number" min={1} max={8} value={form.weeks} onChange={e => setForm(f => ({ ...f, weeks: e.target.value }))} style={{ width: '100%', padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        </div>
+        <div>
+          <label style={{ fontSize: 11, color: '#888' }}>Goals</label>
+          <input placeholder="e.g. drive signups, build community" value={form.goals} onChange={e => setForm(f => ({ ...f, goals: e.target.value }))} style={{ width: '100%', padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        </div>
+      </div>
+      <input placeholder="Channels (comma-separated)" value={form.channels} onChange={e => setForm(f => ({ ...f, channels: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+        {loading ? 'Generating...' : 'Generate Calendar'}
+      </button>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <p style={{ fontSize: 12, color: '#888', marginBottom: 12 }}>{result.summary}</p>
+          {(result.weeks_data || []).map((w: any, wi: number) => (
+            <div key={wi} style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, color: '#a78bfa' }}>Week {w.week}: {w.theme}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {(w.posts || []).map((p: any, pi: number) => (
+                  <div key={pi} style={{ background: '#1a1a2e', padding: 8, borderRadius: 6, display: 'grid', gridTemplateColumns: '70px 90px 1fr', gap: 8, alignItems: 'start' }}>
+                    <div style={{ fontSize: 11, color: '#888' }}>{p.day}</div>
+                    <div style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: channelColors[p.channel] || '#333', textAlign: 'center' }}>{p.channel}</div>
+                    <div>
+                      <div style={{ fontSize: 12, fontWeight: 600 }}>{p.title}</div>
+                      <div style={{ fontSize: 11, color: '#888' }}>{p.hook}</div>
+                      <div style={{ fontSize: 11, color: '#4ade80' }}>CTA: {p.cta}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.54 Brand Voice Analyzer ---
 function BrandVoicePanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ samples: '', brand: '' });
@@ -3078,7 +3142,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3127,6 +3191,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'apidocs', label: '📖 API Docs' },
     { id: 'changelog', label: '📝 Changelog' },
     { id: 'brandvoice', label: '🎨 Brand Voice' },
+    { id: 'contentcal', label: '📅 Content Cal' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3218,6 +3283,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'apidocs' && <ApiDocsPanel api={api} />}
         {tab === 'changelog' && <ChangelogPanel api={api} />}
         {tab === 'brandvoice' && <BrandVoicePanel api={api} />}
+        {tab === 'contentcal' && <ContentCalPanel api={api} />}
       </div>
     </div>
   );

@@ -39335,6 +39335,28 @@ app.post('/api/brand-voice', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.55 Content Calendar Generator — generate a multi-week content calendar
+app.post('/api/content-calendar', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, weeks, channels, goals } = req.body;
+    if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'topic required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const w = Math.min(Math.max(parseInt(weeks) || 4, 1), 8);
+    const ch = channels || 'Blog, Twitter/X, LinkedIn, Email Newsletter';
+    const p = `You are a content strategist. Create a ${w}-week content calendar for:\nTopic: ${topic}\nChannels: ${ch}\nGoals: ${goals || 'grow audience, drive engagement'}\n\nReturn ONLY JSON:\n{"topic":"${topic}","weeks":${w},"summary":"one sentence strategy summary","weeks_data":[{"week":1,"theme":"weekly theme","posts":[{"day":"Monday","channel":"Blog","title":"Post title","hook":"Opening hook or angle","format":"Article/Thread/Video/Email","cta":"Call to action"}]}]}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (
