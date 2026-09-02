@@ -39500,6 +39500,31 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.96 Board Meeting Agenda Generator ---
+app.post('/api/board-agenda', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, meetingDate, duration, boardSize, quarter, keyTopics, financialHighlights, strategicUpdates, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a professional board meeting agenda for ${company || 'the company'}.
+Meeting date: ${meetingDate || 'upcoming'}
+Duration: ${duration || '3 hours'}
+Board size: ${boardSize || '7 members'}
+Quarter: ${quarter || 'Q3'}
+Key topics: ${keyTopics || 'strategy, financials, operations'}
+Financial highlights: ${financialHighlights || 'not specified'}
+Strategic updates: ${strategicUpdates || 'not specified'}
+Return JSON: { agendaTitle: string, meetingDetails:{date:string,duration:string,location:string,quorum:string}, preMeetingPrep:[{item:string,owner:string,dueDate:string}], agendaItems:[{itemNumber:number,title:string,type:'Information'|'Discussion'|'Decision'|'Action',duration:string,presenter:string,objective:string,preReadMaterials:string[],keyQuestions:string[],expectedOutcome:string}], consentAgenda:[{item:string,description:string}], executiveSession:{included:boolean,topics:string[]}, postMeetingActions:[{action:string,owner:string,deadline:string}], boardPackageChecklist:string[], facilitationTips:string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.95 Crisis Communication Plan Generator ---
 app.post('/api/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
   try {
