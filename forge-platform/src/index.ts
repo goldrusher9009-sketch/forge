@@ -39500,6 +39500,24 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.72 White Paper Generator ---
+app.post('/api/whitepaper', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { topic, audience, problem, position, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a professional white paper outline and executive summary on: "${topic}".
+Target audience: ${audience || 'business executives and decision makers'}
+Problem being addressed: ${problem || 'industry challenge'}
+Our position/solution: ${position || 'thought leadership perspective'}
+Deliver: 1) Full structured outline (8-10 sections with sub-points), 2) Executive Summary (300 words), 3) Key Statistics/Data points to research, 4) Recommended visuals/charts. Professional B2B tone.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    res.json({ success: true, whitepaper: (r.content || '').trim() });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.71 Case Study Writer ---
 app.post('/api/case-study', requireAuth, async (req: AuthRequest, res) => {
   try {
