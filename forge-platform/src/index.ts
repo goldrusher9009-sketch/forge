@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.19 AI Customer Success & Retention Intelligence Engine ---
+app.post('/api/cs-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { companyStage, productType, customerSegments, currentChurnRate, avgContractValue, csTeamSize, currentToolStack, biggestCsChallenge, npsScore, expansionRevenue } = req.body;
+  const p = `You are a world-class Customer Success strategist. Build a comprehensive CS & Retention Intelligence report.
+Company: ${companyStage}, Product: ${productType}, Segments: ${customerSegments}, Churn: ${currentChurnRate}, ACV: ${avgContractValue}, CS team: ${csTeamSize}, Tools: ${currentToolStack}, Challenge: ${biggestCsChallenge}, NPS: ${npsScore}, Expansion rev: ${expansionRevenue}
+
+Return JSON with fields:
+- reportTitle (string)
+- executiveSummary (string)
+- retentionScore (number 0-100)
+- churnRiskLevel (string: "Critical"|"High"|"Medium"|"Low")
+- expansionOpportunity (string, $ amount or % upside)
+- retentionFramework (object: north_star string, philosophy string, core_pillars string[])
+- customerHealthSystem (object: health_score_model string, leading_indicators string[], lagging_indicators string[], red_flags string[], green_flags string[])
+- segmentPlaybooks (array of objects: segment string, strategy string, keyMotions string[], successMetrics string[])
+- churnPrevention (object: early_warning_system string, intervention_playbooks string[], win_back_strategy string, churned_analysis string)
+- expansionEngine (object: upsell_triggers string[], cross_sell_plays string[], expansion_framework string, nrr_targets string)
+- csOperations (object: team_structure string, capacity_model string, toolstack_recommendations string[], qbr_framework string)
+- voiceOfCustomer (object: feedback_loops string[], nps_program string, case_study_machine string, community_strategy string)
+- onboardingEngine (object: time_to_value_target string, onboarding_stages string[], adoption_milestones string[], first_90_days string)
+- metrics (array of objects: kpi string, benchmark string, target string, frequency string)
+- thirtyDayPlan (array of strings)
+- quickWins (array of 5 strings)`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0] || '{}';
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.18 AI Data Strategy & Analytics Maturity Engine ---
 app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
