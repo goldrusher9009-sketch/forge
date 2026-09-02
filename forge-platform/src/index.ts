@@ -39500,6 +39500,52 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.92 AI Customer Retention & Churn Prevention Engine ---
+app.post('/api/churn-prevention', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, customerSegment, currentChurnRate, avgContractValue, customerLifetime, topChurnReasons, currentRetentionTactics, npsScore, productUsagePattern, churnGoal } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class Customer Success leader who has reduced churn by 50%+ at multiple SaaS companies. Build a comprehensive churn prevention strategy.
+
+Product: ${product}
+Customer Segment: ${customerSegment}
+Current Churn Rate: ${currentChurnRate || 'Unknown'}
+Avg Contract Value: ${avgContractValue || 'Unknown'}
+Customer Lifetime: ${customerLifetime || 'Unknown'}
+Top Churn Reasons: ${topChurnReasons || 'Unknown'}
+Current Retention Tactics: ${currentRetentionTactics || 'None'}
+NPS Score: ${npsScore || 'Unknown'}
+Usage Pattern: ${productUsagePattern || 'Unknown'}
+Goal: ${churnGoal || 'Reduce churn by 30%'}
+
+Return ONLY valid JSON:
+{
+  "retentionTitle": "string",
+  "executiveSummary": "string",
+  "churnRiskScore": 0-100,
+  "revenueAtRisk": "string",
+  "churnDiagnosis": [{ "reason": "string", "frequency": "High|Medium|Low", "revenuImpact": "string", "rootCause": "string" }],
+  "earlyWarningSignals": [{ "signal": "string", "threshold": "string", "action": "string", "urgency": "Immediate|Within 24h|Within a week" }],
+  "retentionPlaybooks": [{ "segment": "string", "riskLevel": "High|Medium|Low", "interventions": ["string"], "timeline": "string", "owner": "string" }],
+  "healthScoreFramework": { "metrics": [{ "metric": "string", "weight": 0-100, "greenThreshold": "string", "redThreshold": "string" }], "scoringLogic": "string" },
+  "savePlaybook": [{ "stage": "string", "trigger": "string", "action": "string", "offer": "string", "script": "string" }],
+  "proactiveEngagementCalendar": [{ "touchpoint": "string", "timing": "string", "channel": "string", "message": "string" }],
+  "productAdoptionDrivers": ["string"],
+  "expansionOpportunities": [{ "signal": "string", "offer": "string", "timing": "string" }],
+  "npsImprovementPlan": ["string"],
+  "techStackRecommendations": ["string"],
+  "projectedImpact": { "churnReduction": "string", "revenueRetained": "string", "ndrImprovement": "string", "timeframe": "string" },
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.91 AI OKR & Goal Setting Framework ---
 app.post('/api/okr-framework', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;

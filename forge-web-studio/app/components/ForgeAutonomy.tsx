@@ -597,6 +597,121 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.92 AI Customer Retention & Churn Prevention Engine ---
+const URGENCY_COLOR2: Record<string,string> = { 'Immediate':'bg-red-700','Within 24h':'bg-orange-700','Within a week':'bg-yellow-700' };
+const RISK_LEVEL_COLOR: Record<string,string> = { 'High':'bg-red-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
+function ChurnPreventionPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ product:'', customerSegment:'', currentChurnRate:'', avgContractValue:'', customerLifetime:'', topChurnReasons:'', currentRetentionTactics:'', npsScore:'', productUsagePattern:'', churnGoal:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/churn-prevention`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) });
+      setResult(await r.json());
+    } catch(e:any){setResult({error:e.message});}
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">🛡️ AI Customer Retention & Churn Prevention Engine</h2>
+      <div className="grid grid-cols-2 gap-3">
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Product / Service" value={form.product} onChange={e=>setForm(f=>({...f,product:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Customer Segment (SMB, Enterprise...)" value={form.customerSegment} onChange={e=>setForm(f=>({...f,customerSegment:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Current Churn Rate (e.g. 5%/mo)" value={form.currentChurnRate} onChange={e=>setForm(f=>({...f,currentChurnRate:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Avg Contract Value (e.g. $500/mo)" value={form.avgContractValue} onChange={e=>setForm(f=>({...f,avgContractValue:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Avg Customer Lifetime (e.g. 18 months)" value={form.customerLifetime} onChange={e=>setForm(f=>({...f,customerLifetime:e.target.value}))} />
+        <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="NPS Score (e.g. 32)" value={form.npsScore} onChange={e=>setForm(f=>({...f,npsScore:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Top churn reasons (price, competitor, low usage, poor onboarding...)" value={form.topChurnReasons} onChange={e=>setForm(f=>({...f,topChurnReasons:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Product usage pattern (daily active users, feature adoption...)" value={form.productUsagePattern} onChange={e=>setForm(f=>({...f,productUsagePattern:e.target.value}))} />
+        <textarea className="col-span-2 bg-gray-800 text-white rounded p-2 text-sm" rows={2} placeholder="Retention Goal (e.g. reduce churn by 30% in 6 months)" value={form.churnGoal} onChange={e=>setForm(f=>({...f,churnGoal:e.target.value}))} />
+      </div>
+      <button onClick={run} disabled={loading||!form.product} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm disabled:opacity-50">{loading?'Analyzing Churn...':'Build Retention Strategy'}</button>
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+      {result?.retentionTitle && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded p-3">
+            <div className="flex items-center gap-3 flex-wrap mb-2">
+              <span className="text-white font-bold text-lg">{result.retentionTitle}</span>
+              <span className="text-xs text-gray-400">Churn Risk: <span className="text-red-400 font-bold">{result.churnRiskScore}/100</span></span>
+              <span className="text-xs text-orange-400 font-bold">Revenue at Risk: {result.revenueAtRisk}</span>
+            </div>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          {result.earlyWarningSignals?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <div className="text-yellow-400 font-semibold text-sm mb-2">🚨 Early Warning Signals</div>
+              <div className="space-y-2">
+                {result.earlyWarningSignals.map((s:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs px-1 rounded text-white ${URGENCY_COLOR2[s.urgency]||'bg-gray-600'}`}>{s.urgency}</span>
+                      <span className="text-white text-sm font-medium">{s.signal}</span>
+                    </div>
+                    <div className="text-gray-400 text-xs">Threshold: {s.threshold}</div>
+                    <div className="text-green-300 text-xs mt-1">→ {s.action}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.churnDiagnosis?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <div className="text-red-400 font-semibold text-sm mb-2">🔍 Churn Diagnosis</div>
+              <div className="space-y-2">
+                {result.churnDiagnosis.map((d:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs px-1 rounded text-white ${d.frequency==='High'?'bg-red-700':d.frequency==='Medium'?'bg-yellow-700':'bg-gray-600'}`}>{d.frequency}</span>
+                      <span className="text-white text-sm font-medium">{d.reason}</span>
+                      <span className="text-orange-400 text-xs ml-auto">{d.revenuImpact}</span>
+                    </div>
+                    <div className="text-gray-400 text-xs">Root cause: {d.rootCause}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.retentionPlaybooks?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <div className="text-blue-400 font-semibold text-sm mb-2">📋 Retention Playbooks</div>
+              <div className="space-y-2">
+                {result.retentionPlaybooks.map((pb:any,i:number)=>(
+                  <div key={i} className="bg-gray-700 rounded p-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs px-1 rounded text-white ${RISK_LEVEL_COLOR[pb.riskLevel]||'bg-gray-600'}`}>{pb.riskLevel} Risk</span>
+                      <span className="text-white font-medium text-sm">{pb.segment}</span>
+                      <span className="text-gray-400 text-xs ml-auto">{pb.timeline}</span>
+                    </div>
+                    <ul className="text-xs text-gray-300 space-y-0.5">{pb.interventions?.slice(0,3).map((int:string,j:number)=><li key={j}>• {int}</li>)}</ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.projectedImpact && (
+            <div className="bg-green-900/30 border border-green-700 rounded p-3">
+              <div className="text-green-400 font-semibold text-sm mb-2">📈 Projected Impact</div>
+              <div className="grid grid-cols-2 gap-2 text-sm">
+                <div><span className="text-gray-400">Churn Reduction:</span> <span className="text-white font-bold">{result.projectedImpact.churnReduction}</span></div>
+                <div><span className="text-gray-400">Revenue Retained:</span> <span className="text-green-400 font-bold">{result.projectedImpact.revenueRetained}</span></div>
+                <div><span className="text-gray-400">NDR Improvement:</span> <span className="text-white font-bold">{result.projectedImpact.ndrImprovement}</span></div>
+                <div><span className="text-gray-400">Timeframe:</span> <span className="text-white">{result.projectedImpact.timeframe}</span></div>
+              </div>
+            </div>
+          )}
+          {result.quickWins?.length > 0 && (
+            <div className="bg-gray-800 rounded p-3">
+              <div className="text-green-400 font-semibold text-sm mb-2">⚡ Quick Wins</div>
+              <ul className="list-disc list-inside space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm">{w}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.91 AI OKR & Goal Setting Framework ---
 const OKR_CATEGORY_COLOR: Record<string,string> = { 'Growth':'bg-green-700','Retention':'bg-blue-700','Product':'bg-purple-700','Operations':'bg-yellow-700','People':'bg-orange-700','Financial':'bg-teal-700' };
 function OkrFrameworkPanel({ api }: { api: string }) {
@@ -13141,7 +13256,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -13221,6 +13336,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'fundraisingstrategy', label: '💸 Fundraising' },
     { id: 'kpidashboard', label: '📊 KPI Dashboard' },
     { id: 'changemgmt', label: '🔄 Change Mgmt' },
+    { id: 'churnprevention', label: '🛡️ Churn Prevention' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
@@ -13301,6 +13417,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'plgstrategy', label: '🚀 PLG Strategy' },
     { id: 'journeyorch', label: '🗺️ Journey Orchestration' },
     { id: 'aiethics', label: '⚖️ AI Ethics Framework' },
+    { id: 'churnprevention', label: '🛡️ Churn Prevention' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
@@ -13348,6 +13465,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'gtmplanner', label: '🚀 GTM Planner' },
     { id: 'csretention', label: '🎯 CS Retention' },
     { id: 'fundraisingcmd', label: '💎 Fundraising' },
+    { id: 'churnprevention', label: '🛡️ Churn Prevention' },
     { id: 'okrframework', label: '🎯 OKR Framework' },
     { id: 'salesplaybook2', label: '📋 Sales Playbook' },
     { id: 'pricingintel2', label: '💰 Pricing Intel' },
@@ -13479,6 +13597,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'fundraisingstrategy' && <FundraisingStrategyPanel api={api} />}
         {tab === 'kpidashboard' && <KPIDashboardPanel api={api} />}
         {tab === 'changemgmt' && <ChangeMgmtPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -13504,6 +13623,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -13520,6 +13640,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -13566,6 +13687,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -13582,6 +13704,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -13611,6 +13734,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -13627,6 +13751,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
         {tab === 'pmfanalyzer' && <PMFAnalyzerPanel api={api} />}
         {tab === 'complianceintel' && <ComplianceIntelPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
@@ -13652,6 +13777,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'plgstrategy' && <PLGStrategyPanel api={api} />}
         {tab === 'journeyorch' && <JourneyOrchestrationPanel api={api} />}
         {tab === 'aiethics' && <AIEthicsPanel api={api} />}
+        {tab === 'churnprevention' && <ChurnPreventionPanel api={api} />}
         {tab === 'okrframework' && <OkrFrameworkPanel api={api} />}
         {tab === 'salesplaybook2' && <SalesPlaybookPanel api={api} />}
         {tab === 'pricingintel2' && <PricingIntelligencePanel api={api} />}
