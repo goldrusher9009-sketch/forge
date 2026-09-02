@@ -39500,6 +39500,46 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.59 AI Supply Chain & Operations Engine ---
+app.post('/api/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, productType, currentSupplierCount, averageLeadTime, inventoryTurnover, topSupplyRisks, annualProcurementSpend, warehouseLocations, fulfillmentModel, currentOpsTools, teamSize, topPainPoints } = req.body;
+    const p = `You are a senior supply chain and operations consultant. Generate a comprehensive supply chain optimization and operations strategy report.
+
+Company: ${companyName}, Industry: ${industry}, Product Type: ${productType}
+Suppliers: ${currentSupplierCount}, Lead Time: ${averageLeadTime}, Inventory Turns: ${inventoryTurnover}
+Supply Risks: ${topSupplyRisks}, Annual Procurement: ${annualProcurementSpend}
+Warehouses: ${warehouseLocations}, Fulfillment: ${fulfillmentModel}, Tools: ${currentOpsTools}
+Team: ${teamSize}, Pain Points: ${topPainPoints}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "Supply Chain & Operations Report for [Company]",
+  "executiveSummary": "2-3 sentence overview",
+  "operationsScore": 0-100,
+  "supplyChainHealthStatus": "string",
+  "estimatedCostSavings": "string",
+  "criticalRisk": "string",
+  "riskAssessment": [{ "risk": "string", "severity": "Critical|High|Medium|Low", "likelihood": "High|Medium|Low", "mitigations": ["string"], "contingencyPlan": "string" }],
+  "supplierStrategy": { "supplierTiers": [{ "tier": "string", "criteria": ["string"], "managementApproach": "string", "kpis": ["string"] }], "diversificationPlan": ["string"], "contractRecommendations": ["string"], "vendorScorecardTemplate": ["string"] },
+  "inventoryOptimization": { "recommendedModel": "string", "safetyStockFormula": "string", "reorderPointLogic": "string", "abcClassification": [{ "class": "A|B|C", "criteria": "string", "management": "string" }], "slowMovingStrategy": "string", "obsolescencePolicy": "string" },
+  "fulfillmentOptimization": { "networkDesign": "string", "warehouseLayout": ["string"], "pickPackShip": ["string"], "lastMileStrategy": "string", "returnsProcess": "string", "kpis": [{ "metric": "string", "target": "string" }] },
+  "demandPlanning": { "forecastingMethod": "string", "seasonalityFactors": ["string"], "demandSignals": ["string"], "s&opProcess": ["string"], "accuracyTargets": "string" },
+  "technologyRoadmap": [{ "tool": "string", "category": "string", "impact": "string", "cost": "string", "priority": "High|Medium|Low", "timeToValue": "string" }],
+  "processImprovements": [{ "process": "string", "currentState": "string", "futureState": "string", "savings": "string", "effort": "string" }],
+  "sustainabilityInitiatives": ["string"],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Failed to parse response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.58 AI Financial Modeling & Fundraising Engine ---
 app.post('/api/financial-modeling', requireAuth, async (req: AuthRequest, res) => {
   try {
