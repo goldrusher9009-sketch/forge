@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.89 Customer Success Playbook Generator ---
+app.post('/api/cs-playbook', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, customerSegment, churnRisk, successMetrics, teamSize, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a customer success playbook for: ${product || 'the product'}.
+Customer segment: ${customerSegment || 'SMB'}
+Key churn risk signals: ${churnRisk || 'low usage, no logins'}
+Success metrics: ${successMetrics || 'NPS, retention, expansion revenue'}
+CS team size: ${teamSize || 'small'}
+Return JSON: { playbookTitle: string, philosophy: string, customerJourneyStages: [{stage:string,goals:string[],csActions:string[],successIndicators:string[],tools:string[]}], healthScoreFramework: {metrics:[{name:string,weight:string,greenThreshold:string,redThreshold:string}], scoringNote:string}, churnRiskPlaybook: [{trigger:string,severity:'high'|'medium'|'low',responseActions:string[],timeline:string}], expansionPlaybook: [{signal:string,approach:string,timing:string}], qbrTemplate: string[], escalationMatrix: [{situation:string,owner:string,sla:string}] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 3000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.88 Partnership Proposal Generator ---
 app.post('/api/partnership-proposal', requireAuth, async (req: AuthRequest, res) => {
   try {

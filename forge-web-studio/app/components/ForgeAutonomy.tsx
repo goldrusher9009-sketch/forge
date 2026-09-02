@@ -597,6 +597,112 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.89 Customer Success Playbook Generator ---
+const SEVERITY_COLOR: Record<string,string> = { high: '#ef4444', medium: '#f59e0b', low: '#34d399' };
+function CSPlaybookPanel({ api }: { api: string }) {
+  const [product, setProduct] = React.useState('');
+  const [customerSegment, setCustomerSegment] = React.useState('SMB');
+  const [churnRisk, setChurnRisk] = React.useState('');
+  const [successMetrics, setSuccessMetrics] = React.useState('');
+  const [teamSize, setTeamSize] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeTab, setActiveTab] = React.useState('journey');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/cs-playbook`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ product, customerSegment, churnRisk, successMetrics, teamSize }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const sections = [['journey','🗺️ Journey'],['health','❤️ Health Score'],['churn','🚨 Churn Risk'],['expansion','📈 Expansion'],['qbr','📋 QBR']];
+  return (
+    <div style={{ padding: 24, maxWidth: 960 }}>
+      <h2 style={{ marginBottom: 4 }}>🎯 Customer Success Playbook Generator</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Build a full CS playbook with journey maps, health scoring, churn prevention, and expansion plays.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[['Product', product, setProduct, 'e.g. Forge AI Platform'], ['Customer Segment', customerSegment, setCustomerSegment, 'SMB / Mid-Market / Enterprise'], ['Churn Risk Signals', churnRisk, setChurnRisk, 'e.g. no login 14 days, low usage'], ['Success Metrics', successMetrics, setSuccessMetrics, 'e.g. NPS > 40, 90% retention'], ['CS Team Size', teamSize, setTeamSize, 'e.g. 3 CSMs, 1 manager']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading || !product} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Building...' : 'Generate CS Playbook'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ background: '#1a1a2e', borderRadius: 10, padding: 16, marginBottom: 20 }}>
+            <h3 style={{ margin: '0 0 6px' }}>{result.playbookTitle}</h3>
+            <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.philosophy}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+            {sections.map(([id, label]) => (
+              <button key={id} onClick={() => setActiveTab(id)} style={{ padding: '6px 14px', background: activeTab === id ? '#7c3aed' : '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>{label}</button>
+            ))}
+          </div>
+          {activeTab === 'journey' && (
+            <div>{result.customerJourneyStages?.map((s: any, i: number) => (
+              <div key={i} style={{ background: '#111827', borderRadius: 8, padding: 16, marginBottom: 10, borderLeft: '3px solid #7c3aed' }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>{s.stage}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div><div style={{ fontSize: 11, color: '#7c3aed', marginBottom: 4 }}>Goals</div><ul style={{ margin: 0, paddingLeft: 16 }}>{s.goals?.map((g: string, j: number) => <li key={j} style={{ color: '#ccc', fontSize: 12, marginBottom: 2 }}>{g}</li>)}</ul></div>
+                  <div><div style={{ fontSize: 11, color: '#34d399', marginBottom: 4 }}>CS Actions</div><ul style={{ margin: 0, paddingLeft: 16 }}>{s.csActions?.map((a: string, j: number) => <li key={j} style={{ color: '#ccc', fontSize: 12, marginBottom: 2 }}>{a}</li>)}</ul></div>
+                </div>
+              </div>
+            ))}</div>
+          )}
+          {activeTab === 'health' && result.healthScoreFramework && (
+            <div style={{ background: '#111827', borderRadius: 8, padding: 16 }}>
+              <p style={{ color: '#aaa', fontSize: 13, marginTop: 0 }}>{result.healthScoreFramework.scoringNote}</p>
+              {result.healthScoreFramework.metrics?.map((m: any, i: number) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid #222' }}>
+                  <div style={{ flex: 1, fontWeight: 600, fontSize: 13 }}>{m.name}</div>
+                  <div style={{ color: '#888', fontSize: 12 }}>Weight: {m.weight}</div>
+                  <div style={{ color: '#34d399', fontSize: 12 }}>✅ {m.greenThreshold}</div>
+                  <div style={{ color: '#ef4444', fontSize: 12 }}>🔴 {m.redThreshold}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          {activeTab === 'churn' && (
+            <div>{result.churnRiskPlaybook?.map((p: any, i: number) => (
+              <div key={i} style={{ background: '#111827', borderRadius: 8, padding: 14, marginBottom: 10, borderLeft: `3px solid ${SEVERITY_COLOR[p.severity]}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600 }}>{p.trigger}</div>
+                  <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 4, background: SEVERITY_COLOR[p.severity] + '33', color: SEVERITY_COLOR[p.severity] }}>{p.severity}</span>
+                </div>
+                <div style={{ color: '#888', fontSize: 12, marginBottom: 6 }}>Timeline: {p.timeline}</div>
+                <ul style={{ margin: 0, paddingLeft: 16 }}>{p.responseActions?.map((a: string, j: number) => <li key={j} style={{ color: '#ccc', fontSize: 12, marginBottom: 2 }}>{a}</li>)}</ul>
+              </div>
+            ))}</div>
+          )}
+          {activeTab === 'expansion' && (
+            <div>{result.expansionPlaybook?.map((e: any, i: number) => (
+              <div key={i} style={{ background: '#111827', borderRadius: 8, padding: 14, marginBottom: 10 }}>
+                <div style={{ fontWeight: 600, color: '#34d399', marginBottom: 4 }}>{e.signal}</div>
+                <div style={{ color: '#ccc', fontSize: 13, marginBottom: 4 }}>{e.approach}</div>
+                <div style={{ color: '#888', fontSize: 12 }}>Timing: {e.timing}</div>
+              </div>
+            ))}</div>
+          )}
+          {activeTab === 'qbr' && (
+            <div style={{ background: '#111827', borderRadius: 8, padding: 16 }}>
+              <div style={{ fontWeight: 600, color: '#facc15', marginBottom: 12 }}>QBR Agenda Template</div>
+              <ul style={{ margin: 0, paddingLeft: 20 }}>{result.qbrTemplate?.map((item: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 13, marginBottom: 8 }}>{item}</li>)}</ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.88 Partnership Proposal Generator ---
 function PartnershipProposalPanel({ api }: { api: string }) {
   const [ourCompany, setOurCompany] = React.useState('');
@@ -5048,7 +5154,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -5125,6 +5231,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'csplaybook', label: '🎯 CS Playbook' },
     { id: 'partnershipproposal', label: '🤝 Partnership Proposal' },
     { id: 'pricingstrategy', label: '💰 Pricing Strategy' },
     { id: 'execsummary', label: '📄 Exec Summary' },
@@ -5250,6 +5357,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'csplaybook' && <CSPlaybookPanel api={api} />}
         {tab === 'partnershipproposal' && <PartnershipProposalPanel api={api} />}
         {tab === 'pricingstrategy' && <PricingStrategyPanel api={api} />}
         {tab === 'execsummary' && <ExecSummaryPanel api={api} />}
