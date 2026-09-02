@@ -597,6 +597,84 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.85 SWOT Analysis Generator ---
+const SWOT_COLOR: Record<string,string> = { strengths: '#34d399', weaknesses: '#f87171', opportunities: '#60a5fa', threats: '#facc15' };
+const SWOT_ICON: Record<string,string> = { strengths: '💪', weaknesses: '⚠️', opportunities: '🚀', threats: '🛡️' };
+const IMPACT_DOT: Record<string,string> = { high: '#ef4444', medium: '#f59e0b', low: '#6b7280' };
+function SWOTAnalysisPanel({ api }: { api: string }) {
+  const [subject, setSubject] = React.useState('');
+  const [industry, setIndustry] = React.useState('');
+  const [context, setContext] = React.useState('');
+  const [competitors, setCompetitors] = React.useState('');
+  const [timeframe, setTimeframe] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/swot-analysis`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ subject, industry, context, competitors, timeframe }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const STRATEGY_COLOR: Record<string,string> = { SO: '#34d399', WO: '#60a5fa', ST: '#facc15', WT: '#f87171' };
+  return (
+    <div style={{ padding: 24, maxWidth: 960 }}>
+      <h2 style={{ marginBottom: 4 }}>🔷 SWOT Analysis Generator</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Generate a full SWOT analysis with strategic action recommendations.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[['Subject / Company', subject, setSubject, 'e.g. Acme SaaS Platform'], ['Industry', industry, setIndustry, 'e.g. B2B SaaS'], ['Context / Background', context, setContext, 'e.g. Expanding into EU market'], ['Key Competitors', competitors, setCompetitors, 'e.g. Salesforce, HubSpot'], ['Timeframe', timeframe, setTimeframe, 'e.g. Next 12 months']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading || !subject} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Analyzing...' : 'Generate SWOT'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24 }}>
+          <h3 style={{ marginBottom: 16 }}>{result.title}</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+            {(['strengths','weaknesses','opportunities','threats'] as const).map(cat => (
+              <div key={cat} style={{ background: '#111827', borderRadius: 10, padding: 16, borderTop: `3px solid ${SWOT_COLOR[cat]}` }}>
+                <div style={{ fontWeight: 700, color: SWOT_COLOR[cat], marginBottom: 12, textTransform: 'capitalize' }}>{SWOT_ICON[cat]} {cat}</div>
+                {result[cat]?.map((item: any, i: number) => (
+                  <div key={i} style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span style={{ width: 8, height: 8, borderRadius: '50%', background: IMPACT_DOT[item.impact], flexShrink: 0, display: 'inline-block' }} />
+                      <span style={{ fontWeight: 600, fontSize: 13 }}>{item.point}</span>
+                    </div>
+                    <div style={{ color: '#888', fontSize: 12, marginTop: 2, paddingLeft: 14 }}>{item.detail}</div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <h4 style={{ color: '#7c3aed', marginBottom: 12 }}>Strategic Actions</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px,1fr))', gap: 10, marginBottom: 20 }}>
+            {result.strategicActions?.map((a: any, i: number) => (
+              <div key={i} style={{ background: '#1a1a2e', borderRadius: 8, padding: 12, borderLeft: `3px solid ${STRATEGY_COLOR[a.type] || '#7c3aed'}` }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: STRATEGY_COLOR[a.type], background: '#0f0f1a', padding: '2px 6px', borderRadius: 4, marginRight: 6 }}>{a.type}</span>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{a.strategy}</span>
+                <div style={{ color: '#888', fontSize: 12, marginTop: 6 }}>{a.description}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ background: '#1a1a2e', borderRadius: 8, padding: 16 }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>Executive Summary</div>
+            <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.executiveSummary}</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.84 SOP Generator ---
 function SOPGenPanel({ api }: { api: string }) {
   const [processName, setProcessName] = React.useState('');
@@ -4738,7 +4816,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4815,6 +4893,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'swotanalysis', label: '🔷 SWOT Analysis' },
     { id: 'sopgen', label: '📋 SOP Generator' },
     { id: 'battlecard', label: '⚔️ Battle Card' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
@@ -4936,6 +5015,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'swotanalysis' && <SWOTAnalysisPanel api={api} />}
         {tab === 'sopgen' && <SOPGenPanel api={api} />}
         {tab === 'battlecard' && <BattleCardPanel api={api} />}
       </div>
