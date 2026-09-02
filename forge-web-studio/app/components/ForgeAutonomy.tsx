@@ -597,6 +597,71 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.83 Competitor Battle Card Generator ---
+function BattleCardPanel({ api }: { api: string }) {
+  const [ourProduct, setOurProduct] = React.useState('');
+  const [competitor, setCompetitor] = React.useState('');
+  const [ourStrengths, setOurStrengths] = React.useState('');
+  const [ourWeaknesses, setOurWeaknesses] = React.useState('');
+  const [targetBuyer, setTargetBuyer] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [section, setSection] = React.useState('advantages');
+  const run = async () => {
+    setLoading(true); setResult(null);
+    const r = await fetch(`${api}/api/battle-card`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ ourProduct, competitor, ourStrengths, ourWeaknesses, targetBuyer }) });
+    const d = await r.json(); setResult(d); setLoading(false);
+  };
+  const WINNER_COLOR = { us: '#4ade80', them: '#f87171', tie: '#facc15' };
+  const sections = ['advantages','winThemes','objections','discovery','talkingPoints','redFlags','landmines'];
+  return (
+    <div style={{ padding: 24, maxWidth: 760 }}>
+      <h2>⚔️ Competitor Battle Card</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input placeholder="Our product" value={ourProduct} onChange={e => setOurProduct(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Competitor name" value={competitor} onChange={e => setCompetitor(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Our strengths" value={ourStrengths} onChange={e => setOurStrengths(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Our weaknesses" value={ourWeaknesses} onChange={e => setOurWeaknesses(e.target.value)} style={{ padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      </div>
+      <input placeholder="Target buyer persona" value={targetBuyer} onChange={e => setTargetBuyer(e.target.value)} style={{ width: '100%', marginBottom: 12, padding: 8, borderRadius: 6, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+      <button onClick={run} disabled={loading || !ourProduct || !competitor} style={{ padding: '10px 24px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Building...' : 'Generate Battle Card'}</button>
+      {result && !result.error && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+            {sections.map(s => <button key={s} onClick={() => setSection(s)} style={{ padding: '4px 10px', borderRadius: 6, background: section===s ? '#7c3aed' : '#1e1e2e', color: '#fff', border: '1px solid #333', cursor: 'pointer', fontSize: 11, textTransform: 'capitalize' }}>{s}</button>)}
+          </div>
+          {section === 'advantages' && (
+            <div>
+              {(result.ourAdvantages || []).map((a: any, i: number) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '140px 1fr 1fr 60px', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+                  <span style={{ color: '#94a3b8', fontSize: 12 }}>{a.category}</span>
+                  <span style={{ background: '#1e2a1e', borderRadius: 4, padding: '4px 8px', fontSize: 12, color: '#4ade80' }}>{a.us}</span>
+                  <span style={{ background: '#2a1e1e', borderRadius: 4, padding: '4px 8px', fontSize: 12, color: '#f87171' }}>{a.them}</span>
+                  <span style={{ color: (WINNER_COLOR as any)[a.winner] || '#fff', fontWeight: 700, fontSize: 12 }}>{a.winner === 'us' ? '✅ Us' : a.winner === 'them' ? '❌ Them' : '🤝 Tie'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {section === 'objections' && (result.objectionHandling || []).map((o: any, i: number) => (
+            <div key={i} style={{ background: '#1e1e2e', borderRadius: 8, padding: 10, marginBottom: 8 }}>
+              <div style={{ color: '#f87171', fontSize: 13, marginBottom: 4 }}>❓ {o.objection}</div>
+              <div style={{ color: '#4ade80', fontSize: 13 }}>✅ {o.response}</div>
+            </div>
+          ))}
+          {['winThemes','talkingPoints','redFlags','landmines','discovery'].includes(section) && (
+            <ul style={{ margin: 0, paddingLeft: 20 }}>
+              {((result as any)[section === 'discovery' ? 'discoveryQuestions' : section] || []).map((item: string, i: number) => (
+                <li key={i} style={{ color: '#e2e8f0', fontSize: 13, marginBottom: 6 }}>{item}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      {result?.error && <p style={{ color: '#f87171', marginTop: 12 }}>{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v8.82 Onboarding Email Sequence Generator ---
 function OnboardingSequencePanel({ api }: { api: string }) {
   const [product, setProduct] = React.useState('');
@@ -4612,7 +4677,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4689,6 +4754,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'battlecard', label: '⚔️ Battle Card' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -4808,6 +4874,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'battlecard' && <BattleCardPanel api={api} />}
       </div>
     </div>
   );

@@ -39500,6 +39500,28 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.83 Competitor Battle Card Generator ---
+app.post('/api/battle-card', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { ourProduct, competitor, ourStrengths, ourWeaknesses, targetBuyer, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a sales battle card comparing us vs ${competitor || 'the competitor'}.
+Our product: ${ourProduct || 'our solution'}
+Our known strengths: ${ourStrengths || 'not specified'}
+Our known weaknesses: ${ourWeaknesses || 'not specified'}
+Target buyer persona: ${targetBuyer || 'B2B decision maker'}
+Return JSON: { competitor: string, ourProduct: string, winThemes: string[], landmines: string[], discoveryQuestions: string[], objectionHandling: [{ objection: string, response: string }], ourAdvantages: [{ category: string, us: string, them: string, winner: 'us'|'them'|'tie' }], talkingPoints: string[], redFlags: string[] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.82 Onboarding Email Sequence Generator ---
 app.post('/api/onboarding-sequence', requireAuth, async (req: AuthRequest, res) => {
   try {
