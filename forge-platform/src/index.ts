@@ -39479,6 +39479,27 @@ app.post('/api/ad-copy', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// v8.62 Podcast Script Writer — generate podcast episode script and show notes
+app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
+  try {
+    const { topic, duration, format, audience } = req.body;
+    if (!topic || topic.trim().length < 3) return res.status(400).json({ error: 'topic required' });
+    const userId = req.user!.sub || req.user!.id;
+    const anthropicKey = getUserKey(userId, 'anthropic', true);
+    const openaiKey = getUserKey(userId, 'openai', true);
+    const provider = anthropicKey ? 'anthropic' : openaiKey ? 'openai' : null;
+    const key = anthropicKey || openaiKey;
+    if (!key || !provider) return res.status(402).json({ error: 'No LLM key configured' });
+    const mins = parseInt(duration) || 20;
+    const p = `You are a podcast producer. Write a complete podcast episode script.\nTopic: ${topic}\nDuration: ${mins} minutes\nFormat: ${format || 'solo host'}\nAudience: ${audience || 'general listeners'}\n\nReturn ONLY JSON:\n{"episode_title":"Compelling episode title","tagline":"One sentence episode hook","intro_script":"Opening 2-3 sentences to hook the listener","segments":[{"title":"Segment 1 title","timestamp":"0:00","duration_mins":3,"talking_points":["Point 1","Point 2","Point 3"],"script_excerpt":"2-3 sentences of actual script for this segment"},{"title":"Segment 2","timestamp":"3:00","duration_mins":5,"talking_points":["Point 1","Point 2"],"script_excerpt":"Script excerpt"},{"title":"Segment 3","timestamp":"8:00","duration_mins":7,"talking_points":["Point 1","Point 2"],"script_excerpt":"Script excerpt"},{"title":"Wrap-up","timestamp":"15:00","duration_mins":2,"talking_points":["Key takeaway","CTA"],"script_excerpt":"Closing script"}],"outro_script":"Closing 2-3 sentences with CTA","show_notes":{"description":"150-word episode description for podcast platforms","key_takeaways":["Takeaway 1","Takeaway 2","Takeaway 3"],"timestamps":["0:00 - Intro","3:00 - Main topic"],"episode_tags":["tag1","tag2","tag3"]},"social_post":"Short Twitter/X post to promote this episode"}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // ─── B249: E-Learning & Course Marketplace ───────────────────────────────────
 try { db.exec(`
   CREATE TABLE IF NOT EXISTS marketplace_courses (

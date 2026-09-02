@@ -597,6 +597,104 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.62 Podcast Script Writer ---
+function PodcastScriptPanel({ api }: { api: Api }) {
+  const [form, setForm] = useState({ topic: '', duration: '20', format: 'solo host', audience: '' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [view, setView] = useState<'script'|'shownotes'>('script');
+  const [openSeg, setOpenSeg] = useState<number|null>(0);
+  const submit = async () => {
+    if (!form.topic.trim()) return;
+    setLoading(true); setError(''); setResult(null); setOpenSeg(0); setView('script');
+    try {
+      const r = await fetch(`${api.base}/api/podcast-script`, { method: 'POST', headers: { ...api.headers, 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 16 }}>
+      <h3 style={{ marginBottom: 12, fontSize: 15 }}>🎙️ Podcast Script Writer</h3>
+      <input placeholder="Episode topic *" value={form.topic} onChange={e => setForm(f => ({ ...f, topic: e.target.value }))} style={{ width: '100%', padding: 8, marginBottom: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: 8, marginBottom: 8 }}>
+        <input type="number" placeholder="Mins" min={5} max={60} value={form.duration} onChange={e => setForm(f => ({ ...f, duration: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Format (solo / interview / panel)" value={form.format} onChange={e => setForm(f => ({ ...f, format: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+        <input placeholder="Target audience" value={form.audience} onChange={e => setForm(f => ({ ...f, audience: e.target.value }))} style={{ padding: 8, background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+      </div>
+      <button onClick={submit} disabled={loading} style={{ padding: '8px 16px', background: '#7c3aed', border: 'none', borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 13 }}>
+        {loading ? 'Writing...' : 'Write Script'}
+      </button>
+      {error && <p style={{ color: '#f87171', marginTop: 8, fontSize: 12 }}>{error}</p>}
+      {result && (
+        <div style={{ marginTop: 16 }}>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>{result.episode_title}</div>
+            <div style={{ fontSize: 12, color: '#888', fontStyle: 'italic' }}>{result.tagline}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            <button onClick={() => setView('script')} style={{ padding: '4px 12px', background: view === 'script' ? '#7c3aed' : '#1a1a2e', border: `1px solid ${view === 'script' ? '#7c3aed' : '#333'}`, borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12 }}>Script</button>
+            <button onClick={() => setView('shownotes')} style={{ padding: '4px 12px', background: view === 'shownotes' ? '#7c3aed' : '#1a1a2e', border: `1px solid ${view === 'shownotes' ? '#7c3aed' : '#333'}`, borderRadius: 6, color: '#fff', cursor: 'pointer', fontSize: 12 }}>Show Notes</button>
+          </div>
+          {view === 'script' && (
+            <div>
+              <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6, marginBottom: 8, borderLeft: '3px solid #7c3aed' }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>INTRO</div>
+                <div style={{ fontSize: 13, fontStyle: 'italic' }}>{result.intro_script}</div>
+              </div>
+              {(result.segments || []).map((s: any, i: number) => (
+                <div key={i} style={{ background: '#1a1a2e', borderRadius: 6, marginBottom: 6, overflow: 'hidden' }}>
+                  <div onClick={() => setOpenSeg(openSeg === i ? null : i)} style={{ padding: '8px 12px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <span style={{ fontSize: 11, color: '#a78bfa', marginRight: 8 }}>{s.timestamp}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{s.title}</span>
+                      <span style={{ fontSize: 11, color: '#888', marginLeft: 8 }}>{s.duration_mins}min</span>
+                    </div>
+                    <span style={{ fontSize: 12 }}>{openSeg === i ? '▲' : '▼'}</span>
+                  </div>
+                  {openSeg === i && (
+                    <div style={{ padding: '0 12px 10px' }}>
+                      <div style={{ marginBottom: 6 }}>{(s.talking_points || []).map((p: string, j: number) => <div key={j} style={{ fontSize: 12, color: '#aaa', padding: '2px 0' }}>• {p}</div>)}</div>
+                      <div style={{ fontSize: 13, fontStyle: 'italic', color: '#ddd', borderTop: '1px solid #333', paddingTop: 6 }}>{s.script_excerpt}</div>
+                    </div>
+                  )}
+                </div>
+              ))}
+              <div style={{ background: '#1a1a2e', padding: 10, borderRadius: 6, borderLeft: '3px solid #4ade80' }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>OUTRO</div>
+                <div style={{ fontSize: 13, fontStyle: 'italic' }}>{result.outro_script}</div>
+              </div>
+            </div>
+          )}
+          {view === 'shownotes' && result.show_notes && (
+            <div>
+              <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 6, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>DESCRIPTION</div>
+                <div style={{ fontSize: 13, lineHeight: 1.6 }}>{result.show_notes.description}</div>
+              </div>
+              <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 6, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>KEY TAKEAWAYS</div>
+                {(result.show_notes.key_takeaways || []).map((t: string, i: number) => <div key={i} style={{ fontSize: 12, padding: '2px 0' }}>✓ {t}</div>)}
+              </div>
+              <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 6, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>TIMESTAMPS</div>
+                {(result.show_notes.timestamps || []).map((t: string, i: number) => <div key={i} style={{ fontSize: 12, padding: '2px 0', color: '#a78bfa' }}>{t}</div>)}
+              </div>
+              {result.social_post && <div style={{ background: '#1a1a2e', padding: 12, borderRadius: 6 }}>
+                <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>SOCIAL POST</div>
+                <div style={{ fontSize: 13 }}>{result.social_post}</div>
+              </div>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.61 Ad Copy Generator ---
 function AdCopyPanel({ api }: { api: Api }) {
   const [form, setForm] = useState({ product: '', audience: '', goal: 'conversions', platforms: 'Google, Facebook/Instagram, LinkedIn' });
@@ -3648,7 +3746,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3704,6 +3802,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'coldemail', label: '🎯 Cold Email' },
     { id: 'landingcopy', label: '🚀 Landing Copy' },
     { id: 'adcopy', label: '💰 Ad Copy' },
+    { id: 'podscript', label: '🎙️ Podcast' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3802,6 +3901,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'coldemail' && <ColdEmailPanel api={api} />}
         {tab === 'landingcopy' && <LandingCopyPanel api={api} />}
         {tab === 'adcopy' && <AdCopyPanel api={api} />}
+        {tab === 'podscript' && <PodcastScriptPanel api={api} />}
       </div>
     </div>
   );
