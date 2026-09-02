@@ -39500,6 +39500,49 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.63 AI Sales Forecasting & Pipeline Intelligence ---
+app.post('/api/sales-forecast', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { company, industry, currentARR, pipelineValue, avgDealSize, salesCycle, teamSize, quota, historicalWinRate } = req.body;
+    const p = `You are a sales operations and forecasting expert. Generate a comprehensive sales forecast and pipeline intelligence report.
+Company: ${company || 'Our Company'}
+Industry: ${industry || 'B2B SaaS'}
+Current ARR: ${currentARR || '$1M'}
+Pipeline Value: ${pipelineValue || '$3M'}
+Avg Deal Size: ${avgDealSize || '$25K'}
+Sales Cycle: ${salesCycle || '60 days'}
+Team Size: ${teamSize || '5 AEs'}
+Quota: ${quota || '$200K per rep per quarter'}
+Historical Win Rate: ${historicalWinRate || '25%'}
+
+Return JSON only:
+{
+  "forecastTitle": "string",
+  "executiveSummary": "string",
+  "forecastConfidence": 0-100,
+  "pipelineHealth": "Healthy|At Risk|Insufficient|Critical",
+  "quarterlyForecast": [{ "quarter": "string", "committed": "string", "bestCase": "string", "worstCase": "string", "expectedClose": "string", "confidence": 0-100 }],
+  "pipelineAnalysis": { "totalValue": "string", "weightedValue": "string", "coverageRatio": "string", "avgDealVelocity": "string", "bottlenecks": ["string"] },
+  "dealStageBreakdown": [{ "stage": "string", "count": number, "value": "string", "avgDaysInStage": number, "conversionRate": "string" }],
+  "repPerformance": [{ "repSegment": "string", "attainment": "string", "pipelineCoverage": "string", "forecastAccuracy": "string", "coachingNeeds": ["string"] }],
+  "riskDeals": [{ "riskType": "string", "description": "string", "dealCount": number, "totalValue": "string", "mitigation": "string" }],
+  "winLossInsights": { "topWinReasons": ["string"], "topLossReasons": ["string"], "competitorWinRates": [{ "competitor": "string", "ourWinRate": "string" }] },
+  "forecastImprovements": [{ "lever": "string", "currentState": "string", "targetState": "string", "revenueImpact": "string" }],
+  "salesVelocityMetrics": { "opportunities": number, "avgDealValue": "string", "winRate": "string", "salesCycleDays": number, "revenuePerDay": "string" },
+  "actionPlan": [{ "action": "string", "owner": "string", "timeline": "string", "expectedImpact": "string" }],
+  "quickWins": ["string"]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.62 AI Brand Audit & Identity Analyzer ---
 app.post('/api/brand-audit', requireAuth, async (req: AuthRequest, res) => {
   try {
