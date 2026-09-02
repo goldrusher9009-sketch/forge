@@ -39500,6 +39500,24 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.64 YouTube Description Writer ---
+app.post('/api/yt-description', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { title, summary, keywords, channel, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write an SEO-optimized YouTube description for a video titled "${title}".
+Channel: ${channel || 'General'}.
+Summary: ${summary || 'Not provided'}.
+Target keywords: ${keywords || 'Not provided'}.
+Include: compelling first 2 lines (shown before 'Show more'), timestamps placeholder, links section, hashtags (10), and a subscribe CTA. Max 5000 chars.`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 1500 });
+    res.json({ success: true, description: (r.content || '').trim() });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.63 Video Script Writer ---
 app.post('/api/video-script', requireAuth, async (req: AuthRequest, res) => {
   try {

@@ -597,6 +597,38 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.64 YouTube Description Writer ---
+function YTDescriptionPanel({ api }: { api: string }) {
+  const [title, setTitle] = React.useState('');
+  const [summary, setSummary] = React.useState('');
+  const [keywords, setKeywords] = React.useState('');
+  const [channel, setChannel] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/yt-description`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ title, summary, keywords, channel }) });
+      const d = await r.json();
+      setResult(d.description || d.error || 'Error');
+    } catch(e: any) { setResult(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div style={{ padding: 24 }}>
+      <h2>📺 YouTube Description Writer</h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 600 }}>
+        <input placeholder="Video title" value={title} onChange={e => setTitle(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <input placeholder="Channel name" value={channel} onChange={e => setChannel(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <textarea placeholder="Video summary / key points" value={summary} onChange={e => setSummary(e.target.value)} rows={3} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff', resize: 'vertical' }} />
+        <input placeholder="Target keywords (comma separated)" value={keywords} onChange={e => setKeywords(e.target.value)} style={{ padding: 10, borderRadius: 8, border: '1px solid #333', background: '#1a1a1a', color: '#fff' }} />
+        <button onClick={run} disabled={loading || !title} style={{ padding: '10px 20px', borderRadius: 8, background: '#7c3aed', color: '#fff', border: 'none', cursor: 'pointer' }}>{loading ? 'Writing...' : 'Generate Description'}</button>
+      </div>
+      {result && <pre style={{ marginTop: 20, padding: 16, background: '#1a1a1a', borderRadius: 8, whiteSpace: 'pre-wrap', color: '#e2e8f0' }}>{result}</pre>}
+    </div>
+  );
+}
+
 // --- v8.63 Video Script Writer ---
 function VideoScriptPanel({ api }: { api: string }) {
   const [topic, setTopic] = React.useState('');
@@ -3784,7 +3816,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -3842,6 +3874,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'adcopy', label: '💰 Ad Copy' },
     { id: 'podscript', label: '🎙️ Podcast' },
     { id: 'vidscript', label: '🎬 Video Script' },
+    { id: 'ytdesc', label: '📺 YT Description' },
     { id: 'market', label: '≡ƒ¢Æ Market' },
     { id: 'modes', label: 'ΓÜí Modes' },
     { id: 'voice', label: '≡ƒÄÖ∩╕Å Voice' },
@@ -3942,6 +3975,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'adcopy' && <AdCopyPanel api={api} />}
         {tab === 'podscript' && <PodcastScriptPanel api={api} />}
         {tab === 'vidscript' && <VideoScriptPanel api={api} />}
+        {tab === 'ytdesc' && <YTDescriptionPanel api={api} />}
       </div>
     </div>
   );
