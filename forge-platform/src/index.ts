@@ -39500,6 +39500,87 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.57 AI Legal & Compliance Risk Engine ---
+app.post('/api/legal-compliance', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { companyName, industry, jurisdiction, companyStage, businessModel, dataHandling, employeeCount, revenueRange, currentLegalCounsel, topLegalConcerns, recentLegalIssues, contractVolume } = req.body;
+    const p = `You are a senior legal and compliance advisor. Analyze the following company and generate a comprehensive legal & compliance risk assessment.
+
+Company: ${companyName}
+Industry: ${industry}
+Jurisdiction: ${jurisdiction}
+Stage: ${companyStage}
+Business Model: ${businessModel}
+Data Handling: ${dataHandling}
+Employees: ${employeeCount}
+Revenue: ${revenueRange}
+Legal Counsel: ${currentLegalCounsel}
+Top Legal Concerns: ${topLegalConcerns}
+Recent Legal Issues: ${recentLegalIssues}
+Contract Volume: ${contractVolume}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "Legal & Compliance Risk Report for [Company]",
+  "executiveSummary": "2-3 sentence overview",
+  "overallRiskScore": 0-100,
+  "riskLevel": "Critical|High|Medium|Low",
+  "complianceHealthStatus": "string",
+  "criticalExposure": "string",
+  "estimatedLegalBudget": "string",
+  "riskMatrix": [
+    { "area": "string", "riskLevel": "Critical|High|Medium|Low", "likelihood": "High|Medium|Low", "impact": "High|Medium|Low", "currentControls": "string", "gaps": ["string"], "priority": "Immediate|Short-term|Long-term" }
+  ],
+  "regulatoryLandscape": {
+    "applicableRegulations": [{ "regulation": "string", "jurisdiction": "string", "complianceStatus": "Compliant|Partial|Non-compliant|Unknown", "keyRequirements": ["string"], "penalties": "string", "deadlines": "string" }],
+    "upcomingRegulations": ["string"],
+    "industrySpecificRisks": ["string"]
+  },
+  "contractRiskAssessment": {
+    "contractHealthScore": 0-100,
+    "commonWeaknesses": ["string"],
+    "missingClauses": ["string"],
+    "recommendedTemplates": ["string"],
+    "negotiationRedlines": ["string"]
+  },
+  "dataPrivacyCompliance": {
+    "applicableLaws": ["string"],
+    "currentGaps": ["string"],
+    "privacyByDesignActions": ["string"],
+    "incidentResponseReadiness": "string",
+    "dataMapRecommendations": ["string"]
+  },
+  "employmentLawRisks": {
+    "classificationRisks": ["string"],
+    "requiredPolicies": ["string"],
+    "hrComplianceGaps": ["string"],
+    "terminationRisks": "string"
+  },
+  "ipStrategy": {
+    "currentProtections": ["string"],
+    "gaps": ["string"],
+    "trademarkRecommendations": ["string"],
+    "patentOpportunities": ["string"],
+    "tradeSecretProtocols": ["string"]
+  },
+  "legalOperationsRoadmap": {
+    "immediate": [{ "action": "string", "cost": "string", "timeline": "string", "impact": "string" }],
+    "shortTerm": [{ "action": "string", "cost": "string", "timeline": "string", "impact": "string" }],
+    "longTerm": [{ "action": "string", "cost": "string", "timeline": "string", "impact": "string" }]
+  },
+  "legalStackRecommendations": [{ "tool": "string", "purpose": "string", "cost": "string", "priority": "string" }],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Failed to parse response' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.56 AI Talent Acquisition & People Strategy Engine ---
 app.post('/api/talent-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
