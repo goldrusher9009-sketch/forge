@@ -39500,6 +39500,19 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.41 Competitive Moat Analyzer ---
+app.post('/api/competitive-moat', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, product, revenueModel, targetMarket, keyCompetitors, currentAdvantages, weaknesses, networkEffects, switchingCosts, brandStrength, dataAdvantage, regulatoryMoats, patentsIP, costStructure, grossMargin, nrr, churnRate, customerAcquisition, goals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a competitive strategy expert. Analyze competitive moat for: Company: ${company}, Industry: ${industry}, Product: ${product}, Revenue Model: ${revenueModel}, Target Market: ${targetMarket}, Key Competitors: ${keyCompetitors}, Current Advantages: ${currentAdvantages}, Weaknesses: ${weaknesses}, Network Effects: ${networkEffects}, Switching Costs: ${switchingCosts}, Brand Strength: ${brandStrength}, Data Advantage: ${dataAdvantage}, Regulatory Moats: ${regulatoryMoats}, Patents/IP: ${patentsIP}, Cost Structure: ${costStructure}, Gross Margin: ${grossMargin}, NRR: ${nrr}, Churn Rate: ${churnRate}, CAC: ${customerAcquisition}, Goals: ${goals}. Return JSON: { analyzerTitle, executiveSummary, moatScore (0-100), moatStrengthRating ("Narrow"/"Wide"/"No Moat"), moatSources (array: {source, strength (1-5), description, evidence, durabilityYears}), competitorMatrix (array: {competitor, marketShare, moatType, threatLevel, weaknesses}), vulnerabilityAssessment (array: {threat, likelihood, impact, timeHorizon, mitigation}), moatBuildingRoadmap (array: {phase, duration, initiatives, expectedMoatGain, investment}), networkEffectsAnalysis, switchingCostAnalysis, brandAndReputationAnalysis, dataAndAIAdvantage, regulatoryAndComplianceMoat, costAdvantageAnalysis, strategicRecommendations (array: {priority, action, rationale, investment, timeline, expectedROI}), quickWins (array: {action, impact, effort, timeline}), moatMetrics (array: {metric, current, target, timeline}) }`;
+  try {
+    const data = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.40 Global Expansion & Market Entry Playbook ---
 app.post('/api/global-expansion', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, product, currentMarkets, targetMarkets, expansionBudget, teamSize, revenueModel, localCompetitors, regulatoryContext, goToMarketApproach, partnershipStrategy, timeline, expansionGoals } = req.body;
