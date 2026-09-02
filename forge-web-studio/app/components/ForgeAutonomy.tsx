@@ -597,6 +597,77 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.86 Executive Summary Writer ---
+function ExecSummaryPanel({ api }: { api: string }) {
+  const [docType, setDocType] = React.useState('report');
+  const [title, setTitle] = React.useState('');
+  const [audience, setAudience] = React.useState('');
+  const [keyPoints, setKeyPoints] = React.useState('');
+  const [tone, setTone] = React.useState('professional');
+  const [length, setLength] = React.useState('one page');
+  const [mainContent, setMainContent] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/exec-summary`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ docType, title, audience, keyPoints, tone, length, mainContent }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div style={{ padding: 24, maxWidth: 860 }}>
+      <h2 style={{ marginBottom: 4 }}>📄 Executive Summary Writer</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Generate polished executive summaries for reports, proposals, and business documents.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        {[['Document Type', docType, setDocType, 'e.g. report, proposal, business plan'], ['Title', title, setTitle, 'e.g. Q3 Performance Report'], ['Audience', audience, setAudience, 'e.g. Board of Directors'], ['Key Points', keyPoints, setKeyPoints, 'e.g. Revenue growth, cost savings, risks'], ['Tone', tone, setTone, 'professional / formal / concise'], ['Target Length', length, setLength, 'one page / 200 words']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>Main Content / Context (paste or summarize)</div>
+        <textarea value={mainContent} onChange={e => setMainContent(e.target.value)} rows={5} placeholder="Paste your document content or describe what it covers..." style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13, resize: 'vertical' }} />
+      </div>
+      <button onClick={run} disabled={loading || !title} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Writing...' : 'Generate Executive Summary'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ background: '#111827', borderRadius: 10, padding: 20, marginBottom: 16 }}>
+            <h3 style={{ margin: '0 0 4px', color: '#7c3aed' }}>{result.headline}</h3>
+            <p style={{ color: '#ccc', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{result.executiveSummary}</p>
+          </div>
+          {result.metrics?.length > 0 && (
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 16 }}>
+              {result.metrics.map((m: any, i: number) => (
+                <div key={i} style={{ background: '#1a1a2e', borderRadius: 8, padding: '10px 16px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#34d399' }}>{m.value}</div>
+                  <div style={{ fontSize: 11, color: '#888' }}>{m.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+            {[['🔍 Key Findings', result.keyFindings, '#60a5fa'], ['💡 Recommendations', result.recommendations, '#34d399'], ['➡️ Next Steps', result.nextSteps, '#facc15']].map(([label, items, color]: any) => (
+              <div key={label} style={{ background: '#1a1a2e', borderRadius: 8, padding: 14 }}>
+                <div style={{ fontWeight: 600, color, marginBottom: 8, fontSize: 13 }}>{label}</div>
+                <ul style={{ margin: 0, paddingLeft: 16 }}>{items?.map((x: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 12, marginBottom: 6 }}>{x}</li>)}</ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.85 SWOT Analysis Generator ---
 const SWOT_COLOR: Record<string,string> = { strengths: '#34d399', weaknesses: '#f87171', opportunities: '#60a5fa', threats: '#facc15' };
 const SWOT_ICON: Record<string,string> = { strengths: '💪', weaknesses: '⚠️', opportunities: '🚀', threats: '🛡️' };
@@ -4816,7 +4887,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4893,6 +4964,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'execsummary', label: '📄 Exec Summary' },
     { id: 'swotanalysis', label: '🔷 SWOT Analysis' },
     { id: 'sopgen', label: '📋 SOP Generator' },
     { id: 'battlecard', label: '⚔️ Battle Card' },
@@ -5015,6 +5087,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'execsummary' && <ExecSummaryPanel api={api} />}
         {tab === 'swotanalysis' && <SWOTAnalysisPanel api={api} />}
         {tab === 'sopgen' && <SOPGenPanel api={api} />}
         {tab === 'battlecard' && <BattleCardPanel api={api} />}

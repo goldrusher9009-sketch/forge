@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.86 Executive Summary Writer ---
+app.post('/api/exec-summary', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { docType, title, mainContent, audience, keyPoints, tone, length, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Write a professional executive summary for a ${docType || 'report'}.
+Title: ${title || 'Document'}
+Audience: ${audience || 'senior leadership'}
+Key points to cover: ${keyPoints || 'main findings and recommendations'}
+Tone: ${tone || 'professional'}
+Target length: ${length || 'one page'}
+Main content/context: ${mainContent || 'not provided'}
+Return JSON: { executiveSummary: string, headline: string, keyFindings: string[], recommendations: string[], nextSteps: string[], metrics: [{label:string,value:string}] }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.85 SWOT Analysis Generator ---
 app.post('/api/swot-analysis', requireAuth, async (req: AuthRequest, res) => {
   try {
