@@ -597,6 +597,49 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.84 AI Revenue Operations Command Center ---
+const GROWTH_EFFICIENCY_COLOR: Record<string,string> = { 'Poor':'bg-red-700','Fair':'bg-yellow-700','Good':'bg-blue-700','Excellent':'bg-green-700' };
+const LEVER_IMPACT_COLOR: Record<string,string> = { 'High':'text-green-400','Medium':'text-yellow-400','Low':'text-gray-400' };
+function RevOpsCommandPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ company:'', arr:'', growthRate:'', salesTeamSize:'', avgDealSize:'', salesCycle:'', churnRate:'', nrr:'', stage:'Series A' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true);
+    try { const r = await fetch(`${api}/api/revops-command`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e){} setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">📊 RevOps Command</h2>
+      <div className="grid grid-cols-3 gap-3">
+        {(['company','arr','growthRate','salesTeamSize','avgDealSize','salesCycle','churnRate','nrr','stage'] as const).map(f => (
+          <div key={f}><label className="text-gray-400 text-xs capitalize">{f.replace(/([A-Z])/g,' $1')}</label>
+          <input className="w-full bg-gray-800 text-white rounded px-3 py-2 text-sm mt-1" value={form[f]} onChange={e=>setForm(p=>({...p,[f]:e.target.value}))} placeholder={f}/></div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading?'Analyzing...':'Analyze RevOps'}</button>
+      {result && !result.error && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-white font-semibold">Health: {result.revenueHealthScore}/100</span>
+              {result.growthEfficiencyRating && <span className={`${GROWTH_EFFICIENCY_COLOR[result.growthEfficiencyRating]||'bg-gray-600'} text-white text-xs px-2 py-1 rounded`}>{result.growthEfficiencyRating}</span>}
+              {result.magicNumber && <span className="text-gray-300 text-xs">Magic #: {result.magicNumber}</span>}
+              {result.burnMultiple && <span className="text-gray-300 text-xs">Burn: {result.burnMultiple}</span>}
+            </div>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          {result.revenueLevers?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-3">Revenue Levers</h3><div className="space-y-2">{result.revenueLevers.map((l:any,i:number)=><div key={i} className="bg-gray-700 rounded p-3"><div className="flex items-center gap-2 mb-1"><span className="text-white text-sm font-medium">{l.lever}</span><span className={`${LEVER_IMPACT_COLOR[l.impact]||'text-gray-400'} text-xs font-semibold`}>{l.impact} Impact</span><span className="text-gray-400 text-xs ml-auto">{l.timeToImpact}</span></div><p className="text-gray-300 text-xs">{l.opportunity}</p></div>)}</div></div>}
+          {result.keyMetricsDashboard?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-3">Metrics vs Benchmark</h3><div className="space-y-2">{result.keyMetricsDashboard.map((m:any,i:number)=><div key={i} className="bg-gray-700 rounded p-2 flex items-center gap-3"><div className="flex-1"><div className="text-white text-sm">{m.metric}</div><div className="text-gray-400 text-xs">{m.action}</div></div><div className="text-right text-xs"><div className="text-gray-400">Benchmark: {m.benchmark}</div><div className="text-cyan-400 font-semibold">You: {m.yourEstimate}</div></div></div>)}</div></div>}
+          {result.thirtyDayPlan?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-2">30-Day Plan</h3><ul className="space-y-1">{result.thirtyDayPlan.map((p:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-cyan-400 font-bold">{i+1}.</span>{p}</li>)}</ul></div>}
+          {result.quickWins?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-2">Quick Wins</h3><ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-cyan-400">→</span>{w}</li>)}</ul></div>}
+        </div>
+      )}
+      {result?.error && <p className="text-red-400 text-sm">{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v9.83 AI Talent Intelligence & Hiring Optimizer ---
 const MARKET_DEMAND_COLOR: Record<string,string> = { 'Oversupply':'bg-green-700','Balanced':'bg-blue-700','High Demand':'bg-yellow-700','Extreme Scarcity':'bg-red-700' };
 function TalentIntelPanel({ api }: { api: string }) {
@@ -12446,7 +12489,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -12526,6 +12569,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'fundraisingstrategy', label: '💸 Fundraising' },
     { id: 'kpidashboard', label: '📊 KPI Dashboard' },
     { id: 'changemgmt', label: '🔄 Change Mgmt' },
+    { id: 'revopscmd', label: '📊 RevOps' },
     { id: 'talentintel', label: '🎯 Talent Intel' },
     { id: 'partnershipbld', label: '🤝 Partnership' },
     { id: 'crisiscomms', label: '🚨 Crisis Comms' },
@@ -12640,6 +12684,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'gtmplanner', label: '🚀 GTM Planner' },
     { id: 'csretention', label: '🎯 CS Retention' },
     { id: 'fundraisingcmd', label: '💎 Fundraising' },
+    { id: 'revopscmd', label: '📊 RevOps' },
     { id: 'talentintel', label: '🎯 Talent Intel' },
     { id: 'partnershipbld', label: '🤝 Partnership' },
     { id: 'crisiscomms', label: '🚨 Crisis Comms' },
@@ -12763,6 +12808,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'fundraisingstrategy' && <FundraisingStrategyPanel api={api} />}
         {tab === 'kpidashboard' && <KPIDashboardPanel api={api} />}
         {tab === 'changemgmt' && <ChangeMgmtPanel api={api} />}
+        {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
         {tab === 'partnershipbld' && <PartnershipBuilderPanel api={api} />}
         {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
@@ -12780,6 +12826,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
         {tab === 'partnershipbld' && <PartnershipBuilderPanel api={api} />}
         {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
@@ -12828,6 +12875,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
         {tab === 'partnershipbld' && <PartnershipBuilderPanel api={api} />}
         {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
@@ -12859,6 +12907,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'revopscmd' && <RevOpsCommandPanel api={api} />}
         {tab === 'talentintel' && <TalentIntelPanel api={api} />}
         {tab === 'partnershipbld' && <PartnershipBuilderPanel api={api} />}
         {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}

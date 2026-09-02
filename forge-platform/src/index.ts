@@ -39500,6 +39500,49 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.84 AI Revenue Operations Command Center ---
+app.post('/api/revops-command', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, arr, growthRate, salesTeamSize, avgDealSize, salesCycle, churnRate, nrr, stage } = req.body;
+    const p = `You are a RevOps expert. Build a comprehensive Revenue Operations strategy and optimization plan.
+Company: ${company || 'Unknown'}
+ARR: ${arr || 'Unknown'}
+Growth Rate: ${growthRate || 'Unknown'}
+Sales Team Size: ${salesTeamSize || 'Unknown'}
+Average Deal Size: ${avgDealSize || 'Unknown'}
+Sales Cycle: ${salesCycle || 'Unknown'}
+Churn Rate: ${churnRate || 'Unknown'}
+NRR: ${nrr || 'Unknown'}
+Stage: ${stage || 'Series A'}
+Return ONLY valid JSON:
+{
+  "revopsTitle": "string",
+  "executiveSummary": "string",
+  "revenueHealthScore": 0-100,
+  "growthEfficiencyRating": "Poor|Fair|Good|Excellent",
+  "magicNumber": "string",
+  "burnMultiple": "string",
+  "pipelineAnalysis": {"coverageRatio": "string", "velocity": "string", "conversionRate": "string", "leakagePoints": ["string"]},
+  "revenueLevers": [{"lever": "string", "currentState": "string", "opportunity": "string", "impact": "High|Medium|Low", "effort": "High|Medium|Low", "timeToImpact": "string"}],
+  "salesProcessOptimization": "string",
+  "techStackRecommendations": [{"tool": "string", "category": "string", "rationale": "string", "priority": "Critical|High|Medium|Low"}],
+  "forecastingFramework": "string",
+  "quotaDesign": "string",
+  "commissionStructure": "string",
+  "territoryPlan": "string",
+  "keyMetricsDashboard": [{"metric": "string", "benchmark": "string", "yourEstimate": "string", "action": "string"}],
+  "thirtyDayPlan": ["string"],
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.83 AI Talent Intelligence & Hiring Optimizer ---
 app.post('/api/talent-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
