@@ -39500,6 +39500,77 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.39 AI Cybersecurity & Zero Trust Architecture Engine ---
+app.post('/api/cybersecurity', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, teamSize, currentStack, recentIncidents, complianceNeeds, budget, goals } = req.body;
+  const p = `You are a world-class CISO and cybersecurity architect. Create a comprehensive cybersecurity assessment and zero-trust implementation roadmap.
+
+Company: ${companyName || 'Unknown'}
+Industry: ${industry || 'Unknown'}
+Team Size: ${teamSize || 'Unknown'}
+Current Security Stack: ${currentStack || 'Unknown'}
+Recent Incidents: ${recentIncidents || 'None described'}
+Compliance Needs: ${complianceNeeds || 'Unknown'}
+Security Budget: ${budget || 'Unknown'}
+Goals: ${goals || 'Unknown'}
+
+Return a JSON object with these exact fields:
+{
+  "reportTitle": "Cybersecurity & Zero Trust Report for [company]",
+  "executiveSummary": "3-sentence security posture assessment",
+  "securityScore": <number 0-100>,
+  "maturityLevel": "Initial|Developing|Defined|Managed|Optimizing",
+  "criticalVulnerability": "most critical security gap",
+  "immediateAction": "single most important action to take this week",
+  "riskScore": "Critical/High/Medium/Low",
+  "threatLandscape": {
+    "topThreats": ["threat 1", "threat 2", "threat 3"],
+    "industrySpecificRisks": ["risk 1", "risk 2"],
+    "attackVectors": ["vector 1", "vector 2", "vector 3"],
+    "threatActors": ["actor type 1", "actor type 2"]
+  },
+  "securityAudit": {
+    "identityAccess": { "score": <0-100>, "gaps": ["gap 1"], "recommendations": ["rec 1"] },
+    "networkSecurity": { "score": <0-100>, "gaps": ["gap 1"], "recommendations": ["rec 1"] },
+    "endpointSecurity": { "score": <0-100>, "gaps": ["gap 1"], "recommendations": ["rec 1"] },
+    "dataProtection": { "score": <0-100>, "gaps": ["gap 1"], "recommendations": ["rec 1"] },
+    "cloudSecurity": { "score": <0-100>, "gaps": ["gap 1"], "recommendations": ["rec 1"] }
+  },
+  "zeroTrustRoadmap": [
+    { "pillar": "Identity/Device/Network/Application/Data", "currentState": "assessment", "targetState": "goal", "keyControls": ["control 1"], "timeline": "timeline", "priority": "High/Medium/Low" }
+  ],
+  "complianceFramework": [
+    { "framework": "SOC2/ISO27001/NIST/GDPR/etc", "currentGap": "gap description", "requiredControls": ["control 1"], "timeline": "to compliance", "effort": "High/Medium/Low" }
+  ],
+  "incidentResponsePlan": {
+    "detectionCapability": "current detection approach",
+    "responseTeam": "team structure recommendation",
+    "playbookPriorities": ["playbook 1", "playbook 2"],
+    "rto": "recovery time objective",
+    "rpo": "recovery point objective",
+    "communicationPlan": "stakeholder communication approach"
+  },
+  "securityStack": [
+    { "category": "tool category", "currentTool": "current or none", "recommended": "recommended tool", "priority": "Critical/High/Medium", "estimatedCost": "cost range", "rationale": "why this tool" }
+  ],
+  "implementationPlan": [
+    { "phase": "phase name", "timeline": "timeline", "focus": "focus area", "initiatives": ["initiative 1"], "investment": "cost estimate" }
+  ],
+  "securityMetrics": ["metric 1", "metric 2", "metric 3", "metric 4"],
+  "quickWins": ["action 1", "action 2", "action 3"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Invalid response' });
+    res.json(JSON.parse(match[0]));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.38 AI Supply Chain & Procurement Intelligence Engine ---
 app.post('/api/supply-chain', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
