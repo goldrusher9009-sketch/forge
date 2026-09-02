@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.37 Revenue Operations Command Center ---
+app.post('/api/revops', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, arr, growthRate, salesTeamSize, marketingBudget, currentCRM, currentStack, leadSources, avgDealSize, salesCycle, winRate, churnRate, nrr, cac, ltv, revenueGoal, revopsGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Chief Revenue Officer and RevOps expert. Generate a comprehensive Revenue Operations Command Center plan for:
+Company: ${company}, Industry: ${industry}, ARR: ${arr}, Growth Rate: ${growthRate}
+Sales Team: ${salesTeamSize}, Marketing Budget: ${marketingBudget}
+CRM: ${currentCRM}, Stack: ${currentStack}, Lead Sources: ${leadSources}
+Avg Deal: ${avgDealSize}, Sales Cycle: ${salesCycle}, Win Rate: ${winRate}
+Churn: ${churnRate}, NRR: ${nrr}, CAC: ${cac}, LTV: ${ltv}
+Revenue Goal: ${revenueGoal}, RevOps Goals: ${revopsGoals}
+
+Return JSON: { commandCenterTitle, executiveSummary, revenueHealthScore, currentStateAudit: { strengths, gaps, redFlags }, revenueArchitecture: { segments: [{ segment, arr, growth, margin, priority }], motions: [{ motion, target, channels, expectedReturn }] }, demandGeneration: { channels: [{ channel, budget, leads, cpl, cac, roi }], attributionModel, campaignTypes }, pipelineManagement: { stages: [{ stage, name, entryCount, conversionRate, avgDays, bottleneck }], pipelineVelocity, coverageRatio }, salesExcellence: { methodology, quotaDesign, territoryCoverage, enablementPlan: [{ program, audience, format, cadence }] }, revenueIntelligence: { kpiDashboard: [{ category, metrics: [{ name, current, target, trend }] }], forecastingModel, alertThresholds }, techStackOptimization: { currentGaps, recommendations: [{ tool, category, purpose, priority, estimatedROI }] }, revenuePlaybooks: [{ scenario, trigger, playbook, owner, timeline }], implementationRoadmap: { phases: [{ phase, name, duration, initiatives, expectedARRImpact }] }, quickWins: [{ win, effort, expectedImpact, timeline }] }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.36 Product-Led Growth Strategy ---
 app.post('/api/plg-strategy', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, industry, currentModel, targetUsers, freeTrialExists, onboardingFlow, activationMetric, timeToValue, viralLoops, expansionRevenue, nrr, churnRate, cac, ltv, competitors, plgGoals } = req.body;

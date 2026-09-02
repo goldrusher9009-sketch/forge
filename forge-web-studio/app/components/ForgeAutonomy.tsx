@@ -597,6 +597,105 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.37 Revenue Operations Command Center ---
+const REVOPS_TREND: Record<string,string> = { 'up':'text-green-400','down':'text-red-400','flat':'text-gray-400','improving':'text-green-400','declining':'text-red-400' };
+function RevOpsPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', arr:'', growthRate:'', salesTeamSize:'', marketingBudget:'', currentCRM:'', currentStack:'', leadSources:'', avgDealSize:'', salesCycle:'', winRate:'', churnRate:'', nrr:'', cac:'', ltv:'', revenueGoal:'', revopsGoals:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const sf = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try { const r = await fetch(`${api}/api/revops`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e) { setResult({ error: String(e) }); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">💹 Revenue Operations Command Center</h2>
+      <div className="grid grid-cols-3 gap-3">
+        {[['company','Company'],['industry','Industry'],['arr','ARR ($)'],['growthRate','Growth Rate'],['salesTeamSize','Sales Team Size'],['marketingBudget','Marketing Budget'],['currentCRM','Current CRM'],['currentStack','Current Tech Stack'],['leadSources','Lead Sources'],['avgDealSize','Avg Deal Size ($)'],['salesCycle','Sales Cycle (days)'],['winRate','Win Rate %'],['churnRate','Churn Rate %'],['nrr','NRR %'],['cac','CAC ($)'],['ltv','LTV ($)'],['revenueGoal','Revenue Goal']].map(([k,label]) => (
+          <div key={k}>
+            <label className="text-xs text-gray-400">{label}</label>
+            <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} />
+          </div>
+        ))}
+        <div className="col-span-3">
+          <label className="text-xs text-gray-400">RevOps Goals</label>
+          <textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm h-16" value={form.revopsGoals} onChange={e=>sf('revopsGoals',e.target.value)} />
+        </div>
+      </div>
+      <button onClick={run} disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Generating...' : 'Generate RevOps Command Center'}</button>
+      {result && !result.error && (
+        <div className="space-y-4 mt-4">
+          <div className="bg-gray-800 rounded-xl p-4 border border-emerald-500/30 flex items-start gap-4">
+            <div className="flex-1"><h3 className="text-lg font-bold text-emerald-400">{result.commandCenterTitle}</h3><p className="text-gray-300 text-sm mt-1">{result.executiveSummary}</p></div>
+            {result.revenueHealthScore !== undefined && <div className="shrink-0 text-center"><div className="text-4xl font-black text-emerald-400">{result.revenueHealthScore}</div><div className="text-xs text-gray-400">Health Score</div></div>}
+          </div>
+          {result.pipelineManagement?.stages && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Pipeline Stages</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead><tr className="text-gray-400 border-b border-gray-700">{['Stage','Count','Conv%','Days','Bottleneck'].map(h=><th key={h} className="text-left p-2">{h}</th>)}</tr></thead>
+                  <tbody>{result.pipelineManagement.stages.map((s:any,i:number)=>(
+                    <tr key={i} className="border-b border-gray-700">
+                      <td className="p-2 text-gray-200">{s.name}</td>
+                      <td className="p-2 text-blue-400">{s.entryCount}</td>
+                      <td className="p-2 text-green-400">{s.conversionRate}</td>
+                      <td className="p-2 text-yellow-400">{s.avgDays}</td>
+                      <td className="p-2 text-red-400">{s.bottleneck}</td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+              <div className="flex gap-4 mt-2 text-xs"><span className="text-gray-400">Velocity: <span className="text-emerald-400">{result.pipelineManagement.pipelineVelocity}</span></span><span className="text-gray-400">Coverage: <span className="text-emerald-400">{result.pipelineManagement.coverageRatio}</span></span></div>
+            </div>
+          )}
+          {result.revenueIntelligence?.kpiDashboard && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">KPI Dashboard</h4>
+              <div className="space-y-3">{result.revenueIntelligence.kpiDashboard.map((cat:any,i:number)=>(
+                <div key={i}>
+                  <div className="text-gray-400 text-xs font-semibold mb-1">{cat.category}</div>
+                  <div className="grid grid-cols-3 gap-2">{(cat.metrics||[]).map((m:any,j:number)=>(
+                    <div key={j} className="bg-gray-700 rounded p-2 text-xs">
+                      <div className="text-gray-300">{m.name}</div>
+                      <div className="flex justify-between mt-1"><span className="text-yellow-400">{m.current}</span><span className="text-green-400">→{m.target}</span></div>
+                      <div className={`text-xs ${REVOPS_TREND[m.trend?.toLowerCase()]||'text-gray-400'}`}>{m.trend}</div>
+                    </div>
+                  ))}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.revenuePlaybooks && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Revenue Playbooks</h4>
+              <div className="space-y-2">{result.revenuePlaybooks.map((pb:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3 text-sm">
+                  <div className="flex gap-2 mb-1"><span className="text-yellow-400 font-semibold">{pb.scenario}</span><span className="text-gray-500 text-xs">Owner: {pb.owner}</span><span className="text-gray-500 text-xs ml-auto">{pb.timeline}</span></div>
+                  <div className="text-gray-300 text-xs"><span className="text-orange-400">Trigger: {pb.trigger}</span></div>
+                  <div className="text-emerald-400 text-xs mt-1">→ {pb.playbook}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.quickWins && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Quick Wins</h4>
+              <div className="grid grid-cols-2 gap-2">{result.quickWins.map((w:any,i:number)=>(
+                <div key={i} className="bg-emerald-900/30 border border-emerald-700/40 rounded p-2 text-xs">
+                  <div className="text-emerald-300 font-semibold">{w.win}</div>
+                  <div className="flex gap-2 mt-1"><span className="text-yellow-400">{w.effort}</span><span className="text-green-400">{w.expectedImpact}</span><span className="text-gray-500 ml-auto">{w.timeline}</span></div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+    </div>
+  );
+}
 // --- v9.36 Product-Led Growth Strategy ---
 const PLG_SCORE_COLOR = (s: number) => s >= 80 ? 'text-green-400' : s >= 60 ? 'text-yellow-400' : s >= 40 ? 'text-orange-400' : 'text-red-400';
 function PLGStrategyPanel({ api }: { api: string }) {
@@ -9840,7 +9939,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -9938,6 +10037,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'revops', label: '💹 RevOps Command' },
     { id: 'plgstrategy', label: '🚀 PLG Strategy' },
     { id: 'journeyorch', label: '🗺️ Journey Orchestration' },
     { id: 'aiethics', label: '⚖️ AI Ethics Framework' },
@@ -10111,6 +10211,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'revops' && <RevOpsPanel api={api} />}
         {tab === 'plgstrategy' && <PLGStrategyPanel api={api} />}
         {tab === 'journeyorch' && <JourneyOrchestrationPanel api={api} />}
         {tab === 'aiethics' && <AIEthicsPanel api={api} />}
