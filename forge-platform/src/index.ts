@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.98 AI ESG & Sustainability Strategy Builder ---
+app.post('/api/esg-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { companyName, industry, companySize, currentEsgMaturity, primaryGoals, regulatoryContext, stakeholderPressure, currentInitiatives, budget, reportingFrameworks, timeline } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class ESG and sustainability strategist. Build a comprehensive ESG strategy for: Company: ${companyName}, Industry: ${industry}, Size: ${companySize}, Current ESG Maturity: ${currentEsgMaturity||'Beginner'}, Primary Goals: ${primaryGoals}, Regulatory Context: ${regulatoryContext||'General'}, Stakeholder Pressure: ${stakeholderPressure||'Moderate'}, Current Initiatives: ${currentInitiatives||'None'}, Budget: ${budget||'TBD'}, Reporting Frameworks: ${reportingFrameworks||'GRI, TCFD'}, Timeline: ${timeline||'3 years'}.
+Return ONLY valid JSON: { "esgTitle": string, "executiveSummary": string, "esgMaturityScore": number (0-100), "esgRatingProjection": string, "materialityMatrix": [{ "issue": string, "pillar": "Environmental"|"Social"|"Governance", "businessImpact": "High"|"Medium"|"Low", "stakeholderConcern": "High"|"Medium"|"Low", "currentPerformance": string, "priority": "Critical"|"High"|"Medium"|"Low" }], "environmentalStrategy": { "carbonFootprintBaseline": string, "netZeroTarget": string, "initiatives": [{ "initiative": string, "scope": string, "timeline": string, "estimatedReduction": string, "investment": string }], "climateRiskAssessment": string[] }, "socialStrategy": { "diversityGoals": string[], "communityImpactPrograms": string[], "supplyChainESG": string[], "employeeWellbeing": string[], "humanRightsPolicy": string }, "governanceStrategy": { "boardComposition": string, "executiveESGCompensation": string, "ethicsCompliance": string[], "transparencyInitiatives": string[], "riskManagement": string[] }, "reportingFramework": { "primaryFrameworks": string[], "disclosureCalendar": [{ "report": string, "frequency": string, "audience": string }], "dataCollectionPlan": string[], "thirdPartyVerification": string }, "stakeholderEngagement": [{ "group": string, "concern": string, "engagementStrategy": string, "frequency": string }], "esgRoadmap": [{ "year": string, "milestones": string[], "investmentLevel": string, "kpis": string[] }], "businessCaseForESG": { "revenueOpportunity": string, "costSavings": string, "riskMitigation": string, "brandValue": string, "investorAppeal": string }, "quickWins": string[] }`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = raw.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.97 AI Revenue Operations (RevOps) Command Center ---
 app.post('/api/revops-command', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
