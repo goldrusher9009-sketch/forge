@@ -39500,6 +39500,64 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.50 AI Organizational Design & Change Management Engine ---
+app.post('/api/org-design', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const { companyName, industry, currentSize, currentStructure, growthStage, painPoints, changeObjective, timeline, culture, leadershipStyle, remotePolicy } = req.body;
+  const p = `You are a world-class organizational design consultant and change management expert. Design the optimal org structure and change plan.
+
+Company: ${companyName}
+Industry: ${industry}
+Current Size: ${currentSize}
+Current Structure: ${currentStructure}
+Growth Stage: ${growthStage}
+Pain Points: ${painPoints}
+Change Objective: ${changeObjective}
+Timeline: ${timeline}
+Culture: ${culture}
+Leadership Style: ${leadershipStyle}
+Remote Policy: ${remotePolicy}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "Org Design & Change Management Plan for [Company]",
+  "executiveSummary": "...",
+  "orgHealthScore": 0-100,
+  "designMaturity": "Startup|Scaling|Maturing|Enterprise|Transforming",
+  "biggestStructuralIssue": "...",
+  "topPriority": "...",
+  "estimatedROI": "...",
+  "orgAudit": {
+    "spanOfControl": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "decisionVelocity": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "crossFunctionAlignment": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "leadershipDepth": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "cultureFit": { "score": 0-100, "finding": "...", "recommendation": "..." },
+    "scalability": { "score": 0-100, "finding": "...", "recommendation": "..." }
+  },
+  "recommendedStructure": { "model": "Functional|Divisional|Matrix|Flat|Holacracy|Hybrid", "rationale": "...", "keyPrinciples": [], "teamTopology": "...", "layerCount": X, "idealSpanOfControl": "X-X" },
+  "orgChart": [ { "level": 1, "role": "CEO", "directReports": X, "keyResponsibilities": [], "criticalHires": [] } ],
+  "changeRoadmap": [
+    { "phase": "...", "duration": "...", "focus": "...", "activities": [], "successMetrics": [], "risks": [], "budget": "$X" }
+  ],
+  "stakeholderMap": [ { "group": "...", "influence": "High|Medium|Low", "sentiment": "Champion|Neutral|Skeptic|Resistor", "engagementStrategy": "...", "communicationCadence": "..." } ],
+  "changeResistance": [ { "source": "...", "likelihood": "High|Medium|Low", "impact": "High|Medium|Low", "mitigationStrategy": "...", "earlyWarningSign": "..." } ],
+  "cultureDesign": { "targetCulture": "...", "coreValues": [], "behaviorNorms": [], "ritualsToAdd": [], "ritualsToRemove": [], "leadingIndicators": [] },
+  "hiringPlan": [ { "role": "...", "priority": "Critical|High|Medium", "timeline": "...", "rationale": "...", "successProfile": "..." } ],
+  "communicationPlan": [ { "audience": "...", "message": "...", "channel": "...", "timing": "...", "owner": "..." } ],
+  "quickWins": []
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0];
+    if (!json) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.49 AI Go-to-Market Strategy Engine ---
 app.post('/api/gtm-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
