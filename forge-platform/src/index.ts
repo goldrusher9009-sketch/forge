@@ -39500,6 +39500,51 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.90 AI Sales Playbook Generator ---
+app.post('/api/sales-playbook', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, targetBuyer, salesMotion, avgDealSize, salesCycleLength, topObjections, competitors, teamSize, currentChallenges, winRate } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class VP of Sales who has built playbooks for hundreds of high-growth B2B companies. Create a comprehensive sales playbook.
+
+Product: ${product}
+Target Buyer: ${targetBuyer}
+Sales Motion: ${salesMotion || 'Outbound + Inbound'}
+Average Deal Size: ${avgDealSize || 'Unknown'}
+Sales Cycle Length: ${salesCycleLength || 'Unknown'}
+Top Objections: ${topObjections || 'Not specified'}
+Competitors: ${competitors || 'Unknown'}
+Sales Team Size: ${teamSize || 'Unknown'}
+Current Challenges: ${currentChallenges || 'None specified'}
+Current Win Rate: ${winRate || 'Unknown'}
+
+Return ONLY valid JSON:
+{
+  "playbookTitle": "string",
+  "executiveSummary": "string",
+  "salesReadinessScore": 0-100,
+  "idealCustomerProfile": { "company": ["string"], "roles": ["string"], "triggers": ["string"], "disqualifiers": ["string"] },
+  "prospectingPlaybook": { "channels": ["string"], "cadence": "string", "messagingAngles": ["string"], "coldEmailTemplates": [{ "subject": "string", "body": "string" }] },
+  "discoveryFramework": { "openingQuestion": "string", "painQuestions": ["string"], "impactQuestions": ["string"], "budgetQuestions": ["string"], "decisionQuestions": ["string"] },
+  "demoPlaybook": { "structure": ["string"], "keyMoments": ["string"], "customizationTips": ["string"] },
+  "objectionHandling": [{ "objection": "string", "response": "string", "followUp": "string" }],
+  "competitiveBattlecards": [{ "competitor": "string", "theirStrength": "string", "yourWin": "string", "talkTrack": "string" }],
+  "closingStrategies": [{ "technique": "string", "when": "string", "script": "string" }],
+  "stageGateChecklist": [{ "stage": "string", "criteria": ["string"], "nextAction": "string" }],
+  "negotiationGuidance": { "discountPolicy": "string", "anchorTechniques": ["string"], "redLines": ["string"] },
+  "metrics": [{ "kpi": "string", "benchmark": "string", "improvementTip": "string" }],
+  "onboardingChecklist": ["string"],
+  "quickWins": ["string"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result?.content?.[0]?.text || '';
+    const json = JSON.parse(text.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.89 AI Product Pricing Intelligence Engine ---
 app.post('/api/pricing-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
