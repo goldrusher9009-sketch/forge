@@ -597,6 +597,81 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v8.87 Pricing Strategy Generator ---
+function PricingStrategyPanel({ api }: { api: string }) {
+  const [productName, setProductName] = React.useState('');
+  const [productType, setProductType] = React.useState('SaaS');
+  const [targetMarket, setTargetMarket] = React.useState('');
+  const [currentPrice, setCurrentPrice] = React.useState('');
+  const [competitors, setCompetitors] = React.useState('');
+  const [costs, setCosts] = React.useState('');
+  const [goals, setGoals] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/pricing-strategy`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ productName, productType, targetMarket, currentPrice, competitors, costs, goals }) });
+      const d = await r.json();
+      if (!d.success) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div style={{ padding: 24, maxWidth: 960 }}>
+      <h2 style={{ marginBottom: 4 }}>💰 Pricing Strategy Generator</h2>
+      <p style={{ color: '#888', marginBottom: 20 }}>Build a data-driven pricing strategy with tiers, tactics, and competitive positioning.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+        {[['Product Name', productName, setProductName, 'e.g. Forge AI Platform'], ['Product Type', productType, setProductType, 'SaaS / physical / service'], ['Target Market', targetMarket, setTargetMarket, 'e.g. SMBs, enterprise, consumers'], ['Current Price', currentPrice, setCurrentPrice, 'e.g. $49/mo or not set'], ['Competitors & Pricing', competitors, setCompetitors, 'e.g. Notion $8/mo, Monday $10/mo'], ['Cost Structure', costs, setCosts, 'e.g. $5 COGS, $20 CAC'], ['Business Goals', goals, setGoals, 'e.g. maximize ARR, market share']].map(([label, val, set, ph]: any) => (
+          <div key={label}>
+            <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>{label}</div>
+            <input value={val} onChange={e => set(e.target.value)} placeholder={ph} style={{ width: '100%', padding: '8px 10px', background: '#1a1a2e', border: '1px solid #333', borderRadius: 6, color: '#fff', fontSize: 13 }} />
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading || !productName} style={{ padding: '10px 24px', background: '#7c3aed', border: 'none', borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 600 }}>
+        {loading ? 'Generating...' : 'Generate Pricing Strategy'}
+      </button>
+      {error && <div style={{ color: '#f87171', marginTop: 12 }}>{error}</div>}
+      {result && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ background: '#1a1a2e', borderRadius: 10, padding: 20, marginBottom: 20 }}>
+            <div style={{ fontWeight: 700, color: '#facc15', marginBottom: 6 }}>Recommended Strategy: {result.recommendedStrategy}</div>
+            <p style={{ color: '#ccc', fontSize: 13, margin: 0 }}>{result.rationale}</p>
+          </div>
+          <h4 style={{ color: '#7c3aed', marginBottom: 12 }}>Pricing Tiers</h4>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px,1fr))', gap: 12, marginBottom: 20 }}>
+            {result.tiers?.map((t: any, i: number) => (
+              <div key={i} style={{ background: '#111827', borderRadius: 10, padding: 16, border: i === 1 ? '2px solid #7c3aed' : '1px solid #222', position: 'relative' }}>
+                {i === 1 && <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', background: '#7c3aed', fontSize: 10, padding: '2px 8px', borderRadius: 4, color: '#fff', whiteSpace: 'nowrap' }}>RECOMMENDED</div>}
+                <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 4 }}>{t.name}</div>
+                <div style={{ fontSize: 22, fontWeight: 800, color: '#34d399' }}>{t.price}<span style={{ fontSize: 12, color: '#888', fontWeight: 400 }}>/{t.billingPeriod}</span></div>
+                <div style={{ color: '#888', fontSize: 11, marginBottom: 10 }}>For: {t.targetCustomer}</div>
+                <ul style={{ margin: 0, paddingLeft: 16 }}>{t.features?.map((f: string, j: number) => <li key={j} style={{ color: '#ccc', fontSize: 12, marginBottom: 4 }}>{f}</li>)}</ul>
+                {t.positioningNote && <div style={{ marginTop: 8, color: '#60a5fa', fontSize: 11 }}>{t.positioningNote}</div>}
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ background: '#1a1a2e', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontWeight: 600, color: '#60a5fa', marginBottom: 8 }}>🧠 Psychological Tactics</div>
+              <ul style={{ margin: 0, paddingLeft: 16 }}>{result.psychologicalTactics?.map((t: string, i: number) => <li key={i} style={{ color: '#ccc', fontSize: 12, marginBottom: 4 }}>{t}</li>)}</ul>
+            </div>
+            <div style={{ background: '#1a1a2e', borderRadius: 8, padding: 14 }}>
+              <div style={{ fontWeight: 600, color: '#34d399', marginBottom: 8 }}>📊 Details</div>
+              <div style={{ fontSize: 12, color: '#ccc', marginBottom: 6 }}><strong>Freemium:</strong> {result.freemiumRecommendation}</div>
+              <div style={{ fontSize: 12, color: '#ccc', marginBottom: 6 }}><strong>Trial:</strong> {result.trialStrategy}</div>
+              <div style={{ fontSize: 12, color: '#ccc', marginBottom: 6 }}><strong>Discounts:</strong> {result.discountPolicy}</div>
+              <div style={{ fontSize: 12, color: '#facc15' }}><strong>Revenue:</strong> {result.revenueProjection}</div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v8.86 Executive Summary Writer ---
 function ExecSummaryPanel({ api }: { api: string }) {
   const [docType, setDocType] = React.useState('report');
@@ -4887,7 +4962,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -4964,6 +5039,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'abcopy', label: '🧪 A/B Copy Gen' },
     { id: 'pitchdeck', label: '📊 Pitch Deck' },
     { id: 'onboardingseq', label: '📧 Onboarding Emails' },
+    { id: 'pricingstrategy', label: '💰 Pricing Strategy' },
     { id: 'execsummary', label: '📄 Exec Summary' },
     { id: 'swotanalysis', label: '🔷 SWOT Analysis' },
     { id: 'sopgen', label: '📋 SOP Generator' },
@@ -5087,6 +5163,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'abcopy' && <ABCopyPanel api={api} />}
         {tab === 'pitchdeck' && <PitchDeckPanel api={api} />}
         {tab === 'onboardingseq' && <OnboardingSequencePanel api={api} />}
+        {tab === 'pricingstrategy' && <PricingStrategyPanel api={api} />}
         {tab === 'execsummary' && <ExecSummaryPanel api={api} />}
         {tab === 'swotanalysis' && <SWOTAnalysisPanel api={api} />}
         {tab === 'sopgen' && <SOPGenPanel api={api} />}

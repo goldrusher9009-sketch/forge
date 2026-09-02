@@ -39500,6 +39500,30 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v8.87 Pricing Strategy Generator ---
+app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { productName, productType, targetMarket, currentPrice, competitors, costs, goals, provider: prov } = req.body;
+    const provider = prov || 'anthropic';
+    const key = await getUserKey(userId, provider, true);
+    if (!key) return res.status(400).json({ error: 'No API key' });
+    const p = `Create a comprehensive pricing strategy for: ${productName || 'the product'}.
+Product type: ${productType || 'SaaS'}
+Target market: ${targetMarket || 'SMBs'}
+Current price: ${currentPrice || 'not set'}
+Competitors and their pricing: ${competitors || 'not specified'}
+Cost structure: ${costs || 'not specified'}
+Business goals: ${goals || 'growth and profitability'}
+Return JSON: { recommendedStrategy: string, rationale: string, tiers: [{name:string,price:string,billingPeriod:string,features:string[],targetCustomer:string,positioningNote:string}], psychologicalTactics: string[], freemiumRecommendation: string, trialStrategy: string, discountPolicy: string, revenueProjection: string, risks: string[], competitiveAnalysis: string }`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 2500 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v8.86 Executive Summary Writer ---
 app.post('/api/exec-summary', requireAuth, async (req: AuthRequest, res) => {
   try {
