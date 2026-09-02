@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.22 AI M&A Intelligence & Due Diligence Engine ---
+app.post('/api/ma-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  const { acquirerProfile, targetProfile, dealRationale, industryContext, dealSize, structureType, integrationTimeline, synergiesExpected, keyRisks, regulatoryJurisdictions } = req.body;
+  const p = `You are a world-class M&A advisor (McKinsey + Goldman Sachs level). Build a comprehensive M&A Intelligence & Due Diligence report.
+Acquirer: ${acquirerProfile}, Target: ${targetProfile}, Rationale: ${dealRationale}, Industry: ${industryContext}, Deal size: ${dealSize}, Structure: ${structureType}, Integration: ${integrationTimeline}, Synergies: ${synergiesExpected}, Risks: ${keyRisks}, Jurisdictions: ${regulatoryJurisdictions}
+
+Return JSON:
+- reportTitle (string)
+- executiveSummary (string)
+- dealAttractivenessScore (number 0-100)
+- dealRecommendation (string: "Strong Buy"|"Buy"|"Conditional"|"Pass")
+- primaryValueDriver (string)
+- strategicFit (object: rationale string, synergy_thesis string, market_position_impact string, competitive_response string)
+- valuationFramework (object: dcf_range string, comparable_transactions string, trading_comps string, recommended_offer string, walk_away_price string, negotiation_anchors string[])
+- dueDiligenceChecklist (array of objects: workstream string, priority string, key_questions string[], red_flags string[])
+- synergyAnalysis (object: revenue_synergies string, cost_synergies string, total_npv string, realization_timeline string, synergy_risks string[])
+- integrationPlaybook (object: day_one_priorities string[], first_100_days string, integration_model string, culture_assessment string, talent_retention string, systems_integration string)
+- riskMatrix (array of objects: risk string, category string, probability string, impact string, mitigation string)
+- regulatoryAnalysis (object: antitrust_risk string, approval_timeline string, filing_requirements string[], remedies string[])
+- dealStructure (object: recommended_structure string, consideration_mix string, earnout_provisions string, reps_and_warranties string, indemnification string)
+- communicationStrategy (object: internal_messaging string, external_announcement string, employee_FAQs string[], investor_narrative string)
+- quickWins (array of 5 strings)`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = text.match(/\{[\s\S]*\}/)?.[0] || '{}';
+    res.json(JSON.parse(json));
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.21 AI Go-to-Market Launch Command Center ---
 app.post('/api/gtm-launch', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
