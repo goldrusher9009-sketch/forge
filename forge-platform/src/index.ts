@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.71 AI Supply Chain & Vendor Intelligence ---
+app.post('/api/supply-chain', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const { industry, companySize, currentChallenges, geographicScope, productCategories } = req.body;
+    const p = `You are a supply chain expert. Analyze supply chain for: Industry: ${industry}, Company Size: ${companySize}, Challenges: ${currentChallenges}, Geographic Scope: ${geographicScope}, Categories: ${productCategories}. Return JSON: { chainTitle, executiveSummary, supplyChainRiskScore (0-100), supplyChainMaturity ("Reactive"|"Proactive"|"Integrated"|"Optimized"|"Autonomous"), vendorRiskMatrix (array of {vendor, category, riskLevel, dependency, mitigation}), inventoryStrategy, demandForecastingPlan, logisticsOptimization, supplierDiversification, nearshoring Opportunities, digitizationRoadmap, sustainabilityPlan, disruptionPlaybook, costReductionOpportunities, quickWins (array of strings) }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = result.content[0].type === 'text' ? result.content[0].text : '';
+    const json = JSON.parse(text.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.70 AI Innovation Lab & R&D Portfolio Manager ---
 app.post('/api/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
   try {
