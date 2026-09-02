@@ -39500,6 +39500,27 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.40 Global Expansion & Market Entry Playbook ---
+app.post('/api/global-expansion', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, product, currentMarkets, targetMarkets, expansionBudget, teamSize, revenueModel, localCompetitors, regulatoryContext, goToMarketApproach, partnershipStrategy, timeline, expansionGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+  const p = `You are a Global Expansion strategist and international market entry expert. Generate a comprehensive Global Expansion & Market Entry Playbook for:
+Company: ${company}, Industry: ${industry}, Product: ${product}
+Current Markets: ${currentMarkets}, Target Markets: ${targetMarkets}
+Budget: ${expansionBudget}, Team: ${teamSize}, Revenue Model: ${revenueModel}
+Local Competitors: ${localCompetitors}, Regulatory Context: ${regulatoryContext}
+GTM Approach: ${goToMarketApproach}, Partnerships: ${partnershipStrategy}
+Timeline: ${timeline}, Goals: ${expansionGoals}
+
+Return JSON: { playbookTitle, executiveSummary, marketPrioritization: [{ market, country, score, opportunity, readiness, priority, rationale }], marketAnalysis: [{ market, population, gdp, digitalPenetration, competitiveLandscape, regulatoryEnvironment, culturalConsiderations, entryBarriers, opportunities }], entryStrategy: [{ market, mode, rationale, investmentRequired, timeline, keyRisks }], localizationPlan: [{ market, product: [{ adaptation, requirement, effort }], marketing, pricing, legal }], goToMarketPlaybook: [{ market, phase, channels, partnerships, launchSequence: [{ milestone, action, owner, timeline }] }], operationsSetup: [{ market, legalEntity, hiringPlan, officeStrategy, localVendors }], regulatoryAndCompliance: [{ market, requirements: [{ regulation, description, timeline, owner }], risks }], financialProjections: [{ market, year1: { revenue, costs, cashflow }, year2: { revenue, costs, cashflow }, breakeven }], riskMatrix: [{ risk, market, probability, impact, mitigation }], successMetrics: [{ market, metric, target, timeline }], implementationRoadmap: { phases: [{ phase, name, duration, markets, keyActions, milestones }] } }`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.match(/\{[\s\S]*\}/)?.[0] || '{}');
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v9.39 Corporate Innovation Lab Designer ---
 app.post('/api/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, innovationBudget, currentInitiatives, leadership, strategicGoals, innovationChallenges, techFocus, partnershipModel, successMetrics, timeHorizon, labType } = req.body;

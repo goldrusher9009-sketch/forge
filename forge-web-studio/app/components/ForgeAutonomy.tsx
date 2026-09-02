@@ -597,6 +597,100 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.40 Global Expansion & Market Entry Playbook ---
+const PRIORITY_BADGE: Record<string,string> = { 'High':'bg-red-700 text-red-100','Medium':'bg-yellow-700 text-yellow-100','Low':'bg-gray-700 text-gray-200','Critical':'bg-red-900 text-red-100' };
+function GlobalExpansionPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ company:'', industry:'', product:'', currentMarkets:'', targetMarkets:'', expansionBudget:'', teamSize:'', revenueModel:'', localCompetitors:'', regulatoryContext:'', goToMarketApproach:'', partnershipStrategy:'', timeline:'', expansionGoals:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const sf = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
+  const run = async () => {
+    setLoading(true); setResult(null);
+    try { const r = await fetch(`${api}/api/global-expansion`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e) { setResult({ error: String(e) }); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold text-white">🌍 Global Expansion & Market Entry Playbook</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {[['company','Company'],['industry','Industry'],['product','Product/Service'],['currentMarkets','Current Markets'],['targetMarkets','Target Markets (comma-sep)'],['expansionBudget','Expansion Budget'],['teamSize','Team Size'],['revenueModel','Revenue Model'],['localCompetitors','Local Competitors per Market'],['regulatoryContext','Regulatory Context'],['goToMarketApproach','GTM Approach'],['partnershipStrategy','Partnership Strategy'],['timeline','Timeline'],['expansionGoals','Expansion Goals']].map(([k,label]) => (
+          <div key={k} className={k==='expansionGoals'||k==='localCompetitors'?'col-span-2':''}>
+            <label className="text-xs text-gray-400">{label}</label>
+            {k==='expansionGoals'||k==='localCompetitors' ? <textarea className="w-full bg-gray-800 text-white rounded p-2 text-sm h-16" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} /> : <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" value={(form as any)[k]} onChange={e=>sf(k,e.target.value)} />}
+          </div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading ? 'Generating...' : 'Generate Expansion Playbook'}</button>
+      {result && !result.error && (
+        <div className="space-y-4 mt-4">
+          <div className="bg-gray-800 rounded-xl p-4 border border-blue-500/30">
+            <h3 className="text-lg font-bold text-blue-400">{result.playbookTitle}</h3>
+            <p className="text-gray-300 text-sm mt-2">{result.executiveSummary}</p>
+          </div>
+          {result.marketPrioritization && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Market Prioritization</h4>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead><tr className="text-gray-400 border-b border-gray-700">{['Market','Score','Opportunity','Readiness','Priority'].map(h=><th key={h} className="text-left p-2">{h}</th>)}</tr></thead>
+                  <tbody>{result.marketPrioritization.map((m:any,i:number)=>(
+                    <tr key={i} className="border-b border-gray-700">
+                      <td className="p-2 text-gray-200 font-semibold">{m.market || m.country}</td>
+                      <td className="p-2 text-blue-400 font-bold">{m.score}</td>
+                      <td className="p-2 text-green-400">{m.opportunity}</td>
+                      <td className="p-2 text-yellow-400">{m.readiness}</td>
+                      <td className="p-2"><span className={`px-2 py-0.5 rounded text-xs ${PRIORITY_BADGE[m.priority]||'bg-gray-700 text-gray-200'}`}>{m.priority}</span></td>
+                    </tr>
+                  ))}</tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {result.entryStrategy && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Entry Strategies</h4>
+              <div className="space-y-2">{result.entryStrategy.map((s:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3 text-sm">
+                  <div className="flex items-center gap-2 mb-1"><span className="text-blue-300 font-bold">{s.market}</span><span className="bg-blue-800 text-blue-200 text-xs px-2 py-0.5 rounded">{s.mode}</span><span className="text-gray-500 text-xs ml-auto">{s.timeline}</span></div>
+                  <div className="text-gray-300 text-xs">{s.rationale}</div>
+                  <div className="flex gap-3 mt-1 text-xs"><span className="text-green-400">Investment: {s.investmentRequired}</span><span className="text-red-400">Risks: {Array.isArray(s.keyRisks)?s.keyRisks.join(', '):s.keyRisks}</span></div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.financialProjections && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Financial Projections</h4>
+              <div className="grid grid-cols-2 gap-2">{result.financialProjections.map((fp:any,i:number)=>(
+                <div key={i} className="bg-gray-700 rounded p-3 text-xs">
+                  <div className="text-blue-300 font-bold mb-1">{fp.market}</div>
+                  <div className="grid grid-cols-2 gap-1">
+                    <div><div className="text-gray-400">Y1 Revenue</div><div className="text-green-400">{fp.year1?.revenue}</div></div>
+                    <div><div className="text-gray-400">Y2 Revenue</div><div className="text-green-400">{fp.year2?.revenue}</div></div>
+                  </div>
+                  {fp.breakeven && <div className="text-yellow-400 mt-1">Breakeven: {fp.breakeven}</div>}
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.riskMatrix && (
+            <div className="bg-gray-800 rounded-xl p-4">
+              <h4 className="font-semibold text-white mb-2">Risk Matrix</h4>
+              <div className="space-y-1">{result.riskMatrix.map((r:any,i:number)=>(
+                <div key={i} className="flex gap-2 items-start text-xs bg-gray-700 rounded p-2">
+                  <span className="text-red-400 shrink-0 font-semibold">{r.risk}</span>
+                  <span className="text-gray-400">{r.market}</span>
+                  <span className="text-yellow-400 ml-auto shrink-0">P:{r.probability} I:{r.impact}</span>
+                  <span className="text-green-400 shrink-0">→ {r.mitigation}</span>
+                </div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+      {result?.error && <div className="text-red-400 text-sm">{result.error}</div>}
+    </div>
+  );
+}
 // --- v9.39 Corporate Innovation Lab Designer ---
 const HORIZON_BG: Record<string,string> = { '1':'bg-blue-900/40','2':'bg-purple-900/40','3':'bg-orange-900/40','H1':'bg-blue-900/40','H2':'bg-purple-900/40','H3':'bg-orange-900/40' };
 function InnovationLabPanel({ api }: { api: string }) {
@@ -10113,7 +10207,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10211,6 +10305,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'maintegration', label: '🤝 M&A Integration' },
     { id: 'supplychainrisk', label: '⛓️ Supply Chain Risk' },
     { id: 'esgreport', label: '🌱 ESG Report' },
+    { id: 'globalexpansion', label: '🌍 Global Expansion' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
     { id: 'accelerator', label: '🏗️ Accelerator Builder' },
     { id: 'revops', label: '💹 RevOps Command' },
@@ -10387,6 +10482,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'maintegration' && <MAIntegrationPanel api={api} />}
         {tab === 'supplychainrisk' && <SupplyChainRiskPanel api={api} />}
         {tab === 'esgreport' && <ESGReportPanel api={api} />}
+        {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
         {tab === 'accelerator' && <AcceleratorBuilderPanel api={api} />}
         {tab === 'revops' && <RevOpsPanel api={api} />}
