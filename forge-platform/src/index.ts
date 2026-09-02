@@ -39500,6 +39500,45 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.81 AI Crisis Communication Command Center ---
+app.post('/api/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { crisisType, description, affectedParties, currentResponse, mediaPresence, timeline } = req.body;
+    const p = `You are a crisis communications expert. Build a comprehensive crisis communication plan.
+Crisis Type: ${crisisType || 'Unknown'}
+Description: ${description || 'Unknown'}
+Affected Parties: ${affectedParties || 'Unknown'}
+Current Response: ${currentResponse || 'None yet'}
+Media Presence: ${mediaPresence || 'Unknown'}
+Timeline: ${timeline || 'Unknown'}
+Return ONLY valid JSON:
+{
+  "crisisTitle": "string",
+  "executiveSummary": "string",
+  "crisisSeverity": "Low|Medium|High|Critical",
+  "crisisPhase": "Emerging|Acute|Chronic|Resolution",
+  "immediateActions": ["string"],
+  "stakeholderMap": [{"stakeholder": "string", "concern": "string", "messageKey": "string", "channel": "string", "urgency": "Immediate|24hrs|72hrs|Week"}],
+  "mediaStatements": [{"audience": "string", "statement": "string", "tone": "string"}],
+  "socialMediaStrategy": "string",
+  "internalCommsScript": "string",
+  "spokespersonGuidance": "string",
+  "doNotSayList": ["string"],
+  "scenarioPlaybooks": [{"scenario": "string", "trigger": "string", "response": "string"}],
+  "monitoringPlan": "string",
+  "recoveryMilestones": [{"milestone": "string", "timeframe": "string", "successMetric": "string"}],
+  "lessonsLearned": "string",
+  "quickWins": ["string"]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.80 AI Board Meeting Preparation Suite ---
 app.post('/api/board-prep', requireAuth, async (req: AuthRequest, res) => {
   try {

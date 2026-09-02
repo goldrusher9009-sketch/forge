@@ -597,6 +597,47 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.81 AI Crisis Communication Command Center ---
+const CRISIS_SEVERITY_COLOR: Record<string,string> = { 'Low':'bg-green-700','Medium':'bg-yellow-700','High':'bg-orange-700','Critical':'bg-red-700' };
+const URGENCY_COLOR: Record<string,string> = { 'Immediate':'bg-red-700','24hrs':'bg-orange-700','72hrs':'bg-yellow-700','Week':'bg-green-700' };
+function CrisisCommsPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ crisisType:'', description:'', affectedParties:'', currentResponse:'', mediaPresence:'', timeline:'' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true);
+    try { const r = await fetch(`${api}/api/crisis-comms`, { method:'POST', headers:{'Content-Type':'application/json',...(localStorage.getItem('forge_token')?{Authorization:`Bearer ${localStorage.getItem('forge_token')}`}:{})}, body: JSON.stringify(form) }); setResult(await r.json()); } catch(e){} setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold text-white">🚨 Crisis Comms Command</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {(['crisisType','description','affectedParties','currentResponse','mediaPresence','timeline'] as const).map(f => (
+          <div key={f}><label className="text-gray-400 text-xs capitalize">{f.replace(/([A-Z])/g,' $1')}</label>
+          <input className="w-full bg-gray-800 text-white rounded px-3 py-2 text-sm mt-1" value={form[f]} onChange={e=>setForm(p=>({...p,[f]:e.target.value}))} placeholder={f}/></div>
+        ))}
+      </div>
+      <button onClick={run} disabled={loading} className="bg-red-700 hover:bg-red-800 text-white px-6 py-2 rounded font-semibold disabled:opacity-50">{loading?'Analyzing...':'Build Crisis Plan'}</button>
+      {result && !result.error && (
+        <div className="space-y-4">
+          <div className="bg-gray-800 rounded-lg p-4">
+            <div className="flex items-center gap-3 mb-2">
+              {result.crisisSeverity && <span className={`${CRISIS_SEVERITY_COLOR[result.crisisSeverity]||'bg-gray-600'} text-white text-xs px-2 py-1 rounded font-bold`}>{result.crisisSeverity}</span>}
+              {result.crisisPhase && <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">{result.crisisPhase}</span>}
+            </div>
+            <p className="text-gray-300 text-sm">{result.executiveSummary}</p>
+          </div>
+          {result.immediateActions?.length > 0 && <div className="bg-red-900 bg-opacity-40 rounded-lg p-4 border border-red-700"><h3 className="text-red-400 font-semibold mb-2">⚡ Immediate Actions</h3><ul className="space-y-1">{result.immediateActions.map((a:string,i:number)=><li key={i} className="text-white text-sm flex gap-2"><span className="text-red-400 font-bold">{i+1}.</span>{a}</li>)}</ul></div>}
+          {result.stakeholderMap?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-3">Stakeholder Map</h3><div className="space-y-2">{result.stakeholderMap.map((s:any,i:number)=><div key={i} className="bg-gray-700 rounded p-3"><div className="flex items-center gap-2 mb-1"><span className="text-white text-sm font-medium">{s.stakeholder}</span><span className={`${URGENCY_COLOR[s.urgency]||'bg-gray-600'} text-white text-xs px-2 py-0.5 rounded`}>{s.urgency}</span><span className="text-gray-400 text-xs ml-auto">{s.channel}</span></div><p className="text-gray-300 text-xs">{s.messageKey}</p></div>)}</div></div>}
+          {result.doNotSayList?.length > 0 && <div className="bg-gray-800 rounded-lg p-4 border border-red-800"><h3 className="text-red-400 font-semibold mb-2">🚫 Do NOT Say</h3><ul className="space-y-1">{result.doNotSayList.map((d:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-red-500">✗</span>{d}</li>)}</ul></div>}
+          {result.quickWins?.length > 0 && <div className="bg-gray-800 rounded-lg p-4"><h3 className="text-white font-semibold mb-2">Key Actions</h3><ul className="space-y-1">{result.quickWins.map((w:string,i:number)=><li key={i} className="text-gray-300 text-sm flex gap-2"><span className="text-red-400">→</span>{w}</li>)}</ul></div>}
+        </div>
+      )}
+      {result?.error && <p className="text-red-400 text-sm">{result.error}</p>}
+    </div>
+  );
+}
+
 // --- v9.77 AI Product-Market Fit Analyzer ---
 const AGENDA_TYPE_COLOR: Record<string,string> = { 'Update':'bg-blue-700','Decision':'bg-red-700','Discussion':'bg-yellow-700','Approval':'bg-green-700' };
 const TREND_ICON: Record<string,string> = { 'Up':'↑','Down':'↓','Flat':'→' };
@@ -12325,7 +12366,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -12517,6 +12558,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'gtmplanner', label: '🚀 GTM Planner' },
     { id: 'csretention', label: '🎯 CS Retention' },
     { id: 'fundraisingcmd', label: '💎 Fundraising' },
+    { id: 'crisiscomms', label: '🚨 Crisis Comms' },
     { id: 'boardprep3', label: '🏛️ Board Prep' },
     { id: 'execcomp', label: '💰 Exec Comp' },
     { id: 'moatanalyzer', label: '🏰 Moat Analyzer' },
@@ -12652,6 +12694,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
         {tab === 'boardprep3' && <BoardPrepPanel api={api} />}
         {tab === 'execcomp' && <ExecCompPanel api={api} />}
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
@@ -12697,6 +12740,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
         {tab === 'boardprep3' && <BoardPrepPanel api={api} />}
         {tab === 'execcomp' && <ExecCompPanel api={api} />}
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
@@ -12725,6 +12769,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'gtmplanner' && <GTMPlannerPanel api={api} />}
         {tab === 'csretention' && <CSRetentionPanel api={api} />}
         {tab === 'fundraisingcmd' && <FundraisingCommandPanel api={api} />}
+        {tab === 'crisiscomms' && <CrisisCommsPanel api={api} />}
         {tab === 'boardprep3' && <BoardPrepPanel api={api} />}
         {tab === 'execcomp' && <ExecCompPanel api={api} />}
         {tab === 'moatanalyzer' && <MoatAnalyzerPanel api={api} />}
