@@ -39500,6 +39500,21 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v9.56 Competitive Intelligence War Room ---
+app.post('/api/competitive-war-room', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'Anthropic key required' }); return; }
+    const { company, competitors, industry, focus } = req.body;
+    const p = `You are an elite competitive intelligence analyst. Analyze "${company}" vs competitors [${(competitors||[]).join(', ')}] in the ${industry||'technology'} industry${focus ? `, focusing on: ${focus}` : ''}.
+Return ONLY valid JSON: { "warRoomTitle": string, "executiveSummary": string, "competitiveScore": number (0-100, company's competitive position), "marketPosition": "Dominant"|"Leader"|"Challenger"|"Niche", "competitorProfiles": [{ "name": string, "strengths": string[], "weaknesses": string[], "strategy": string, "threatLevel": "Critical"|"High"|"Medium"|"Low", "recentMoves": string[] }], "battleCards": [{ "competitor": string, "winAgainst": string[], "loseAgainst": string[], "talkingPoints": string[], "objectionHandlers": [{ "objection": string, "response": string }] }], "marketDynamics": { "marketSize": string, "growthRate": string, "keyTrends": string[], "disruptors": string[], "consolidationRisk": string }, "swotAnalysis": { "strengths": string[], "weaknesses": string[], "opportunities": string[], "threats": string[] }, "pricingIntelligence": { "ourPosition": string, "competitorPricing": [{ "competitor": string, "model": string, "estimate": string }], "pricingStrategy": string }, "featureMatrix": [{ "feature": string, "us": boolean, "competitors": [{ "name": string, "has": boolean, "notes": string }] }], "winLossAnalysis": { "whyWeWin": string[], "whyWeLose": string[], "switchingTriggers": string[], "retentionFactors": string[] }, "competitiveGaps": [{ "gap": string, "priority": "Critical"|"High"|"Medium", "timeToClose": string, "recommendation": string }], "attackVectors": string[], "defensiveMovies": string[], "quickWins": string[] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?|\n?```/g, '').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v9.55 AI Innovation Lab & Moonshot Generator ---
 app.post('/api/innovation-lab', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, currentProducts, coreCompetencies, targetMarkets, budget, timeline, riskTolerance, competitors, emergingTechnologies, customerPainPoints, strategicGoals, teamStrengths, constraints, previousAttempts } = req.body;

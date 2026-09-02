@@ -597,6 +597,54 @@ function AgentRunInspector({ api }: { api: Api }) {
   );
 }
 
+// --- v9.56 Competitive Intelligence War Room ---
+const MARKET_POS_COLOR: Record<string,string> = { 'Dominant':'bg-purple-700','Leader':'bg-blue-700','Challenger':'bg-yellow-700','Niche':'bg-gray-700' };
+const THREAT_COLOR: Record<string,string> = { 'Critical':'bg-red-700','High':'bg-orange-700','Medium':'bg-yellow-700','Low':'bg-green-700' };
+function CompetitiveWarRoomPanel({ api }: { api: string }) {
+  const [company, setCompany] = React.useState('');
+  const [competitors, setCompetitors] = React.useState('');
+  const [industry, setIndustry] = React.useState('');
+  const [focus, setFocus] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const [result, setResult] = React.useState<any>(null);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    if (!company.trim()) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/competitive-war-room`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify({ company, competitors: competitors.split(',').map(s=>s.trim()).filter(Boolean), industry, focus }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || 'Failed');
+      setResult(d);
+    } catch(e:any) { setError(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="space-y-4">
+      <div className="bg-gray-900 rounded-lg p-4 space-y-3">
+        <h2 className="text-xl font-bold text-white">🎯 Competitive Intelligence War Room</h2>
+        <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" placeholder="Your company name" value={company} onChange={e=>setCompany(e.target.value)} />
+        <input className="w-full bg-gray-800 text-white rounded p-2 text-sm" placeholder="Competitors (comma-separated)" value={competitors} onChange={e=>setCompetitors(e.target.value)} />
+        <div className="grid grid-cols-2 gap-2">
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Industry" value={industry} onChange={e=>setIndustry(e.target.value)} />
+          <input className="bg-gray-800 text-white rounded p-2 text-sm" placeholder="Focus area (optional)" value={focus} onChange={e=>setFocus(e.target.value)} />
+        </div>
+        <button onClick={run} disabled={loading || !company.trim()} className="w-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold py-2 px-4 rounded">{loading ? 'Analyzing...' : '⚔️ Launch War Room'}</button>
+        {error && <div className="text-red-400 text-sm">{error}</div>}
+      </div>
+      {result && (
+        <div className="space-y-3">
+          <div className="bg-gray-800 rounded p-4"><div className="flex items-center gap-3 mb-2"><h3 className="text-lg font-bold text-white">{result.warRoomTitle}</h3><span className={`px-3 py-1 rounded-full text-xs text-white ${MARKET_POS_COLOR[result.marketPosition]||'bg-gray-700'}`}>{result.marketPosition}</span><span className="text-2xl font-bold text-red-400">{result.competitiveScore}/100</span></div><p className="text-gray-300 text-sm">{result.executiveSummary}</p></div>
+          {result.competitorProfiles?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">🕵️ Competitor Profiles</h4><div className="space-y-3">{result.competitorProfiles.map((c:any,i:number)=><div key={i} className="bg-gray-900 rounded p-3"><div className="flex items-center gap-2 mb-2"><span className="text-white font-semibold">{c.name}</span><span className={`px-2 py-0.5 rounded text-xs text-white ${THREAT_COLOR[c.threatLevel]||'bg-gray-700'}`}>{c.threatLevel} Threat</span></div><p className="text-gray-400 text-xs mb-2">{c.strategy}</p><div className="grid grid-cols-2 gap-2 text-xs"><div><div className="text-green-400 font-semibold mb-1">Strengths</div>{c.strengths?.map((s:string,j:number)=><div key={j} className="text-gray-300">• {s}</div>)}</div><div><div className="text-red-400 font-semibold mb-1">Weaknesses</div>{c.weaknesses?.map((s:string,j:number)=><div key={j} className="text-gray-300">• {s}</div>)}</div></div></div>)}</div></div>}
+          {result.battleCards?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">🃏 Battle Cards</h4><div className="space-y-3">{result.battleCards.map((b:any,i:number)=><div key={i} className="bg-gray-900 rounded p-3"><div className="text-orange-400 font-semibold mb-2">vs {b.competitor}</div><div className="grid grid-cols-2 gap-2 text-xs mb-2"><div><div className="text-green-400 font-semibold mb-1">We Win When</div>{b.winAgainst?.map((s:string,j:number)=><div key={j} className="text-gray-300">✓ {s}</div>)}</div><div><div className="text-red-400 font-semibold mb-1">We Lose When</div>{b.loseAgainst?.map((s:string,j:number)=><div key={j} className="text-gray-300">✗ {s}</div>)}</div></div><div className="text-xs"><div className="text-blue-400 font-semibold mb-1">Talking Points</div>{b.talkingPoints?.map((s:string,j:number)=><div key={j} className="text-gray-300">• {s}</div>)}</div></div>)}</div></div>}
+          {result.swotAnalysis && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">📊 SWOT Analysis</h4><div className="grid grid-cols-2 gap-3 text-xs">{[['Strengths','text-green-400','strengths'],['Weaknesses','text-red-400','weaknesses'],['Opportunities','text-blue-400','opportunities'],['Threats','text-orange-400','threats']].map(([label,color,key])=><div key={key} className="bg-gray-900 rounded p-2"><div className={`font-semibold mb-1 ${color}`}>{label}</div>{result.swotAnalysis[key]?.map((s:string,i:number)=><div key={i} className="text-gray-300">• {s}</div>)}</div>)}</div></div>}
+          {result.competitiveGaps?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-3">🚨 Competitive Gaps</h4><div className="space-y-2">{result.competitiveGaps.map((g:any,i:number)=><div key={i} className="flex items-start gap-2 text-sm"><span className={`px-2 py-0.5 rounded text-xs text-white shrink-0 ${g.priority==='Critical'?'bg-red-700':g.priority==='High'?'bg-orange-700':'bg-yellow-700'}`}>{g.priority}</span><div><div className="text-white">{g.gap}</div><div className="text-gray-400 text-xs">{g.recommendation} • {g.timeToClose}</div></div></div>)}</div></div>}
+          {result.quickWins?.length > 0 && <div className="bg-gray-800 rounded p-4"><h4 className="text-white font-bold mb-2">⚡ Quick Wins</h4>{result.quickWins.map((w:string,i:number)=><div key={i} className="text-green-400 text-sm">• {w}</div>)}</div>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- v9.55 AI Innovation Lab & Moonshot Generator ---
 const INNOV_READINESS_COLOR: Record<string,string> = { 'Pioneer':'bg-purple-700','Fast Follower':'bg-blue-700','Adapter':'bg-yellow-700','Laggard':'bg-red-700' };
 const HORIZON_COLOR: Record<string,string> = { 'H1 Core':'bg-blue-800','H2 Adjacent':'bg-purple-800','H3 Transformational':'bg-orange-800' };
@@ -10587,7 +10635,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -10675,6 +10723,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'agencyproposal', label: '📄 Agency Proposal' },
     { id: 'perfreview', label: '⭐ Perf Review' },
     { id: 'vendoreval', label: '🔍 Vendor Eval' },
+    { id: 'competitivewarroom', label: '⚔️ War Room' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
     { id: 'financialmodeler', label: '📊 Financial Modeler' },
     { id: 'contractintelligence', label: '⚖️ Contract Intelligence' },
@@ -10701,6 +10750,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'pricingengine', label: '💰 Pricing Engine' },
     { id: 'competitivemoat', label: '🏰 Competitive Moat' },
     { id: 'globalexpansion', label: '🌍 Global Expansion' },
+    { id: 'competitivewarroom', label: '⚔️ War Room' },
     { id: 'innovationlab', label: '🔬 Innovation Lab' },
     { id: 'accelerator', label: '🏗️ Accelerator Builder' },
     { id: 'revops', label: '💹 RevOps Command' },
@@ -10867,6 +10917,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'agencyproposal' && <AgencyProposalPanel api={api} />}
         {tab === 'perfreview' && <PerfReviewPanel api={api} />}
         {tab === 'vendoreval' && <VendorEvalPanel api={api} />}
+        {tab === 'competitivewarroom' && <CompetitiveWarRoomPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
         {tab === 'financialmodeler' && <FinancialModelerPanel api={api} />}
         {tab === 'contractintelligence' && <ContractIntelligencePanel api={api} />}
@@ -10893,6 +10944,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'pricingengine' && <PricingEnginePanel api={api} />}
         {tab === 'competitivemoat' && <CompetitiveMoatPanel api={api} />}
         {tab === 'globalexpansion' && <GlobalExpansionPanel api={api} />}
+        {tab === 'competitivewarroom' && <CompetitiveWarRoomPanel api={api} />}
         {tab === 'innovationlab' && <InnovationLabPanel api={api} />}
         {tab === 'accelerator' && <AcceleratorBuilderPanel api={api} />}
         {tab === 'revops' && <RevOpsPanel api={api} />}
