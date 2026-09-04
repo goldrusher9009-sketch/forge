@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.39 AI Sustainability Strategy Engine ---
+app.post('/api/sustain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop a comprehensive sustainability and ESG strategy for competitive advantage';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a sustainability strategy and ESG (Environmental, Social, Governance) expert. Help organizations build meaningful and competitive sustainability programs. ${p}\n\nProvide: 1) ESG materiality assessment framework for the industry 2) Current sustainability baseline and gap analysis 3) Science-based targets and emissions reduction roadmap 4) Social impact strategy (diversity, supply chain, community) 5) Governance improvements and board-level ESG oversight 6) Sustainability reporting framework (GRI, SASB, TCFD) 7) Green revenue opportunities and circular economy strategies 8) Stakeholder engagement plan and sustainability communications strategy` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.38 AI M&A Intelligence Engine ---
 app.post('/api/maintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
