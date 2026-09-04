@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.20 AI Investor Relations & Fundraising Intelligence Engine ---
+app.post('/api/investor-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, stage, industry, arr, growth, burnRate, runway, raiseAmount, useOfFunds } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class venture capitalist and investment banker with expertise in startup fundraising.
+Company: ${companyName}
+Stage: ${stage}
+Industry: ${industry}
+ARR: ${arr}
+Growth Rate: ${growth}
+Burn Rate: ${burnRate}
+Runway: ${runway}
+Raise Amount: ${raiseAmount}
+Use of Funds: ${useOfFunds}
+
+Return comprehensive investor intelligence as JSON:
+{
+  "investabilityScore": {"overall": number, "breakdown": [{"dimension": "string", "score": number, "commentary": "string"}]},
+  "valuationAnalysis": {"suggestedRange": "string", "methodology": "string", "comparables": [{"company": "string", "multiple": "string", "relevance": "string"}], "keyDrivers": ["string"]},
+  "investorTargeting": [{"firmType": "string", "examples": ["string"], "fitReason": "string", "dealSize": "string", "priority": "tier1|tier2|tier3"}],
+  "pitchNarrative": {"hook": "string", "problemStatement": "string", "solution": "string", "marketOpportunity": "string", "businessModel": "string", "traction": "string", "whyNow": "string", "whyUs": "string", "ask": "string"},
+  "ddPreparation": {"strengthsToHighlight": ["string"], "weaknessesToAddress": ["string"], "likelyQuestions": [{"question": "string", "suggestedAnswer": "string"}]},
+  "termSheetGuidance": {"keyTermsToNegotiate": [{"term": "string", "targetPosition": "string", "walkAwayPoint": "string"}], "redFlags": ["string"]},
+  "fundraisingTimeline": [{"phase": "string", "duration": "string", "activities": ["string"], "milestone": "string"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.19 AI Operations Excellence & Process Intelligence Engine ---
 app.post('/api/ops-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
