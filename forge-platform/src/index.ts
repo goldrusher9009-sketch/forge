@@ -39500,6 +39500,43 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.16 AI Product Launch Command Center ---
+app.post('/api/launch-cmd', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { productName, category, targetAudience, uniqueValue, launchDate, budget, channels, competitors } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class product launch strategist who has led 100+ successful product launches.
+Product: ${productName}
+Category: ${category}
+Target Audience: ${targetAudience}
+Unique Value Proposition: ${uniqueValue}
+Launch Date: ${launchDate}
+Budget: ${budget}
+Channels: ${channels}
+Competitors: ${competitors}
+
+Return a comprehensive product launch plan as JSON:
+{
+  "launchReadiness": {"overallScore": number, "criteria": [{"name": "string", "status": "ready|at-risk|not-ready", "note": "string"}]},
+  "goToMarketStrategy": {"positioning": "string", "messaging": {"headline": "string", "subheadline": "string", "keyMessages": ["string"]}, "channels": [{"channel": "string", "priority": "primary|secondary", "tactics": ["string"]}]},
+  "launchTimeline": [{"week": "string", "phase": "string", "tasks": ["string"], "milestone": "string"}],
+  "contentPlan": [{"type": "string", "title": "string", "channel": "string", "timing": "string", "goal": "string"}],
+  "prStrategy": {"angle": "string", "targetOutlets": ["string"], "pressReleaseSummary": "string", "pitchHook": "string"},
+  "influencerStrategy": {"tiers": [{"tier": "string", "count": number, "budget": "string", "deliverables": "string"}]},
+  "successMetrics": [{"metric": "string", "target": "string", "timeframe": "string"}],
+  "riskMitigation": [{"risk": "string", "probability": "low|medium|high", "mitigation": "string"}],
+  "budgetAllocation": [{"category": "string", "percentage": number, "amount": "string"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.15 AI Sales Intelligence & Revenue Operations Engine ---
 app.post('/api/sales-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
