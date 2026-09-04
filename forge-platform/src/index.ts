@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.53 AI SportsTech & Athlete Performance Strategy Engine ---
+app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SportsTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a SportsTech and athlete performance strategy expert. ${p}\n\nProvide actionable strategy covering: wearable performance tracking, sports analytics, fan engagement platforms, eSports monetization, athlete data ownership, injury prevention AI, sports betting tech, stadium smart infrastructure, media rights innovation, and athlete brand building.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.52 AI AudioTech & Podcast Strategy Engine ---
 app.post('/api/audiotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
