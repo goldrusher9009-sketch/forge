@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.84 AI MediaTech & Creator Economy Engine ---
+app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MediaTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MediaTech and creator economy strategy expert. ${p}\n\nProvide actionable strategy covering: creator monetization platform dynamics and take-rate economics, streaming media business models and content licensing, AI-generated content impact on media workflows, podcast and audio monetization strategies, newsletter and subscription media unit economics, social media algorithm changes and platform risk, sports media rights and OTT distribution, creator fund economics vs. brand deal marketplaces, media company M&A consolidation trends, and building durable media technology businesses in a fragmented attention economy.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.83 AI SupplyChain & Logistics Intelligence Engine ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
