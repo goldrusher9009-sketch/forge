@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.55 AI Cybersecurity Threat Intelligence & Posture Engine ---
+app.post('/api/cyber-intel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, currentSecurityStack, knownVulnerabilities, complianceRequirements, incidentHistory, securityTeamSize, budget, cloudProviders, criticalAssets } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a CISO and cybersecurity threat intelligence expert. Create a comprehensive cybersecurity posture assessment and threat intelligence report.
+Company: ${company}, Industry: ${industry}, Size: ${companySize}
+Security Stack: ${currentSecurityStack}, Vulnerabilities: ${knownVulnerabilities}
+Compliance: ${complianceRequirements}, Incidents: ${incidentHistory}
+Security Team: ${securityTeamSize}, Budget: ${budget}
+Cloud Providers: ${cloudProviders}, Critical Assets: ${criticalAssets}
+Return ONLY valid JSON (no markdown):
+{
+  "postureScore": { "overall": 0-100, "networkSecurity": 0-100, "endpointProtection": 0-100, "identityAccess": 0-100, "dataProtection": 0-100, "cloudSecurity": 0-100, "incidentResponse": 0-100, "securityCulture": 0-100 },
+  "threatLandscape": [{ "threat": "", "actor": "", "likelihood": "critical|high|medium|low", "impact": "critical|high|medium|low", "ttps": [], "indicators": [], "mitigations": [] }],
+  "vulnerabilityPriorities": [{ "vulnerability": "", "cvssScore": 0-10, "exploitability": "", "affectedSystems": [], "remediation": "", "priority": 1, "timeToFix": "" }],
+  "securityRoadmap": [{ "initiative": "", "phase": "", "priority": "critical|high|medium|low", "investment": "", "expectedROI": "", "timeline": "", "owner": "" }],
+  "complianceGaps": [{ "framework": "", "requirement": "", "currentStatus": "compliant|partial|non-compliant", "gap": "", "remediation": "", "deadline": "" }],
+  "incidentResponsePlan": { "detectionCapabilities": [], "containmentProcedures": [], "recoverySteps": [], "communicationPlan": [], "lessonsLearned": [], "tabletopExercises": [] },
+  "zeroTrustRoadmap": [{ "pillar": "", "currentMaturity": 0-100, "targetMaturity": 0-100, "actions": [], "timeline": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.54 AI M&A Due Diligence & Integration Intelligence Engine ---
 app.post('/api/ma-diligence-ai', requireAuth, async (req: AuthRequest, res) => {
   const { acquirer, target, dealType, dealSize, industry, strategicRationale, targetRevenue, targetEbitda, synergies, concerns, timeline } = req.body;
