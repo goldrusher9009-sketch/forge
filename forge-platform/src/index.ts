@@ -39634,6 +39634,81 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.97 AI Product-Led Growth Engine ---
+app.post('/api/plg-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { product, currentModel, freeTierUsage, conversionRate } = req.body;
+    const p = `You are an elite Product-Led Growth (PLG) strategist. Analyze:
+Product: ${product || 'Collaboration & project management SaaS'}
+Current Model: ${currentModel || 'Sales-led, demo required, 14-day trial'}
+Free Tier Usage: ${freeTierUsage || 'No free tier currently'}
+Current Trial Conversion Rate: ${conversionRate || '8% trial to paid'}
+
+Design a comprehensive PLG strategy:
+
+**PLG READINESS ASSESSMENT**
+- Product virality and shareability potential
+- Self-serve onboarding feasibility score
+- Time-to-value (TTV) analysis
+- Network effects and collaboration hooks
+- Data and usage instrumentation gaps
+
+**FREE TIER / FREEMIUM DESIGN**
+- What to include in free tier (usage limits, features)
+- What to gate behind paid (the "aha moment" features)
+- Free-to-paid conversion mechanics
+- Anti-abuse and cost controls
+- Viral and collaborative features to expose for free
+
+**ACTIVATION & AHA MOMENT**
+- Define the product's core "aha moment"
+- Steps from signup to first value
+- Activation funnel design (Day 1, Day 3, Day 7)
+- Friction removal in onboarding
+- Empty state design and dummy data strategy
+
+**PRODUCT VIRALITY LOOPS**
+- Invite and referral mechanisms
+- Collaborative features that bring in new users
+- Viral coefficient (K-factor) improvement tactics
+- Shareable outputs and embeds
+- Network effect acceleration
+
+**SELF-SERVE EXPANSION**
+- In-product upgrade triggers and paywalls
+- Usage-based pricing signals
+- Team expansion and seat growth mechanics
+- In-app upsell and cross-sell moments
+- Upgrade email and notification sequences
+
+**PLG METRICS FRAMEWORK**
+- North Star Metric selection and rationale
+- Activation rate, TTV, DAU/MAU, expansion MRR
+- PQL (Product Qualified Lead) definition
+- PQA (Product Qualified Account) scoring
+- Weekly PLG health dashboard design
+
+**SALES-ASSIST MOTION**
+- When to layer in human sales (PQL thresholds)
+- Product usage signals for SDR/AE outreach
+- PLG + SLG hybrid motion design
+- CRM integration and data handoff
+
+**IMPLEMENTATION ROADMAP**
+- Phase 1 (0-30 days): Analytics and instrumentation
+- Phase 2 (31-60 days): Free tier launch
+- Phase 3 (61-90 days): Viral loop activation
+- Expected conversion rate improvement at each phase
+
+Deliver a PLG playbook that can 3-5x self-serve revenue within 12 months.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.96 AI Partnership & Alliance Strategy Engine ---
 app.post('/api/partnership-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
