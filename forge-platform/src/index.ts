@@ -39634,6 +39634,26 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.84 AI People Analytics & HR Intelligence Engine ---
+app.post('/api/people-analytics-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, headcount, attritionRate, avgTenure, engagementScore, hiringPace, topRoles, performanceDistribution, compensationBenchmark, deiMetrics, trainingBudget, remotePolicy } = req.body;
+    const p = `You are an AI people analytics and HR intelligence expert. Analyze:
+Industry: ${industry}, Headcount: ${headcount}, Attrition: ${attritionRate}%
+Avg Tenure: ${avgTenure} months, Engagement Score: ${engagementScore}/10
+Hiring Pace: ${hiringPace} hires/month, Top Roles: ${topRoles}
+Performance: ${performanceDistribution}, Comp Benchmark: ${compensationBenchmark}
+DEI: ${deiMetrics}, Training Budget: $${trainingBudget}/employee/yr
+Remote Policy: ${remotePolicy}
+Return JSON: { workforceHealth: { overallScore: number, retentionRisk: string, engagementRisk: string, productivityIndex: number }, attritionAnalysis: { annualCostOfAttrition: number, predictedAttrition12mo: number, highRiskSegments:[{segment,riskScore,headcount,estimatedCost,interventions:[]}], retentionROI: number }, talentGaps: [{role,urgency,currentCount,neededCount,timeToHire,marketSalary,internalDevelopmentPossible}], engagementDrivers: { topDrivers:[{driver,score,benchmark,improvement}], riskFactors:[{factor,impact,affectedEmployees,recommendation}] }, deiInsights: { currentState: string, gaps:[string], initiatives:[{initiative,timeline,expectedImpact}] }, hiringPlan: { quarterlyTargets:[{q,hires,roles:[],budget}], sourcingRecommendations:[string], retentionVsHiring: string }, learningRoadmap: [{program,targetAudience,skillGap,format,duration,estimatedROI}] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.83 AI Operations Excellence & Process Intelligence Engine ---
 app.post('/api/ops-excellence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
