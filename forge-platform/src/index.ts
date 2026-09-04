@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.52 AI WealthTech & Investment Engine ---
+app.post('/api/wealthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a wealthtech and investment strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a wealthtech and investment management expert. Provide comprehensive analysis covering robo-advisors, portfolio optimization, alternative investments, digital assets, tax-loss harvesting, family office technology, ESG investing, fractional ownership, wealth management platforms, regulatory compliance (MiFID II, SEC), and client experience innovation. ${p}\n\nProvide actionable insights with risk-adjusted return analysis and technology recommendations.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.51 AI InsurTech & Risk Engine ---
 app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
