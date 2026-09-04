@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.85 AI Revenue Operations Command Center ---
+app.post('/api/revops-command', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { mrr, churn, cac, ltv, pipeline, team, bottleneck } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Revenue Operations expert who has scaled 20+ B2B SaaS companies. Analyze:
+Current MRR: ${mrr || 'Not specified'}
+Churn Rate: ${churn || 'Not specified'}
+CAC: ${cac || 'Not specified'}
+LTV: ${ltv || 'Not specified'}
+Pipeline Value: ${pipeline || 'Not specified'}
+Team Size/Structure: ${team || 'Not specified'}
+Biggest Bottleneck: ${bottleneck || 'Not specified'}
+
+Deliver a complete RevOps Command Center analysis:
+1. REVENUE HEALTH SCORE - grade each metric vs. SaaS benchmarks (CAC ratio, LTV:CAC, NRR, pipeline coverage)
+2. FUNNEL AUDIT - identify top 3 conversion rate problems with estimated revenue impact
+3. CHURN FORENSICS - root cause analysis and predicted churn curve
+4. EXPANSION REVENUE - upsell/cross-sell opportunities ranked by ARR potential
+5. PIPELINE HYGIENE - rules for stage definitions, deal scoring, and stale-deal management
+6. SALES VELOCITY FORMULA - current vs. target: deals × win rate × ACV ÷ sales cycle
+7. TOOLSTACK OPTIMIZATION - recommended RevOps stack for current stage
+8. FORECASTING MODEL - 3-scenario (bear/base/bull) 12-month revenue projection
+9. COMPENSATION DESIGN - quota, OTE, accelerators aligned to growth stage
+10. 30-60-90 SPRINT PLAN - specific RevOps initiatives with owner and success metric
+
+Be data-driven. Include specific formulas, benchmarks, and dollar-impact estimates.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.84 AI Product-Market Fit Accelerator ---
 app.post('/api/pmf-accelerator', requireAuth, async (req: AuthRequest, res) => {
   try {

@@ -2395,6 +2395,79 @@ function CXOptimizationPanel({ api }:{ api:string }) {
   );
 }
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
+const RO_HEALTH_BG = (g:string) => g==='A'?'bg-green-100 text-green-700':g==='B'?'bg-blue-100 text-blue-700':g==='C'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';
+const RO_IMPACT_BG = (i:string) => i==='High'?'bg-green-100 text-green-700':i==='Medium'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-700';
+function RevOpsCmdPanel({ api }: { api: string }) {
+  const [mrr, setMrr] = React.useState('');
+  const [churn, setChurn] = React.useState('');
+  const [cac, setCac] = React.useState('');
+  const [ltv, setLtv] = React.useState('');
+  const [pipeline, setPipeline] = React.useState('');
+  const [team, setTeam] = React.useState('');
+  const [bottleneck, setBottleneck] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    if (!mrr) return;
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/revops-command`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ mrr, churn, cac, ltv, pipeline, team, bottleneck }) });
+      const d = await r.json();
+      setResult(d.analysis || d.error || 'No result');
+    } catch (e: any) { setResult(e.message); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">💰 Revenue Operations Command Center</h2>
+        <p className="text-gray-500 text-sm">AI-powered RevOps analysis: funnel health, forecasting, and sprint plan</p>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">MRR *</label>
+          <input value={mrr} onChange={e=>setMrr(e.target.value)} placeholder="e.g. $150K" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Monthly Churn</label>
+          <input value={churn} onChange={e=>setChurn(e.target.value)} placeholder="e.g. 2.5%" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">CAC</label>
+          <input value={cac} onChange={e=>setCac(e.target.value)} placeholder="e.g. $3,200" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">LTV</label>
+          <input value={ltv} onChange={e=>setLtv(e.target.value)} placeholder="e.g. $18,000" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Pipeline Value</label>
+          <input value={pipeline} onChange={e=>setPipeline(e.target.value)} placeholder="e.g. $2.1M qualified" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Team Structure</label>
+          <input value={team} onChange={e=>setTeam(e.target.value)} placeholder="e.g. 5 AEs, 3 SDRs, 2 CSM" className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+        </div>
+      </div>
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-gray-600 mb-1">Biggest Revenue Bottleneck</label>
+        <textarea value={bottleneck} onChange={e=>setBottleneck(e.target.value)} rows={2} placeholder="e.g. Long sales cycles, high churn in month 3, poor expansion revenue..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400" />
+      </div>
+      <button onClick={run} disabled={loading||!mrr} className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 disabled:opacity-50 transition-colors">
+        {loading ? '🔄 Analyzing Revenue Operations...' : '💰 Generate RevOps Command Report'}
+      </button>
+      {result && (
+        <div className="mt-6 bg-gray-50 border rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">📈</span>
+            <span className="font-bold text-gray-800">RevOps Command Report</span>
+          </div>
+          <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{result}</div>
+        </div>
+      )}
+    </div>
+  );
+}
 const PMF_DIM_COLOR = (v:number) => v>=80?'bg-green-100 text-green-700':v>=60?'bg-blue-100 text-blue-700':v>=40?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';
 const PMF_STAGE_BG: Record<string,string> = { 'Pre-launch':'bg-gray-100 text-gray-700', 'Early stage':'bg-blue-100 text-blue-700', 'Growth':'bg-green-100 text-green-700', 'Scale':'bg-violet-100 text-violet-700' };
 function PMFAccelPanel({ api }: { api: string }) {
@@ -26531,7 +26604,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -26680,6 +26753,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26743,6 +26817,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26865,6 +26940,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26928,6 +27004,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27036,6 +27113,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27099,6 +27177,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27163,6 +27242,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27226,6 +27306,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27340,6 +27421,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27403,6 +27485,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'supplychain42', label: '🚢 Supply Chain' },
     { id: 'cyberthreat43', label: '🛡 Cyber Threat' },
     { id: 'pmfaccel44', label: '🎯 PMF Accelerator' },
+    { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27613,6 +27696,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27676,6 +27760,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27740,6 +27825,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27803,6 +27889,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27895,6 +27982,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27958,6 +28046,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28022,6 +28111,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28085,6 +28175,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28168,6 +28259,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28231,6 +28323,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28295,6 +28388,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28358,6 +28452,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28454,6 +28549,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28517,6 +28613,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28605,6 +28702,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28668,6 +28766,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28732,6 +28831,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28795,6 +28895,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28878,6 +28979,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28941,6 +29043,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29005,6 +29108,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29068,6 +29172,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29164,6 +29269,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29227,6 +29333,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29291,6 +29398,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29354,6 +29462,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29437,6 +29546,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29500,6 +29610,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29564,6 +29675,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29627,6 +29739,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29719,6 +29832,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29782,6 +29896,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29846,6 +29961,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29909,6 +30025,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'supplychain42' && <SupplyChainIntelPanel api={api} />}
           {tab === 'cyberthreat43' && <CyberThreatIntelPanel api={api} />}
           {tab === 'pmfaccel44' && <PMFAccelPanel api={api} />}
+          {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
