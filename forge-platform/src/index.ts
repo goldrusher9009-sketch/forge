@@ -39634,6 +39634,83 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.04 AI Pricing Strategy & Revenue Optimization Engine ---
+app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { productDescription, currentPricing, targetMarket, businessModel } = req.body;
+    const p = `You are an elite Pricing Strategy & Revenue Optimization consultant. Analyze:
+Product/Service: ${productDescription || 'B2B SaaS project management platform, 500 customers, $2M ARR'}
+Current Pricing: ${currentPricing || 'Single plan $49/user/month, no freemium, no annual discount'}
+Target Market: ${targetMarket || 'SMB to mid-market, 10-500 employees, tech-forward companies'}
+Business Model: ${businessModel || 'PLG motion, self-serve + sales-assist for enterprise'}
+
+Provide a comprehensive pricing strategy and revenue optimization plan:
+
+**PRICING MODEL ARCHITECTURE**
+- Recommended pricing model (per seat, usage-based, outcome-based, hybrid)
+- Tier structure with names, price points, and feature differentiation
+- Freemium/free trial design and conversion optimization
+- Annual vs. monthly pricing strategy and discount levels
+- Add-on and expansion revenue opportunities
+- Enterprise pricing approach (custom vs. published)
+
+**VALUE METRIC ANALYSIS**
+- Primary value metric identification (what scales with customer value)
+- Value metric validation framework
+- Pricing unit economics at each tier
+- Customer willingness-to-pay research approach
+- Competitor pricing benchmark analysis
+- Value-based vs. cost-plus vs. competitive pricing tradeoffs
+
+**PACKAGING & BUNDLING**
+- Feature-to-tier allocation strategy
+- Good-better-best tier design principles
+- Champion features to drive upgrades
+- Bundle design for maximum perceived value
+- Add-on vs. tier feature decisions
+- Trial-to-paid conversion optimization
+
+**REVENUE EXPANSION PLAYBOOK**
+- Net Revenue Retention (NRR) improvement levers
+- Expansion revenue triggers and playbook
+- Upsell motion (timing, triggers, messaging)
+- Cross-sell opportunity mapping
+- Price increase strategy and communication
+- Churn recovery and win-back pricing
+
+**MARKET SEGMENTATION PRICING**
+- Segment-specific pricing considerations
+- Geographic pricing strategy
+- Vertical-specific pricing (if applicable)
+- Customer size pricing differentiation
+- Channel partner and reseller pricing
+- Government/nonprofit/startup discounting
+
+**PRICING PSYCHOLOGY & PRESENTATION**
+- Price anchoring and decoy pricing tactics
+- Framing and presentation optimization
+- Payment terms and cash flow optimization
+- Price page design best practices
+- Objection handling for pricing conversations
+- Negotiation guardrails and discount approval process
+
+**IMPLEMENTATION ROADMAP**
+- Pricing change communication strategy
+- Grandfathering and migration plan for existing customers
+- A/B testing framework for pricing experiments
+- Pricing governance and review cadence
+- Revenue impact modeling for each recommendation
+- 90-day quick wins vs. 6-month strategic changes
+
+Deliver a pricing playbook with specific price points, tier names, and implementation sequence.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.03 AI Talent Intelligence & Workforce Strategy Engine ---
 app.post('/api/talent-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
