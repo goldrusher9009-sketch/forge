@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.86 AI WealthTech & Personal Finance Engine ---
+app.post('/api/wealthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a wealthtech and personal finance strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a wealthtech and personal finance innovation expert. Provide comprehensive analysis covering: robo-advisor architecture, portfolio optimization algorithms, tax-loss harvesting strategies, financial planning automation, micro-investing platforms, BNPL and embedded finance, open banking APIs, financial literacy tools, retirement planning engines, wealth management digitization, alternative investment platforms, and regulatory compliance (SEC, FINRA, MiFID II). ${p}\n\nProvide actionable, technically grounded recommendations with market opportunity analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.85 AI CyberSecurity & Zero Trust Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
