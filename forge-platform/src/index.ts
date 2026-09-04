@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.76 AI NeuroTech & Brain-Computer Interface Engine ---
+app.post('/api/neurotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a neurotech and brain-computer interface strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a neurotechnology and brain-computer interface expert. Analyze and provide deep insights on: ${p}\n\nCover: BCI applications (medical vs consumer), neural signal processing, non-invasive vs invasive approaches, FDA regulatory pathway, neurofeedback systems, cognitive enhancement, neuro-ethics, key players landscape, investment trends, and commercialization roadmap.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.75 AI AR/VR & Metaverse Engine ---
 app.post('/api/arvr-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
