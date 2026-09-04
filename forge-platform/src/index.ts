@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.17 AI Media & Entertainment Strategy Engine ---
+app.post('/api/media-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { mediaType, mediaChallenge, audienceProfile, revenueModel } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite media and entertainment strategy expert with deep expertise in streaming platforms, content IP, creator economy, gaming, live events, and AI-driven media production.
+
+Media Type/Company: ${mediaType}
+Media Challenge: ${mediaChallenge}
+Audience Profile: ${audienceProfile}
+Revenue Model: ${revenueModel}
+
+Provide a comprehensive Media & Entertainment strategy covering:
+1. Content Strategy & IP Development — franchise building, format adaptation, global vs. local content mix
+2. Streaming & Distribution Intelligence — platform economics, windowing strategy, churn reduction, LTV optimization
+3. Creator Economy & UGC Platforms — monetization architecture, creator tools, community flywheel, brand safety
+4. Gaming & Interactive Entertainment — live-service economics, in-game monetization, esports infrastructure
+5. AI-Driven Production — generative content, synthetic media, automated localization, VFX cost reduction
+6. Audience Intelligence & Personalization — recommendation engines, engagement prediction, A/B content testing
+7. Live Events & Experiences — hybrid event economics, ticketing optimization, sponsorship ROI
+8. Media M&A & IP Valuation — catalog acquisition, franchise licensing, rights management, syndication
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.16 AI Space Tech & Deep Tech Strategy Engine ---
 app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
