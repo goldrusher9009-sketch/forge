@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.86 AI RetailTech & Commerce Intelligence Engine ---
+app.post('/api/retailtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a RetailTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a RetailTech and commerce intelligence strategy expert. ${p}\n\nProvide actionable strategy covering: omnichannel retail technology stack economics, AI-powered merchandising and dynamic pricing, retail media network monetization, inventory intelligence and shrink reduction, BOPIS and curbside pickup operational optimization, loyalty program data monetization, D2C brand vs. marketplace strategy trade-offs, POS modernization and embedded payments, computer vision for retail analytics, and building commerce technology platforms with durable network effects against Shopify and Square.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.85 AI CyberSecurity & Threat Intelligence Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
