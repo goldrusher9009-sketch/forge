@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.16 AI Space Tech & Deep Tech Strategy Engine ---
+app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { techType, deepTechChallenge, marketContext, ventureProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite space technology and deep tech strategy expert with deep expertise in commercial space, satellite constellations, quantum computing, advanced materials, and frontier technology commercialization.
+
+Tech Type/Company: ${techType}
+Deep Tech Challenge: ${deepTechChallenge}
+Market Context: ${marketContext}
+Venture/Growth Profile: ${ventureProfile}
+
+Provide a comprehensive Space Tech & Deep Tech strategy covering:
+1. Space Systems Architecture — launch vehicle economics, satellite bus design, orbital mechanics optimization
+2. Earth Observation & Remote Sensing — SAR/optical data products, analytics platforms, API monetization
+3. Satellite Connectivity — LEO constellation economics, ground station networks, spectrum licensing
+4. Quantum Computing Commercialization — NISQ-era applications, quantum advantage identification, hardware roadmap
+5. Advanced Materials & Manufacturing — novel material commercialization, defense/aerospace qualification, supply chain
+6. Synthetic Biology & Bioengineering — IP strategy, FDA pathway, industrial vs. therapeutic applications
+7. Deep Tech Funding & De-risking — SBIR/STTR, dual-use strategy, government vs. commercial balance
+8. Technology Readiness & Commercialization — TRL advancement, spin-out strategy, licensing vs. product company
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.15 AI Mobility & Transportation Tech Strategy Engine ---
 app.post('/api/mobility-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
