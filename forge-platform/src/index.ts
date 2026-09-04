@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.38 AI M&A Intelligence Engine ---
+app.post('/api/maintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze M&A opportunities and develop an inorganic growth strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a mergers & acquisitions strategy and corporate development expert. Help organizations evaluate and execute inorganic growth opportunities. ${p}\n\nProvide: 1) M&A strategic rationale and acquisition thesis development 2) Target identification criteria and screening framework 3) Deal structure options (acquisition, merger, JV, strategic investment) 4) Due diligence checklist by domain (financial, legal, tech, culture) 5) Valuation approaches and key value drivers 6) Integration planning framework and Day 1 readiness 7) Post-merger integration risks and mitigation strategies 8) Build vs buy analysis with NPV comparison framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.37 AI Workforce Planning Engine ---
 app.post('/api/workplan-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
