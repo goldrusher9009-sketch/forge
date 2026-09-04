@@ -39634,6 +39634,26 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.83 AI Operations Excellence & Process Intelligence Engine ---
+app.post('/api/ops-excellence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, companySize, currentProcesses, painPoints, automationLevel, teamStructure, kpis, bottlenecks, techStack, complianceRequirements, improvementGoals } = req.body;
+    const p = `You are an AI operations excellence and process intelligence expert. Analyze:
+Industry: ${industry}, Size: ${companySize}
+Current Processes: ${currentProcesses}, Pain Points: ${painPoints}
+Automation Level: ${automationLevel}%, Team: ${teamStructure}
+KPIs: ${kpis}, Bottlenecks: ${bottlenecks}
+Tech Stack: ${techStack}, Compliance: ${complianceRequirements}
+Goals: ${improvementGoals}
+Return JSON: { maturityAssessment: { overallScore: number, dimensions:[{dimension,score,benchmark,gaps:[]}] }, processOpportunities: [{process,currentState,futureState,automationPotential,annualTimeSaved,annualCostSaved,implementationComplexity,priority}], automationRoadmap: { phases:[{phase,duration,processes:[],tools:[],estimatedROI,investment}] }, kpiFramework: [{kpi,currentValue,target,frequency,owner,leadingIndicators:[]}], operationalRisks: [{risk,likelihood,impact,mitigation,owner}], quickWins: [{action,effort,weeklyTimeSaved,annualValue,tool}], techRecommendations: [{tool,purpose,integrations:[],estimatedCost,roi}] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.82 AI Financial Planning & Scenario Modeling Engine ---
 app.post('/api/financial-planning-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
