@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.69 AI RoboticsTech & Automation Engine ---
+app.post('/api/roboticstech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a robotics and automation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a robotics and automation expert. Analyze and provide deep insights on: ${p}\n\nCover: automation opportunities, RPA implementation, cobots vs industrial robots, AI-driven robotics, ROI analysis, workforce transition, integration challenges, safety protocols, and future automation roadmap.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.68 AI EnergyTech & Grid Innovation Engine ---
 app.post('/api/energytech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
