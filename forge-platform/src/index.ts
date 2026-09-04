@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.11 AI Organizational Design Engine ---
+app.post('/api/orgdesign-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Design an optimal organizational structure';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an organizational design and transformation expert. Help companies build high-performing structures and operating models. ${p}\n\nProvide: 1) Current state org assessment 2) Target operating model design 3) Spans and layers optimization 4) Decision rights framework (RACI) 5) Change management and communication plan 6) Implementation roadmap with quick wins` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.10 AI Regulatory Intelligence Engine ---
 app.post('/api/regintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
