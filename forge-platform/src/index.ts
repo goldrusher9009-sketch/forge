@@ -39500,6 +39500,36 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.83 AI Cybersecurity Threat Intelligence Engine ---
+app.post('/api/cyber-threat-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { industry, assets, threats, compliance, maturity } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Cybersecurity Threat Intelligence expert. Analyze:
+Industry: ${industry}
+Critical Assets: ${assets || 'Not specified'}
+Known Threats/Incidents: ${threats || 'None specified'}
+Compliance Requirements: ${compliance || 'Not specified'}
+Security Maturity Level: ${maturity || 'Not assessed'}
+
+Provide:
+1. THREAT LANDSCAPE - top 5 threats for this industry with TTPs (Tactics, Techniques, Procedures)
+2. RISK MATRIX - likelihood × impact for each threat vector
+3. VULNERABILITY PRIORITIES - critical gaps to remediate immediately
+4. ZERO-DAY EXPOSURE - areas most likely targeted by nation-state/APT actors
+5. COMPLIANCE GAPS - specific control failures per framework (NIST/ISO/SOC2/PCI)
+6. INCIDENT RESPONSE PLAYBOOK - step-by-step for top 3 attack scenarios
+7. SECURITY ROADMAP - 90-day hardening plan with resource estimates
+8. METRICS & KPIs - security posture measurement framework
+
+Include MITRE ATT&CK mappings where relevant. Be specific and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.82 AI Supply Chain & Procurement Intelligence Engine ---
 app.post('/api/supply-chain-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
