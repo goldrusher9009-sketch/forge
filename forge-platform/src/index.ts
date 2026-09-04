@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.16 AI Digital Transformation Engine ---
+app.post('/api/digitaltx-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a digital transformation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a digital transformation and technology strategy expert. Help organizations modernize and digitize their operations. ${p}\n\nProvide: 1) Digital maturity assessment 2) Technology stack modernization roadmap 3) Process automation opportunities (RPA, AI, workflow) 4) Data and analytics foundation design 5) Change management and adoption strategy 6) ROI model and business case framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.15 AI Sales Enablement Engine ---
 app.post('/api/salesenable-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
