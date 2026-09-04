@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.63 AI SupplyChain & LogisticsTech Strategy Engine ---
+app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SupplyChain strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a SupplyChain and LogisticsTech strategy expert. ${p}\n\nProvide actionable strategy covering: supply chain visibility platforms, AI-driven demand forecasting, freight tech disruption, warehouse automation, nearshoring and reshoring opportunities, supply chain risk management, digital freight brokerage, cold chain technology, reverse logistics, and building network-effect moats in logistics software.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.62 AI CyberSecurity & Zero Trust Strategy Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
