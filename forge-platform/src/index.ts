@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.20 AI WealthTech & Investment Intelligence Engine ---
+app.post('/api/wealthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a WealthTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a wealth technology and investment intelligence strategy expert. ${p}\n\nProvide comprehensive analysis covering: robo-advisor platform design and fee compression dynamics, alternative investment democratization (private equity, real assets, hedge fund access), AI-powered portfolio construction and risk management, ESG and impact investing product development, digital family office technology architecture, cryptocurrency and digital asset wealth management integration, tax-loss harvesting automation and direct indexing, financial planning software and goals-based investing, wealth management CRM and client engagement technology, regulatory compliance automation (KYC/AML, suitability), next-generation client onboarding and digital account opening, and WealthTech M&A and partnership landscape. Include advisor productivity metrics, client segmentation frameworks, and technology build vs buy analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.19 AI ConstructionTech & PropDev Engine ---
 app.post('/api/constructiontech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
