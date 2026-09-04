@@ -39634,6 +39634,75 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.91 AI Investor Relations & Fundraising Intelligence Engine ---
+app.post('/api/investor-relations-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { stage, metrics, sector, raise } = req.body;
+    const p = `You are an elite Investor Relations & Fundraising Intelligence advisor. Analyze:
+Company Stage: ${stage || 'Series A, 18 months post-launch'}
+Key Metrics: ${metrics || '$1.2M ARR, 15% MoM growth, 95% NRR, 18 months runway'}
+Sector: ${sector || 'B2B SaaS / Vertical AI'}
+Raise Target: ${raise || '$8M Series A'}
+
+Provide comprehensive fundraising intelligence:
+
+**INVESTOR TARGETING STRATEGY**
+- Ideal investor profile for this stage/sector
+- Tier 1 VCs actively investing in this space
+- Sector-specialist funds to prioritize
+- Angel and family office opportunities
+
+**NARRATIVE & POSITIONING**
+- Compelling fundraising narrative framework
+- Key themes resonating with investors right now
+- How to position vs. comparable companies
+- The "why now" argument for this sector
+
+**METRICS BENCHMARKING**
+- How your metrics compare to Series A benchmarks
+- Which metrics to lead with (and which to contextualize)
+- Red flags investors will probe and pre-empt answers
+- The growth story arc to tell
+
+**PITCH DECK STRUCTURE**
+- Recommended slide order and count
+- What to include on each key slide
+- Data visualization recommendations
+- Appendix slides for deep dives
+
+**DUE DILIGENCE PREPARATION**
+- Standard Series A data room checklist
+- Questions investors will ask (with model answers)
+- Financial model requirements
+- Customer reference preparation
+
+**TERM SHEET INTELLIGENCE**
+- Typical Series A terms for this sector
+- Valuation benchmarks (ARR multiples)
+- Dilution analysis and cap table implications
+- Investor-friendly vs. founder-friendly terms to watch
+
+**PROCESS MANAGEMENT**
+- Fundraising timeline (intro to close)
+- How to create competitive dynamics
+- FOMO generation tactics
+- Lead investor vs. follow-on strategy
+
+**POST-RAISE INVESTOR RELATIONS**
+- Board meeting cadence and format
+- Investor update best practices
+- When and how to ask for intros
+- Managing investor expectations
+
+Deliver a fundraising playbook that gets a founder to a term sheet in 90 days.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.90 AI Pricing Strategy & Revenue Optimization Engine ---
 app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
