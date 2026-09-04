@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.97 AI Brand Strategy & Identity Engine ---
+app.post('/api/brand-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, category, audience, competitors, values, differentiator } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Brand Strategy & Identity expert who has built iconic brands for startups, consumer companies, and B2B businesses — from naming and positioning to visual identity and brand architecture. Analyze:
+Company/Product: ${company}
+Category: ${category || 'Not specified'}
+Target Audience: ${audience || 'Not specified'}
+Key Competitors: ${competitors || 'Not specified'}
+Core Values: ${values || 'Not specified'}
+Differentiator: ${differentiator || 'Not specified'}
+
+Deliver a comprehensive Brand Strategy & Identity report:
+1. BRAND POSITIONING STATEMENT - fill-in-the-blank framework: "For [audience] who [need], [brand] is the [category] that [benefit] because [reason to believe]"
+2. BRAND ARCHETYPE - identify the primary archetype (Hero, Explorer, Creator, etc.) with behavioral implications for content and design
+3. BRAND PERSONALITY - 5 personality dimensions with adjective pairs and tone-of-voice guidelines
+4. MESSAGING HIERARCHY - core promise, proof points, and RTBs (reasons to believe) for 3 audience segments
+5. NAME ARCHITECTURE - evaluate current name + 10 alternative name concepts with URL availability, trademark risk assessment
+6. VISUAL IDENTITY DIRECTION - color palette psychology, typography personality, logo concept directions, and brand mood board description
+7. BRAND VOICE GUIDE - writing principles, vocabulary to use/avoid, and 5 before/after rewrite examples
+8. BRAND STORY - founding narrative, mission statement, vision statement, and the "why we exist" manifesto
+9. COMPETITIVE DIFFERENTIATION MAP - perceptual map showing whitespace where this brand can uniquely own
+10. BRAND ACTIVATION PLAN - how to bring the brand to life across: website, social, sales materials, packaging, events, and employee experience
+
+Be highly specific, creative, and opinionated. Include naming examples, tagline options, and concrete visual direction.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.96 AI Digital Transformation & Technology Modernization Engine ---
 app.post('/api/digital-transform', requireAuth, async (req: AuthRequest, res) => {
   try {
