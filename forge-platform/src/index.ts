@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.49 AI QuantumTech & Computing Engine ---
+app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a quantum computing strategy and roadmap';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a quantum computing and quantum technology expert. Provide deep analysis covering quantum algorithms, qubit technologies, quantum cryptography, quantum advantage use cases, hybrid classical-quantum architectures, quantum error correction, leading platforms (IBM Q, Google Quantum, IonQ, Rigetti), and enterprise quantum readiness. ${p}\n\nProvide actionable insights with timeline projections and business impact analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.48 AI CyberSecurity & Threat Intelligence Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
