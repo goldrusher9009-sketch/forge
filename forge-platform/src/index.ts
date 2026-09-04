@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.72 AI Operational Excellence Engine ---
+app.post('/api/opexcell-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Identify operational inefficiencies and build an excellence roadmap';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an operational excellence and lean management expert. Build a comprehensive operational excellence program covering: 1) Process mapping and waste identification (Lean/Six Sigma) 2) Key operational KPIs and measurement framework 3) Automation and technology enablement opportunities 4) Cross-functional coordination improvement 5) Capacity planning and resource optimization 6) Quality management and defect reduction 7) Continuous improvement culture and OKR design. Context: ${p}\n\nProvide specific improvement initiatives with ROI estimates and implementation priority.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.71 AI Mergers & Acquisitions Engine ---
 app.post('/api/mandaeng-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
