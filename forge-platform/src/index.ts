@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.25 AI Operational Excellence Engine ---
+app.post('/api/opexcell-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze operational excellence and process optimization strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an operational excellence and lean management expert. Help organizations eliminate waste, improve quality, and drive continuous improvement. ${p}\n\nProvide: 1) Process waste identification (8 wastes of lean) 2) Value stream mapping insights 3) Bottleneck analysis and throughput improvement 4) Quality management system recommendations 5) KPI and OKR alignment for operations 6) Automation and digitization opportunities 7) Change management and culture of improvement plan 8) Operational excellence maturity roadmap` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.24 AI Market Entry Strategy Engine ---
 app.post('/api/marketentry-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
