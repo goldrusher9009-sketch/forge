@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.27 AI Financial Scenario & Stress Testing Engine ---
+app.post('/api/fin-scenario', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, revenue, cost, growthRate, industry, horizon } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a CFO-level financial strategist. Build comprehensive financial scenarios and stress tests for:
+Company: ${company || 'SaaS company'}
+Current Revenue: ${revenue || '$1M ARR'}
+Cost Structure: ${cost || 'standard SaaS'}
+Growth Rate: ${growthRate || '100% YoY'}
+Industry: ${industry || 'software'}
+Planning Horizon: ${horizon || '3 years'}
+
+Return JSON with these exact keys:
+{
+  "baseCase": { "year1": { "revenue": string, "gross_margin": string, "ebitda": string, "headcount": number, "runway": string }, "year2": { "revenue": string, "gross_margin": string, "ebitda": string, "headcount": number, "runway": string }, "year3": { "revenue": string, "gross_margin": string, "ebitda": string, "headcount": number, "runway": string }, "assumptions": string[] },
+  "bullCase": { "upside": string, "triggerEvents": string[], "year3Revenue": string, "probability": string },
+  "bearCase": { "downside": string, "riskEvents": string[], "year3Revenue": string, "survivalStrategies": string[], "probability": string },
+  "stressTests": [{ "scenario": string, "trigger": string, "revenueImpact": string, "cashImpact": string, "recoveryTime": string, "mitigations": string[] }],
+  "unitEconomics": { "cac": string, "ltv": string, "ltvCacRatio": string, "paybackPeriod": string, "nrr": string, "grossMargin": string },
+  "capitalStrategy": { "currentRunway": string, "nextRaiseRecommendation": string, "raiseAmount": string, "useOfFunds": string[], "alternativeOptions": string[] },
+  "costOptimization": [{ "category": string, "currentSpend": string, "optimizedSpend": string, "savings": string, "actions": string[] }],
+  "kpiDashboard": [{ "metric": string, "current": string, "target12m": string, "benchmark": string, "status": "on-track"|"at-risk"|"off-track" }]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = r.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(m[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.26 AI Product-Market Fit Analyzer ---
 app.post('/api/pmf-analyzer', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
