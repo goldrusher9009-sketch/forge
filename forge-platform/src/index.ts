@@ -39500,6 +39500,63 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.02 AI Operations Excellence & Process Intelligence Engine ---
+app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { processName, industry, currentMetrics, painPoints, teamSize, automationLevel } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a world-class operations excellence consultant and process engineering expert.
+Process/Function: ${processName}
+Industry: ${industry}
+Current Metrics: ${currentMetrics}
+Pain Points: ${painPoints}
+Team Size: ${teamSize}
+Current Automation Level: ${automationLevel}
+
+Deliver a comprehensive operations excellence analysis. Return ONLY valid JSON:
+{
+  "processAudit": {
+    "maturityLevel": "initial|developing|defined|managed|optimizing",
+    "maturityScore": "1-5",
+    "keyWastes": [{"type": "Lean waste type", "description": "desc", "estimatedCost": "impact"}],
+    "bottlenecks": [{"step": "process step", "issue": "desc", "severity": "high|medium|low"}],
+    "quickFixes": ["fix1", "fix2"]
+  },
+  "optimizationRoadmap": [
+    {"phase": "Phase 1|2|3", "name": "initiative name", "duration": "timeframe", "effort": "low|medium|high", "impact": "high|medium|low", "actions": ["action1"], "expectedOutcome": "metric improvement"}
+  ],
+  "automationOpportunities": [
+    {"process": "step name", "automationType": "RPA|AI|Integration|Workflow", "roi": "estimated ROI", "complexity": "low|medium|high", "tools": ["tool1"], "description": "what to automate"}
+  ],
+  "kpiFramework": {
+    "efficiency": [{"metric": "name", "current": "baseline", "target": "goal", "measurementFrequency": "daily|weekly|monthly"}],
+    "quality": [{"metric": "name", "current": "baseline", "target": "goal"}],
+    "velocity": [{"metric": "name", "current": "baseline", "target": "goal"}]
+  },
+  "teamStructure": {
+    "rolesNeeded": ["role1"],
+    "skillGaps": ["gap1"],
+    "trainingPriorities": ["priority1"]
+  },
+  "estimatedImpact": {
+    "costSavings": "annual estimate",
+    "timeReduction": "percentage",
+    "qualityImprovement": "percentage",
+    "paybackPeriod": "timeframe"
+  },
+  "executiveSummary": "2-3 sentence overview with top 3 priorities"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.01 AI Sales Intelligence & Pipeline Acceleration Engine ---
 app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
