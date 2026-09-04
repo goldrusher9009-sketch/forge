@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.70 AI Technology Strategy Engine ---
+app.post('/api/techstrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Define our technology strategy and build vs buy decisions';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a technology strategy and CTO advisory expert. Build a comprehensive technology strategy covering: 1) Current tech stack assessment and technical debt prioritization 2) Build vs buy vs partner decision framework 3) Platform architecture evolution roadmap 4) AI/ML integration opportunities 5) Engineering team structure and scaling plan 6) Security and compliance architecture 7) Technology investment prioritization and ROI framework. Context: ${p}\n\nProvide specific architectural recommendations and a phased technology roadmap.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.69 AI Customer Journey Engine ---
 app.post('/api/custjourney-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
