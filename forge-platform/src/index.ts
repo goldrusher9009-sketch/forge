@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.35 AI SpaceTech & Aerospace Strategy Engine ---
+app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SpaceTech and aerospace strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a SpaceTech and aerospace strategy expert. ${p}\n\nProvide actionable strategy covering: satellite technology, launch economics, space tourism, defense applications, constellation networks, regulatory landscape, and commercialization pathways.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.34 AI CleanTech & Sustainability Strategy Engine ---
 app.post('/api/cleantech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
