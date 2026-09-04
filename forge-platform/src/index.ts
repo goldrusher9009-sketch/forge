@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.89 AI GTM Launch Intelligence Engine ---
+app.post('/api/gtm-launch-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, market, icp, competitors, launchDate, budget } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a GTM (Go-to-Market) expert who has launched 30+ B2B products. Plan the launch for:
+Product/Feature: ${product}
+Target Market: ${market || 'Not specified'}
+Ideal Customer Profile: ${icp || 'Not specified'}
+Key Competitors: ${competitors || 'Not specified'}
+Launch Date: ${launchDate || 'Not specified'}
+Budget: ${budget || 'Not specified'}
+
+Build a comprehensive GTM Launch Intelligence report:
+1. LAUNCH READINESS SCORE - rate across: product, sales, marketing, CS, partnerships, legal/compliance
+2. POSITIONING STRATEGY - category creation vs. repositioning vs. feature launch framing
+3. MESSAGING ARCHITECTURE - hero message, 3 pillars, proof points, objection handlers per buyer persona
+4. CHANNEL STRATEGY - ranked channels by ICP concentration × cost efficiency × velocity
+5. LAUNCH SEQUENCING - 4-phase plan: pre-launch (D-60), launch week, amplification (D+30), optimization (D+90)
+6. LAUNCH ASSETS CHECKLIST - 25-item list with owner, deadline, and priority
+7. ANALYST & PRESS STRATEGY - who to brief, messaging for each, embargo timeline
+8. PARTNER & ECOSYSTEM PLAY - integration partners, resellers, influencers to activate
+9. SALES ENABLEMENT PACKAGE - battlecard, demo script, FAQ, pricing objection handlers
+10. SUCCESS METRICS - leading/lagging indicators with 30/60/90-day targets and instruments
+
+Be specific with timelines, budgets, and channel tactics. Include launch week hour-by-hour plan.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.88 AI Customer Success & Retention Intelligence Engine ---
 app.post('/api/cs-retention-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
