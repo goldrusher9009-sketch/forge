@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.51 AI Digital Transformation Engine ---
+app.post('/api/digtrans-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Plan a digital transformation';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a digital transformation expert. Create a comprehensive transformation roadmap for: ${p}\n\nProvide:\n1. Current state assessment and digital maturity score\n2. Target state vision and business outcomes\n3. Technology stack recommendations (cloud, AI, automation)\n4. Change management and workforce upskilling plan\n5. Phased implementation roadmap (0-6, 6-18, 18-36 months)\n6. ROI projections and success metrics` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.50 AI Fundraising Strategy Engine ---
 app.post('/api/fundraise-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
