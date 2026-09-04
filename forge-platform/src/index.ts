@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.93 AI BioTech & Genomics Engine ---
+app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a BioTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a biotechnology and genomics strategy expert. ${p}\n\nProvide a comprehensive strategy covering: CRISPR and gene editing therapeutics, mRNA platform technologies, synthetic biology and cell engineering, genomic sequencing economics and clinical applications, biomanufacturing and fermentation scale-up, drug discovery AI and target identification, regulatory strategy (FDA, EMA pathways), biotech financing and licensing deals, diagnostics and liquid biopsy, and agricultural biotech. Include market sizing, key players, investment landscape, and actionable implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.92 AI CleanTech & Energy Transition Engine ---
 app.post('/api/cleantech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
