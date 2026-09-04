@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.23 AI EnergyTech & Grid Intelligence Engine ---
+app.post('/api/energytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an EnergyTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an energy technology and grid intelligence strategy expert. ${p}\n\nProvide comprehensive analysis covering: utility digital transformation and grid modernization roadmaps, distributed energy resources (DER) orchestration and VPP business models, energy storage economics and battery technology landscape, AI-powered demand forecasting and load management, smart meter data monetization and customer engagement, energy trading platforms and market design, offshore and onshore wind development economics, green hydrogen production and distribution economics, carbon capture and storage (CCS) investment analysis, EV charging infrastructure business models, energy-as-a-service platform design, and cleantech regulatory incentive navigation (IRA, EU Green Deal). Include grid resilience frameworks, utility partnership strategies, and capital allocation priorities for energy transition.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.22 AI SportsTech & Fitness Intelligence Engine ---
 app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
