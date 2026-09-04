@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.12 AI Innovation Portfolio Engine ---
+app.post('/api/innovport-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build an innovation portfolio strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an innovation strategy and portfolio management expert. Help organizations build balanced innovation pipelines. ${p}\n\nProvide: 1) Innovation portfolio mapping (core/adjacent/transformational) 2) Opportunity identification and prioritization 3) Stage-gate process design 4) Resource allocation framework 5) Innovation metrics and KPIs 6) Build-buy-partner decision framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.11 AI Organizational Design Engine ---
 app.post('/api/orgdesign-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
