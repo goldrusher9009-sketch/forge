@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.40 AI NanoTech & Materials Science Engine ---
+app.post('/api/nanotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a NanoTech and materials science strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a NanoTech and materials science intelligence expert. Provide comprehensive analysis covering nanomaterial synthesis and characterization, advanced composites and metamaterials, 2D materials (graphene, MoS2), drug delivery nanosystems, nanoelectronics and quantum dots, self-healing materials, smart coatings and surfaces, additive manufacturing of novel materials, materials informatics and AI-driven discovery, commercialization pathways, and IP landscape analysis. ${p}\n\nProvide actionable insights with R&D roadmaps, commercialization strategies, and market opportunity analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.39 AI MobilityTech & Transportation Engine ---
 app.post('/api/mobilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
