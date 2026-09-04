@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.96 AI Digital Transformation & Technology Modernization Engine ---
+app.post('/api/digital-transform', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { org, industry, size, stack, pain, budget, timeline } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Digital Transformation & Technology Modernization expert who has led large-scale DX programs at Fortune 500s, government agencies, and mid-market companies — reducing tech debt, migrating legacy systems, and driving AI adoption. Analyze:
+Organization: ${org}
+Industry: ${industry || 'Not specified'}
+Size: ${size || 'Not specified'}
+Current Tech Stack: ${stack || 'Not specified'}
+Pain Points: ${pain || 'Not specified'}
+Budget: ${budget || 'Not specified'}
+Timeline: ${timeline || '18 months'}
+
+Deliver a comprehensive Digital Transformation & Technology Modernization report:
+1. DIGITAL MATURITY ASSESSMENT - score across 6 dimensions: data, cloud, AI/ML, customer experience, operations, culture
+2. LEGACY SYSTEM AUDIT - inventory framework for identifying technical debt, integration nightmares, and sunset candidates
+3. MODERNIZATION ROADMAP - prioritized sequence of systems to migrate/replace with dependency mapping and risk ratings
+4. CLOUD STRATEGY - IaaS/PaaS/SaaS recommendations, multi-cloud vs. single-cloud tradeoffs, migration approach (lift-shift vs. refactor)
+5. AI & AUTOMATION OPPORTUNITIES - top 10 processes to automate with ROI estimates and implementation complexity scores
+6. DATA ARCHITECTURE - data lakehouse design, real-time vs. batch pipelines, master data management, and governance
+7. CHANGE MANAGEMENT PLAN - stakeholder alignment, training programs, adoption metrics, and resistance mitigation
+8. BUILD vs. BUY vs. PARTNER DECISIONS - for each major capability: make/buy/partner decision with vendor shortlist
+9. SECURITY & COMPLIANCE - zero-trust architecture, compliance requirements by industry, and DevSecOps integration
+10. INVESTMENT MODEL - CapEx vs. OpEx shift, expected TCO reduction, 3-year ROI model, and success KPIs
+
+Be specific about vendor options, cost ranges, and industry-specific modernization patterns.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.95 AI Partnership & Channel Strategy Engine ---
 app.post('/api/partnership-strategy', requireAuth, async (req: AuthRequest, res) => {
   try {
