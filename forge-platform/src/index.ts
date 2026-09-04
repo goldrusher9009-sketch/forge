@@ -39634,6 +39634,41 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.49 AI Regulatory Intelligence & Compliance Automation Engine ---
+app.post('/api/regulatory-ai', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, geographies, businessActivities, currentCompliance, upcomingRegulations, dataTypes, riskTolerance, complianceBudget } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a regulatory intelligence and compliance automation expert. Analyze regulatory requirements and build a compliance roadmap.
+Company: ${company}
+Industry: ${industry}
+Geographies: ${geographies}
+Business Activities: ${businessActivities}
+Current Compliance: ${currentCompliance}
+Upcoming Regulations: ${upcomingRegulations}
+Data Types Processed: ${dataTypes}
+Risk Tolerance: ${riskTolerance}
+Compliance Budget: ${complianceBudget}
+
+Return JSON:
+{
+  "complianceScore": { "overall": 0-100, "gdprReadiness": 0-100, "industrySpecific": 0-100, "dataPrivacy": 0-100, "financialRegulatory": 0-100 },
+  "regulatoryLandscape": [{ "regulation": "", "jurisdiction": "", "effectiveDate": "", "applicability": "required|recommended|monitor", "penaltyRisk": "", "currentGap": "", "priority": "critical|high|medium|low" }],
+  "complianceGaps": [{ "area": "", "gap": "", "risk": "critical|high|medium|low", "remediation": "", "effort": "low|medium|high", "deadline": "", "owner": "" }],
+  "automationOpportunities": [{ "process": "", "currentManualEffort": "", "automationSolution": "", "costSavings": "", "implementationTime": "", "tools": [""] }],
+  "complianceRoadmap": [{ "quarter": "", "initiatives": [""], "regulations": [""], "budget": "", "milestones": [""] }],
+  "riskRegister": [{ "risk": "", "category": "", "likelihood": 0-100, "impact": 0-100, "mitigation": "", "residualRisk": "" }],
+  "reportingCalendar": [{ "report": "", "frequency": "", "nextDue": "", "owner": "", "automation": "manual|semi-auto|automated" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.48 AI Partnership & Alliance Strategy Engine ---
 app.post('/api/partnership-ai', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
