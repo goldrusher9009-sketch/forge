@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.28 AI Supply Chain & Logistics Intelligence Engine ---
+app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { supplyChainType, networkChallenge, geographicScope, techStack } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a Supply Chain & Logistics strategy expert. Analyze this supply chain venture:
+
+Supply Chain Type: ${supplyChainType}
+Network Challenge: ${networkChallenge}
+Geographic Scope: ${geographicScope}
+Tech Stack: ${techStack}
+
+Provide:
+1. NETWORK DESIGN — node optimization, hub-and-spoke vs. point-to-point, DC footprint strategy
+2. DEMAND FORECASTING — AI/ML models, demand sensing, inventory optimization, safety stock algorithms
+3. SUPPLIER STRATEGY — multi-sourcing, nearshoring vs. offshoring, supplier risk scoring, diversification
+4. LAST-MILE OPTIMIZATION — route optimization, carrier mix, delivery density, urban vs. rural economics
+5. VISIBILITY & TRACKING — real-time tracking stack, ETA prediction, exception management, IoT integration
+6. INVENTORY INTELLIGENCE — SKU rationalization, ABC analysis, slow-mover liquidation, turns optimization
+7. RESILIENCE PLANNING — geopolitical risk mapping, buffer strategies, alternative routing playbooks
+8. SUSTAINABILITY — carbon footprint reduction, green logistics, scope 3 emissions reporting
+9. TECHNOLOGY STACK — WMS/TMS/OMS integration, digital twin, AI control tower, carrier API ecosystem
+10. ROI ROADMAP — cost reduction targets, working capital improvement, service level uplift, 12-month wins`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.27 AI Robotics & Autonomous Systems Strategy Engine ---
 app.post('/api/robotics-ai', requireAuth, async (req: AuthRequest, res) => {
   const { roboticsType, autonomyLevel, industryVertical, hardwareSoftwareSplit } = req.body;
