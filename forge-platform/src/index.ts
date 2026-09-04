@@ -39500,6 +39500,60 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.09 AI Financial Modeling & Valuation Engine ---
+app.post('/api/financial-model', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, businessModel, revenue, growthRate, margins, marketSize, comparables, stage } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a top-tier investment banker and financial modeler with expertise in DCF, comparables, and venture valuation.
+Company: ${companyName}
+Business Model: ${businessModel}
+Revenue/ARR: ${revenue}
+Growth Rate: ${growthRate}
+Margins: ${margins}
+Total Addressable Market: ${marketSize}
+Comparable Companies: ${comparables}
+Stage: ${stage}
+
+Return a comprehensive JSON financial model with these exact keys:
+{
+  "valuationSummary": {
+    "dcfValuation": "string",
+    "comparablesValuation": "string",
+    "ventureValuation": "string",
+    "blendedRange": "string",
+    "recommendedValuation": "string",
+    "keyDriver": "string"
+  },
+  "dcfModel": {
+    "assumptions": [{"metric": "string", "value": "string", "rationale": "string"}],
+    "projections": [{"year": "string", "revenue": "string", "ebitda": "string", "fcf": "string"}],
+    "terminalValue": "string",
+    "discountRate": "string",
+    "impliedValuation": "string"
+  },
+  "comparablesAnalysis": {
+    "multiples": [{"company": "string", "evRevenue": "string", "evEbitda": "string", "growthRate": "string"}],
+    "impliedRange": "string",
+    "positioning": "string"
+  },
+  "scenarioAnalysis": {
+    "bear": {"valuation": "string", "assumptions": "string", "probability": "string"},
+    "base": {"valuation": "string", "assumptions": "string", "probability": "string"},
+    "bull": {"valuation": "string", "assumptions": "string", "probability": "string"}
+  },
+  "keyRisks": [{"risk": "string", "impact": "string", "mitigation": "string"}],
+  "investorNarrative": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.08 AI Cybersecurity Posture & Threat Intelligence Engine ---
 app.post('/api/cyber-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
