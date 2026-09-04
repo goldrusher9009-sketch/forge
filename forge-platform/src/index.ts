@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.84 AI Product-Market Fit Accelerator ---
+app.post('/api/pmf-accelerator', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, target, problem, solution, metrics, stage } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Product-Market Fit expert who has helped 50+ startups achieve PMF. Analyze:
+Product: ${product}
+Target Market: ${target}
+Problem Being Solved: ${problem}
+Solution/Approach: ${solution}
+Current Metrics: ${metrics || 'Pre-launch'}
+Stage: ${stage || 'Early stage'}
+
+Provide a comprehensive PMF analysis:
+1. PMF SCORE (0-100) - with breakdown across 5 dimensions: retention, NPS, market size, differentiation, urgency
+2. CUSTOMER SEGMENTS - rank 3-5 segments by PMF likelihood with specific ICPs
+3. SIGNAL ANALYSIS - what metrics/behaviors indicate/contradict PMF
+4. RETENTION HYPOTHESIS - predicted retention curves and churn drivers
+5. CHANNEL-FIT MATRIX - best acquisition channels for this specific ICP
+6. POSITIONING GAPS - what messaging resonates vs. falls flat
+7. PMF EXPERIMENTS - 5 specific experiments to run in next 30 days with success criteria
+8. PIVOT OPTIONS - 3 adjacent pivots if current trajectory misses PMF
+9. INVESTOR NARRATIVE - how to frame PMF progress for fundraising
+10. 90-DAY ROADMAP - specific actions to accelerate PMF achievement
+
+Be brutally honest and specific. Include benchmark comparisons.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.83 AI Cybersecurity Threat Intelligence Engine ---
 app.post('/api/cyber-threat-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
