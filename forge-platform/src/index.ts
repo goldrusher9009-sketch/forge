@@ -39500,6 +39500,38 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.28 AI Supply Chain Resilience Engine ---
+app.post('/api/supply-resilience', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, supplyChain, risks, geography } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a supply chain resilience expert. Build a comprehensive supply chain risk and resilience strategy for:
+Company: ${company || 'manufacturing company'}
+Industry: ${industry || 'general manufacturing'}
+Supply Chain Description: ${supplyChain || 'multi-tier global supply chain'}
+Known Risks: ${risks || 'geopolitical, weather, supplier concentration'}
+Primary Geography: ${geography || 'global'}
+
+Return JSON with these exact keys:
+{
+  "riskAssessment": { "overallRiskScore": number (1-10), "primaryVulnerabilities": string[], "exposureMap": [{ "region": string, "riskLevel": "critical"|"high"|"medium"|"low", "risks": string[] }] },
+  "supplierAnalysis": { "concentrationRisks": string[], "singleSourceItems": string[], "diversificationOpportunities": string[], "supplierScorecard": [{ "tier": string, "count": number, "avgRisk": string, "action": string }] },
+  "resilienceStrategies": [{ "strategy": string, "category": "nearshoring"|"dual-sourcing"|"inventory"|"digital"|"partnerships", "investment": string, "riskReduction": string, "timeline": string }],
+  "contingencyPlans": [{ "scenario": string, "probability": "high"|"medium"|"low", "impact": string, "response": string[], "recoveryTime": string }],
+  "inventoryStrategy": { "bufferStockRecommendations": [{ "category": string, "currentDays": number, "recommendedDays": number, "rationale": string }], "safetyStockFormula": string },
+  "digitalTwinRoadmap": [{ "phase": string, "capability": string, "benefit": string, "technology": string }],
+  "sustainabilityIntegration": { "carbonFootprint": string, "scope3Emissions": string, "greenSupplyChainInitiatives": string[] },
+  "kpis": [{ "metric": string, "current": string, "target": string, "frequency": string }]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = r.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(m[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.27 AI Financial Scenario & Stress Testing Engine ---
 app.post('/api/fin-scenario', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
