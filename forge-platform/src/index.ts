@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.63 AI Organizational Design Engine ---
+app.post('/api/orgdesign-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Help us design an optimal organizational structure for our growth stage';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an organizational design and people strategy expert. Build a comprehensive org design analysis covering: 1) Current vs ideal org structure assessment 2) Span of control optimization 3) Functional vs cross-functional team trade-offs 4) Decision rights and RACI frameworks 5) Culture and values alignment 6) Leadership development pipeline 7) Hiring roadmap for next 12-18 months. Context: ${p}\n\nProvide specific structural recommendations with implementation sequencing.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.62 AI Retention Engine ---
 app.post('/api/retention-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
