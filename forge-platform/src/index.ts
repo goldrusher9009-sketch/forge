@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.07 AI Web3 & Decentralized Finance Engine ---
+app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Web3 strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Web3, blockchain, and decentralized finance strategy expert. ${p}\n\nProvide comprehensive analysis covering: DeFi protocol design and tokenomics engineering, Layer 2 scaling solutions and cross-chain interoperability, NFT marketplace strategy and digital ownership models, DAO governance frameworks and treasury management, smart contract audit and security best practices, RWA (real-world asset) tokenization, institutional DeFi adoption strategies, on-chain analytics and MEV optimization, GameFi and metaverse economic design, stablecoin mechanisms and yield strategies, regulatory landscape navigation, and Web3 go-to-market approaches. Include technical architecture considerations, token launch strategies, and community building frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.06 AI CyberSecurity & Threat Intelligence Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
