@@ -39634,6 +39634,27 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.73 AI Pricing Strategy & Revenue Optimization Engine ---
+app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, productType, currentPricing, currentARR, customerCount, avgDealSize, churnRate, expansionRate, competitorPricing, costStructure, targetMargin, customerSegments, geographies, pricingModel } = req.body;
+    const p = `You are an AI pricing strategy and revenue optimization expert. Analyze:
+Industry: ${industry}, Product: ${productType}
+Current Pricing: ${currentPricing}, ARR: $${currentARR}
+Customers: ${customerCount}, Avg Deal: $${avgDealSize}
+Churn: ${churnRate}%, Expansion: ${expansionRate}%
+Competitor Pricing: ${competitorPricing}, Costs: ${costStructure}
+Target Margin: ${targetMargin}%, Segments: ${customerSegments}
+Geographies: ${geographies}, Model: ${pricingModel}
+Return JSON: { pricingAnalysis: { currentEfficiency: number, pricePositioning, elasticityEstimate, leakagePoints:[{area,revenueLeakage,fix}] }, recommendedStrategies: [{strategy,description,expectedARRLift,implementationRisk,timeToImpact,steps:[]}], segmentPricing: [{segment,currentPrice,recommendedPrice,rationale,expectedChurnImpact}], packagingRecommendations: [{tier,name,price,features:[],targetSegment,expectedConversion}], expansionRevenue: { currentNRR: number, targetNRR: number, motions:[{motion,description,targetARRAdd,playbook:[]}] }, competitivePositioning: { priceIndex: number, valueGap, recommendations:[] } }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.72 AI Supply Chain Risk & Resilience Engine ---
 app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
