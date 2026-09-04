@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.47 AI GovTech & Public Sector Strategy Engine ---
+app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a GovTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a GovTech and public sector strategy expert. ${p}\n\nProvide actionable strategy covering: digital government transformation, citizen services modernization, procurement innovation, open data initiatives, smart city platforms, public-private partnerships, regulatory sandbox design, cybersecurity for critical infrastructure, and civic AI deployment.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.46 AI BioTech & Life Sciences Strategy Engine ---
 app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
