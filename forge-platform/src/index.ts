@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.52 AI Crisis Management Engine ---
+app.post('/api/crisismanage-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Help manage a business crisis';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a crisis management and business continuity expert. Develop a crisis response plan for: ${p}\n\nProvide:\n1. Crisis severity assessment (P1-P4) and immediate triage actions\n2. Stakeholder communication plan (internal, customers, media, regulators)\n3. Containment and remediation steps\n4. Business continuity measures\n5. Post-crisis recovery roadmap\n6. Lessons learned framework and preventive measures` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.51 AI Digital Transformation Engine ---
 app.post('/api/digtrans-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
