@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.61 AI HRTech & Future of Work Strategy Engine ---
+app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an HRTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an HRTech and future of work strategy expert. ${p}\n\nProvide actionable strategy covering: AI-driven recruiting and ATS optimization, employee experience platforms, skills-based hiring frameworks, workforce analytics, remote work infrastructure, HR data privacy compliance, HRIS consolidation, performance management reinvention, internal mobility platforms, and building defensible HR software in a crowded market.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.60 AI MarTech & Growth Intelligence Strategy Engine ---
 app.post('/api/martech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
