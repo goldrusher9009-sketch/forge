@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.58 AI ESG Strategy Engine ---
+app.post('/api/esgstrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop an ESG strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an ESG (Environmental, Social, Governance) strategy expert. Develop a comprehensive ESG strategy for: ${p}\n\nProvide:\n1. ESG materiality assessment and priority issues\n2. Environmental targets (carbon footprint, net-zero pathway, resource efficiency)\n3. Social initiatives (DEI, labor standards, community impact)\n4. Governance improvements (board diversity, executive pay, transparency)\n5. ESG reporting framework (GRI, SASB, TCFD alignment)\n6. Stakeholder engagement and investor communication plan` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.57 AI Data Monetization Engine ---
 app.post('/api/datamon-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
