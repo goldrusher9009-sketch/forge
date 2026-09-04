@@ -39634,6 +39634,25 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.76 AI ESG & Sustainability Intelligence Engine ---
+app.post('/api/esg-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, companySize, annualRevenue, scope1Emissions, scope2Emissions, scope3Emissions, renewableEnergyPct, waterUsage, wasteRecyclingRate, boardDiversity, employeeTurnover, communityInvestment, esgRatingTargets, currentFrameworks, supplyChainCountries } = req.body;
+    const p = `You are an AI ESG and sustainability intelligence expert. Analyze:
+Industry: ${industry}, Size: ${companySize}, Revenue: $${annualRevenue}
+Scope 1: ${scope1Emissions} tCO2e, Scope 2: ${scope2Emissions} tCO2e, Scope 3: ${scope3Emissions} tCO2e
+Renewable: ${renewableEnergyPct}%, Water: ${waterUsage}, Recycling: ${wasteRecyclingRate}%
+Board Diversity: ${boardDiversity}, Turnover: ${employeeTurnover}%, Community: $${communityInvestment}
+Targets: ${esgRatingTargets}, Frameworks: ${currentFrameworks}, Supply Chain: ${supplyChainCountries}
+Return JSON: { esgScores: { environmental: number, social: number, governance: number, overall: number, peerBenchmark: number }, carbonStrategy: { netZeroPathway:[{year,target,actions:[]}], carbonCredits:{recommended:number,cost:number,providers:[]}, reductionInitiatives:[{initiative,annualReduction,cost,payback}] }, socialImpact: { diversityScore: number, initiatives:[{name,impact,timeline}], communityPrograms:[], employeeWellbeing:{score:number,improvements:[]} }, governanceStrengths: [{area,strength,improvement}], reportingRequirements: [{framework,required:boolean,deadline,gaps:[]}], investorNarrative: { esgStory, keyMetrics:[], riskMitigations:[], opportunityAreas:[] } }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.75 AI Cybersecurity Risk & Threat Intelligence Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
