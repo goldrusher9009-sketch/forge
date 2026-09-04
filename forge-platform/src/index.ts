@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.79 AI InsurTech & Risk Intelligence Engine ---
+app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an InsurTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an InsurTech and risk intelligence strategy expert. ${p}\n\nProvide actionable strategy covering: embedded insurance distribution and API-first underwriting, usage-based insurance and telematics data monetization, AI-driven claims automation and fraud detection, parametric insurance product design, reinsurance capacity and cat modeling, insurtech regulatory sandboxes and surplus lines, customer acquisition economics in insurance, loss ratio optimization with ML, climate risk pricing evolution, and building durable InsurTech businesses amid incumbent distribution advantages.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.78 AI Mobility & Autonomous Vehicle Strategy Engine ---
 app.post('/api/mobility-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
