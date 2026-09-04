@@ -39500,6 +39500,59 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.00 AI Customer Experience Optimization Engine ---
+app.post('/api/cx-optimize', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { businessType, customerSegment, currentPainPoints, channelMix, npsScore } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a world-class customer experience strategist and CX transformation expert.
+Business Type: ${businessType}
+Customer Segment: ${customerSegment}
+Current Pain Points: ${currentPainPoints}
+Channel Mix: ${channelMix}
+Current NPS Score: ${npsScore || 'Unknown'}
+
+Create a comprehensive CX optimization strategy. Return ONLY valid JSON:
+{
+  "cxDiagnosis": {
+    "keyFrictionPoints": ["friction1", "friction2"],
+    "momentsThatMatter": ["moment1", "moment2"],
+    "emotionalDrivers": ["driver1", "driver2"],
+    "churnRiskSignals": ["signal1", "signal2"]
+  },
+  "journeyOptimization": [
+    {"stage": "Awareness|Consideration|Purchase|Onboarding|Retention|Advocacy", "currentState": "desc", "idealState": "desc", "quickWins": ["win1"], "strategicInitiatives": ["initiative1"]}
+  ],
+  "channelStrategy": [
+    {"channel": "name", "currentEffectiveness": "high|medium|low", "optimizationOpportunity": "desc", "recommendedActions": ["action1"]}
+  ],
+  "personalizationPlaybook": {
+    "segmentationCriteria": ["criteria1"],
+    "personalizationTactics": [{"segment": "name", "tactic": "desc", "expectedLift": "metric"}],
+    "dataRequirements": ["data1"]
+  },
+  "npsImprovementPlan": {
+    "targetNPS": "number",
+    "detractorRecovery": ["action1"],
+    "passiveConversion": ["action1"],
+    "promoterAmplification": ["action1"],
+    "expectedTimeToImpact": "timeframe"
+  },
+  "quickWins": [{"action": "desc", "effort": "low|medium|high", "impact": "high|medium|low", "timeframe": "days"}],
+  "kpis": [{"metric": "name", "baseline": "current", "target": "goal", "measurementMethod": "how"}],
+  "executiveSummary": "3 sentence strategic overview with expected business impact"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.99 AI Regulatory Intelligence & Compliance Monitoring Engine ---
 app.post('/api/regulatory-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
