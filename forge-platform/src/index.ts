@@ -39533,6 +39533,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.32 AI Pricing Psychology & Revenue Optimization Engine ---
+app.post('/api/pricing-psych', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, industry, currentPricing, targetSegment, competitors, revenueGoal } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'No Anthropic key configured' });
+  const p = `You are a pricing psychology and revenue optimization expert. Analyze this product's pricing strategy and provide psychological and data-driven optimization recommendations.
+
+Product: ${product}
+Industry: ${industry}
+Current Pricing: ${currentPricing}
+Target Segment: ${targetSegment}
+Competitors: ${competitors}
+Revenue Goal: ${revenueGoal}
+
+Return ONLY valid JSON:
+{
+  "pricingScore": { "overall": 68, "psychology": 72, "positioning": 65, "competitive": 70, "elasticity": 65 },
+  "psychologyTactics": [{ "tactic": "Charm pricing", "description": "Use $X.99 instead of round numbers", "expectedLift": "15%", "implementation": "Update all price points to end in .99", "effort": "low" }],
+  "pricingTiers": [{ "tier": "Starter", "price": "$29/mo", "features": ["5 users", "10GB storage", "Email support"], "targetPersona": "Small teams", "conversionPsychology": "Loss aversion — free trial to paid" }],
+  "anchoringStrategy": { "anchor": "$199/mo Enterprise", "decoy": "$99/mo Professional", "target": "$49/mo Growth", "rationale": "Middle option looks most reasonable next to expensive anchor" },
+  "revenueLevers": [{ "lever": "Annual billing discount", "currentState": "No annual option", "recommendation": "Offer 20% discount for annual", "revenueImpact": "+$180K ARR", "effort": "low" }],
+  "elasticityAnalysis": { "priceElasticity": -1.2, "optimalPricePoint": "$67", "currentPrice": "$49", "recommendedAdjustment": "+37%", "expectedVolumeChange": "-18%", "netRevenueChange": "+12%" },
+  "quickWins": ["Add annual billing option", "Create 3-tier good/better/best", "Add free trial CTA"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.30 AI Regulatory Intelligence & Compliance Forecasting Engine ---
 app.post('/api/reg-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
