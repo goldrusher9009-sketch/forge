@@ -39500,6 +39500,45 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.11 AI Healthcare & Clinical Intelligence Engine ---
+app.post('/api/health-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { symptoms, patientProfile, medicalHistory, currentMedications, labResults, clinicalQuestion } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a clinical decision support AI providing educational health information (NOT medical advice).
+Clinical Question: ${clinicalQuestion}
+Symptoms: ${symptoms}
+Patient Profile: ${patientProfile}
+Medical History: ${medicalHistory}
+Current Medications: ${currentMedications}
+Lab Results: ${labResults}
+
+IMPORTANT: This is for educational/research purposes only. Always recommend consulting a licensed healthcare provider.
+
+Return comprehensive JSON clinical education with these exact keys:
+{
+  "disclaimer": "string (always include: consult healthcare provider)",
+  "differentialDiagnosis": [{"condition": "string", "likelihood": "high|moderate|low", "keyFeatures": "string", "icdCode": "string"}],
+  "clinicalPearls": [{"pearl": "string", "evidence": "string", "source": "string"}],
+  "workupRecommendations": {
+    "labTests": [{"test": "string", "rationale": "string", "urgency": "routine|urgent|emergent"}],
+    "imaging": [{"modality": "string", "indication": "string"}],
+    "referrals": [{"specialty": "string", "reason": "string"}]
+  },
+  "drugInteractions": [{"drug1": "string", "drug2": "string", "severity": "string", "mechanism": "string"}],
+  "evidenceBasedGuidelines": [{"guideline": "string", "recommendation": "string", "evidenceLevel": "string"}],
+  "redFlags": [{"flag": "string", "action": "string", "urgency": "string"}],
+  "patientEducation": {"keyPoints": ["string"], "lifestyleModifications": ["string"], "followUp": "string"}
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.10 AI Legal Strategy & Contract Intelligence Engine ---
 app.post('/api/legal-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
