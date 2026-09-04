@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.88 AI WealthTech & Personal Finance Engine ---
+app.post('/api/wealthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a WealthTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a WealthTech and personal finance strategy expert. ${p}\n\nProvide actionable strategy covering: robo-advisor economics and AUM growth strategies, fractional investing and democratized asset access, personal finance super-app competitive dynamics, financial wellness and salary-linked products, tax optimization automation and TLH at scale, retirement planning platform modernization, alternative asset platform market development, financial data aggregation moats and open banking, credit decisioning with alternative data, and building WealthTech businesses with durable AUM retention against Schwab and Fidelity incumbents.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.87 AI QuantumTech & Next-Gen Computing Engine ---
 app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
