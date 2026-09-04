@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.17 AI MediaTech & Streaming Engine ---
+app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MediaTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a media technology and streaming strategy expert. ${p}\n\nProvide comprehensive analysis covering: streaming platform competitive dynamics (Netflix, Disney+, YouTube landscape), ad-supported vs subscription revenue model optimization, content acquisition and original IP investment frameworks, creator economy monetization and platform partnership strategies, audio streaming and podcast monetization models, OTT vs linear TV transition strategies, media AI for content recommendation and discovery, sports rights and live event streaming economics, international market expansion for streaming platforms, digital advertising technology and programmatic media buying, gaming and interactive entertainment convergence with media, and media M&A landscape. Include audience retention metrics, content ROI frameworks, and technology infrastructure cost modeling.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.16 AI RetailTech & Commerce Engine ---
 app.post('/api/retailtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
