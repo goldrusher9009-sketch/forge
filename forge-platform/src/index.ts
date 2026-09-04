@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.41 AI HealthTech & Digital Therapeutics Engine ---
+app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a HealthTech and digital therapeutics strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a HealthTech and digital therapeutics intelligence expert. Provide comprehensive analysis covering digital therapeutics (DTx) development and FDA clearance pathways, remote patient monitoring platforms, AI diagnostics and medical imaging, EHR interoperability and FHIR standards, mental health apps and virtual care, genomics and precision medicine, wearables and biosensor ecosystems, hospital operations optimization, pharmaceutical digital engagement, value-based care models, and health data privacy compliance. ${p}\n\nProvide actionable insights with regulatory roadmaps, technology recommendations, and market opportunity analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.40 AI NanoTech & Materials Science Engine ---
 app.post('/api/nanotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
