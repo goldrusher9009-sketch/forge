@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.38 AI MediaTech & Entertainment Strategy Engine ---
+app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MediaTech and entertainment strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MediaTech and entertainment strategy expert. ${p}\n\nProvide actionable strategy covering: streaming economics, content monetization, creator platforms, AI-generated media, licensing models, audience analytics, distribution channels, and IP commercialization.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.37 AI InsurTech & Risk Management Strategy Engine ---
 app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
