@@ -39634,6 +39634,25 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.81 AI Sales Intelligence & Deal Coaching Engine ---
+app.post('/api/sales-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, productCategory, avgDealSize, salesCycleLength, winRate, topCompetitors, idealCustomerProfile, currentPipeline, lostDealReasons, topObjections, salesTeamSize, quota } = req.body;
+    const p = `You are an AI sales intelligence and deal coaching expert. Analyze:
+Industry: ${industry}, Product: ${productCategory}
+Avg Deal Size: $${avgDealSize}, Sales Cycle: ${salesCycleLength} days, Win Rate: ${winRate}%
+Competitors: ${topCompetitors}, ICP: ${idealCustomerProfile}
+Pipeline: $${currentPipeline}, Lost Reasons: ${lostDealReasons}
+Top Objections: ${topObjections}, Team Size: ${salesTeamSize}, Quota: $${quota}
+Return JSON: { pipelineHealth: { coverageRatio: number, projectedQuotaAttainment: number, atRiskDeals: number, recommendation: string }, dealCoaching: { winStrategies:[{strategy,when,howTo,example}], objectionHandlers:[{objection,response,followUp,successRate}], closingTechniques:[{technique,bestFor,script,timing}] }, competitiveBattlecard: [{competitor,ourStrengths:[],theirStrengths:[],ourWeaknesses:[],killPhrases:[],positioningStatement}], icp: { characteristics:[string], buyingSignals:[string], disqualifiers:[string], decisionMakers:[string], valueProp: string }, salesPlaybook: { prospecting:[string], discovery:[string], demoTips:[string], negotiation:[string], closing:[string] }, forecastAccuracy: { currentWinRate: number, optimizedWinRate: number, revenueUplift: number, keyLevers:[string] } }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.80 AI Customer Journey & Experience Intelligence Engine ---
 app.post('/api/customer-journey-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
