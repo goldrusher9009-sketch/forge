@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.61 AI Innovation & R&D Portfolio Management Engine ---
+app.post('/api/innovation-rd-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, rdBudget, currentProjects, innovationGoals, timeHorizon, competitorInnovation, patentPortfolio, partnerships, techTrends, riskAppetite, commercializationGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are an innovation strategy and R&D portfolio management expert. Create a comprehensive innovation portfolio and R&D strategy.
+Company: ${company}, Industry: ${industry}, R&D Budget: ${rdBudget}
+Current Projects: ${currentProjects}, Goals: ${innovationGoals}, Time Horizon: ${timeHorizon}
+Competitor Innovation: ${competitorInnovation}, Patent Portfolio: ${patentPortfolio}
+Partnerships: ${partnerships}, Tech Trends: ${techTrends}
+Risk Appetite: ${riskAppetite}, Commercialization Goals: ${commercializationGoals}
+Return ONLY valid JSON (no markdown):
+{
+  "portfolioHealth": { "overall": 0-100, "balance": 0-100, "pipelineStrength": 0-100, "commercializationRate": 0-100, "patentActivity": 0-100, "partnershipLeverage": 0-100 },
+  "horizonAllocation": { "horizon1Core": "", "horizon2Adjacent": "", "horizon3Transformational": "", "recommendation": "" },
+  "projectPortfolio": [{ "project": "", "horizon": "H1|H2|H3", "stage": "ideation|research|development|pilot|scale", "npv": "", "risk": "high|medium|low", "strategicFit": 0-100, "recommendation": "accelerate|maintain|pivot|kill" }],
+  "innovationThemes": [{ "theme": "", "marketPotential": "", "techReadiness": 0-100, "competitiveWhiteSpace": "", "investmentRecommendation": "", "timeToMarket": "" }],
+  "ipStrategy": { "patentGaps": [], "licensingOpportunities": [], "defensivePublications": [], "priorityFilings": [], "estimatedPortfolioValue": "" },
+  "partnershipMap": [{ "partnerType": "", "rationale": "", "targetProfiles": [], "dealStructure": "", "expectedValue": "" }],
+  "stagingGates": [{ "stage": "", "criteria": [], "goDecision": "", "noGoDecision": "", "timeline": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.60 AI Talent Intelligence & Workforce Planning Engine ---
 app.post('/api/talent-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, headcount, growthPlan, criticalRoles, skillGaps, attritionRate, competitorTalent, hiringBudget, remotePolicy, diversityGoals, hrChallenges } = req.body;
