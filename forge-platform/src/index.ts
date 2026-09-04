@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.13 AI CleanTech & Sustainability Engine ---
+app.post('/api/cleantech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a CleanTech sustainability strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cleantech and sustainability strategy expert. ${p}\n\nProvide comprehensive analysis covering: renewable energy transition roadmaps (solar, wind, green hydrogen), carbon accounting and net-zero pathway design, ESG reporting frameworks and regulatory compliance (CSRD, SEC climate rules), circular economy business model transformation, sustainable supply chain decarbonization, carbon credit markets and voluntary offset strategies, clean mobility and EV infrastructure, energy storage and grid modernization, sustainable finance and green bonds, biodiversity and nature-based solutions, corporate sustainability reporting (GRI, TCFD, SASB), and cleantech startup investment landscape. Include quick-win vs long-term initiatives, cost-benefit analysis of sustainability investments, and stakeholder engagement frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.12 AI QuantumTech & Advanced Computing Engine ---
 app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
