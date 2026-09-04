@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.78 AI Mobility & Autonomous Vehicle Strategy Engine ---
+app.post('/api/mobility-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Mobility strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Mobility and autonomous vehicle strategy expert. ${p}\n\nProvide actionable strategy covering: autonomous vehicle commercialization timelines and regulatory milestones, EV charging infrastructure economics, fleet electrification business models, micromobility unit economics and city permitting, ride-hailing competitive dynamics, automotive software and OTA update monetization, vehicle-as-a-service and subscription models, urban air mobility market development, data monetization from connected vehicles, and building durable mobility tech businesses in capital-intensive markets.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.77 AI PropTech & Real Estate Strategy Engine ---
 app.post('/api/proptech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
