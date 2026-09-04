@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.67 AI Revenue Intelligence & Sales Forecasting Engine ---
+app.post('/api/revenue-intel-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, currentARR, targetARR, salesTeamSize, avgDealSize, salesCycle, winRate, pipelineCoverage, topSegments, expansionRevenue, churnARR, newLogoGoal, quotaAttainment, forecastMethod } = req.body;
+    const p = `You are a revenue intelligence and sales forecasting expert. Generate a comprehensive revenue analysis and sales forecast.
+
+Revenue Context:
+- Company: ${company}
+- Current ARR: ${currentARR}
+- Target ARR: ${targetARR}
+- Sales Team Size: ${salesTeamSize}
+- Avg Deal Size: ${avgDealSize}
+- Sales Cycle: ${salesCycle}
+- Win Rate: ${winRate}%
+- Pipeline Coverage: ${pipelineCoverage}x
+- Top Segments: ${topSegments}
+- Expansion Revenue: ${expansionRevenue}
+- Churn ARR: ${churnARR}
+- New Logo Goal: ${newLogoGoal}
+- Quota Attainment: ${quotaAttainment}%
+- Forecast Method: ${forecastMethod}
+
+Return JSON with: revenueMetrics (object: nrrPercent number, arrGrowthRate number, magicNumber number, salesEfficiency number, revenuePerRep number, paybackPeriod number), forecast (object: q1 object with best/likely/worst numbers, q2 same, q3 same, q4 same, annualBest number, annualLikely number, annualWorst number), revenueBreakdown (object: newLogo number, expansion number, renewal number, totalARR number), gaps (array: gap string, impact string, urgency 'immediate'|'this-quarter'|'next-quarter', action string), salesCapacityPlan (array: role string, currentCount number, neededCount number, expectedContribution string, hiringPriority 'critical'|'high'|'medium'), revenuePlaybook (object: weeklyRituals array, pipelineHealthChecks array, forecastCadence string, leadingIndicators array).`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.66 AI Product-Market Fit & Growth Loop Engine ---
 app.post('/api/pmf-growth-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
