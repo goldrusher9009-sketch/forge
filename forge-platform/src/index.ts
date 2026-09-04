@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.14 AI Education & Learning Intelligence Engine ---
+app.post('/api/edu-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { subject, learnerProfile, currentLevel, learningGoal, timeAvailable, learningStyle } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class educational psychologist and master curriculum designer.
+Subject: ${subject}
+Learner Profile: ${learnerProfile}
+Current Level: ${currentLevel}
+Learning Goal: ${learningGoal}
+Time Available: ${timeAvailable}
+Learning Style: ${learningStyle}
+
+Return comprehensive JSON learning plan:
+{
+  "learnerAnalysis": {"strengths": ["string"], "gaps": ["string"], "learningStyle": "string", "estimatedMastery": "string", "optimalSessionLength": "string"},
+  "curriculumMap": {"totalDuration": "string", "phases": [{"phase": "string", "duration": "string", "objectives": ["string"], "keyTopics": ["string"]}]},
+  "weeklyPlan": [{"week": number, "theme": "string", "dailyTasks": [{"day": "string", "task": "string", "duration": "string", "resource": "string"}], "milestone": "string"}],
+  "conceptBreakdown": [{"concept": "string", "difficulty": "beginner|intermediate|advanced", "prerequisites": ["string"], "mentalModel": "string", "commonMisconceptions": ["string"]}],
+  "practiceExercises": [{"title": "string", "type": "string", "difficulty": "string", "instructions": "string", "expectedOutcome": "string"}],
+  "assessmentStrategy": {"formative": ["string"], "summative": "string", "successMetrics": ["string"]},
+  "resourceLibrary": [{"title": "string", "type": "book|video|course|article|tool", "why": "string", "priority": "string"}],
+  "motivationPlan": {"intrinsicDrivers": ["string"], "milestoneRewards": ["string"], "plateauStrategies": ["string"]},
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.13 AI Climate & Sustainability Intelligence Engine ---
 app.post('/api/climate-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
