@@ -39500,6 +39500,70 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.06 AI Talent Intelligence & Team Optimization Engine ---
+app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { teamSize, roles, skills, challenges, growthPlans, culture } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a world-class talent strategy advisor and organizational psychologist specializing in team optimization.
+Team Size: ${teamSize}
+Current Roles: ${roles}
+Key Skills Present: ${skills}
+Talent Challenges: ${challenges}
+Growth Plans: ${growthPlans}
+Culture: ${culture}
+
+Deliver comprehensive talent intelligence. Return ONLY valid JSON:
+{
+  "teamDiagnosis": {
+    "healthScore": "1-10",
+    "healthLevel": "critical|at-risk|stable|healthy|thriving",
+    "keyStrengths": ["strength1"],
+    "criticalGaps": ["gap1"],
+    "burnoutRisk": "low|medium|high",
+    "retentionRisk": "low|medium|high"
+  },
+  "skillsMatrix": {
+    "coreStrengths": [{"skill": "name", "level": "expert|advanced|intermediate", "coverage": "% of team"}],
+    "criticalGaps": [{"skill": "name", "urgency": "immediate|short-term|long-term", "impact": "why this matters"}],
+    "emergingNeeds": [{"skill": "name", "timeframe": "when needed", "reason": "why"}]
+  },
+  "hiringStrategy": {
+    "immediatePriorities": [{"role": "title", "rationale": "why now", "mustHaves": ["skill1"], "niceToHaves": ["skill1"]}],
+    "hiringSequence": ["role1 → reason", "role2 → reason"],
+    "makeVsBuy": [{"area": "skill area", "recommendation": "hire|train|contract", "reasoning": "why"}]
+  },
+  "teamStructure": {
+    "currentStructure": "assessment of current structure",
+    "recommendedStructure": "optimal structure description",
+    "reportingChanges": ["suggested change"],
+    "collaborationImprovements": ["improvement"]
+  },
+  "retentionPlaybook": {
+    "retentionDrivers": ["key driver for this team"],
+    "atRiskSignals": ["warning sign to watch"],
+    "retentionActions": [{"action": "specific action", "impact": "expected outcome", "timeline": "when"}],
+    "compensationInsights": "compensation strategy recommendation"
+  },
+  "performanceOptimization": {
+    "productivityLevers": ["lever1"],
+    "meetingOptimization": "recommendations for meeting culture",
+    "asyncStrategies": ["async work strategy"],
+    "oKRRecommendations": ["OKR suggestion for team"]
+  },
+  "executiveSummary": "3 sentence talent situation and top priorities"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.05 AI Product-Market Fit & Growth Strategy Engine ---
 app.post('/api/pmf-growth', requireAuth, async (req: AuthRequest, res) => {
   try {
