@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.30 AI HR Tech & Future of Work Strategy Engine ---
+app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { hrtechFocus, workforceChallenge, companyStage, targetBuyer } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are an HR Tech & Future of Work strategy expert. Analyze this HR tech venture:
+
+HR Tech Focus: ${hrtechFocus}
+Workforce Challenge: ${workforceChallenge}
+Company Stage: ${companyStage}
+Target Buyer: ${targetBuyer}
+
+Provide:
+1. PRODUCT DIFFERENTIATION — vs. Workday/ADP/SAP/Rippling — where to compete vs. integrate
+2. BUYER JOURNEY — HR buyer vs. CHRO vs. CEO decision, champion vs. economic buyer separation
+3. SALES MOTION — PLG bottoms-up vs. enterprise top-down, proof-of-concept design, pilot structure
+4. IMPLEMENTATION & ONBOARDING — time-to-value, data migration, change management support model
+5. INTEGRATION ECOSYSTEM — HRIS/ATS/payroll connectors, API-first vs. native, marketplace strategy
+6. AI DIFFERENTIATION — specific AI use cases (screening, scheduling, engagement, attrition prediction)
+7. COMPLIANCE & LEGAL — EEOC/GDPR/CCPA, bias audit requirements, employment law considerations
+8. PRICING & PACKAGING — per-seat vs. PEPM, module bundling, enterprise vs. SMB tier design
+9. CUSTOMER SUCCESS — retention drivers, expansion revenue, NPS strategy, multi-year contracts
+10. 18-MONTH GTM ROADMAP — ICP focus, ACV targets, channel mix, case study velocity`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.29 AI Creator Economy & Influencer Strategy Engine ---
 app.post('/api/creator-economy-ai', requireAuth, async (req: AuthRequest, res) => {
   const { creatorType, platformFocus, audienceSize, monetizationGoal } = req.body;
