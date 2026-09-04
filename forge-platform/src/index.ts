@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.52 AI AudioTech & Podcast Strategy Engine ---
+app.post('/api/audiotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an AudioTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an AudioTech and podcast industry strategy expert. ${p}\n\nProvide actionable strategy covering: podcast monetization, audio AI tools, voice cloning ethics, spatial audio, podcast discovery, listener retention, B2B audio content, live audio platforms, distribution strategy, podcast networks, and the future of voice-first interfaces.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.51 AI NanoTech & Advanced Materials Strategy Engine ---
 app.post('/api/nanotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
