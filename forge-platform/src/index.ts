@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.71 AI DronesTech & UAV Innovation Engine ---
+app.post('/api/dronestech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a drone technology and UAV strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a drone technology and UAV industry expert. Analyze and provide deep insights on: ${p}\n\nCover: commercial drone applications, regulatory landscape (FAA/EASA), autonomous flight systems, delivery logistics, inspection use-cases, counter-drone solutions, swarm technology, payload optimization, battery advances, and market opportunity sizing.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.70 AI NanoTech & Advanced Materials Engine ---
 app.post('/api/nanotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
