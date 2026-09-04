@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.54 AI Talent Intelligence Engine ---
+app.post('/api/talentintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop a talent intelligence strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a talent intelligence and workforce strategy expert. Develop a comprehensive talent strategy for: ${p}\n\nProvide:\n1. Talent market analysis and competitive benchmarking\n2. Critical role identification and skill gap assessment\n3. Build vs buy vs borrow framework\n4. Employer branding and EVP recommendations\n5. Retention risk analysis and mitigation strategies\n6. Workforce planning 12-24 month roadmap` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.53 AI Ecosystem Strategy Engine ---
 app.post('/api/ecosystrat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
