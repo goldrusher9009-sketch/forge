@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.25 AI CyberSecurity & InfoSec Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a cybersecurity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cybersecurity and information security strategy expert specializing in threat intelligence, zero-trust architecture, cloud security, and compliance. ${p}\n\nProvide comprehensive analysis covering: threat landscape assessment and attack surface mapping, zero-trust architecture design, cloud security posture (CSPM/CWPP), identity and access management (IAM/PAM), SOC and incident response playbooks, vulnerability management and patch cadence, secure SDLC and DevSecOps integration, compliance frameworks (SOC2/ISO27001/NIST/GDPR), supply chain security, ransomware resilience, AI-powered threat detection, red team/blue team strategy, and security product roadmap for a growing SaaS company.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.24 AI BioTech & Life Sciences Engine ---
 app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
