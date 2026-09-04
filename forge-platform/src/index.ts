@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.74 AI DevTools & Developer Experience Strategy Engine ---
+app.post('/api/devtools-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a DevTools strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a DevTools and developer experience strategy expert. ${p}\n\nProvide actionable strategy covering: developer-led growth and PLG motion for dev tools, API-first product strategy, SDK design and developer onboarding, open source monetization models, observability and monitoring market dynamics, CI/CD and platform engineering trends, AI coding assistant integration strategies, developer community building and DevRel ROI, pricing for usage-based developer tools, and building beloved developer products that achieve viral adoption.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.73 AI ClimateTech & Carbon Markets Strategy Engine ---
 app.post('/api/climatetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
