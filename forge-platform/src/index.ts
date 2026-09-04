@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.38 AI FoodTech & AgriTech Intelligence Engine ---
+app.post('/api/foodtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a FoodTech and AgriTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a FoodTech and AgriTech intelligence expert. Provide comprehensive analysis covering precision agriculture, vertical farming and controlled environments, alternative protein development, food supply chain optimization, smart irrigation and IoT sensors, AI crop disease detection, food waste reduction platforms, plant-based and cultivated meat markets, food safety traceability via blockchain, restaurant tech and ghost kitchens, and sustainable packaging innovations. ${p}\n\nProvide actionable insights with market data, technology recommendations, and sustainability frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.37 AI GameTech & Interactive Entertainment Engine ---
 app.post('/api/gametech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
