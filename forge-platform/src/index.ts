@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.92 AI Talent Intelligence & Workforce Planning Engine ---
+app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { role, level, industry, headcount, skills, budget, timeline } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Talent Intelligence & Workforce Planning expert with experience scaling teams at hypergrowth startups and Fortune 500s. Analyze:
+Role/Function: ${role}
+Seniority Level: ${level || 'Not specified'}
+Industry: ${industry || 'Not specified'}
+Current Headcount: ${headcount || 'Not specified'}
+Required Skills: ${skills || 'Not specified'}
+Hiring Budget: ${budget || 'Not specified'}
+Timeline: ${timeline || '6 months'}
+
+Deliver a comprehensive Talent Intelligence & Workforce Planning report:
+1. TALENT MARKET ANALYSIS - supply/demand dynamics, scarcity index, and geographic talent pools for this role
+2. COMPENSATION BENCHMARKING - base salary ranges by level (P3-P7) and location with equity and bonus data
+3. SKILLS TAXONOMY - must-have vs. nice-to-have skills, adjacent skills to accept, and skills to train
+4. HIRING FUNNEL DESIGN - sourcing channels ranked by yield, time-to-hire, and cost-per-hire estimates
+5. JOB DESCRIPTION OPTIMIZATION - bias-free language, compelling value props, and SEO for job boards
+6. INTERVIEW PROCESS DESIGN - stage-by-stage structure with time estimates and pass/fail criteria
+7. CANDIDATE SCORING RUBRIC - weighted scorecard for technical, behavioral, and culture-fit dimensions
+8. COMPETITIVE EMPLOYER BRAND - what top candidates in this market care about beyond compensation
+9. WORKFORCE PLANNING MODEL - headcount plan by quarter with dependency on revenue milestones
+10. RETENTION STRATEGY - flight risk indicators, retention interventions, and succession planning for key roles
+
+Include market data, specific salary ranges, and sourcing channel effectiveness percentages.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.91 AI Pricing Strategy & Revenue Optimization Engine ---
 app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
   try {
