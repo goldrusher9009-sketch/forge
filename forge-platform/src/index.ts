@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.62 AI EdTech & Learning Innovation Engine ---
+app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an EdTech & Learning Innovation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an EdTech and learning innovation expert. Analyze online learning platforms, adaptive learning AI, skills credentialing, corporate training tech, K-12 and higher education disruption, microlearning, gamification, VR/AR learning experiences, and lifelong learning ecosystems. ${p}\n\nProvide actionable insights on learning outcomes optimization, platform monetization, content strategy, and the future of education technology.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.61 AI AgriTech & Food Systems Engine ---
 app.post('/api/agritech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
