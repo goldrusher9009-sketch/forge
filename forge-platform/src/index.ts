@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.80 AI FoodTech & Alternative Protein Engine ---
+app.post('/api/foodtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a food technology and alternative protein strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a food technology and alternative protein expert. Analyze and provide deep insights on: ${p}\n\nCover: cultivated meat commercialization, plant-based formulation, precision fermentation, food supply chain AI, smart packaging, ghost kitchens, personalized nutrition, food waste reduction, regulatory pathways, and consumer adoption strategies.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.79 AI TravelTech & Hospitality Engine ---
 app.post('/api/traveltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
