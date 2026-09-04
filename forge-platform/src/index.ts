@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.16 AI RetailTech & Commerce Engine ---
+app.post('/api/retailtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a RetailTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a retail technology and commerce strategy expert. ${p}\n\nProvide comprehensive analysis covering: omnichannel retail transformation roadmaps, AI-powered personalization and recommendation engines, inventory optimization and demand forecasting technology, RFID and computer vision in-store analytics, buy-now-pay-later and embedded finance integration, social commerce and live shopping strategies, headless commerce architecture decisions, loyalty program redesign for modern consumers, last-mile delivery innovation and fulfillment economics, retail media network monetization, sustainability in retail supply chains, and direct-to-consumer brand building vs marketplace strategy. Include customer acquisition cost benchmarks, conversion rate optimization frameworks, and technology vendor selection criteria.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.15 AI FoodTech & AgriFood Engine ---
 app.post('/api/foodtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
