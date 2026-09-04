@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.99 AI Web3 & Blockchain Strategy Engine ---
+app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Web3 and blockchain strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Web3 and blockchain strategy expert. Provide actionable strategies for tokenomics design, DeFi protocol architecture, NFT utility, DAO governance, smart contract security, L2 scaling, cross-chain interoperability, and regulatory compliance in crypto. ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.98 AI Creator Economy Engine ---
 app.post('/api/creator-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
