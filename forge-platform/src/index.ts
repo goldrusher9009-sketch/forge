@@ -39500,6 +39500,64 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.05 AI Product-Market Fit & Growth Strategy Engine ---
+app.post('/api/pmf-growth', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { productDescription, targetCustomer, currentTraction, growthBlockers, revenueModel } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a world-class product strategy advisor specializing in product-market fit assessment and growth engineering.
+Product: ${productDescription}
+Target Customer: ${targetCustomer}
+Current Traction: ${currentTraction}
+Growth Blockers: ${growthBlockers}
+Revenue Model: ${revenueModel}
+
+Deliver a comprehensive PMF & growth strategy. Return ONLY valid JSON:
+{
+  "pmfAssessment": {
+    "pmfScore": "1-10",
+    "pmfLevel": "pre-pmf|approaching|achieved|scaling",
+    "signals": {"positive": ["signal1"], "negative": ["signal1"]},
+    "coreHypothesis": "the core PMF bet",
+    "validationStatus": "validated|partially-validated|unvalidated"
+  },
+  "customerSegmentation": {
+    "beachhead": {"segment": "name", "whyThisFirst": "rationale", "size": "estimate", "characteristics": ["char1"]},
+    "expansionSegments": [{"segment": "name", "timing": "when to expand", "unlock": "what enables this"}]
+  },
+  "growthDiagnosis": {
+    "primaryConstraint": "acquisition|activation|retention|referral|revenue",
+    "acquisitionStrategies": [{"channel": "name", "effort": "low|medium|high", "expectedCAC": "estimate", "scalability": "high|medium|low"}],
+    "retentionDrivers": ["driver1", "driver2"],
+    "viralLoops": ["potential viral mechanism"],
+    "growthExperiments": [{"hypothesis": "what we think", "test": "how to test", "metric": "what to measure", "duration": "timeframe"}]
+  },
+  "productStrategy": {
+    "coreValueProp": "one sentence value proposition",
+    "mustHaveFeatures": ["feature1"],
+    "niceToHaveFeatures": ["feature1"],
+    "killFeatures": ["what to cut"],
+    "roadmapPriority": ["P0: item", "P1: item", "P2: item"]
+  },
+  "growthModel": {
+    "primaryGrowthMotion": "PLG|SLG|MLG|community",
+    "keyMetrics": [{"metric": "name", "target": "goal", "current": "baseline"}],
+    "northStarMetric": "the one metric that matters",
+    "growthTarget": "12-month goal"
+  },
+  "executiveSummary": "3 sentence PMF status and top growth priorities"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.04 AI Market Intelligence & Competitive Landscape Engine ---
 app.post('/api/market-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
