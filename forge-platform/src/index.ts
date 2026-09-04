@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.30 AI Leadership Development Engine ---
+app.post('/api/leaderdev-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze leadership development strategy and executive effectiveness';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a leadership development and executive coaching expert. Help individuals and organizations build high-performing leadership capacity. ${p}\n\nProvide: 1) Leadership style assessment and situational effectiveness 2) Core competency gap analysis vs. role requirements 3) Executive presence and communication development plan 4) Decision-making frameworks and cognitive bias mitigation 5) Team-building and culture-setting tactics 6) Succession planning and pipeline development 7) 360-degree feedback integration approach 8) 90-day leadership acceleration plan` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.29 AI Growth Hacking Engine ---
 app.post('/api/growthhack-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
