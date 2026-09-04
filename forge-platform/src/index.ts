@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.62 AI Crisis Management & Business Continuity Engine ---
+app.post('/api/crisis-mgmt-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, crisisType, currentSituation, stakeholders, mediaExposure, regulatoryContext, businessImpact, resources, timeframe, communicationChannels, previousCrises } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a crisis management and business continuity expert. Create a comprehensive crisis response and business continuity plan.
+Company: ${company}, Industry: ${industry}, Crisis Type: ${crisisType}
+Current Situation: ${currentSituation}, Stakeholders: ${stakeholders}
+Media Exposure: ${mediaExposure}, Regulatory Context: ${regulatoryContext}
+Business Impact: ${businessImpact}, Resources: ${resources}, Timeframe: ${timeframe}
+Communication Channels: ${communicationChannels}, Previous Crises: ${previousCrises}
+Return ONLY valid JSON (no markdown):
+{
+  "crisisAssessment": { "severity": "critical|high|medium|low", "spreadRisk": 0-100, "reputationRisk": 0-100, "financialRisk": 0-100, "regulatoryRisk": 0-100, "recoveryComplexity": 0-100 },
+  "immediateActions": [{ "action": "", "owner": "", "deadline": "", "priority": "P0|P1|P2", "rationale": "" }],
+  "communicationPlan": [{ "audience": "", "channel": "", "message": "", "timing": "", "tone": "", "approver": "" }],
+  "stakeholderMatrix": [{ "stakeholder": "", "influence": 0-100, "concern": "", "strategy": "", "keyMessages": [], "frequency": "" }],
+  "businessContinuity": [{ "function": "", "rtoHours": 0, "rpoHours": 0, "workaround": "", "resources": [], "responsible": "" }],
+  "recoveryRoadmap": [{ "phase": "", "duration": "", "milestones": [], "successCriteria": [], "risks": [] }],
+  "lessonsLearned": { "rootCauses": [], "systemicIssues": [], "preventionMeasures": [], "protocolUpdates": [], "trainingNeeds": [] }
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.61 AI Innovation & R&D Portfolio Management Engine ---
 app.post('/api/innovation-rd-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, rdBudget, currentProjects, innovationGoals, timeHorizon, competitorInnovation, patentPortfolio, partnerships, techTrends, riskAppetite, commercializationGoals } = req.body;
