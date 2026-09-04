@@ -39634,6 +39634,25 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.78 AI Regulatory Compliance & Risk Management Engine ---
+app.post('/api/regulatory-compliance-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, jurisdiction, companySize, revenueRange, dataTypes, operationsScope, existingFrameworks, recentAuditFindings, plannedChanges, riskTolerance } = req.body;
+    const p = `You are an AI regulatory compliance and risk management expert. Analyze:
+Industry: ${industry}, Jurisdiction: ${jurisdiction}
+Company Size: ${companySize}, Revenue: ${revenueRange}
+Data Types Handled: ${dataTypes}, Operations Scope: ${operationsScope}
+Existing Frameworks: ${existingFrameworks}, Recent Audit Findings: ${recentAuditFindings}
+Planned Changes: ${plannedChanges}, Risk Tolerance: ${riskTolerance}
+Return JSON: { regulatoryLandscape: { applicableRegulations:[{regulation,jurisdiction,effectiveDate,penaltyRange,complianceDeadline,priority}], upcomingChanges:[{regulation,effectiveDate,impact,preparationNeeded}] }, complianceGapAnalysis: { overallScore: number, gaps:[{area,currentState,requiredState,gapSeverity,remediationCost,remediationTime}] }, riskRegister: { risks:[{riskId,category,description,likelihood,impact,inherentRisk,controls,residualRisk,owner,reviewDate}], heatmapSummary:{critical:number,high:number,medium:number,low:number} }, complianceRoadmap: { phases:[{phase,timeframe,priorities:[],estimatedCost,resourcesRequired}] }, keyControls: [{control,framework,implementationStatus,testingFrequency,lastTested,gaps}], executiveSummary: { topRisks:[string], immediateActions:[string], estimatedComplianceCost: number } }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.77 AI M&A Due Diligence & Deal Intelligence Engine ---
 app.post('/api/ma-diligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
