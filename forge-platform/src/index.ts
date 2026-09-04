@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.50 AI Customer Success & Churn Prevention Engine ---
+app.post('/api/customer-success-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, customerSegments, churnRate, ltv, nps, supportTickets, usageMetrics, contractValues, healthScoreFactors, retentionGoals } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are an expert customer success strategist and churn prevention specialist. Analyze this B2B SaaS company and generate a comprehensive customer success intelligence report.
+Company: ${company}, Product: ${product}
+Customer Segments: ${customerSegments}, Current Churn Rate: ${churnRate}%, NPS: ${nps}
+LTV: ${ltv}, Support Tickets/Month: ${supportTickets}
+Usage Metrics: ${usageMetrics}, Contract Values: ${contractValues}
+Health Score Factors: ${healthScoreFactors}, Retention Goals: ${retentionGoals}
+Return ONLY valid JSON (no markdown):
+{
+  "healthScoreModel": { "overall": 0-100, "productAdoption": 0-100, "supportSentiment": 0-100, "contractExpansion": 0-100, "engagementDepth": 0-100, "paymentHealth": 0-100 },
+  "churnRiskSegments": [{ "segment": "", "riskLevel": "critical|high|medium|low", "churnProbability": 0-100, "accountsAtRisk": 0, "revenueAtRisk": "", "primarySignals": [], "timeToChurn": "", "interventionWindow": "" }],
+  "retentionPlaybooks": [{ "trigger": "", "playbook": "", "actions": [], "owner": "", "timeline": "", "successMetric": "", "expectedImpact": "" }],
+  "expansionOpportunities": [{ "account": "", "opportunity": "", "currentMRR": "", "potentialMRR": "", "upsellProduct": "", "timing": "", "approach": "" }],
+  "csTeamCapacity": { "currentCsm": 0, "recommendedCsm": 0, "accountsPerCsm": 0, "hiringPriority": "", "toolingGaps": [], "automationOpportunities": [] },
+  "qbrTemplates": [{ "segment": "", "agenda": [], "keyMetrics": [], "expansionTalk": "", "renewalStrategy": "" }],
+  "successMilestones": [{ "milestone": "", "timeframe": "", "criteria": [], "celebrationAction": "", "expansionSignal": false }],
+  "voiceOfCustomer": { "topCompliments": [], "topComplaints": [], "featureRequests": [], "sentimentTrend": "", "npsImprovement": [] }
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.49 AI Regulatory Intelligence & Compliance Automation Engine ---
 app.post('/api/regulatory-ai', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
