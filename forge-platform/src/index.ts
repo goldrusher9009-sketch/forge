@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.12 AI QuantumTech & Advanced Computing Engine ---
+app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a QuantumTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a quantum technology and advanced computing strategy expert. ${p}\n\nProvide comprehensive analysis covering: quantum computing hardware landscape (superconducting, photonic, ion trap), quantum software and algorithm development, quantum cryptography and post-quantum security migration, quantum sensing and metrology applications, hybrid quantum-classical computing architectures, quantum advantage timelines by industry vertical, enterprise quantum readiness assessment, quantum-as-a-service business models, talent acquisition and quantum workforce development, quantum computing investment landscape, neuromorphic and edge computing convergence, and quantum networking protocols. Include near-term vs long-term opportunity mapping, risk assessment, and first-mover advantage strategies.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.11 AI SupplyChain & Logistics Intelligence Engine ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
