@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.03 AI EdTech & Learning Platform Engine ---
+app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an EdTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an education technology and learning platform strategy expert. ${p}\n\nProvide comprehensive analysis covering: adaptive learning algorithms and personalized curriculum design, AI tutoring and assessment systems, LMS architecture and content delivery networks, microlearning and gamification frameworks, corporate L&D platform strategies, K-12 and higher ed market penetration, credentialing and skills verification via blockchain, creator economy tools for educators, edtech monetization models, and global market expansion including emerging markets. Include technology stack recommendations, engagement metrics, and retention optimization strategies.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.02 AI InsurTech & Risk Management Engine ---
 app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
