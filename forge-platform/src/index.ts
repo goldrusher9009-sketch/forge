@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.21 AI Customer Experience & Journey Intelligence Engine ---
+app.post('/api/cx-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, industry, productType, customerSegment, currentNPS, painPoints, channels, competitors } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class Chief Customer Officer and CX strategist with expertise in customer journey design.
+Company: ${companyName}
+Industry: ${industry}
+Product Type: ${productType}
+Customer Segment: ${customerSegment}
+Current NPS: ${currentNPS}
+Pain Points: ${painPoints}
+Channels: ${channels}
+Competitors: ${competitors}
+
+Return comprehensive CX intelligence as JSON:
+{
+  "cxAudit": {"overallScore": number, "dimensions": [{"dimension": "string", "score": number, "insight": "string"}]},
+  "customerJourneyMap": [{"stage": "string", "customerGoal": "string", "touchpoints": ["string"], "emotions": "string", "painPoints": ["string"], "opportunities": ["string"]}],
+  "personaProfiles": [{"name": "string", "archetype": "string", "demographics": "string", "motivations": ["string"], "frustrations": ["string"], "preferredChannels": ["string"]}],
+  "momentsThatMatter": [{"moment": "string", "impact": "high|medium|low", "currentState": "string", "desiredState": "string", "intervention": "string"}],
+  "cxInitiatives": [{"initiative": "string", "phase": "quick-win|medium-term|strategic", "expectedImpact": "string", "npsLift": "string", "effort": "low|medium|high"}],
+  "voiceOfCustomer": {"keyThemes": ["string"], "sentimentDrivers": [{"driver": "string", "sentiment": "positive|negative|neutral", "frequency": "string"}], "verbatims": ["string"]},
+  "retentionStrategy": {"churnRiskSignals": ["string"], "retentionPlaybooks": [{"trigger": "string", "intervention": "string", "channel": "string"}], "loyaltyMechanics": ["string"]},
+  "cxMetrics": [{"metric": "string", "current": "string", "target": "string", "measurement": "string"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.20 AI Investor Relations & Fundraising Intelligence Engine ---
 app.post('/api/investor-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
