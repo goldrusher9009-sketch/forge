@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.46 AI SpaceTech & Satellite Intelligence Engine ---
+app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SpaceTech and satellite intelligence strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a SpaceTech and satellite intelligence expert. Provide comprehensive analysis covering small satellite (smallsat/cubesat) development and launch economics, Earth observation and remote sensing analytics, satellite internet constellations (LEO broadband), space tourism and commercial space stations, in-orbit servicing and debris removal, lunar and Mars mission architectures, space mining and resource utilization, propulsion technology trends, dual-use satellite applications, government vs. commercial space dynamics, and NewSpace startup ecosystem mapping. ${p}\n\nProvide actionable insights with technology roadmaps, market opportunity analysis, and investment frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.45 AI ConstructionTech & Smart Buildings Engine ---
 app.post('/api/constructiontech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
