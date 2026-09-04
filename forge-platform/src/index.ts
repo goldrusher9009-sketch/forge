@@ -39634,6 +39634,75 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.88 AI Cybersecurity & Threat Intelligence Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { orgType, stack, incident, maturity } = req.body;
+    const p = `You are an elite Cybersecurity & Threat Intelligence advisor. Analyze:
+Organization Type: ${orgType || 'Mid-size SaaS company, 200 employees'}
+Tech Stack: ${stack || 'AWS, React, Node.js, PostgreSQL, Stripe'}
+Recent Incident/Concern: ${incident || 'Phishing attempts increasing'}
+Security Maturity: ${maturity || 'Basic (MFA deployed, no SOC)'}
+
+Provide comprehensive cybersecurity intelligence:
+
+**THREAT LANDSCAPE ASSESSMENT**
+- Top threats for this org profile in 2024-2025
+- Industry-specific attack vectors
+- Nation-state and APT relevance
+- Ransomware risk profile
+
+**VULNERABILITY PRIORITIES**
+- Critical gaps to address immediately
+- Attack surface mapping
+- Crown jewels identification
+- Third-party and supply chain risks
+
+**SECURITY CONTROLS ROADMAP**
+- Quick wins (0-30 days, low cost)
+- Medium-term controls (30-90 days)
+- Strategic investments (90+ days)
+- Controls mapped to NIST CSF / CIS Top 18
+
+**INCIDENT RESPONSE PLAYBOOK**
+- Detection and triage steps
+- Containment procedures by incident type
+- Communication templates (internal/external)
+- Evidence preservation checklist
+- Recovery and lessons-learned process
+
+**PHISHING & SOCIAL ENGINEERING DEFENSE**
+- Employee awareness program outline
+- Technical controls (DMARC/DKIM/SPF)
+- Simulation testing cadence
+- Escalation process for reported phishing
+
+**IDENTITY & ACCESS MANAGEMENT**
+- Privileged access management priorities
+- Zero-trust implementation roadmap
+- MFA gaps to close
+- Service account hygiene
+
+**COMPLIANCE ALIGNMENT**
+- Relevant frameworks (SOC 2, ISO 27001, GDPR)
+- Gap analysis summary
+- Audit preparation priorities
+- Evidence collection automation
+
+**SECURITY METRICS DASHBOARD**
+- KPIs for board reporting
+- Leading vs. lagging indicators
+- Benchmark targets by maturity level
+
+Deliver a prioritized security roadmap a CISO or security-aware founder can act on.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.87 AI Supply Chain & Procurement Intelligence Engine ---
 app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
