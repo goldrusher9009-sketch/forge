@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.31 AI MarTech & Growth Hacking Strategy Engine ---
+app.post('/api/martech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { martechStack, growthChallenge, customerJourney, budgetProfile } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a MarTech & Growth Hacking strategy expert. Analyze this marketing technology challenge:
+
+MarTech Stack: ${martechStack}
+Growth Challenge: ${growthChallenge}
+Customer Journey: ${customerJourney}
+Budget Profile: ${budgetProfile}
+
+Provide:
+1. GROWTH LOOP ARCHITECTURE — identify flywheel mechanics, viral coefficients, referral loop design
+2. ACQUISITION STACK — paid vs. organic mix, CAC by channel, attribution model, budget allocation
+3. MARTECH RATIONALIZATION — audit existing stack, identify redundancies, consolidation opportunities
+4. CONVERSION OPTIMIZATION — funnel analysis, A/B testing roadmap, landing page strategy, friction removal
+5. EMAIL & LIFECYCLE — segmentation strategy, behavioral triggers, re-engagement sequences, deliverability
+6. PAID MEDIA STRATEGY — Google/Meta/LinkedIn mix, creative testing framework, bidding strategy, ROAS targets
+7. SEO & CONTENT ENGINE — topical authority, programmatic SEO, content-to-conversion mapping
+8. DATA & ANALYTICS — unified customer data platform, identity resolution, attribution modeling, LTV prediction
+9. PERSONALIZATION — dynamic content, recommendation engine, behavioral targeting, account-based marketing
+10. GROWTH EXPERIMENTS — 30/60/90 day test calendar, ICE scoring framework, north star metric alignment`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.30 AI HR Tech & Future of Work Strategy Engine ---
 app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { hrtechFocus, workforceChallenge, companyStage, targetBuyer } = req.body;
