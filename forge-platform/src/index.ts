@@ -39634,6 +39634,96 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.08 AI Healthcare & Life Sciences Strategy Engine ---
+app.post('/api/healthcare-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { organizationType, strategicChallenge, marketContext, constraints } = req.body;
+    const p = `You are an elite Healthcare & Life Sciences Strategy advisor. Analyze:
+Organization Type: ${organizationType || 'Digital health startup, Series B, remote patient monitoring platform'}
+Strategic Challenge: ${strategicChallenge || 'Scaling from pilot programs to enterprise health system contracts, FDA clearance path'}
+Market Context: ${marketContext || 'Post-COVID telehealth normalization, value-based care shift, CMS reimbursement expansion'}
+Constraints: ${constraints || '$20M runway, 24 months to Series C, need 3 health system reference customers'}
+
+Provide a comprehensive healthcare and life sciences strategy:
+
+**MARKET LANDSCAPE ANALYSIS**
+- Healthcare market segment sizing and growth drivers
+- Value-based care vs. fee-for-service transition impact
+- Payer landscape and reimbursement trends
+- Health system consolidation and buying dynamics
+- Digital health adoption barriers and accelerants
+- Competitive landscape and white space analysis
+- Regulatory environment overview (FDA, CMS, ONC, state)
+
+**REGULATORY & COMPLIANCE STRATEGY**
+- FDA pathway analysis (510(k), De Novo, PMA, SaMD classification)
+- Clinical evidence requirements and study design
+- HIPAA/HITECH compliance architecture
+- ONC interoperability and information blocking rules
+- State-specific telehealth regulations
+- SOC 2 Type II and HITRUST certification roadmap
+- IRB and clinical trial considerations
+
+**CLINICAL EVIDENCE & OUTCOMES**
+- Clinical validation study design
+- Real-world evidence generation strategy
+- Outcomes measurement framework (clinical, operational, financial)
+- Health economics and outcomes research (HEOR) approach
+- Publication strategy and clinical partnerships
+- Key opinion leader (KOL) engagement
+- Clinical advisory board design
+
+**HEALTH SYSTEM & PAYER GO-TO-MARKET**
+- Health system segmentation and targeting
+- Buying committee mapping (CMO, CIO, CFO, department heads)
+- Pilot-to-enterprise expansion playbook
+- ROI and value proposition quantification
+- Contract structure and pricing (per-member-per-month, episode, shared savings)
+- Payer contracting and reimbursement strategy
+- GPO and IDN channel strategy
+
+**REIMBURSEMENT & REVENUE STRATEGY**
+- CPT code and billing strategy
+- CMS coverage determination process
+- Commercial payer contracting approach
+- Value-based contract design
+- Remote patient monitoring (RPM) billing optimization
+- Chronic care management (CCM) integration
+- Direct-to-consumer vs. B2B model tradeoffs
+
+**INTEROPERABILITY & DATA STRATEGY**
+- EHR integration strategy (Epic, Cerner, Oracle Health)
+- FHIR API implementation priorities
+- Clinical data exchange and patient matching
+- AI/ML model governance in clinical settings
+- Data privacy and de-identification approach
+- Real-world data partnerships
+
+**PARTNERSHIP & CHANNEL STRATEGY**
+- Health system partnership structures
+- Payer partnership and co-development
+- Pharma and med device partnerships
+- Academic medical center collaborations
+- Distribution channel options
+- Strategic acquisition targets
+
+**GROWTH & SCALE ROADMAP**
+- Pilot design for maximum conversion
+- Reference customer development strategy
+- Geographic expansion prioritization
+- Product line extension opportunities
+- International market entry (EU MDR, Health Canada)
+- Series C fundraising narrative
+
+Deliver a healthcare strategy playbook with regulatory, commercial, and clinical milestones.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.07 AI Corporate Governance & Board Intelligence Engine ---
 app.post('/api/governance-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
