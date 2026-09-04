@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.43 AI RetailTech & Commerce Intelligence Engine ---
+app.post('/api/retailtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a RetailTech and commerce strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a RetailTech and commerce intelligence expert. Provide comprehensive analysis covering omnichannel retail strategy, AI-powered personalization and recommendation engines, inventory optimization and demand forecasting, cashierless checkout and smart store technology, social commerce and live shopping platforms, loyalty program design, returns management and reverse logistics, retail media networks, BOPIS and fulfillment strategies, customer data platforms, and sustainability in retail supply chains. ${p}\n\nProvide actionable insights with technology recommendations, implementation roadmaps, and revenue impact analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.42 AI CreativeTech & Media Production Engine ---
 app.post('/api/creativetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
