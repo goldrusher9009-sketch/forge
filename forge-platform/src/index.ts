@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.50 AI Fundraising Strategy Engine ---
+app.post('/api/fundraise-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Plan a fundraising strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a venture capital and fundraising expert. Develop a comprehensive fundraising strategy for: ${p}\n\nProvide:\n1. Funding stage assessment and round sizing recommendation\n2. Investor targeting list (tier 1/2/3 VCs, angels, strategics)\n3. Pitch narrative and key metrics to highlight\n4. Due diligence preparation checklist\n5. Term sheet negotiation priorities\n6. Timeline and milestone roadmap to close` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.49 AI Supply Chain Optimizer ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
