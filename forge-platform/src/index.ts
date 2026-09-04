@@ -39500,6 +39500,41 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.15 AI Sales Intelligence & Revenue Operations Engine ---
+app.post('/api/sales-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, targetMarket, productService, currentARR, salesTeamSize, avgDealSize, salesCycle, challenges } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class CRO and revenue operations strategist with expertise in B2B SaaS sales.
+Company: ${companyName}
+Target Market: ${targetMarket}
+Product/Service: ${productService}
+Current ARR: ${currentARR}
+Sales Team Size: ${salesTeamSize}
+Average Deal Size: ${avgDealSize}
+Sales Cycle: ${salesCycle}
+Current Challenges: ${challenges}
+
+Return comprehensive JSON sales intelligence:
+{
+  "revenueAnalysis": {"currentRunRate": "string", "growthRate": "string", "revenuePerRep": "string", "quotaAttainment": "string", "forecastedARR": "string", "growthLevers": ["string"]},
+  "icp": {"primarySegment": "string", "firmographics": {"companySize": "string", "industry": ["string"], "revenue": "string", "geography": "string"}, "psychographics": ["string"], "triggerEvents": ["string"], "negativeICP": ["string"]},
+  "salesPlaybook": {"prospectingTactics": ["string"], "outreachSequence": [{"step": number, "channel": "string", "timing": "string", "message": "string"}], "discoveryQuestions": ["string"], "objectionHandling": [{"objection": "string", "response": "string"}]},
+  "pipelineAnalysis": {"coverageRequired": "string", "stageMixRecommendation": [{"stage": "string", "target": "string"}], "velocityDrivers": ["string"], "leakagePoints": ["string"]},
+  "competitivePulse": [{"competitor": "string", "differentiator": "string", "battlecardTip": "string"}],
+  "revOpsRecommendations": [{"area": "string", "recommendation": "string", "impact": "string", "effort": "low|medium|high"}],
+  "kpis": [{"metric": "string", "target": "string", "current": "string", "action": "string"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.14 AI Education & Learning Intelligence Engine ---
 app.post('/api/edu-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
