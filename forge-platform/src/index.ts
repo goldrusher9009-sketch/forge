@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.68 AI Legal Risk & Compliance Intelligence Engine ---
+app.post('/api/legal-risk-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { companyType, industry, jurisdictions, employeeCount, revenueRange, dataTypes, regulatoryFrameworks, recentIncidents, contractVolume, ipAssets, pendingLitigation, complianceTeamSize, lastAuditDate, topLegalConcerns } = req.body;
+    const p = `You are a legal risk and compliance intelligence expert. Generate a comprehensive legal risk assessment and compliance roadmap.
+
+Company Context:
+- Company Type: ${companyType}
+- Industry: ${industry}
+- Jurisdictions: ${jurisdictions}
+- Employee Count: ${employeeCount}
+- Revenue Range: ${revenueRange}
+- Data Types Handled: ${dataTypes}
+- Regulatory Frameworks: ${regulatoryFrameworks}
+- Recent Incidents: ${recentIncidents}
+- Contract Volume: ${contractVolume}
+- IP Assets: ${ipAssets}
+- Pending Litigation: ${pendingLitigation}
+- Compliance Team Size: ${complianceTeamSize}
+- Last Audit Date: ${lastAuditDate}
+- Top Legal Concerns: ${topLegalConcerns}
+
+Return JSON with: riskScorecard (object: overall number 0-100, dataPrivacy number, employment number, contractual number, regulatory number, ip number, riskLevel 'critical'|'high'|'medium'|'low'), topRisks (array: risk string, category string, likelihood 'high'|'medium'|'low', impact 'severe'|'major'|'moderate', mitigationSteps array, urgency 'immediate'|'30-days'|'90-days'), complianceGaps (array: framework string, currentStatus 'non-compliant'|'partial'|'compliant', gapDescription string, remediationCost string, timeToRemediate string, priority number), contractRisks (array: contractType string, commonIssues array, redFlags array, recommendedClauses array), legalRoadmap (object: immediate array, shortTerm array, longTerm array, estimatedTotalCost string), regulatoryCalendar (array: deadline string, requirement string, jurisdiction string, penalty string, daysUntilDue number).`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.67 AI Revenue Intelligence & Sales Forecasting Engine ---
 app.post('/api/revenue-intel-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
