@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.15 AI FoodTech & AgriFood Engine ---
+app.post('/api/foodtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a FoodTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a food technology and agrifood strategy expert. ${p}\n\nProvide comprehensive analysis covering: alternative protein market dynamics (plant-based, cultivated meat, precision fermentation), vertical farming and controlled environment agriculture economics, food supply chain traceability and blockchain applications, precision agriculture and agri-AI technology adoption, food waste reduction technologies and circular food systems, functional foods and personalized nutrition trends, food safety and quality assurance technology, restaurant tech and ghost kitchen business models, D2C food brand building strategies, regulatory pathways for novel foods (FDA, EFSA), sustainable packaging innovation, and agrifood venture capital landscape. Include market sizing, consumer adoption curves, regulatory timelines, and competitive positioning frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.14 AI SpaceTech & Aerospace Engine ---
 app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
