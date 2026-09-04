@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.53 AI Ecosystem Strategy Engine ---
+app.post('/api/ecosystrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a business ecosystem strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a business ecosystem and platform strategy expert. Design a comprehensive ecosystem strategy for: ${p}\n\nProvide:\n1. Ecosystem map (producers, consumers, orchestrators, complementors)\n2. Platform design principles and governance model\n3. Partner onboarding and value exchange framework\n4. Network effects flywheel design\n5. Ecosystem monetization and revenue sharing model\n6. Growth and expansion roadmap` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.52 AI Crisis Management Engine ---
 app.post('/api/crisismanage-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
