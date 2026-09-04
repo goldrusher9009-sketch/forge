@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.24 AI BioTech & Life Sciences Strategy Engine ---
+app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { biotechFocus, scienceStage, targetDisease, fundingProfile } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a BioTech & Life Sciences strategy expert. Analyze this biotech venture:
+
+BioTech Focus: ${biotechFocus}
+Science Stage: ${scienceStage}
+Target Disease/Application: ${targetDisease}
+Funding Profile: ${fundingProfile}
+
+Provide:
+1. SCIENTIFIC MOAT — IP position, platform defensibility, biological mechanism novelty
+2. CLINICAL DEVELOPMENT STRATEGY — IND filing, Phase I/II/III design, adaptive trial approaches
+3. REGULATORY PATHWAY — FDA breakthrough designation, orphan drug, fast track, accelerated approval
+4. TRANSLATIONAL ROADMAP — discovery → IND → Phase I → proof-of-concept milestones
+5. PARTNERSHIP & LICENSING STRATEGY — pharma BD deals, co-development, out-licensing triggers
+6. IP & FREEDOM TO OPERATE — patent landscape, FTO analysis, composition-of-matter vs. method claims
+7. MANUFACTURING & CMC — scale-up challenges, CDMO selection, GMP readiness
+8. FUNDING STRATEGY — SBIR/STTR, Series A/B triggers, strategic corporate venture, IPO readiness
+9. COMPETITIVE LANDSCAPE — mechanism differentiation, clinical superiority claims, market timing
+10. VALUE CREATION MILESTONES — 24-month catalysts that drive valuation inflections`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.23 AI HealthTech & Digital Health Strategy Engine ---
 app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { healthVertical, clinicalChallenge, regulatoryContext, businessModel } = req.body;
