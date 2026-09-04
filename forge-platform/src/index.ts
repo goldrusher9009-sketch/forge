@@ -39634,6 +39634,26 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.74 AI Digital Marketing & Growth Intelligence Engine ---
+app.post('/api/digital-marketing-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, targetAudience, monthlyBudget, currentChannels, cac, ltv, conversionRate, monthlyTraffic, emailListSize, socialFollowers, contentFrequency, topCompetitors, primaryGoal, currentROAS } = req.body;
+    const p = `You are an AI digital marketing and growth intelligence expert. Analyze:
+Industry: ${industry}, Audience: ${targetAudience}
+Budget: $${monthlyBudget}/mo, Channels: ${currentChannels}
+CAC: $${cac}, LTV: $${ltv}, CVR: ${conversionRate}%
+Traffic: ${monthlyTraffic}/mo, Email List: ${emailListSize}
+Social: ${socialFollowers} followers, Content: ${contentFrequency}
+Competitors: ${topCompetitors}, Goal: ${primaryGoal}, ROAS: ${currentROAS}
+Return JSON: { channelAnalysis: [{channel,currentROI,recommendedBudgetPct,growthPotential,quickWins:[]}], contentStrategy: {pillarTopics:[],distributionPlan:[{channel,frequency,contentType,estimatedReach}],viralHooks:[]}, growthExperiments: [{experiment,hypothesis,channel,estimatedLift,cost,duration,successMetric}], funnelOptimization: [{stage,currentRate,targetRate,tactics:[],estimatedImpact}], audienceInsights: {topSegments:[{name,size,cac,ltv,bestChannel}],lookalikeSources:[],messagingAngles:[]}, projections: {month3:{traffic,leads,revenue},month6:{traffic,leads,revenue},month12:{traffic,leads,revenue}} }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.73 AI Pricing Strategy & Revenue Optimization Engine ---
 app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
