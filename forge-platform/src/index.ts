@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.84 AI SpaceTech & Satellite Innovation Engine ---
+app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a space technology strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a space technology and satellite innovation expert. Provide comprehensive analysis covering: satellite constellation design, launch vehicle selection, Earth observation applications, space-based communications, in-space manufacturing, orbital debris mitigation, space tourism business models, lunar and Mars mission planning, smallsat and cubesat strategies, spectrum licensing and regulatory compliance, space insurance, and commercial space market opportunities. ${p}\n\nProvide actionable, technically grounded recommendations with market analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.83 AI QuantumTech & Quantum Computing Engine ---
 app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
