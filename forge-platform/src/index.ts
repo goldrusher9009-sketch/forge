@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.35 AI Robotics & Autonomous Systems Engine ---
+app.post('/api/robotics-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Robotics strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a robotics and autonomous systems strategy expert specializing in industrial automation, autonomous vehicles, drone ecosystems, humanoid robots, and AI-powered perception systems. ${p}\n\nProvide comprehensive analysis covering: robot operating system (ROS2) architecture and deployment strategy, industrial automation ROI and workforce transition planning, autonomous vehicle technology stack and regulatory pathway, drone logistics and BVLOS operations, computer vision and sensor fusion (LiDAR/radar/camera), foundation models for robotics (RT-2, GROOT), humanoid robot commercialization strategy, warehouse and fulfillment automation, surgical and medical robotics, safety-critical system certification (ISO 10218/IEC 61508), hardware-software integration and platform strategy, edge AI for real-time inference, and the competitive landscape from Boston Dynamics to Figure AI.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.34 AI EdTech & Learning Intelligence Engine ---
 app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
