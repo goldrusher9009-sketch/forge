@@ -2397,6 +2397,29 @@ function CXOptimizationPanel({ api }:{ api:string }) {
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
+// v13.59 AI DeepTech & Emerging Technologies Engine
+function DeepTechPanel({ api }: { api: string }) {
+  const [input, setInput] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/deeptech-ai`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ prompt: input }) });
+      const d = await r.json(); setResult(d.result || d.error || 'No response');
+    } catch (e: any) { setResult(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-6 space-y-4">
+      <h2 className="text-2xl font-bold text-gray-800">🔬 DeepTech & Emerging Technologies</h2>
+      <p className="text-gray-600">Analyze synthetic biology, neuromorphic computing, brain-computer interfaces, fusion energy, AR/VR/XR, 6G, swarm robotics, and lab-to-market commercialization.</p>
+      <textarea className="w-full border rounded-lg p-3 h-28 text-sm" placeholder="Describe your deeptech innovation, research area, or commercialization challenge..." value={input} onChange={e => setInput(e.target.value)} />
+      <button onClick={run} disabled={loading} className="bg-cyan-600 text-white px-6 py-2 rounded-lg hover:bg-cyan-700 disabled:opacity-50">{loading ? 'Analyzing...' : 'Generate Strategy'}</button>
+      {result && <div className="bg-gray-50 border rounded-lg p-4 text-sm whitespace-pre-wrap">{result}</div>}
+    </div>
+  );
+}
+
 // v13.58 AI MediaTech & Entertainment Engine
 function MediaTechPanel({ api }: { api: string }) {
   const [input, setInput] = React.useState('');
@@ -39698,7 +39721,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -40035,7 +40059,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -40431,7 +40456,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -40768,7 +40794,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -41150,7 +41177,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -41487,7 +41515,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -41825,7 +41854,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -42162,7 +42192,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -42550,7 +42581,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -42887,7 +42919,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'mediatech318', label: '🎬 MediaTech AI' },
+              { id: 'deeptech319', label: '🔬 DeepTech AI' },
+    { id: 'mediatech318', label: '🎬 MediaTech AI' },
     { id: 'govtech317', label: '🏛️ GovTech AI' },
     { id: 'supplychain316', label: '📦 SupplyChain AI' },
     { id: 'marketingtech315', label: '📣 MktgTech AI' },
@@ -43371,6 +43404,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'revenueintel127' && <RevenueIntelPanel api={api} />}
       {tab === 'legalrisk128' && <LegalRiskPanel api={api} />}
       {tab === 'financialmodel129' && <FinancialModelPanel api={api} />}
+      {tab === 'deeptech319' && <DeepTechPanel api={api} />}
       {tab === 'mediatech318' && <MediaTechPanel api={api} />}
       {tab === 'govtech317' && <GovTechPanel api={api} />}
       {tab === 'supplychain316' && <SupplyChainPanel api={api} />}

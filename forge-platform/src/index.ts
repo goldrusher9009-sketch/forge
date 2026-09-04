@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.59 AI DeepTech & Emerging Technologies Engine ---
+app.post('/api/deeptech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a deeptech and emerging technology strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a deeptech and emerging technologies expert. Provide comprehensive analysis covering synthetic biology, neuromorphic computing, advanced photonics, metamaterials, brain-computer interfaces, fusion energy, AR/VR/XR hardware, 6G communications, autonomous systems, swarm robotics, digital-physical convergence, and technology commercialization pathways from lab to market. ${p}\n\nProvide actionable insights with technology readiness levels, IP strategies, and go-to-market recommendations.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.58 AI MediaTech & Entertainment Engine ---
 app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
