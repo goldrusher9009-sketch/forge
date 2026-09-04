@@ -39634,6 +39634,91 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.06 AI Brand Strategy & Marketing Intelligence Engine ---
+app.post('/api/brand-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { brandContext, targetAudience, competitiveLandscape, marketingGoals } = req.body;
+    const p = `You are an elite Brand Strategy & Marketing Intelligence advisor. Analyze:
+Brand Context: ${brandContext || 'Series B B2B SaaS, $15M ARR, rebranding from dev tool to enterprise platform'}
+Target Audience: ${targetAudience || 'CTOs and VP Engineering at 200-2000 employee tech companies'}
+Competitive Landscape: ${competitiveLandscape || 'Competing with GitHub, GitLab, Atlassian — need to differentiate on AI-native angle'}
+Marketing Goals: ${marketingGoals || 'Triple ARR in 18 months, expand to enterprise, launch category leadership campaign'}
+
+Provide a comprehensive brand strategy and marketing intelligence plan:
+
+**BRAND POSITIONING & ARCHITECTURE**
+- Brand positioning statement (for whom, what, unlike whom, because)
+- Category design strategy — own a category vs. compete in existing
+- Brand personality and voice attributes
+- Brand promise and proof points
+- Visual identity direction and differentiation
+- Brand architecture (master brand, sub-brands, product names)
+- Tagline and messaging hierarchy
+
+**AUDIENCE INTELLIGENCE**
+- ICP deep dive: psychographics, buying triggers, pain hierarchy
+- Buyer committee mapping (champion, economic buyer, blocker)
+- Customer journey mapping by persona
+- Voice of customer research synthesis
+- Community and watering holes where audience gathers
+- Influencer and thought leader mapping
+- Segment-specific messaging variations
+
+**COMPETITIVE MARKETING INTELLIGENCE**
+- Share of voice analysis framework
+- Competitor messaging and positioning gaps
+- Content strategy benchmarking
+- SEO and keyword opportunity mapping
+- Paid media intelligence
+- Social media presence analysis
+- Conference and event presence strategy
+- Analyst and press relationship gaps
+
+**MESSAGING FRAMEWORK**
+- Category narrative (the big idea)
+- Company-level messaging pillars (3-5 core themes)
+- Product messaging by feature area
+- Use case messaging matrix
+- Objection handling messaging
+- Proof point library (stats, case studies, quotes)
+- Sales narrative and pitch arc
+
+**DEMAND GENERATION STRATEGY**
+- Channel mix recommendation with budget allocation
+- Content marketing strategy (topics, formats, cadence)
+- SEO strategy and content calendar framework
+- Paid acquisition strategy (channels, targeting, budget)
+- Account-based marketing (ABM) program design
+- Event and conference strategy
+- Partner and co-marketing opportunities
+- Community building strategy
+
+**CATEGORY CREATION & THOUGHT LEADERSHIP**
+- Category name and definition
+- Category creation playbook
+- Analyst relations strategy
+- Press and media outreach plan
+- Speaking and awards strategy
+- Proprietary research and data strategy
+- LinkedIn and social thought leadership
+
+**MEASUREMENT & OPTIMIZATION**
+- Brand health metrics (awareness, consideration, preference)
+- Marketing performance KPIs by channel
+- Attribution model recommendation
+- A/B testing roadmap for messaging
+- Customer acquisition cost and LTV optimization
+- Marketing qualified lead and pipeline metrics
+
+Deliver a brand playbook with specific messaging, channel recommendations, and 90-day activation plan.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.05 AI Supply Chain & Operations Intelligence Engine ---
 app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
