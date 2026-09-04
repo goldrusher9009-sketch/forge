@@ -39634,6 +39634,25 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.79 AI Product Innovation & R&D Pipeline Engine ---
+app.post('/api/product-innovation-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, currentProducts, targetMarket, problemStatement, budget, timelineMonths, teamSize, existingTech, competitorProducts, customerPainPoints, innovationGoal } = req.body;
+    const p = `You are an AI product innovation and R&D pipeline expert. Analyze:
+Industry: ${industry}, Current Products: ${currentProducts}
+Target Market: ${targetMarket}, Problem: ${problemStatement}
+Budget: $${budget}, Timeline: ${timelineMonths} months, Team: ${teamSize}
+Existing Tech: ${existingTech}, Competitors: ${competitorProducts}
+Pain Points: ${customerPainPoints}, Goal: ${innovationGoal}
+Return JSON: { innovationOpportunities: [{id,title,description,marketPotential,feasibility,novelty,score,rationale}], rdPipeline: { stages:[{stage,name,duration,budget,objectives:[],keyActivities:[],successCriteria:[],goNoGoDecision}] }, productConcepts: [{concept,targetSegment,coreValueProp,keyFeatures:[],techRequirements:[],differentiators:[],timeToMarket,estimatedRevenue}], technologyRoadmap: [{quarter,milestones:[],techInvestments:[],dependencies:[]}], innovationMetrics: { expectedROI: number, patentPotential: number, marketShareGain: number, timeToBreakeven: string }, prioritizationMatrix: [{initiative,impact,effort,priority,recommendedQuarter}] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.78 AI Regulatory Compliance & Risk Management Engine ---
 app.post('/api/regulatory-compliance-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
