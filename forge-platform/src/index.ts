@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.20 AI Retail & E-Commerce Strategy Engine ---
+app.post('/api/retail-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { retailType, retailChallenge, customerProfile, revenueProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite retail and e-commerce strategy expert with deep expertise in omnichannel retail, marketplace dynamics, DTC brand building, supply chain optimization, and AI-powered personalization.
+
+Retail Type/Company: ${retailType}
+Retail Challenge: ${retailChallenge}
+Customer Profile: ${customerProfile}
+Revenue/Growth Profile: ${revenueProfile}
+
+Provide a comprehensive Retail & E-Commerce strategy covering:
+1. Omnichannel Architecture — unified commerce platform, inventory visibility, BOPIS/BORIS optimization
+2. AI-Powered Personalization — recommendation engines, dynamic pricing, browse-to-buy conversion
+3. Marketplace Strategy — Amazon/Walmart/TikTok Shop positioning, private label, channel conflict management
+4. DTC Brand Building — first-party data strategy, loyalty programs, subscription economics, LTV maximization
+5. Supply Chain & Fulfillment — last-mile innovation, distributed inventory, returns optimization
+6. Retail Media Networks — on-site advertising, sponsored products, audience data monetization
+7. Social Commerce & Live Shopping — creator partnerships, shoppable content, live stream economics
+8. Operational Excellence — shrink reduction, workforce optimization, store-as-fulfillment-center strategy
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.19 AI Energy & Clean Tech Strategy Engine ---
 app.post('/api/energytech-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
