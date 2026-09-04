@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.98 AI Fundraising & Investor Relations Engine ---
+app.post('/api/fundraising-ir', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, stage, sector, metrics, raise, use, existing } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Fundraising & Investor Relations expert who has helped 200+ companies raise $5B+ in venture, growth equity, and debt financing. Analyze:
+Company: ${company}
+Funding Stage: ${stage || 'Series A'}
+Sector: ${sector || 'Not specified'}
+Key Metrics: ${metrics || 'Not specified'}
+Target Raise: ${raise || 'Not specified'}
+Use of Funds: ${use || 'Not specified'}
+Existing Investors: ${existing || 'None'}
+
+Deliver a comprehensive Fundraising & Investor Relations report:
+1. FUNDRAISING READINESS SCORE - assess readiness across: team, market, traction, product, financials, story (1-10 each)
+2. INVESTOR TARGETING - 30 specific VC/PE/angel firms ranked by fit, stage, sector focus, and recent portfolio
+3. VALUATION FRAMEWORK - comparable company analysis, revenue multiple benchmarks, and defensible valuation range
+4. PITCH NARRATIVE STRUCTURE - problem → solution → market → traction → model → team → ask story arc with slide-by-slide guidance
+5. KEY METRICS DASHBOARD - must-have KPIs for this stage: ARR, NRR, CAC/LTV, burn rate, runway, growth rate with benchmarks
+6. INVESTOR Q&A PREPARATION - top 40 questions investors will ask with answer frameworks and what NOT to say
+7. TERM SHEET NEGOTIATION GUIDE - key terms to fight for vs. concede: valuation, liquidation preferences, pro-rata, board seats
+8. DATA ROOM CHECKLIST - complete list of documents needed organized by category with quality standards
+9. INVESTOR RELATIONS CADENCE - monthly update template, board meeting structure, and relationship maintenance playbook
+10. ALTERNATIVE FINANCING - when VC isn't the answer: revenue-based financing, venture debt, strategic investment, grants
+
+Include specific investor names, check sizes, and current market dynamics for this stage and sector.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.97 AI Brand Strategy & Identity Engine ---
 app.post('/api/brand-strategy', requireAuth, async (req: AuthRequest, res) => {
   try {
