@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.26 AI InsurTech & Risk Engine ---
+app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an InsurTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an insurance technology and risk management strategy expert specializing in digital underwriting, parametric insurance, embedded insurance, and actuarial innovation. ${p}\n\nProvide comprehensive analysis covering: digital distribution and embedded insurance channels, AI-powered underwriting and risk scoring, parametric and usage-based insurance products, claims automation and fraud detection, reinsurance strategy and risk transfer, regulatory compliance (state/Lloyd's/EU Solvency II), customer lifetime value and retention, IoT and telematics data integration, catastrophe modeling and climate risk, insurtech partnership and API ecosystem strategy, loss ratio optimization, and new product development for underserved markets.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.25 AI CyberSecurity & InfoSec Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
