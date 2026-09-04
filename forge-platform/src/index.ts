@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.29 AI Growth Hacking Engine ---
+app.post('/api/growthhack-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze growth hacking strategy and viral expansion opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a growth hacking and viral marketing expert. Help startups and growth teams find unconventional, high-leverage growth tactics. ${p}\n\nProvide: 1) Growth loop identification (viral, paid, content, product-led) 2) North Star metric and growth accounting model 3) Acquisition channel experiments prioritized by ICE score 4) Activation and onboarding optimization tactics 5) Referral and virality mechanics design 6) Retention lever analysis and quick wins 7) Monetization expansion opportunities 8) 30-day growth sprint plan with specific experiments` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.28 AI Crisis Management Engine ---
 app.post('/api/crisis-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
