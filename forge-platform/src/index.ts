@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.70 AI NanoTech & Advanced Materials Engine ---
+app.post('/api/nanotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a nanotechnology and advanced materials strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a nanotechnology and advanced materials expert. Analyze and provide deep insights on: ${p}\n\nCover: nanomaterials applications, advanced composites, smart materials, manufacturing at nanoscale, commercialization pathways, IP landscape, regulatory considerations, market opportunities, R&D partnerships, and technology readiness levels.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.69 AI RoboticsTech & Automation Engine ---
 app.post('/api/roboticstech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
