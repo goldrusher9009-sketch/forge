@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.69 AI Web3 & Crypto Strategy Engine ---
+app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Web3 strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Web3 and crypto strategy expert. ${p}\n\nProvide actionable strategy covering: DeFi protocol design and tokenomics, NFT market dynamics and utility, Layer 1 and Layer 2 competitive landscape, DAO governance structures, crypto exchange and wallet product strategy, regulatory navigation across jurisdictions, institutional crypto adoption, RWA tokenization, zero-knowledge proof applications, and building sustainable crypto-native businesses beyond speculation.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.68 AI BioTech & Genomics Strategy Engine ---
 app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
