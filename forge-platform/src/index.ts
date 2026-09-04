@@ -39634,6 +39634,69 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.86 AI Brand Intelligence & Reputation Management Engine ---
+app.post('/api/brand-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { brand, industry, competitors, crisis } = req.body;
+    const p = `You are an elite Brand Intelligence & Reputation Management advisor. Analyze:
+Brand: ${brand || 'Acme Corp'}
+Industry: ${industry || 'SaaS / Technology'}
+Competitors: ${competitors || 'Salesforce, HubSpot, Pipedrive'}
+Crisis/Issue: ${crisis || 'None currently'}
+
+Provide comprehensive brand intelligence:
+
+**BRAND HEALTH ASSESSMENT**
+- Brand equity indicators and strength score
+- Share of voice in market
+- Sentiment trajectory (improving/declining)
+- Net Promoter Score benchmarks for this industry
+
+**REPUTATION RISK RADAR**
+- Current reputation vulnerabilities
+- Emerging narrative threats
+- Social media risk triggers
+- Crisis probability assessment
+
+**COMPETITIVE BRAND POSITIONING**
+- How brand stacks up vs. competitors
+- Positioning gaps and opportunities
+- Messaging differentiation analysis
+- Visual identity and recall benchmarks
+
+**CRISIS MANAGEMENT PLAYBOOK**
+- Crisis response framework (1hr / 24hr / 72hr)
+- Stakeholder communication priority order
+- Approved messaging templates for common scenarios
+- Media escalation thresholds
+
+**BRAND BUILDING STRATEGY**
+- Priority channels for brand investment
+- Content themes that build authority
+- Partnership and co-branding opportunities
+- Influencer and advocate program blueprint
+
+**SENTIMENT MONITORING FRAMEWORK**
+- Key listening topics and keywords
+- Alert thresholds that trigger action
+- Response SLA recommendations by severity
+- Escalation matrix
+
+**REPUTATION RECOVERY (if crisis)**
+- Root cause acknowledgment approach
+- Restitution and remediation steps
+- Narrative rebuild timeline
+- Progress metrics to track recovery
+
+Deliver a brand intelligence report with immediate action priorities.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.85 AI Talent Intelligence & Workforce Strategy Engine ---
 app.post('/api/talent-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
