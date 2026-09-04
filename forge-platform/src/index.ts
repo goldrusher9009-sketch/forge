@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.13 AI Climate & Sustainability Intelligence Engine ---
+app.post('/api/climate-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { organizationType, industry, currentEmissions, sustainabilityGoals, regulations, budget } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-leading climate scientist and sustainability strategist with expertise in ESG, carbon markets, and net-zero transition planning.
+Organization Type: ${organizationType}
+Industry: ${industry}
+Current Emissions/Footprint: ${currentEmissions}
+Sustainability Goals: ${sustainabilityGoals}
+Applicable Regulations: ${regulations}
+Budget: ${budget}
+
+Return comprehensive JSON sustainability analysis:
+{
+  "emissionsProfile": {"scope1": "string", "scope2": "string", "scope3": "string", "totalCO2e": "string", "industryBenchmark": "string", "percentileRanking": "string"},
+  "netZeroRoadmap": {"targetYear": "string", "milestones": [{"year": "string", "target": "string", "actions": ["string"]}], "estimatedCost": "string", "roi": "string"},
+  "carbonReductionOpportunities": [{"initiative": "string", "co2Reduction": "string", "cost": "string", "paybackPeriod": "string", "priority": "high|medium|low"}],
+  "regulatoryCompliance": [{"regulation": "string", "status": "compliant|gap|at-risk", "deadline": "string", "action": "string"}],
+  "esgScoring": {"environmental": number, "social": number, "governance": number, "overall": number, "benchmarkComparison": "string"},
+  "carbonMarkets": {"creditOpportunity": "string", "estimatedRevenue": "string", "methodology": "string", "certificationPath": "string"},
+  "supplyChainSustainability": [{"area": "string", "risk": "string", "opportunity": "string", "action": "string"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.12 AI Real Estate & Property Intelligence Engine ---
 app.post('/api/realestate-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
