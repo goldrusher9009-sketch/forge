@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.50 AI RoboTech & Automation Strategy Engine ---
+app.post('/api/robotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a RoboTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a RoboTech and industrial automation strategy expert. ${p}\n\nProvide actionable strategy covering: collaborative robots (cobots), warehouse automation, autonomous mobile robots, computer vision, RPA vs physical automation tradeoffs, workforce transition, ROI modeling, supply chain integration, safety certification, and the future of human-robot collaboration.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.49 AI Web3 & Blockchain Strategy Engine ---
 app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
