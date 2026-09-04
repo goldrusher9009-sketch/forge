@@ -39634,6 +39634,97 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.05 AI Supply Chain & Operations Intelligence Engine ---
+app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { industryContext, challengeDescription, currentState, constraints } = req.body;
+    const p = `You are an elite Supply Chain & Operations Intelligence strategist. Analyze:
+Industry Context: ${industryContext || 'Consumer electronics manufacturer, $500M revenue, global supply chain'}
+Challenge: ${challengeDescription || 'Post-COVID resilience: reducing single-supplier dependency, 6-month lead times'}
+Current State: ${currentState || '80% single-sourced components, 3 tier-1 suppliers in Taiwan/China, no real-time visibility'}
+Constraints: ${constraints || '$10M transformation budget, 18-month timeline, cannot disrupt current production'}
+
+Provide a comprehensive supply chain and operations intelligence strategy:
+
+**SUPPLY CHAIN RISK ASSESSMENT**
+- Current supply chain vulnerability mapping
+- Single points of failure identification
+- Geopolitical risk exposure analysis
+- Supplier financial health assessment framework
+- Natural disaster and climate risk mapping
+- Cybersecurity and data dependency risks
+- Risk scoring matrix by component/supplier/region
+
+**SUPPLY CHAIN RESILIENCE DESIGN**
+- Multi-sourcing strategy by category
+- Nearshoring and friendshoring opportunities
+- Safety stock and buffer inventory design
+- Demand sensing and forecasting improvement
+- Supplier diversification roadmap
+- Strategic stockpiling decisions
+- Network topology optimization
+
+**SUPPLIER RELATIONSHIP MANAGEMENT**
+- Supplier segmentation framework (strategic, preferred, transactional)
+- Supplier development and capability building
+- Collaborative forecasting programs
+- Joint innovation initiatives
+- Supplier financial support mechanisms
+- Performance scorecard design
+- Dual-sourcing qualification process
+
+**OPERATIONS OPTIMIZATION**
+- Manufacturing network optimization
+- Capacity planning and flexibility design
+- Lean/Six Sigma opportunity identification
+- Quality management system improvements
+- Warehouse and distribution network design
+- Last-mile logistics optimization
+- Returns and reverse logistics improvement
+
+**DIGITAL SUPPLY CHAIN TRANSFORMATION**
+- Supply chain visibility platform requirements
+- IoT and real-time tracking implementation
+- Demand planning and S&OP improvement
+- Blockchain for provenance and traceability
+- AI/ML forecasting capabilities
+- Control tower design
+- Supplier portal and collaboration tools
+
+**SUSTAINABILITY & COMPLIANCE**
+- Carbon footprint mapping and reduction
+- Scope 3 emissions measurement approach
+- Sustainable sourcing certification requirements
+- Conflict minerals and responsible sourcing
+- Modern slavery and labor standards
+- Circular economy opportunities
+- ESG supplier requirements
+
+**FINANCIAL IMPACT MODELING**
+- Working capital optimization opportunities
+- Inventory carrying cost reduction
+- Logistics cost optimization
+- Total cost of ownership analysis
+- Make vs. buy decision framework
+- Tariff and trade compliance optimization
+
+**IMPLEMENTATION ROADMAP**
+- Quick wins (0-90 days)
+- Medium-term initiatives (3-12 months)
+- Strategic transformation (1-3 years)
+- Change management approach
+- KPI and measurement framework
+- Governance structure
+
+Deliver an actionable operations playbook with specific recommendations and ROI estimates.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.04 AI Pricing Strategy & Revenue Optimization Engine ---
 app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
