@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.17 AI Talent Intelligence & Workforce Planning Engine ---
+app.post('/api/talent-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, industry, headcount, growthTarget, keyRoles, currentChallenges, location, budget } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class Chief People Officer and talent strategist with expertise in workforce planning.
+Company: ${companyName}
+Industry: ${industry}
+Current Headcount: ${headcount}
+Growth Target: ${growthTarget}
+Key Roles to Fill: ${keyRoles}
+Current Challenges: ${currentChallenges}
+Location: ${location}
+Hiring Budget: ${budget}
+
+Return comprehensive talent intelligence as JSON:
+{
+  "workforcePlan": {"currentState": "string", "targetState": "string", "gapAnalysis": ["string"], "timeline": "string"},
+  "hiringPriorities": [{"role": "string", "urgency": "critical|high|medium", "impact": "string", "hiringDifficulty": "easy|moderate|hard", "estimatedCost": "string"}],
+  "talentMarket": {"supplyDemand": "string", "salaryBenchmarks": [{"role": "string", "range": "string", "trend": "string"}], "hotSkills": ["string"], "emergingRoles": ["string"]},
+  "sourcingStrategy": [{"channel": "string", "effectiveness": "high|medium|low", "costPerHire": "string", "timeToFill": "string", "tactics": ["string"]}],
+  "retentionAnalysis": {"riskFactors": ["string"], "retentionLevers": ["string"], "engagementInitiatives": ["string"], "flightRiskIndicators": ["string"]},
+  "diversityStrategy": {"currentState": "string", "goals": ["string"], "initiatives": ["string"], "metrics": ["string"]},
+  "organizationalDesign": {"recommendedStructure": "string", "spans": "string", "criticalRoles": ["string"], "successionGaps": ["string"]},
+  "hrTechStack": [{"tool": "string", "purpose": "string", "priority": "high|medium|low"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.16 AI Product Launch Command Center ---
 app.post('/api/launch-cmd', requireAuth, async (req: AuthRequest, res) => {
   try {
