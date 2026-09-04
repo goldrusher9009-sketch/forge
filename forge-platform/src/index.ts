@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.29 AI Creator Economy & Influencer Strategy Engine ---
+app.post('/api/creator-economy-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { creatorType, platformFocus, audienceSize, monetizationGoal } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a Creator Economy & Influencer strategy expert. Analyze this creator venture:
+
+Creator Type: ${creatorType}
+Platform Focus: ${platformFocus}
+Audience Size: ${audienceSize}
+Monetization Goal: ${monetizationGoal}
+
+Provide:
+1. CONTENT STRATEGY — content pillars, posting cadence, format mix (short/long/live), series architecture
+2. PLATFORM OPTIMIZATION — algorithm leverage, SEO/discoverability, cross-platform syndication strategy
+3. AUDIENCE GROWTH — organic tactics, collaboration strategy, community-building, comment-to-follower funnel
+4. MONETIZATION MIX — brand deals, memberships, digital products, courses, merch, licensing, SaaS
+5. BRAND DEAL STRATEGY — rate card, media kit, ideal brand partners, exclusivity terms, performance metrics
+6. OWNED MEDIA — newsletter, podcast, community platform (Discord/Circle), reducing platform dependency
+7. PRODUCT DEVELOPMENT — course/ebook/template strategy, pricing, launch sequencing, upsell architecture
+8. TEAM & OPERATIONS — when to hire an editor/manager/agent, tools stack, content workflow automation
+9. PERSONAL BRAND MOAT — niche authority, distinctive POV, IP protection, speaking/consulting revenue
+10. 12-MONTH GROWTH PLAN — follower targets, revenue milestones, platform expansion, deal pipeline`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.28 AI Supply Chain & Logistics Intelligence Engine ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { supplyChainType, networkChallenge, geographicScope, techStack } = req.body;
