@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.48 AI CyberSecurity & Threat Intelligence Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a cybersecurity threat analysis and defense strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cybersecurity and threat intelligence expert. Provide comprehensive analysis covering threat landscape, attack vectors, vulnerability assessment, zero-trust architecture, incident response, SOC operations, SIEM/SOAR tools, compliance frameworks (SOC2, ISO27001, NIST), and security tooling strategy. ${p}\n\nProvide actionable security recommendations with risk prioritization.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.47 AI BioTech & Life Sciences Engine ---
 app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
