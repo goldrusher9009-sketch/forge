@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.33 AI LegalTech & RegTech Engine ---
+app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a LegalTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a legal technology and regulatory technology strategy expert specializing in AI-powered contract analysis, compliance automation, regulatory intelligence, and legal operations transformation. ${p}\n\nProvide comprehensive analysis covering: AI contract review and CLM (contract lifecycle management) strategy, regulatory change management and horizon scanning, KYC/AML compliance automation, legal operations (LegalOps) maturity model, e-discovery and litigation support technology, intellectual property management and patent analytics, regulatory reporting automation (Basel IV/Dodd-Frank/MiFID II), privacy compliance engineering (GDPR/CCPA/PIPL), corporate governance and entity management, alternative legal service providers (ALSPs) and law firm vs. in-house strategy, legal analytics and predictive litigation, sanctions screening and watchlist management, and AI ethics and responsible AI governance frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.32 AI ClimateTech & ESG Intelligence Engine ---
 app.post('/api/climatetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
