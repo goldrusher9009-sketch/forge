@@ -39500,6 +39500,62 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.01 AI Sales Intelligence & Pipeline Acceleration Engine ---
+app.post('/api/sales-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { targetAccount, dealStage, dealSize, competitorPresence, stakeholders, timeline } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are an elite B2B sales strategist and revenue intelligence expert.
+Target Account: ${targetAccount}
+Deal Stage: ${dealStage}
+Deal Size: ${dealSize}
+Competitor Presence: ${competitorPresence}
+Key Stakeholders: ${stakeholders}
+Timeline: ${timeline}
+
+Generate a comprehensive sales intelligence and acceleration report. Return ONLY valid JSON:
+{
+  "accountIntelligence": {
+    "buyingSignals": ["signal1", "signal2"],
+    "organizationalPriorities": ["priority1", "priority2"],
+    "budgetIndicators": ["indicator1"],
+    "decisionMakingProcess": "description of how they buy",
+    "riskFactors": ["risk1", "risk2"]
+  },
+  "stakeholderMap": [
+    {"role": "title", "influence": "high|medium|low", "stance": "champion|neutral|skeptic|blocker", "motivations": ["motivation1"], "engagementStrategy": "how to engage"}
+  ],
+  "competitiveTactics": {
+    "differentiators": ["differentiator1"],
+    "competitorWeaknesses": ["weakness1"],
+    "traps": ["trap to set for competitor"],
+    "battlecardTips": ["tip1"]
+  },
+  "dealAcceleration": {
+    "nextBestActions": [{"action": "desc", "owner": "who", "deadline": "timeframe", "expectedOutcome": "result"}],
+    "objectionHandling": [{"objection": "likely objection", "response": "how to handle"}],
+    "closingStrategy": "recommended approach to close",
+    "proposalTips": ["tip1"]
+  },
+  "forecastInsights": {
+    "winProbability": "percentage",
+    "keyRisks": ["risk1"],
+    "accelerators": ["what could speed the deal"],
+    "recommendedCommitLevel": "commit|best-case|pipeline"
+  },
+  "executiveSummary": "2-3 sentence deal overview with win strategy"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.00 AI Customer Experience Optimization Engine ---
 app.post('/api/cx-optimize', requireAuth, async (req: AuthRequest, res) => {
   try {
