@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.54 AI FashionTech & Luxury Strategy Engine ---
+app.post('/api/fashiontech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a FashionTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a FashionTech and luxury industry strategy expert. ${p}\n\nProvide actionable strategy covering: AI-driven personalization, virtual try-on, sustainable fashion tech, supply chain traceability, resale market platforms, digital fashion and NFTs, luxury brand digital transformation, D2C vs wholesale models, influencer commerce, and the metaverse in fashion.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.53 AI SportsTech & Athlete Performance Strategy Engine ---
 app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
