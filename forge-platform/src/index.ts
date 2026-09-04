@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.76 AI Customer Success Engine ---
+app.post('/api/customersuccess-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop a customer success strategy to improve retention and expansion';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a customer success strategy expert. Analyze the following customer situation and provide: 1) Health score framework and churn prediction signals, 2) Onboarding optimization roadmap, 3) Expansion revenue playbook (upsell/cross-sell), 4) At-risk account intervention strategies, 5) QBR and executive engagement framework, 6) CS team structure and tooling recommendations. Be specific and metrics-driven.\n\n${p}` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.75 AI Talent Intelligence Engine ---
 app.post('/api/talentintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
