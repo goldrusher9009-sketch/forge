@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.57 AI Supply Chain Resilience & Risk Engine ---
+app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, supplierCount, geographicSpread, criticalSuppliers, inventoryStrategy, riskEvents, digitizationLevel, sustainabilityGoals, logisticsNetwork, annualSpend } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a supply chain resilience and risk management expert. Analyze the supply chain and produce a comprehensive risk and resilience strategy.
+Company: ${company}, Industry: ${industry}
+Suppliers: ${supplierCount}, Geographic Spread: ${geographicSpread}
+Critical Suppliers: ${criticalSuppliers}, Inventory Strategy: ${inventoryStrategy}
+Risk Events: ${riskEvents}, Digitization Level: ${digitizationLevel}
+Sustainability Goals: ${sustainabilityGoals}, Logistics Network: ${logisticsNetwork}, Annual Spend: ${annualSpend}
+Return ONLY valid JSON (no markdown):
+{
+  "resilienceScore": { "overall": 0-100, "supplierDiversity": 0-100, "inventoryBuffer": 0-100, "digitization": 0-100, "geographicRisk": 0-100, "visibility": 0-100 },
+  "riskHeatmap": [{ "category": "", "likelihood": 0-100, "impact": 0-100, "currentMitigation": "", "residualRisk": "high|medium|low", "topThreats": [] }],
+  "supplierStrategy": [{ "tier": "tier1|tier2|tier3", "action": "", "rationale": "", "timeline": "", "costImpact": "", "riskReduction": 0-100 }],
+  "inventoryOptimization": { "currentDays": 0, "recommendedDays": 0, "safetyStockStrategy": "", "jitVsBuffer": "", "keySkus": [], "estimatedSavings": "" },
+  "digitizationRoadmap": [{ "capability": "", "currentState": "", "targetState": "", "tools": [], "roi": "", "timeline": "" }],
+  "contingencyPlans": [{ "scenario": "", "trigger": "", "responseSteps": [], "recoveryTime": "", "costEstimate": "" }],
+  "kpis": [{ "metric": "", "current": "", "target": "", "frequency": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.56 AI ESG & Sustainability Intelligence Engine ---
 app.post('/api/esg-intel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, currentEsgScore, carbonFootprint, supplyChainExposure, investorExpectations, regulatoryContext, esgGoals, reportingFrameworks, materialityTopics } = req.body;
