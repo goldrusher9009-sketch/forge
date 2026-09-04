@@ -39634,6 +39634,26 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.75 AI Cybersecurity Risk & Threat Intelligence Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, companySize, techStack, cloudProviders, employeeCount, remoteWorkPct, securityBudget, currentTools, complianceFrameworks, lastAuditDate, incidentHistory, dataTypes, thirdPartyVendors, securityTeamSize } = req.body;
+    const p = `You are an AI cybersecurity risk and threat intelligence expert. Analyze:
+Industry: ${industry}, Size: ${companySize}, Tech: ${techStack}
+Cloud: ${cloudProviders}, Employees: ${employeeCount}, Remote: ${remoteWorkPct}%
+Security Budget: $${securityBudget}, Tools: ${currentTools}
+Compliance: ${complianceFrameworks}, Last Audit: ${lastAuditDate}
+Incidents: ${incidentHistory}, Data Types: ${dataTypes}
+Vendors: ${thirdPartyVendors}, Security Team: ${securityTeamSize}
+Return JSON: { riskScore: { overall: number, breakdown:[{category,score,trend}] }, threatLandscape: { topThreats:[{threat,likelihood,impact,mitre:[],mitigations:[]}], industrySpecificRisks:[] }, vulnerabilityAssessment: [{area,severity,findings:[],remediationPriority,cost}], complianceGaps: [{framework,currentStatus,gaps:[],remediationSteps:[],deadline}], securityRoadmap: [{quarter,initiatives:[{name,priority,cost,riskReduction}]}], incidentResponsePlan: {maturityScore:number,gaps:[],improvements:[]}, budgetOptimization: {currentEfficiency:number,recommendations:[{action,saving,riskImpact}]} }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.74 AI Digital Marketing & Growth Intelligence Engine ---
 app.post('/api/digital-marketing-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
