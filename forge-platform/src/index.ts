@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.17 AI Competitive Moat Engine ---
+app.post('/api/compmoat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze competitive moat and defensibility strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a competitive strategy and business moat expert. Help companies build durable competitive advantages. ${p}\n\nProvide: 1) Moat type analysis (network effects, switching costs, cost advantages, intangible assets, efficient scale) 2) Current moat strength assessment 3) Moat-building investment priorities 4) Competitive threat mapping and response playbook 5) Defensibility roadmap 6) Metrics to track moat strength over time` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.16 AI Digital Transformation Engine ---
 app.post('/api/digitaltx-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
