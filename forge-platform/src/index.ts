@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.65 AI FashionTech & Retail Innovation Engine ---
+app.post('/api/fashiontech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a FashionTech & Retail Innovation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a FashionTech and retail innovation expert. Analyze virtual try-on tech, AI-powered personalization, sustainable fashion platforms, direct-to-consumer brands, social commerce, supply chain transparency, resale and circular economy platforms, and the future of retail experiences. ${p}\n\nProvide actionable insights on brand differentiation, technology adoption, consumer behavior shifts, and investment opportunities in fashion and retail technology.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.64 AI MobilityTech & Transportation Engine ---
 app.post('/api/mobilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
