@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.70 AI Customer Success & Health Score Intelligence Engine ---
+app.post('/api/cs-health-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { industry, customerSegments, avgContractValue, totalCustomers, csTeamSize, nps, csat, churnRate, expansionRate, avgOnboardingDays, supportTicketVolume, productAdoptionRate, qbrCadence, topChurnReasons } = req.body;
+    const p = `You are a customer success and health score intelligence expert. Generate a comprehensive CS health assessment and success playbook.
+
+CS Context:
+- Industry: ${industry}
+- Customer Segments: ${customerSegments}
+- Avg Contract Value: ${avgContractValue}
+- Total Customers: ${totalCustomers}
+- CS Team Size: ${csTeamSize}
+- NPS: ${nps}
+- CSAT: ${csat}
+- Churn Rate: ${churnRate}%
+- Expansion Rate: ${expansionRate}%
+- Avg Onboarding Days: ${avgOnboardingDays}
+- Support Ticket Volume: ${supportTicketVolume}
+- Product Adoption Rate: ${productAdoptionRate}%
+- QBR Cadence: ${qbrCadence}
+- Top Churn Reasons: ${topChurnReasons}
+
+Return JSON with: healthScoreModel (object: overallHealth number 0-100, dimensions array of objects with name/weight/currentScore/benchmark, scoringRules array of strings, automationOpportunities array), customerSegmentHealth (array: segment string, healthScore number 0-100, churnRisk 'critical'|'high'|'medium'|'low', arAtRisk number, recommendedActions array), csPlaybooks (array: playbook string, trigger string, steps array of strings, owner string, timeline string, successMetric string), expansionOpportunities (array: customer string, currentARR number, expansionSignal string, recommendedProduct string, probabilityScore number, nextAction string), onboardingOptimization (object: currentTime string, targetTime string, bottlenecks array, milestones array of objects with day/milestone/successCriteria, automationWins array), csTeamCapacity (object: currentRatio number, recommendedRatio number, teamGaps array, priorityHires array, toolingNeeds array).`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.69 AI Financial Modeling & Scenario Planning Engine ---
 app.post('/api/financial-model-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
