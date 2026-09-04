@@ -39500,6 +39500,65 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.80 AI Brand Architecture & Positioning Engine ---
+app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, stage, currentTagline, missionStatement, targetAudience, productPortfolio, competitors, currentPerception, desiredPerception, keyDifferentiators, brandValues, toneOfVoice, pricePosition, geographies, customerPainPoints, foundingStory, keyMetrics, recentPRWins, brandChallenges, upcomingLaunch } = req.body;
+    const p = `You are a world-class brand strategist and positioning expert. Build a comprehensive brand architecture and positioning strategy.
+
+Company: ${companyName}
+Industry: ${industry}
+Stage: ${stage}
+Current Tagline: ${currentTagline}
+Mission Statement: ${missionStatement}
+Target Audience: ${targetAudience}
+Product Portfolio: ${productPortfolio}
+Competitors: ${competitors}
+Current Perception: ${currentPerception}
+Desired Perception: ${desiredPerception}
+Key Differentiators: ${keyDifferentiators}
+Brand Values: ${brandValues}
+Tone of Voice: ${toneOfVoice}
+Price Position: ${pricePosition}
+Geographies: ${geographies}
+Customer Pain Points: ${customerPainPoints}
+Founding Story: ${foundingStory}
+Key Metrics/Proof Points: ${keyMetrics}
+Recent PR Wins: ${recentPRWins}
+Brand Challenges: ${brandChallenges}
+Upcoming Launch: ${upcomingLaunch}
+
+Return a JSON object with:
+{
+  "reportTitle": string,
+  "executiveSummary": string,
+  "brandStrengthScore": number (0-100),
+  "differentiationScore": number (0-100),
+  "clarityScore": number (0-100),
+  "urgencyLevel": "Critical"|"High"|"Medium"|"Low",
+  "brandDNA": { "coreEssence": string, "brandPromise": string, "brandPersonality": string[], "brandArchetype": string, "emotionalBenefit": string, "functionalBenefit": string, "brandTerritories": string[] },
+  "positioningStatement": { "for": string, "who": string, "theProduct": string, "that": string, "unlike": string, "ourProduct": string },
+  "messagingHierarchy": { "primaryMessage": string, "supportingMessages": string[], "proofPoints": string[], "keyDifferentiators": string[], "callToAction": string },
+  "audienceArchetypes": [{ "name": string, "demographics": string, "psychographics": string, "painPoints": string[], "motivations": string[], "mediaHabits": string[], "messagingAngle": string, "channelPriority": string[] }],
+  "competitivePositioning": { "positioningMap": [{ "competitor": string, "position": string, "weakness": string, "ourAdvantage": string }], "whitespaceOpportunity": string, "defensiblePosition": string },
+  "brandVoiceGuide": { "tone": string[], "vocabulary": string[], "avoidWords": string[], "writingStyle": string, "examples": [{ "bad": string, "good": string }] },
+  "visualIdentityDirections": [{ "direction": string, "moodboard": string, "rationale": string, "targetEmotion": string }],
+  "nameAndTaglineOptions": [{ "tagline": string, "rationale": string, "emotionalHook": string, "memorability": "High"|"Medium"|"Low" }],
+  "brandNarratives": { "elevatorPitch": string, "investorNarrative": string, "customerStory": string, "employerBrand": string, "foundingStory": string },
+  "channelStrategy": [{ "channel": string, "messagingFocus": string, "contentTypes": string[], "toneAdjustment": string, "priority": "Primary"|"Secondary"|"Tertiary" }],
+  "brandLaunchPlan": [{ "phase": string, "timeline": string, "activities": string[], "kpis": string[], "budget": string }],
+  "quickWins": string[]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = result.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(match[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.79 AI Financial Scenario & Stress Testing Engine ---
 app.post('/api/financial-scenario', requireAuth, async (req: AuthRequest, res) => {
   try {
