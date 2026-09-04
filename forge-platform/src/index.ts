@@ -39634,6 +39634,41 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.44 AI Supply Chain Intelligence & Resilience Engine ---
+app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, productCategory, suppliers, geographies, disruptions, inventoryStrategy, leadTimes, criticalMaterials } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a supply chain intelligence and resilience expert. Analyze and optimize this supply chain.
+Company: ${company}
+Industry: ${industry}
+Product Category: ${productCategory}
+Current Suppliers: ${suppliers}
+Geographies: ${geographies}
+Recent Disruptions: ${disruptions}
+Inventory Strategy: ${inventoryStrategy}
+Lead Times: ${leadTimes}
+Critical Materials: ${criticalMaterials}
+
+Return JSON:
+{
+  "riskAssessment": { "overallScore": 0-100, "concentrationRisk": 0-100, "geopoliticalRisk": 0-100, "supplierRisk": 0-100, "logisticsRisk": 0-100 },
+  "vulnerabilities": [{ "area": "", "severity": "critical|high|medium|low", "description": "", "likelihood": 0-100, "impact": "" }],
+  "supplierDiversification": [{ "category": "", "currentState": "", "recommendation": "", "alternativeSuppliers": [""], "timeToSwitch": "", "costImpact": "" }],
+  "resilienceStrategies": [{ "strategy": "", "description": "", "investment": "", "timeframe": "", "riskReduction": 0-100, "roi": "" }],
+  "inventoryOptimization": { "safetyStockRecommendation": "", "reorderPoints": [""], "bufferStrategies": [""], "estimatedSavings": "" },
+  "nearshoring": [{ "category": "", "currentLocation": "", "proposedLocation": "", "rationale": "", "costComparison": "", "timeline": "" }],
+  "kpis": [{ "metric": "", "currentValue": "", "targetValue": "", "priority": "high|medium|low" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.43 AI Crisis Communication & Reputation Management Engine ---
 app.post('/api/crisis-comms-ai', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
