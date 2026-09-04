@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.45 AI Competitive Moat Builder ---
+app.post('/api/moatbuilder-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our competitive position';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a competitive strategy expert specializing in building durable competitive moats. Analyze and develop strategies for: ${p}\n\nProvide:\n1. Current moat assessment (network effects, switching costs, cost advantages, intangibles)\n2. Moat strengthening opportunities\n3. Competitor threat analysis\n4. 18-month moat-building roadmap\n5. Key metrics to track moat durability` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.44 AI Strategic Partnerships Engine ---
 app.post('/api/stratpartner-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
