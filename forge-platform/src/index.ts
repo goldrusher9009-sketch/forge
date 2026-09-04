@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.27 AI Ecosystem Partnership Engine ---
+app.post('/api/ecosystem-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze ecosystem partnership strategy and platform opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an ecosystem strategy and platform business expert. Help organizations build powerful partner networks and platform businesses. ${p}\n\nProvide: 1) Ecosystem mapping (suppliers, complementors, distributors, developers) 2) Platform business model assessment 3) Partner value proposition and recruitment strategy 4) API and integration architecture recommendations 5) Partner enablement program design 6) Revenue sharing and incentive structure 7) Governance and quality control mechanisms 8) Ecosystem health metrics and expansion roadmap` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.26 AI Data Monetization Engine ---
 app.post('/api/datamon-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
