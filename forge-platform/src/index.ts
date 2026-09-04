@@ -39634,6 +39634,74 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.95 AI Customer Success & Churn Prevention Engine ---
+app.post('/api/customer-success-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { customerSegment, churnRate, arr, topChurnReasons } = req.body;
+    const p = `You are an elite Customer Success & Churn Prevention strategist. Analyze:
+Customer Segment: ${customerSegment || 'Mid-Market SaaS (50-500 employees)'}
+Current Churn Rate: ${churnRate || '8% annual'}
+Annual Recurring Revenue: ${arr || '$12M ARR'}
+Top Churn Reasons: ${topChurnReasons || 'Poor onboarding, low feature adoption, competitive pricing'}
+
+Provide a comprehensive churn prevention strategy:
+
+**CHURN RISK SCORING MODEL**
+- Leading indicators of churn (behavioral signals)
+- Lagging indicators and hard signals
+- Health score framework (0-100) with weights
+- Early warning trigger thresholds
+
+**CUSTOMER SEGMENTATION FOR CS**
+- High-touch vs. tech-touch vs. low-touch criteria
+- At-risk customer identification methodology
+- Champion and power user identification
+- Expansion-ready account signals
+
+**ONBOARDING & ACTIVATION OPTIMIZATION**
+- 30/60/90 day success milestones
+- Activation metrics that predict retention
+- Common onboarding failure points to fix
+- Automated vs. human-led onboarding triggers
+
+**ENGAGEMENT & ADOPTION PLAYBOOKS**
+- Feature adoption campaign sequences
+- QBR (Quarterly Business Review) framework
+- Executive sponsor program design
+- Power user development program
+
+**CHURN INTERVENTION PLAYBOOKS**
+- Red account rescue playbook (step-by-step)
+- At-risk outreach sequence and messaging
+- Win-back campaign for churned customers
+- Escalation path to executive involvement
+
+**EXPANSION REVENUE STRATEGY**
+- Upsell and cross-sell trigger identification
+- Land and expand motion design
+- Expansion playbook by customer segment
+- ROI storytelling for renewal conversations
+
+**CS TEAM STRUCTURE & METRICS**
+- CSM to customer ratio recommendations
+- Key metrics: NRR, GRR, NPS, CSAT, TTV
+- CS compensation and incentive structure
+- Tools and tech stack recommendations
+
+**30-DAY QUICK WINS**
+- Immediate actions to reduce churn this quarter
+- Low-effort high-impact interventions
+- Metrics to track weekly
+
+Deliver a complete Customer Success playbook that reduces churn by 30-50%.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.94 AI Innovation & Technology Scouting Engine ---
 app.post('/api/innovation-scouting-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
