@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.14 AI SpaceTech & Aerospace Engine ---
+app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SpaceTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a space technology and aerospace strategy expert. ${p}\n\nProvide comprehensive analysis covering: commercial space launch market dynamics (SpaceX, Rocket Lab, Blue Origin landscape), satellite internet constellations and connectivity economics, earth observation and geospatial intelligence commercialization, in-space manufacturing and materials science opportunities, lunar and Mars economy development timelines, space tourism market segmentation, defense and dual-use space technology, satellite communications infrastructure investment, space debris mitigation and orbital sustainability, regulatory navigation (FCC, ITU, FAA launch licenses), space insurance and risk modeling, and venture capital flows into NewSpace. Include near-term commercial opportunities, government contract strategies, and technology readiness level assessments.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.13 AI CleanTech & Sustainability Engine ---
 app.post('/api/cleantech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
