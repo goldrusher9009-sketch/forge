@@ -39634,6 +39634,27 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.72 AI Supply Chain Risk & Resilience Engine ---
+app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, productCategories, supplierCount, primarySupplierRegions, currentInventoryDays, leadTimes, singleSourcedItems, revenueAtRisk, disruptionHistory, logisticsPartners, tariffExposure, demandVolatility, sustainabilityGoals, techStack } = req.body;
+    const p = `You are an AI supply chain risk and resilience expert. Analyze:
+Industry: ${industry}, Products: ${productCategories}
+Suppliers: ${supplierCount}, Regions: ${primarySupplierRegions}
+Inventory Days: ${currentInventoryDays}, Lead Times: ${leadTimes}
+Single-Sourced Items: ${singleSourcedItems}, Revenue at Risk: $${revenueAtRisk}
+Disruption History: ${disruptionHistory}, Logistics: ${logisticsPartners}
+Tariff Exposure: ${tariffExposure}, Demand Volatility: ${demandVolatility}
+Sustainability Goals: ${sustainabilityGoals}, Tech Stack: ${techStack}
+Return JSON: { riskAssessment: { overallRiskScore: number, criticalRisks:[{risk,probability,impact,mitigationCost,priority}], geopoliticalExposure:[{region,riskLevel,percentSpend,alternativeRegions:[]}] }, resilienceStrategies: [{strategy,description,implementation,costToImplement,riskReduction,timeframe}], supplierDiversification: { currentHerfindahl: number, targetHerfindahl: number, recommendedNewSuppliers:[{category,targetRegion,certifications:[],timeline}] }, inventoryOptimization: { safetyStockDays: number, bufferByCategory:[{category,currentDays,recommendedDays,reason}], cashImpact: number }, digitalTransformation: [{technology,benefit,implementation,roi}], sustainabilityScore: { current: number, target: number, initiatives:[{name,carbonReduction,cost,timeline}] } }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.71 AI Talent Intelligence & Workforce Planning Engine ---
 app.post('/api/talent-intel-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
