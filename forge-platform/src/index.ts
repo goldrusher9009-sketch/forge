@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.21 AI GovTech & PublicSector Engine ---
+app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a GovTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a government technology and public sector strategy expert. ${p}\n\nProvide comprehensive analysis covering: digital government transformation roadmaps, citizen services digitization and UX design, AI in public administration and policy analysis, government procurement modernization and vendor qualification, smart city infrastructure planning (mobility, energy, safety), open data strategies and public sector data governance, cybersecurity frameworks for critical infrastructure, e-democracy and civic engagement technology, healthcare system digitization and interoperability, public safety and emergency response technology, government cloud migration and legacy system modernization, and GovTech startup ecosystem and procurement pathways. Include change management for public sector, stakeholder engagement, regulatory compliance frameworks, and public-private partnership models.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.20 AI WealthTech & Investment Intelligence Engine ---
 app.post('/api/wealthtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
