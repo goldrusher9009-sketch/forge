@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.33 AI Regulatory Intelligence Engine ---
+app.post('/api/regintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze regulatory landscape and compliance strategy for business growth';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a regulatory intelligence and compliance strategy expert. Help organizations navigate complex regulatory environments proactively. ${p}\n\nProvide: 1) Key regulatory landscape mapping for the industry/region 2) Emerging regulatory trends and anticipated changes 3) Compliance gap analysis and risk prioritization 4) Regulatory risk mitigation strategies 5) Proactive regulatory engagement and advocacy recommendations 6) Compliance program design and governance structure 7) Regulatory change monitoring and response playbooks 8) Cost of compliance vs risk of non-compliance analysis` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.32 AI Innovation Portfolio Engine ---
 app.post('/api/innovport-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
