@@ -39634,6 +39634,75 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.87 AI Supply Chain & Procurement Intelligence Engine ---
+app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { product, suppliers, region, spend } = req.body;
+    const p = `You are an elite Supply Chain & Procurement Intelligence advisor. Analyze:
+Product/Category: ${product || 'Electronic components / PCBs'}
+Current Suppliers: ${suppliers || 'TSMC, Foxconn, Flextronics'}
+Sourcing Region: ${region || 'Asia-Pacific'}
+Annual Spend: ${spend || '$5M'}
+
+Provide comprehensive supply chain intelligence:
+
+**SUPPLY CHAIN RISK ASSESSMENT**
+- Single-source dependency risks
+- Geopolitical exposure by region
+- Climate and natural disaster risks
+- Supplier financial health indicators
+
+**SUPPLIER PERFORMANCE SCORECARD**
+- Quality metrics benchmarks
+- On-time delivery standards
+- Cost competitiveness ranking
+- Innovation and capability scores
+
+**PROCUREMENT OPTIMIZATION**
+- Should-cost modeling approach
+- Volume consolidation opportunities
+- Payment terms optimization
+- Total cost of ownership analysis
+
+**DIVERSIFICATION STRATEGY**
+- Alternative supplier recommendations by tier
+- Near-shoring and friend-shoring options
+- Dual-source vs. multi-source tradeoffs
+- Qualification timeline estimates
+
+**INVENTORY & DEMAND PLANNING**
+- Safety stock recommendations
+- Lead time buffer strategies
+- Demand volatility management
+- Obsolescence risk mitigation
+
+**NEGOTIATION PLAYBOOK**
+- Leverage points with current suppliers
+- RFQ strategy and timing
+- Contract structure recommendations
+- Key performance indicators to include
+
+**SUSTAINABILITY & COMPLIANCE**
+- ESG requirements for supply base
+- Forced labor / conflict minerals checks
+- Carbon footprint reduction opportunities
+- Regulatory compliance checklist
+
+**COST REDUCTION ROADMAP**
+- Quick wins (0-90 days)
+- Strategic initiatives (6-18 months)
+- Transformation plays (18+ months)
+- Expected savings quantification
+
+Deliver actionable procurement intelligence a CPO can execute on immediately.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.86 AI Brand Intelligence & Reputation Management Engine ---
 app.post('/api/brand-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
