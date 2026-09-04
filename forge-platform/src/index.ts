@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.57 AI GovTech & Public Sector Engine ---
+app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a govtech and public sector modernization strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a govtech and public sector technology expert. Provide comprehensive analysis covering digital government transformation, citizen experience platforms, smart city infrastructure, AI in public services, open data initiatives, procurement modernization, identity & access management, cybersecurity for government, cloud adoption frameworks (FedRAMP, G-Cloud), and policy technology. ${p}\n\nProvide actionable insights with change management strategies and stakeholder engagement plans.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.56 AI SupplyChainTech & Logistics Engine ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
