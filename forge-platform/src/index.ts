@@ -39500,6 +39500,70 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.79 AI Financial Scenario & Stress Testing Engine ---
+app.post('/api/financial-scenario', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, stage, currentRevenue, growthRate, grossMargin, operatingMargin, burnRate, cashRunway, headcount, arr, mrr, churnRate, ltv, cac, debtLevel, equityRaised, currentValuation, keyRevStreams, fixedCosts, variableCosts, topCustomers, geoExposure, currencyExposure, keyRisks, plannedInvestments, exitStrategy } = req.body;
+    const p = `You are an elite CFO and financial risk analyst. Build comprehensive financial scenarios and stress tests for this company.
+
+Company: ${companyName}
+Industry: ${industry}
+Stage: ${stage}
+Current Revenue: ${currentRevenue}
+Growth Rate: ${growthRate}
+Gross Margin: ${grossMargin}
+Operating Margin: ${operatingMargin}
+Burn Rate: ${burnRate}
+Cash Runway: ${cashRunway}
+Headcount: ${headcount}
+ARR: ${arr}
+MRR: ${mrr}
+Churn Rate: ${churnRate}
+LTV: ${ltv}
+CAC: ${cac}
+Debt Level: ${debtLevel}
+Equity Raised: ${equityRaised}
+Current Valuation: ${currentValuation}
+Key Revenue Streams: ${keyRevStreams}
+Fixed Costs: ${fixedCosts}
+Variable Costs: ${variableCosts}
+Top Customers: ${topCustomers}
+Geographic Exposure: ${geoExposure}
+Currency Exposure: ${currencyExposure}
+Key Risks: ${keyRisks}
+Planned Investments: ${plannedInvestments}
+Exit Strategy: ${exitStrategy}
+
+Return a JSON object with:
+{
+  "reportTitle": string,
+  "executiveSummary": string,
+  "financialHealthScore": number (0-100),
+  "resilienceScore": number (0-100),
+  "runwayRiskLevel": "Critical"|"High"|"Medium"|"Low",
+  "valuationRange": { "bear": string, "base": string, "bull": string },
+  "unitEconomicsAssessment": { "ltvCacRatio": string, "paybackPeriod": string, "grossMarginHealth": string, "magicNumber": string, "burnMultiple": string, "efficiency": "Excellent"|"Good"|"Fair"|"Poor" },
+  "scenarioAnalysis": [{ "scenario": string, "probability": string, "revenueImpact": string, "marginImpact": string, "runwayImpact": string, "keyAssumptions": string[], "triggerEvents": string[], "mitigationActions": string[] }],
+  "stressTests": [{ "stressEvent": string, "severity": "Catastrophic"|"Severe"|"Moderate"|"Mild", "probability": string, "revenueAtRisk": string, "survivalProbability": string, "timeToImpact": string, "warningSignals": string[], "contingencyPlan": string }],
+  "cashFlowProjections": { "month3": string, "month6": string, "month12": string, "month24": string, "breakeven": string, "defaultRisk": string },
+  "concentrationRisks": [{ "riskType": string, "exposure": string, "severity": "High"|"Medium"|"Low", "mitigation": string }],
+  "capitalStrategy": { "currentPosition": string, "optimalStructure": string, "fundraisingTiming": string, "targetAmount": string, "useOfFunds": string[], "dilutionAnalysis": string, "alternativeFinancing": string[] },
+  "costOptimization": { "savingsOpportunities": [{ "area": string, "potentialSaving": string, "implementation": "Quick"|"Medium"|"Complex", "tradeoffs": string }], "totalSavingsPotential": string },
+  "revenueAcceleration": { "quickWinRevenue": string, "opportunities": [{ "initiative": string, "revenueImpact": string, "timeframe": string, "investment": string }] },
+  "kpiDashboard": [{ "metric": string, "current": string, "target": string, "status": "On Track"|"At Risk"|"Off Track", "action": string }],
+  "strategicRecommendations": string[],
+  "quickWins": string[]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = result.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(match[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.78 AI Customer Experience & Journey Optimization Engine ---
 app.post('/api/cx-journey-optimizer', requireAuth, async (req: AuthRequest, res) => {
   try {
