@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.06 AI CyberSecurity & Threat Intelligence Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a cybersecurity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cybersecurity and threat intelligence strategy expert. ${p}\n\nProvide comprehensive analysis covering: zero-trust architecture implementation roadmaps, AI-powered threat detection and SOC automation, ransomware defense and incident response playbooks, cloud security posture management, identity and access management modernization, supply chain security and vendor risk, penetration testing frameworks and red team strategies, regulatory compliance (SOC2, ISO27001, NIST, GDPR), cybersecurity product market positioning, managed security service provider business models, vulnerability management programs, and security awareness training ROI. Include threat landscape analysis, technology stack recommendations, and build-vs-buy decisions.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.05 AI CreatorEconomy & Content Monetization Engine ---
 app.post('/api/creatoreconomy-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
