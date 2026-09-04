@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.24 AI BioTech & Life Sciences Engine ---
+app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a BioTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a biotechnology and life sciences strategy expert specializing in drug discovery, genomics, diagnostics, biomanufacturing, and precision medicine. ${p}\n\nProvide comprehensive analysis covering: pipeline strategy and asset prioritization, platform technology differentiation, regulatory pathway optimization (FDA/EMA), IP landscape and freedom to operate, clinical development strategy, biomarker and companion diagnostic development, manufacturing scale-up and CMC, partnership and out-licensing opportunities, patient stratification and precision medicine approaches, reimbursement and market access strategy, and emerging technology integration (AI-driven drug discovery, CRISPR, cell/gene therapy, synthetic biology).` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.23 AI EnergyTech & Grid Intelligence Engine ---
 app.post('/api/energytech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
