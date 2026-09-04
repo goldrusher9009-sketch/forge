@@ -39500,6 +39500,48 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.10 AI Legal Strategy & Contract Intelligence Engine ---
+app.post('/api/legal-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { contractType, parties, keyTerms, jurisdiction, riskTolerance, dealContext } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a senior partner at a top-tier law firm specializing in commercial contracts and legal strategy.
+Contract Type: ${contractType}
+Parties: ${parties}
+Key Terms/Clauses: ${keyTerms}
+Jurisdiction: ${jurisdiction}
+Risk Tolerance: ${riskTolerance}
+Deal Context: ${dealContext}
+
+Return comprehensive JSON legal analysis with these exact keys:
+{
+  "riskAssessment": {
+    "overallRisk": "low|medium|high|critical",
+    "riskScore": number,
+    "topRisks": [{"clause": "string", "risk": "string", "severity": "string", "recommendation": "string"}]
+  },
+  "clauseAnalysis": [{"clause": "string", "currentLanguage": "string", "issues": "string", "suggestedRevision": "string", "priority": "high|medium|low"}],
+  "negotiationStrategy": {
+    "mustHaves": ["string"],
+    "niceToHaves": ["string"],
+    "concessions": ["string"],
+    "walkAwayPoints": ["string"],
+    "openingPosition": "string"
+  },
+  "redFlags": [{"flag": "string", "explanation": "string", "urgency": "string"}],
+  "missingClauses": [{"clause": "string", "why": "string", "suggestedLanguage": "string"}],
+  "complianceChecklist": [{"requirement": "string", "status": "present|missing|unclear", "action": "string"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.09 AI Financial Modeling & Valuation Engine ---
 app.post('/api/financial-model', requireAuth, async (req: AuthRequest, res) => {
   try {
