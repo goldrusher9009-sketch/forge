@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.09 AI M&A Intelligence Engine ---
+app.post('/api/ma-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze M&A strategy and target identification';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an M&A strategy and corporate development expert. Help with deal sourcing, due diligence, valuation, and integration planning. ${p}\n\nProvide: 1) Strategic rationale and deal thesis 2) Target screening criteria and pipeline 3) Valuation framework (DCF, comps, precedent transactions) 4) Due diligence checklist by workstream 5) Integration planning roadmap 6) Risk factors and mitigation strategies` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.08 AI Global Expansion Engine ---
 app.post('/api/globalexpand-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
