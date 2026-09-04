@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.78 AI RetailTech & Commerce Innovation Engine ---
+app.post('/api/retailtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a retail technology and commerce innovation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a retail technology and commerce innovation expert. Analyze and provide deep insights on: ${p}\n\nCover: omnichannel strategy, AI-powered personalization, inventory optimization, cashierless checkout, social commerce, live shopping, loyalty programs, last-mile delivery, retail media networks, and in-store experience technology.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.77 AI VoiceTech & Conversational AI Engine ---
 app.post('/api/voicetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
