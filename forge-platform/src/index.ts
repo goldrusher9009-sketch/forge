@@ -39634,6 +39634,41 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.46 AI Innovation Pipeline & R&D Intelligence Engine ---
+app.post('/api/innovation-pipeline', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, currentRnDSpend, innovationAreas, competitors, technologyTrends, patentFocus, timeHorizon, innovationGoals } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are an innovation strategy and R&D intelligence expert. Build a comprehensive innovation pipeline.
+Company: ${company}
+Industry: ${industry}
+Current R&D Spend: ${currentRnDSpend}
+Innovation Areas: ${innovationAreas}
+Competitors: ${competitors}
+Technology Trends: ${technologyTrends}
+Patent Focus: ${patentFocus}
+Time Horizon: ${timeHorizon}
+Innovation Goals: ${innovationGoals}
+
+Return JSON:
+{
+  "innovationScore": { "overall": 0-100, "rndEfficiency": 0-100, "marketReadiness": 0-100, "talentCapability": 0-100, "competitiveAdvantage": 0-100 },
+  "opportunityMatrix": [{ "area": "", "marketSize": "", "feasibility": 0-100, "strategicFit": 0-100, "timeToMarket": "", "recommendation": "pursue|monitor|abandon", "rationale": "" }],
+  "pipelineStages": [{ "stage": "", "initiatives": [{ "name": "", "budget": "", "timeline": "", "expectedOutcome": "", "kpi": "" }] }],
+  "technologyRoadmap": [{ "technology": "", "maturityLevel": "emerging|developing|mature", "investmentRequired": "", "expectedImpact": "", "dependencies": [""], "milestone": "" }],
+  "competitiveIntelligence": [{ "competitor": "", "innovationStrength": "", "patents": "", "gaps": [""], "opportunities": [""] }],
+  "ipStrategy": { "priorityAreas": [""], "filingRecommendations": [""], "defensiveStrategies": [""], "licensingOpportunities": [""] },
+  "fundingAllocation": [{ "area": "", "currentBudget": "", "recommendedBudget": "", "rationale": "", "expectedROI": "" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.45 AI Workforce Analytics & People Intelligence Engine ---
 app.post('/api/workforce-ai', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
