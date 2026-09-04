@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.53 AI LegalTech & Compliance Engine ---
+app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a legaltech and compliance strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a legaltech and compliance expert. Provide comprehensive analysis covering contract automation, e-discovery, legal AI tools, regulatory compliance (GDPR, CCPA, SOX, HIPAA), IP management, litigation analytics, legal operations, CLM platforms, AML/KYC, and emerging AI regulation. ${p}\n\nProvide actionable insights with risk mitigation strategies and technology recommendations.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.52 AI WealthTech & Investment Engine ---
 app.post('/api/wealthtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
