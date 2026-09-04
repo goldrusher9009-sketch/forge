@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.56 AI SupplyChainTech & Logistics Engine ---
+app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a supply chain technology and logistics strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a supply chain technology and logistics expert. Provide comprehensive analysis covering demand forecasting AI, warehouse automation, last-mile delivery optimization, supplier risk management, blockchain for traceability, digital twins, inventory optimization, cold chain logistics, freight tech, reverse logistics, nearshoring/reshoring strategies, and supply chain resilience. ${p}\n\nProvide actionable insights with cost reduction opportunities and technology roadmaps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.55 AI MarketingTech & Growth Engine ---
 app.post('/api/marketingtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
