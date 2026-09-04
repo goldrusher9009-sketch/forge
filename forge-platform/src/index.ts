@@ -39634,6 +39634,34 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.54 AI M&A Due Diligence & Integration Intelligence Engine ---
+app.post('/api/ma-diligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { acquirer, target, dealType, dealSize, industry, strategicRationale, targetRevenue, targetEbitda, synergies, concerns, timeline } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a senior M&A advisor and due diligence expert. Create a comprehensive M&A due diligence and integration intelligence report.
+Acquirer: ${acquirer}, Target: ${target}, Deal Type: ${dealType}, Deal Size: ${dealSize}
+Industry: ${industry}, Strategic Rationale: ${strategicRationale}
+Target Revenue: ${targetRevenue}, Target EBITDA: ${targetEbitda}
+Synergies: ${synergies}, Concerns: ${concerns}, Timeline: ${timeline}
+Return ONLY valid JSON (no markdown):
+{
+  "dealScorecard": { "strategicFit": 0-100, "financialHealth": 0-100, "integrationComplexity": 0-100, "synergyPotential": 0-100, "riskLevel": 0-100, "recommendation": "proceed|proceed-with-caution|pause|reject", "confidence": 0-100 },
+  "dueDiligenceChecklist": [{ "workstream": "", "priority": "critical|high|medium|low", "items": [], "redFlags": [], "owner": "", "timeline": "" }],
+  "synergyAnalysis": { "revenueSynergies": [{ "type": "", "annualValue": "", "timeToCapture": "", "confidence": 0-100 }], "costSynergies": [{ "type": "", "annualValue": "", "timeToCapture": "", "confidence": 0-100 }], "totalNPV": "", "integrationCost": "", "breakeven": "" },
+  "riskRegister": [{ "risk": "", "category": "", "probability": "high|medium|low", "impact": "high|medium|low", "mitigation": "", "dealBreaker": false }],
+  "integrationPlan": [{ "phase": "", "duration": "", "priorities": [], "keyDecisions": [], "budget": "", "successMetrics": [] }],
+  "valuationBenchmarks": { "evRevenue": "", "evEbitda": "", "peerComps": [], "premiumJustification": "", "walkawayPrice": "", "synergizedValue": "" },
+  "day100Plan": { "week1": [], "month1": [], "month3": [], "communicationPlan": [], "retentionRisks": [], "quickWins": [] }
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.53 AI Data Strategy & Analytics Maturity Engine ---
 app.post('/api/data-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, currentDataStack, dataTeamSize, dataProblems, businessGoals, dataMaturityLevel, budget, keyDecisions } = req.body;
