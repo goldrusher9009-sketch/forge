@@ -39634,6 +39634,26 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.71 AI Talent Intelligence & Workforce Planning Engine ---
+app.post('/api/talent-intel-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, companySize, currentHeadcount, openRoles, attritionRate, avgTimeToHire, avgSalaryBudget, remotePolicy, topSkillGaps, competitorHiring, growthTarget, hiringBudget, cultureValues, currentBenefits } = req.body;
+    const p = `You are an AI talent intelligence and workforce planning expert. Analyze:
+Industry: ${industry}, Size: ${companySize}, Headcount: ${currentHeadcount}
+Open Roles: ${openRoles}, Attrition: ${attritionRate}%, TTH: ${avgTimeToHire} days
+Salary Budget: $${avgSalaryBudget}, Remote Policy: ${remotePolicy}
+Skill Gaps: ${topSkillGaps}, Competitor Hiring: ${competitorHiring}
+Growth Target: ${growthTarget}, Hiring Budget: $${hiringBudget}
+Culture: ${cultureValues}, Benefits: ${currentBenefits}
+Return JSON: { workforcePlan: { headcountTargets: [{role,current,target,timeline,priority}], skillGapAnalysis: [{skill,urgency,buildVsBuy,timeToClose}], attritionRisk: {overallScore,highRiskSegments:[{segment,riskLevel,drivers:[],retentionCost}]} }, talentAcquisition: { priorityRoles: [{title,urgency,sourcingChannels:[],competitiveSalary,timeToHire}], employerBrandScore: number, differentiators:[], improvements:[] }, compensationIntel: { marketPositioning, adjustmentsNeeded:[{role,currentComp,marketComp,gap,recommendation}], equityStrategy }, cultureRetention: { healthScore: number, strengths:[], risks:[], initiatives:[{name,impact,cost,timeline}] }, workforceTrends: [{trend,impact,recommendation,timeline}] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.70 AI Customer Success & Health Score Intelligence Engine ---
 app.post('/api/cs-health-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
