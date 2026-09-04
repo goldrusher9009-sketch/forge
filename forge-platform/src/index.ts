@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.42 AI Organizational Culture Engine ---
+app.post('/api/orgculture-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Diagnose and transform organizational culture to drive performance and retention';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an organizational culture and change management expert. Help organizations diagnose, design, and transform their culture for high performance. ${p}\n\nProvide: 1) Culture diagnostic framework and current state assessment 2) Desired culture definition aligned with strategy 3) Culture gap analysis and root cause identification 4) Culture change roadmap with milestones 5) Leadership behaviors and role modeling requirements 6) Rituals, symbols, and storytelling to reinforce culture 7) Hiring, onboarding, and performance management alignment 8) Culture measurement metrics and pulse survey design` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.41 AI Sales Enablement Engine ---
 app.post('/api/salesenable-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
