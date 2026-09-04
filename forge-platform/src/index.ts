@@ -39500,6 +39500,65 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.04 AI Market Intelligence & Competitive Landscape Engine ---
+app.post('/api/market-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { targetMarket, productCategory, competitors, geographicFocus, objective } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a premier market intelligence analyst and competitive strategy expert.
+Target Market: ${targetMarket}
+Product/Service Category: ${productCategory}
+Known Competitors: ${competitors}
+Geographic Focus: ${geographicFocus}
+Intelligence Objective: ${objective}
+
+Deliver a comprehensive market intelligence report. Return ONLY valid JSON:
+{
+  "marketOverview": {
+    "marketSize": "TAM estimate",
+    "growthRate": "CAGR",
+    "keyTrends": ["trend1", "trend2", "trend3"],
+    "tailwinds": ["tailwind1", "tailwind2"],
+    "headwinds": ["headwind1", "headwind2"],
+    "maturityStage": "emerging|growing|mature|declining"
+  },
+  "competitiveLandscape": {
+    "marketStructure": "fragmented|consolidated|duopoly|monopoly",
+    "leaders": [{"name": "company", "estimatedShare": "pct", "strengths": ["s1"], "weaknesses": ["w1"], "recentMoves": ["move1"]}],
+    "challengers": [{"name": "company", "differentiator": "how they compete", "threatLevel": "high|medium|low"}],
+    "whitespaceOpportunities": ["opportunity1", "opportunity2"]
+  },
+  "customerInsights": {
+    "primaryBuyers": ["segment1"],
+    "purchasingTriggers": ["trigger1"],
+    "switchingCosts": "low|medium|high",
+    "unmetNeeds": ["need1", "need2"],
+    "willingness2Pay": "price range insight"
+  },
+  "portersFiveForces": {
+    "supplierPower": {"level": "high|medium|low", "rationale": "desc"},
+    "buyerPower": {"level": "high|medium|low", "rationale": "desc"},
+    "threatOfNew": {"level": "high|medium|low", "rationale": "desc"},
+    "threatOfSubstitutes": {"level": "high|medium|low", "rationale": "desc"},
+    "rivalry": {"level": "high|medium|low", "rationale": "desc"}
+  },
+  "strategicRecommendations": [
+    {"priority": "high|medium|low", "action": "strategic action", "rationale": "why", "timeframe": "when"}
+  ],
+  "winningPositionFormula": "2-3 sentence positioning statement to win in this market",
+  "executiveSummary": "3 sentence market snapshot with top opportunity"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.03 AI Financial Scenario Planning & Modeling Engine ---
 app.post('/api/financial-scenario', requireAuth, async (req: AuthRequest, res) => {
   try {
