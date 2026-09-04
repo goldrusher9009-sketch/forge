@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.82 AI SustainabilityTech & ESG Engine ---
+app.post('/api/sustainabilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a sustainability and ESG strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a sustainability and ESG expert. Provide comprehensive analysis covering: carbon footprint reduction, ESG reporting frameworks (GRI, TCFD, SASB), circular economy strategies, green supply chain optimization, renewable energy transition, biodiversity impact assessment, social impact measurement, governance best practices, sustainability-linked financing, and stakeholder engagement. ${p}\n\nProvide actionable, data-driven recommendations with implementation roadmaps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.81 AI GovTech 2.0 & Civic Innovation Engine ---
 app.post('/api/govtech2-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
