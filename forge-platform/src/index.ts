@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.93 AI ESG & Sustainability Intelligence Engine ---
+app.post('/api/esg-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { company, industry, size, goals, frameworks, stakeholders } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an ESG & Sustainability Strategy expert who has advised Fortune 500 companies, PE-backed firms, and startups on achieving net-zero, ESG ratings improvement, and impact-driven growth. Analyze:
+Company/Organization: ${company}
+Industry: ${industry || 'Not specified'}
+Company Size: ${size || 'Not specified'}
+Sustainability Goals: ${goals || 'Not specified'}
+Reporting Frameworks: ${frameworks || 'GRI, TCFD, SASB'}
+Key Stakeholders: ${stakeholders || 'Investors, customers, regulators'}
+
+Deliver a comprehensive ESG & Sustainability Intelligence report:
+1. ESG MATERIALITY MATRIX - rank top 15 ESG issues by financial materiality and stakeholder importance for this industry
+2. BASELINE ASSESSMENT - likely current ESG performance gaps vs. sector peers across E, S, and G pillars
+3. SCIENCE-BASED TARGETS - recommended GHG reduction targets aligned with 1.5°C pathway with Scope 1/2/3 breakdown
+4. ENVIRONMENTAL ROADMAP - energy transition plan, circular economy opportunities, water/waste reduction initiatives
+5. SOCIAL STRATEGY - DEI metrics and targets, supply chain human rights due diligence, community impact programs
+6. GOVERNANCE FRAMEWORK - board composition, executive ESG compensation linkage, ethics and anti-corruption controls
+7. REPORTING STRATEGY - GRI, TCFD, SASB, and CSRD alignment with disclosure calendar and data collection systems
+8. ESG RATINGS IMPROVEMENT - gap analysis vs. MSCI, Sustainalytics, CDP with specific actions to move up one tier
+9. GREEN FINANCE OPPORTUNITIES - ESG-linked bonds, sustainability-linked loans, green CapEx incentives available
+10. BUSINESS VALUE CASE - quantified ESG ROI: cost savings, premium pricing, talent attraction, investor access, risk reduction
+
+Be specific about industry benchmarks, regulatory requirements, and financial impacts.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.92 AI Talent Intelligence & Workforce Planning Engine ---
 app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
