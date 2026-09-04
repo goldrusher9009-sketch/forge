@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.73 AI ClimateTech & Carbon Markets Strategy Engine ---
+app.post('/api/climatetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a ClimateTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a ClimateTech and carbon markets strategy expert. ${p}\n\nProvide actionable strategy covering: voluntary carbon market dynamics and credit quality, carbon capture and storage technology commercialization, grid-scale energy storage economics, green hydrogen supply chain, climate risk analytics and ESG data, sustainable finance and green bonds, corporate net-zero roadmap development, biodiversity and nature-based solution markets, climate policy tailwinds and regulatory arbitrage, and building investable ClimateTech businesses at scale.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.72 AI SportsTech & Gaming Strategy Engine ---
 app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
