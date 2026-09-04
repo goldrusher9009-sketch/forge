@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.13 AI EdTech & Learning Intelligence Engine ---
+app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { edtechType, learningChallenge, targetAudience, growthProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite EdTech strategy and learning intelligence expert with deep expertise in online education platforms, adaptive learning, corporate training, and AI-powered personalized education.
+
+EdTech Type/Company: ${edtechType}
+Learning Challenge: ${learningChallenge}
+Target Audience: ${targetAudience}
+Growth Profile: ${growthProfile}
+
+Provide a comprehensive EdTech strategy covering:
+1. AI-Powered Adaptive Learning — personalization engines, learning path optimization, knowledge graphs
+2. Content Intelligence — curriculum design, auto-assessment generation, difficulty calibration
+3. Learner Engagement & Retention — gamification, cohort learning, nudge systems, completion rates
+4. Skills Gap Analysis — workforce upskilling, competency mapping, labor market alignment
+5. Corporate L&D Strategy — training ROI, compliance automation, manager coaching tools
+6. Assessment & Credentialing — AI proctoring, micro-credentials, blockchain certificates
+7. EdTech Platform Architecture — LMS vs. LXP, API ecosystem, content marketplace integrations
+8. Monetization & GTM — B2C vs. B2B2C, pricing models, employer partnerships, government contracts
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.12 AI Legal Tech & Contract Intelligence Engine ---
 app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
