@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.31 AI Scenario Planning Engine ---
+app.post('/api/scenplan-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze strategic scenarios and future uncertainty planning';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a strategic scenario planning and futures thinking expert. Help organizations navigate uncertainty and prepare for multiple futures. ${p}\n\nProvide: 1) Key driving forces and uncertainty identification 2) 3-4 distinct plausible scenarios with narratives 3) Early warning signals and trigger indicators for each scenario 4) Strategic options that work across multiple scenarios (robust strategies) 5) Scenario-specific contingency plans 6) Decision triggers and pre-committed actions 7) Organizational capabilities needed for each scenario 8) Monitoring dashboard and review cadence recommendations` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.30 AI Leadership Development Engine ---
 app.post('/api/leaderdev-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
