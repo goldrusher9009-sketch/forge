@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.75 AI HealthTech & Digital Therapeutics Strategy Engine ---
+app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a HealthTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a HealthTech and digital therapeutics strategy expert. ${p}\n\nProvide actionable strategy covering: digital therapeutics FDA clearance pathways and reimbursement, remote patient monitoring and RPM billing, electronic health record integration and interoperability, hospital at home market dynamics, mental health platform scalability, employer health benefits distribution channel, AI diagnostics regulatory strategy, value-based care alignment and outcomes measurement, consumer health app monetization, and building sustainable digital health businesses with clinical evidence.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.74 AI DevTools & Developer Experience Strategy Engine ---
 app.post('/api/devtools-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
