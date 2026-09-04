@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.70 AI Robotics & Automation Strategy Engine ---
+app.post('/api/robotics-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Robotics strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Robotics and industrial automation strategy expert. ${p}\n\nProvide actionable strategy covering: warehouse and logistics automation economics, humanoid robot commercialization timelines, surgical and medical robotics market, autonomous vehicle and drone delivery, RaaS (Robotics as a Service) business models, AI-powered quality control and inspection, cobots and human-robot collaboration, manufacturing reshoring and automation ROI, software stack differentiation in robotics, and building scalable robotics companies.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.69 AI Web3 & Crypto Strategy Engine ---
 app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
