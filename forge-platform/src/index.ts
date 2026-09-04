@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.49 AI Supply Chain Optimizer ---
+app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Optimize our supply chain';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a supply chain optimization expert. Analyze and improve the supply chain for: ${p}\n\nProvide:\n1. Supply chain mapping and bottleneck identification\n2. Inventory optimization recommendations\n3. Supplier diversification and risk mitigation\n4. Cost reduction opportunities (10-20% targets)\n5. Technology and automation recommendations\n6. Resilience and contingency planning` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.48 AI Brand Strategy Engine ---
 app.post('/api/brandstrat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
