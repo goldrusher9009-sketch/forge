@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.92 AI CleanTech & Energy Transition Engine ---
+app.post('/api/cleantech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a CleanTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cleantech and energy transition strategy expert. ${p}\n\nProvide a comprehensive strategy covering: solar and wind energy economics and project finance, battery storage and grid modernization, green hydrogen and fuel cell technology, carbon capture and sequestration, EV infrastructure and fleet electrification, energy efficiency and smart buildings, voluntary carbon markets, utility-scale vs distributed generation, regulatory incentives (IRA, EU Green Deal), and corporate net-zero strategy. Include market sizing, key players, investment landscape, and actionable implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.91 AI SpaceTech & Satellite Economy Engine ---
 app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
