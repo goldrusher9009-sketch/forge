@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.34 AI Customer Lifetime Value Engine ---
+app.post('/api/clvengine-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze customer lifetime value and develop strategies to maximize CLV';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a customer lifetime value (CLV) and customer success strategy expert. Help organizations maximize long-term customer value. ${p}\n\nProvide: 1) CLV calculation framework and segmentation model 2) Key drivers of CLV in this business context 3) Customer journey mapping and value inflection points 4) Retention and expansion revenue strategies by segment 5) Churn prediction signals and early intervention playbooks 6) Customer success program design recommendations 7) Upsell/cross-sell opportunity identification framework 8) CLV improvement roadmap with projected ROI` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.33 AI Regulatory Intelligence Engine ---
 app.post('/api/regintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
