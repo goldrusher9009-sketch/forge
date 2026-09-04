@@ -39634,6 +39634,98 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.11 AI Real Estate & PropTech Strategy Engine ---
+app.post('/api/proptech-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { propertyType, strategicChallenge, marketContext, investmentProfile } = req.body;
+    const p = `You are an elite Real Estate & PropTech Strategy advisor. Analyze:
+Property/Company Type: ${propertyType || 'PropTech startup, Series A, AI-powered commercial real estate underwriting platform'}
+Strategic Challenge: ${strategicChallenge || 'Replacing manual underwriting workflows at institutional CRE lenders and investors'}
+Market Context: ${marketContext || 'Rising rate environment, office sector stress, multifamily resilience, data center boom'}
+Investment/Growth Profile: ${investmentProfile || '$12M raised, targeting top 50 CRE lenders, need 10 enterprise customers for Series B'}
+
+Provide a comprehensive real estate and PropTech strategy:
+
+**REAL ESTATE MARKET ANALYSIS**
+- Current CRE market cycle positioning by asset class
+- Capital markets conditions (debt availability, cap rate trends)
+- Distress opportunities and risk sectors
+- Technology adoption curve by property type and investor type
+- Regulatory environment (zoning, rent control, fair housing)
+- ESG and green building requirements
+- International market dynamics if relevant
+
+**PROPTECH COMPETITIVE LANDSCAPE**
+- Market map by technology category
+- Build vs. buy vs. partner for core capabilities
+- Data provider and analytics ecosystem
+- Integration requirements (Yardi, MRI, CoStar, RealPage)
+- Funding landscape and M&A activity
+- Key customer segments and buying behavior
+- Pricing benchmarks by product category
+
+**PRODUCT & TECHNOLOGY STRATEGY**
+- Core product differentiation and defensibility
+- AI/ML model development in real estate context
+- Data strategy and proprietary data acquisition
+- Integration ecosystem and API design
+- Mobile and field workforce enablement
+- IoT and smart building integration opportunities
+- Computer vision and spatial analytics
+
+**GO-TO-MARKET STRATEGY**
+- Customer segmentation (REITs, private equity, lenders, operators)
+- Buying committee mapping (CTO, CFO, acquisitions, asset management)
+- Sales cycle and procurement process navigation
+- Pilot and proof of concept design
+- Pricing model (SaaS, per-unit, transaction-based, AUM-based)
+- Channel partners (brokers, consultants, technology partners)
+- Conference and community strategy (ULI, NMHC, CREFC)
+
+**DATA & ANALYTICS DIFFERENTIATION**
+- Proprietary data source identification and acquisition
+- Alternative data integration (satellite, mobile, transaction)
+- Valuation model development approach
+- Market intelligence and benchmarking capabilities
+- Predictive analytics for NOI, rent growth, cap rates
+- Portfolio analytics and benchmarking
+- Risk scoring and stress testing
+
+**REAL ESTATE INVESTMENT STRATEGY** (if applicable)
+- Asset class selection and allocation framework
+- Market selection criteria and scoring
+- Acquisition underwriting standards
+- Value-add vs. core plus vs. opportunistic positioning
+- Portfolio construction and diversification
+- Asset management and operational improvement
+- Disposition timing and exit strategy
+
+**FINANCING & CAPITAL MARKETS**
+- Debt capital stack optimization
+- Equity capitalization strategy
+- Bridge vs. permanent financing decisions
+- Preferred equity and mezzanine structures
+- Recourse vs. non-recourse considerations
+- CMBS, agency, and life company lending dynamics
+- PropTech-specific funding sources
+
+**IMPLEMENTATION & SCALE**
+- Land-and-expand playbook for enterprise PropTech
+- Customer success and onboarding design
+- Integration and implementation timeline
+- Data migration and change management
+- Network effect building strategy
+- International expansion readiness
+
+Deliver a PropTech strategy with commercial milestones, product priorities, and capital plan.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.10 AI Climate Tech & Sustainability Strategy Engine ---
 app.post('/api/climate-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
