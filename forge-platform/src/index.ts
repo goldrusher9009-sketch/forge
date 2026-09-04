@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.36 AI Channel Strategy Engine ---
+app.post('/api/chanstrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Design an optimal go-to-market channel strategy for maximum reach and revenue';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a channel strategy and go-to-market distribution expert. Help organizations design and optimize their sales and distribution channels. ${p}\n\nProvide: 1) Channel landscape analysis (direct, indirect, digital, partner) 2) Customer buying journey and preferred channel mapping 3) Channel mix recommendations with rationale 4) Partner program design and enablement framework 5) Channel conflict identification and resolution strategies 6) Channel economics and margin structure analysis 7) Digital vs physical channel optimization 8) Channel performance metrics and governance model` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.35 AI Pricing Strategy Engine ---
 app.post('/api/pricestrat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
