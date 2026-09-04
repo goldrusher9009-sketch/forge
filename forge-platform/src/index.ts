@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.64 AI Revenue Operations Engine ---
+app.post('/api/revops-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our revenue operations and identify optimization opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Revenue Operations (RevOps) expert. Build a comprehensive RevOps analysis covering: 1) Sales funnel efficiency and conversion rate optimization 2) CRM hygiene and data quality framework 3) Sales velocity levers (deal count, ACV, win rate, cycle time) 4) Marketing and sales alignment metrics 5) Revenue forecasting accuracy improvements 6) Tech stack consolidation recommendations 7) RevOps team structure and hiring plan. Context: ${p}\n\nProvide specific metrics, benchmarks, and prioritized action items.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.63 AI Organizational Design Engine ---
 app.post('/api/orgdesign-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
