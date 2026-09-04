@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.59 AI Innovation Portfolio Engine ---
+app.post('/api/innovport-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our innovation portfolio and suggest improvements';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an innovation strategy expert. Build a comprehensive innovation portfolio analysis covering: 1) Current innovation pipeline assessment 2) Horizon 1/2/3 opportunity mapping 3) Resource allocation recommendations 4) Build/buy/partner decisions 5) Innovation metrics and KPIs 6) Risk-adjusted return projections 7) Portfolio balancing strategies. Context: ${p}\n\nProvide actionable frameworks and specific recommendations.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.58 AI ESG Strategy Engine ---
 app.post('/api/esgstrat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
