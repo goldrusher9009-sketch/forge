@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.30 AI MedTech & Digital Health Engine ---
+app.post('/api/medtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MedTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a medical technology and digital health strategy expert specializing in FDA regulatory pathways, medical device commercialization, digital therapeutics, remote patient monitoring, and health system sales. ${p}\n\nProvide comprehensive analysis covering: FDA 510(k)/PMA/De Novo regulatory strategy, CE marking and international regulatory pathways, clinical evidence generation and trial design, reimbursement strategy (CPT codes, coverage determination, value-based contracting), health system and IDN sales strategy, EHR integration and interoperability (FHIR/HL7), AI/ML-enabled medical device SaMD classification, digital therapeutics (DTx) prescription pathway, remote patient monitoring and RPM reimbursement, real-world evidence strategy, hospital procurement and capital vs. operational budget, patient engagement and adherence optimization, and medical device cybersecurity requirements.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.29 AI DeepTech & Semiconductor Engine ---
 app.post('/api/deeptech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
