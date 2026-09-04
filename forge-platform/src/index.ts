@@ -39634,6 +39634,24 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.82 AI Financial Planning & Scenario Modeling Engine ---
+app.post('/api/financial-planning-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyStage, currentARR, growthRate, burnRate, runway, headcount, grossMargin, cac, ltv, churnRate, raisedToDate, planningHorizon } = req.body;
+    const p = `You are an AI financial planning and scenario modeling expert. Analyze:
+Stage: ${companyStage}, ARR: $${currentARR}, Growth: ${growthRate}%/yr
+Burn: $${burnRate}/mo, Runway: ${runway} months, Headcount: ${headcount}
+Gross Margin: ${grossMargin}%, CAC: $${cac}, LTV: $${ltv}
+Churn: ${churnRate}%/mo, Raised: $${raisedToDate}, Horizon: ${planningHorizon} months
+Return JSON: { keyMetrics: { ltvCacRatio: number, magicNumber: number, ruleOf40: number, burnMultiple: number, efficiencyScore: string }, scenarios: [ {name:'Base Case',assumptions:[string],arr12mo:number,arr24mo:number,runway:number,headcountEOY:number,grossMarginTarget:number,fundingNeeded:number,recommendation:string}, {name:'Bull Case',assumptions:[string],arr12mo:number,arr24mo:number,runway:number,headcountEOY:number,grossMarginTarget:number,fundingNeeded:number,recommendation:string}, {name:'Bear Case',assumptions:[string],arr12mo:number,arr24mo:number,runway:number,headcountEOY:number,grossMarginTarget:number,fundingNeeded:number,recommendation:string} ], unitEconomics: { paybackPeriodMonths: number, grossProfitPerCustomer: number, nrr: number, arpu: number, improvement:[{metric,currentValue,targetValue,action}] }, cashFlowProjection: [{month,revenue,expenses,netBurn,cumulativeCash}], fundingStrategy: { recommendedRound: string, timing: string, targetAmount: number, useOfFunds:[{category,amount,rationale}], investorProfile: string }, operationalPriorities: [{priority,impact,effort,timeline}] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.81 AI Sales Intelligence & Deal Coaching Engine ---
 app.post('/api/sales-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
