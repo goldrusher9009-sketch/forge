@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.98 AI Creator Economy Engine ---
+app.post('/api/creator-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a creator economy monetization strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a creator economy expert. Provide actionable strategies for content monetization, audience building, sponsorship negotiation, subscription models, digital product creation, platform diversification, community monetization, and creator brand building. ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.97 AI Product-Led Growth Engine ---
 app.post('/api/plg-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
