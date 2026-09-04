@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.58 AI Pricing Strategy & Revenue Optimization Engine ---
+app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, businessModel, currentPrice, costStructure, targetMargin, competitors, customerSegments, priceElasticity, revenueGoal, marketPosition, pricingChallenges } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a pricing strategy and revenue optimization expert. Create a comprehensive pricing strategy and revenue optimization plan.
+Company: ${company}, Product/Service: ${product}, Business Model: ${businessModel}
+Current Price: ${currentPrice}, Cost Structure: ${costStructure}, Target Margin: ${targetMargin}
+Competitors: ${competitors}, Customer Segments: ${customerSegments}
+Price Elasticity: ${priceElasticity}, Revenue Goal: ${revenueGoal}
+Market Position: ${marketPosition}, Challenges: ${pricingChallenges}
+Return ONLY valid JSON (no markdown):
+{
+  "pricingAudit": { "currentMargin": "", "benchmarkVsCompetitors": "", "pricePositioning": "premium|mid|value", "revenueLeakage": [], "quickWins": [] },
+  "pricingModels": [{ "model": "", "description": "", "bestFor": "", "expectedMarginImpact": "", "implementationComplexity": "low|medium|high", "recommendation": "primary|secondary|avoid" }],
+  "segmentPricing": [{ "segment": "", "willingness": "", "optimalPrice": "", "discountStrategy": "", "upsellOpportunity": "", "churnRisk": "high|medium|low" }],
+  "revenueLevers": [{ "lever": "", "currentState": "", "opportunity": "", "revenueImpact": "", "effort": "low|medium|high", "priority": 1 }],
+  "competitivePricing": { "priceFloor": "", "priceCeiling": "", "sweetSpot": "", "differentiationFactors": [], "riskOfPriceWar": "high|medium|low" },
+  "implementationPlan": [{ "phase": "", "actions": [], "timeline": "", "expectedLift": "", "metrics": [] }],
+  "revenueProjection": { "currentARR": "", "optimizedARR": "", "upliftPercent": 0, "paybackPeriod": "", "assumptions": [] }
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.57 AI Supply Chain Resilience & Risk Engine ---
 app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, supplierCount, geographicSpread, criticalSuppliers, inventoryStrategy, riskEvents, digitizationLevel, sustainabilityGoals, logisticsNetwork, annualSpend } = req.body;
