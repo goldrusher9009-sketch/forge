@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.23 AI Customer Experience Engine ---
+app.post('/api/cxengine-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze customer experience strategy and journey optimization';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a customer experience (CX) strategy and journey design expert. Help organizations deliver exceptional customer experiences that drive loyalty and revenue. ${p}\n\nProvide: 1) Customer journey mapping and pain point identification 2) CX maturity assessment and benchmarking 3) Voice of Customer (VoC) program design 4) Touchpoint optimization priorities (digital and physical) 5) Personalization and segmentation strategy 6) CX technology stack recommendations 7) Employee experience alignment for CX delivery 8) CX ROI measurement framework and KPIs` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.22 AI Fundraising Intelligence Engine ---
 app.post('/api/fundraise-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
