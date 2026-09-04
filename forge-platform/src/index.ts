@@ -39634,6 +39634,82 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.98 AI Revenue Operations & Sales Intelligence Engine ---
+app.post('/api/revops-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { salesTeamSize, avgDealSize, salesCycle, currentCRM } = req.body;
+    const p = `You are an elite Revenue Operations (RevOps) & Sales Intelligence strategist. Analyze:
+Sales Team Size: ${salesTeamSize || '12 AEs, 6 SDRs, 3 CSMs'}
+Average Deal Size: ${avgDealSize || '$45K ACV, range $10K-$250K'}
+Sales Cycle Length: ${salesCycle || '67 days average, 90+ for enterprise'}
+Current CRM/Stack: ${currentCRM || 'Salesforce, Outreach, ZoomInfo, Gong'}
+
+Provide comprehensive RevOps intelligence:
+
+**REVENUE PROCESS AUDIT**
+- Lead-to-close process mapping with bottlenecks
+- Stage conversion rates vs. benchmarks
+- Average time in each stage analysis
+- Leakage points and drop-off reasons
+- Data quality and CRM hygiene issues
+
+**SALES CAPACITY PLANNING**
+- Revenue per rep benchmarking
+- Quota attainment analysis framework
+- Ramping timeline by role (SDR, AE, CSM)
+- Headcount model for next 12 months
+- Territory and account segmentation design
+
+**PIPELINE HEALTH & FORECASTING**
+- Pipeline coverage ratio targets (3x-5x)
+- Forecast methodology (commit vs. best case vs. pipeline)
+- Deal scoring model (MEDDIC/MEDDPICC/BANT)
+- Pipeline generation by source analysis
+- Weekly/monthly forecast cadence design
+
+**SALES PROCESS OPTIMIZATION**
+- Outbound sequence design (steps, timing, channels)
+- Discovery call framework and qualification criteria
+- Demo-to-proposal conversion optimization
+- Negotiation and closing playbook
+- Objection handling library
+
+**TECH STACK OPTIMIZATION**
+- Current stack assessment and gaps
+- Data enrichment and intent data recommendations
+- Automation opportunities (follow-up, routing, scoring)
+- CRM workflow and reporting design
+- AI-powered sales tool recommendations
+
+**REVENUE ANALYTICS DASHBOARD**
+- Leading indicators to track weekly
+- Lagging indicators for monthly review
+- Cohort analysis for rep performance
+- Win/loss analysis framework
+- Competitive win rate tracking
+
+**COMPENSATION & INCENTIVE DESIGN**
+- OTE structure by role benchmarks
+- Accelerator and SPIFF design
+- Team vs. individual quota splits
+- Clawback and draw policies
+- President's Club criteria
+
+**90-DAY REVOPS TRANSFORMATION**
+- Quick wins in first 30 days
+- Process improvements in days 31-60
+- Technology and automation in days 61-90
+- Expected revenue impact metrics
+
+Deliver a RevOps blueprint that increases revenue efficiency by 30-40%.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.97 AI Product-Led Growth Engine ---
 app.post('/api/plg-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
