@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.18 AI Talent Intelligence Engine ---
+app.post('/api/talentiq-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze talent strategy and workforce intelligence';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a talent intelligence and workforce strategy expert. Help organizations attract, develop, and retain top talent. ${p}\n\nProvide: 1) Talent market analysis and competitive benchmarking 2) Skills gap assessment and future-of-work readiness 3) Employer brand differentiation strategy 4) Compensation and benefits competitive positioning 5) Talent pipeline and succession planning 6) Retention risk factors and mitigation playbook 7) Key hiring metrics and talent KPIs to track` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.17 AI Competitive Moat Engine ---
 app.post('/api/compmoat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
