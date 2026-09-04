@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.69 AI Customer Journey Engine ---
+app.post('/api/custjourney-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Map and optimize our customer journey from awareness to advocacy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a customer experience and journey mapping expert. Build a comprehensive customer journey analysis covering: 1) Full journey stage mapping (Awareness → Consideration → Purchase → Onboarding → Value → Expansion → Advocacy) 2) Touchpoint audit and friction identification 3) Emotional journey mapping and key moments of truth 4) Drop-off analysis and conversion optimization 5) Personalization opportunities by segment 6) Cross-functional ownership and handoff design 7) Journey measurement framework and CX KPIs. Context: ${p}\n\nProvide specific interventions for each stage with expected impact.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.68 AI Financial Modeling Engine ---
 app.post('/api/finmodel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
