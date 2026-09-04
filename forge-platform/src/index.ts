@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.14 AI Pricing Intelligence Engine ---
+app.post('/api/pricingintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze pricing strategy and optimization opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a pricing strategy and revenue optimization expert. Help companies design and optimize pricing models. ${p}\n\nProvide: 1) Pricing model analysis (value-based, cost-plus, competitive, dynamic) 2) Market segmentation and price sensitivity assessment 3) Price architecture and packaging recommendations 4) Discounting strategy and guardrails 5) Price increase execution playbook 6) Competitive pricing intelligence framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.13 AI Customer Lifetime Value Engine ---
 app.post('/api/clv-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
