@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.28 AI MarketingTech & AdTech Engine ---
+app.post('/api/marketingtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MarketingTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a marketing technology and advertising technology strategy expert specializing in customer data platforms, programmatic advertising, personalization at scale, and growth marketing. ${p}\n\nProvide comprehensive analysis covering: customer data platform (CDP) architecture and identity resolution, programmatic advertising and DSP/SSP strategy, first-party data collection and cookieless targeting, AI-powered personalization and recommendation engines, attribution modeling and incrementality testing, marketing mix modeling (MMM), account-based marketing (ABM) for B2B, influencer and creator economy strategy, conversational marketing and chatbot funnels, retention marketing and lifecycle automation, brand safety and fraud prevention, cross-channel measurement and unified analytics, and martech stack consolidation for a high-growth company.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.27 AI HRTech & People Analytics Engine ---
 app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
