@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.91 AI Pricing Strategy & Revenue Optimization Engine ---
+app.post('/api/pricing-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, model, market, competitors, costs, goals } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Pricing Strategy & Revenue Optimization expert who has optimized pricing for SaaS, marketplace, hardware, and service businesses generating $1M to $1B+ in revenue. Analyze:
+Product/Service: ${product}
+Current Pricing Model: ${model || 'Not specified'}
+Target Market: ${market || 'Not specified'}
+Competitive Landscape: ${competitors || 'Not specified'}
+Cost Structure: ${costs || 'Not specified'}
+Revenue Goals: ${goals || 'Not specified'}
+
+Deliver a comprehensive Pricing Strategy & Revenue Optimization report:
+1. PRICING MODEL AUDIT - assess current model vs. alternatives (freemium, usage-based, tiered, value-based, dynamic, outcome-based)
+2. WILLINGNESS-TO-PAY ANALYSIS - segment-by-segment WTP estimates with research methodology to validate
+3. COMPETITIVE PRICING MAP - position on price/value matrix vs. named alternatives with gaps to exploit
+4. OPTIMAL PRICE POINT RECOMMENDATION - with price elasticity estimates and revenue impact modeling
+5. PACKAGING & BUNDLING STRATEGY - 3-tier recommendation (good/better/best) with feature allocation rationale
+6. EXPANSION REVENUE PLAYBOOK - upsell triggers, cross-sell sequences, and usage-based expansion logic
+7. PRICE INCREASE STRATEGY - how to raise prices 20-40% without churning customers, with communication templates
+8. ANNUAL vs. MONTHLY OPTIMIZATION - discount thresholds, incentive structures, and cash flow impact
+9. INTERNATIONAL PRICING - purchasing power parity adjustments and market-entry pricing by region
+10. METRICS DASHBOARD - key pricing KPIs, A/B test designs, and 90-day revenue optimization roadmap
+
+Provide specific numbers, percentages, and dollar amounts throughout. Include psychological pricing tactics.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.90 AI Innovation Sprint & R&D Pipeline Engine ---
 app.post('/api/innovation-sprint', requireAuth, async (req: AuthRequest, res) => {
   try {
