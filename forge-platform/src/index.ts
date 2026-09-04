@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.30 AI Regulatory Intelligence & Compliance Forecasting Engine ---
+app.post('/api/reg-intel', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, jurisdiction, currentCompliance, businessActivities, riskTolerance } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'No Anthropic key configured' });
+  const p = `You are a regulatory intelligence and compliance expert. Analyze this company's regulatory landscape and provide forecasting and compliance strategy.
+
+Company: ${company}
+Industry: ${industry}
+Jurisdiction: ${jurisdiction}
+Current Compliance Status: ${currentCompliance}
+Business Activities: ${businessActivities}
+Risk Tolerance: ${riskTolerance}
+
+Return ONLY valid JSON:
+{
+  "complianceScore": { "overall": 74, "dataPrivacy": 80, "financial": 70, "operational": 75, "environmental": 65 },
+  "regulatoryLandscape": [{ "regulation": "GDPR", "status": "compliant", "jurisdiction": "EU", "lastUpdated": "2024", "keyRequirements": ["data minimization", "consent management"] }],
+  "upcomingChanges": [{ "regulation": "AI Act", "effectiveDate": "2025-Q3", "impact": "high", "affectedAreas": ["AI systems", "data processing"], "requiredActions": ["audit AI systems", "implement transparency reports"] }],
+  "complianceGaps": [{ "area": "Data Retention", "severity": "medium", "regulation": "CCPA", "gap": "Unclear retention schedules", "remediation": "Implement data lifecycle policy", "effort": "medium", "timeline": "90 days" }],
+  "riskForecast": [{ "risk": "Increased data privacy enforcement", "probability": "high", "timeframe": "12 months", "financialExposure": "$2M-5M", "mitigationStrategy": "DPA appointment and audit trails" }],
+  "complianceRoadmap": [{ "quarter": "Q1 2025", "priorities": ["GDPR audit", "CCPA gap closure"], "budget": "$150K", "resources": "2 FTE compliance officers" }],
+  "quickWins": ["Appoint Data Protection Officer", "Implement cookie consent manager", "Complete staff GDPR training"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.29 AI Organizational Resilience & Change Management Engine ---
 app.post('/api/org-resilience', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
