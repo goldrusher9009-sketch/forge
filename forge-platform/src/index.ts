@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.45 AI MobilityTech & Transportation Strategy Engine ---
+app.post('/api/mobilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MobilityTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MobilityTech and transportation strategy expert. ${p}\n\nProvide actionable strategy covering: EV adoption curves, autonomous vehicle roadmaps, ride-sharing economics, micromobility, logistics optimization, smart city integration, fleet electrification, charging infrastructure, regulatory navigation, and carbon reduction targets.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.44 AI EdTech & Learning Intelligence Engine ---
 app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
