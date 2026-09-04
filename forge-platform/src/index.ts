@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.69 AI Financial Modeling & Scenario Planning Engine ---
+app.post('/api/financial-model-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { companyStage, revenue, grossMargin, opex, headcount, burnRate, runway, fundraisingTarget, revenueGrowthRate, cogs, capitalExpenditure, accountsReceivable, businessModel, keyAssumptions } = req.body;
+    const p = `You are a financial modeling and scenario planning expert. Generate a comprehensive financial model with scenario analysis.
+
+Financial Context:
+- Company Stage: ${companyStage}
+- Current Revenue: ${revenue}
+- Gross Margin: ${grossMargin}%
+- Opex: ${opex}
+- Headcount: ${headcount}
+- Monthly Burn Rate: ${burnRate}
+- Runway (months): ${runway}
+- Fundraising Target: ${fundraisingTarget}
+- Revenue Growth Rate: ${revenueGrowthRate}%
+- COGS: ${cogs}
+- Capital Expenditure: ${capitalExpenditure}
+- Accounts Receivable: ${accountsReceivable}
+- Business Model: ${businessModel}
+- Key Assumptions: ${keyAssumptions}
+
+Return JSON with: financialSummary (object: currentRunRate number, projectedARR number, grossProfitMargin number, ebitdaMargin number, cashPosition number, monthsToBreakeven number), scenarios (object: bear object, base object, bull object — each with: revenue12m number, revenue24m number, grossMargin number, netMargin number, headcountNeeded number, additionalFundingNeeded number, keyDrivers array), unitEconomics (object: cac number, ltv number, ltvCacRatio number, paybackPeriod number, contributionMargin number, breakEvenUnits number), cashFlowProjection (array 12 items: month string, revenue number, cogs number, grossProfit number, opex number, ebitda number, cashBalance number), fundraisingAnalysis (object: recommendedRound string, targetAmount number, useOfFunds array of objects with category/amount/percentage, projectedRunway number, dilutionEstimate string), kpiDashboard (array: kpi string, current string, target12m string, benchmark string, status 'on-track'|'at-risk'|'off-track').`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.68 AI Legal Risk & Compliance Intelligence Engine ---
 app.post('/api/legal-risk-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
