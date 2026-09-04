@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.67 AI Web3 & Blockchain Innovation Engine ---
+app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Web3 & Blockchain Innovation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Web3 and blockchain innovation expert. Analyze DeFi protocols, NFT ecosystems, DAOs, layer-2 scaling solutions, tokenomics design, crypto regulatory landscape, institutional crypto adoption, blockchain enterprise applications, and the future of decentralized infrastructure. ${p}\n\nProvide actionable insights on protocol development, token economy design, regulatory compliance, community building, and investment opportunities in the Web3 ecosystem.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.66 AI AudioTech & Creator Economy Engine ---
 app.post('/api/audiotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
