@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.96 AI DataOps & MLOps Engine ---
+app.post('/api/dataops-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a DataOps and MLOps strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a DataOps and MLOps expert. Provide actionable strategies for data pipeline automation, ML model lifecycle management, feature stores, model monitoring, data quality frameworks, CI/CD for ML, and team operating models. ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.95 AI DevRel & Developer Experience Engine ---
 app.post('/api/devrel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
