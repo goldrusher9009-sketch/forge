@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.81 AI GovTech 2.0 & Civic Innovation Engine ---
+app.post('/api/govtech2-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a GovTech and civic innovation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a GovTech and civic innovation expert. Analyze and provide deep insights on: ${p}\n\nCover: digital government services, AI in public sector, smart city infrastructure, procurement reform, open data initiatives, civic engagement platforms, regulatory technology, cross-agency data sharing, government cloud migration, and vendor partnership models.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.80 AI FoodTech & Alternative Protein Engine ---
 app.post('/api/foodtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
