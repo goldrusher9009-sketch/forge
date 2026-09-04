@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.63 AI Brand Strategy & Positioning Intelligence Engine ---
+app.post('/api/brand-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, targetAudience, currentBrandPerception, competitors, brandValues, uniqueValueProp, marketingBudget, channels, brandChallenges, expansionGoals, customerInsights } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a brand strategy and positioning expert. Create a comprehensive brand strategy and positioning plan.
+Company: ${company}, Industry: ${industry}, Target Audience: ${targetAudience}
+Current Brand Perception: ${currentBrandPerception}, Competitors: ${competitors}
+Brand Values: ${brandValues}, UVP: ${uniqueValueProp}
+Budget: ${marketingBudget}, Channels: ${channels}
+Challenges: ${brandChallenges}, Expansion Goals: ${expansionGoals}, Customer Insights: ${customerInsights}
+Return ONLY valid JSON (no markdown):
+{
+  "brandAudit": { "awarenessScore": 0-100, "perceptionScore": 0-100, "differentiationScore": 0-100, "consistencyScore": 0-100, "emotionalConnection": 0-100, "trustScore": 0-100 },
+  "positioning": { "currentPosition": "", "targetPosition": "", "positioningStatement": "", "keyDifferentiators": [], "categoryDefinition": "", "whitespace": "" },
+  "audiencePersonas": [{ "persona": "", "demographics": "", "psychographics": "", "painPoints": [], "motivations": [], "mediaHabits": [], "messagingAngle": "" }],
+  "messagingFramework": { "masterbrand": "", "tagline": "", "elevator": "", "pillars": [], "proofPoints": [], "toneOfVoice": [] },
+  "competitiveLandscape": [{ "competitor": "", "positioning": "", "strengths": [], "weaknesses": [], "ourAdvantage": "" }],
+  "channelStrategy": [{ "channel": "", "role": "", "budgetAllocation": "", "kpis": [], "contentPillars": [] }],
+  "brandBuildingRoadmap": [{ "quarter": "", "initiatives": [], "milestones": [], "budget": "", "expectedOutcome": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.62 AI Crisis Management & Business Continuity Engine ---
 app.post('/api/crisis-mgmt-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, crisisType, currentSituation, stakeholders, mediaExposure, regulatoryContext, businessImpact, resources, timeframe, communicationChannels, previousCrises } = req.body;

@@ -2397,6 +2397,106 @@ function CXOptimizationPanel({ api }:{ api:string }) {
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
+// v11.63 AI Brand Strategy & Positioning Intelligence Engine
+function BrandStrategyPanel({ api }: { api: string }) {
+  const [form, setForm] = React.useState({ company: '', industry: '', targetAudience: '', currentBrandPerception: '', competitors: '', brandValues: '', uniqueValueProp: '', marketingBudget: '', channels: '', brandChallenges: '', expansionGoals: '', customerInsights: '' });
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  async function run() {
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/brand-strategy-ai`, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify(form) });
+      if (!r.ok) throw new Error(await r.text());
+      setResult(await r.json());
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  }
+  const inp = 'w-full bg-gray-800 rounded px-3 py-2 text-sm text-white placeholder-gray-500 border border-gray-700 focus:border-rose-500 focus:outline-none';
+  return (
+    <div className="space-y-6">
+      <div className="bg-gray-900 rounded-xl p-6 border border-gray-700">
+        <h3 className="text-lg font-semibold text-white mb-4">🎨 Brand Strategy & Positioning Intelligence</h3>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          {[['company','Company Name'],['industry','Industry'],['targetAudience','Target Audience'],['currentBrandPerception','Current Brand Perception'],['competitors','Key Competitors'],['brandValues','Brand Values'],['uniqueValueProp','Unique Value Proposition'],['marketingBudget','Marketing Budget'],['channels','Current Marketing Channels'],['brandChallenges','Brand Challenges'],['expansionGoals','Expansion Goals'],['customerInsights','Customer Insights']].map(([k,label]) => (
+            <div key={k}>
+              <label className="block text-xs text-gray-400 mb-1">{label}</label>
+              <input className={inp} value={(form as any)[k]} onChange={e => setForm(p => ({...p, [k]: e.target.value}))} placeholder={label} />
+            </div>
+          ))}
+        </div>
+        <button onClick={run} disabled={loading || !form.company} className="w-full py-2 bg-rose-600 hover:bg-rose-500 disabled:opacity-50 rounded-lg text-white font-semibold text-sm transition-colors">
+          {loading ? 'Building Brand Strategy...' : 'Generate Brand Strategy'}
+        </button>
+        {error && <p className="mt-3 text-red-400 text-sm">{error}</p>}
+      </div>
+      {result && (
+        <div className="space-y-4">
+          {result.brandAudit && (
+            <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+              <h4 className="font-semibold text-white mb-3">📊 Brand Audit</h4>
+              <div className="grid grid-cols-3 gap-3">
+                {Object.entries(result.brandAudit).map(([k,v]: any) => (
+                  <div key={k} className="bg-gray-800 rounded-lg p-3 text-center">
+                    <div className={`text-2xl font-bold ${Number(v) >= 70 ? 'text-rose-400' : Number(v) >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>{v}</div>
+                    <div className="text-xs text-gray-400 capitalize mt-1">{k.replace(/([A-Z])/g,' $1')}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.positioning && (
+            <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+              <h4 className="font-semibold text-white mb-3">🎯 Brand Positioning</h4>
+              <div className="bg-rose-900/30 rounded-lg p-4 mb-3 border border-rose-700">
+                <div className="text-xs text-rose-300 mb-1">Positioning Statement</div>
+                <div className="text-sm text-white italic">"{result.positioning.positioningStatement}"</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-800 rounded-lg p-3"><div className="text-xs text-gray-400">Current</div><div className="text-sm text-white mt-1">{result.positioning.currentPosition}</div></div>
+                <div className="bg-gray-800 rounded-lg p-3"><div className="text-xs text-gray-400">Target</div><div className="text-sm text-rose-300 font-semibold mt-1">{result.positioning.targetPosition}</div></div>
+              </div>
+              {result.positioning.keyDifferentiators?.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{result.positioning.keyDifferentiators.map((d:string,i:number) => <span key={i} className="text-xs px-2 py-1 bg-rose-900/40 text-rose-300 rounded">{d}</span>)}</div>}
+            </div>
+          )}
+          {result.messagingFramework && (
+            <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+              <h4 className="font-semibold text-white mb-3">💬 Messaging Framework</h4>
+              <div className="space-y-3">
+                <div className="bg-gray-800 rounded-lg p-3"><div className="text-xs text-gray-400">Tagline</div><div className="text-lg font-bold text-rose-400 mt-1">"{result.messagingFramework.tagline}"</div></div>
+                <div className="bg-gray-800 rounded-lg p-3"><div className="text-xs text-gray-400">Elevator Pitch</div><div className="text-sm text-white mt-1">{result.messagingFramework.elevator}</div></div>
+                {result.messagingFramework.pillars?.length > 0 && <div><div className="text-xs text-gray-400 mb-2">Brand Pillars</div><div className="flex flex-wrap gap-2">{result.messagingFramework.pillars.map((p:string,i:number) => <span key={i} className="text-xs px-3 py-1 bg-rose-900/30 border border-rose-700 text-rose-300 rounded-full">{p}</span>)}</div></div>}
+              </div>
+            </div>
+          )}
+          {result.audiencePersonas?.length > 0 && (
+            <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+              <h4 className="font-semibold text-white mb-3">👥 Audience Personas</h4>
+              <div className="space-y-3">{result.audiencePersonas.map((p:any,i:number) => (
+                <div key={i} className="bg-gray-800 rounded-lg p-3">
+                  <div className="font-semibold text-white text-sm mb-1">{p.persona}</div>
+                  <div className="text-xs text-gray-400 mb-2">{p.demographics} • {p.psychographics}</div>
+                  <div className="text-xs text-rose-300 italic">Angle: {p.messagingAngle}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+          {result.channelStrategy?.length > 0 && (
+            <div className="bg-gray-900 rounded-xl p-5 border border-gray-700">
+              <h4 className="font-semibold text-white mb-3">📡 Channel Strategy</h4>
+              <div className="space-y-2">{result.channelStrategy.map((c:any,i:number) => (
+                <div key={i} className="bg-gray-800 rounded-lg p-3 flex items-center justify-between">
+                  <div><div className="text-sm font-semibold text-white">{c.channel}</div><div className="text-xs text-gray-400">{c.role}</div></div>
+                  <div className="text-rose-400 font-bold text-sm">{c.budgetAllocation}</div>
+                </div>
+              ))}</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // v11.62 AI Crisis Management & Business Continuity Engine
 const CRISIS_SEV_BG: Record<string, string> = { critical: 'bg-red-950 border-red-500', high: 'bg-red-900', medium: 'bg-orange-900', low: 'bg-yellow-900' };
 const PRIORITY_COLOR: Record<string, string> = { P0: 'text-red-400', P1: 'text-orange-400', P2: 'text-yellow-400' };
@@ -32848,7 +32948,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'|'finscenario63'|'marketintel64'|'pmfgrowth65'|'talentiq66'|'supplychain67'|'cyberintel68'|'finmodel69'|'legalintel70'|'healthintel71'|'realestate72'|'climateintel73'|'eduintel74'|'salesintel75'|'launchcmd76'|'talentintel77'|'brandarch78'|'opsintel79'|'investorintel80'|'cxintel81'|'datastrat82'|'compintelcmd83'|'growtheng84'|'enterprisesalescmd85'|'pmfanalyzer86'|'finscenario87'|'supplyresilience88'|'orgresilience89'|'regintel90'|'innovportfolio91'|'pricingpsych92'|'clvretention93'|'talentintel94'|'brandarch95'|'cxjourney96'|'revintel97'|'digitransform98'|'esgintel99'|'warroom100'|'maintel101'|'plgmonetize102'|'crisiscomms103'|'supplychain104'|'workforceai105'|'innovpipeline106'|'pricingintel107'|'partnershipai108'|'regulatoryai109'|'customersuccess110'|'gtmlaunch111'|'execcoaching112'|'datastrategy113'|'madiligence114'|'cyberintel115'|'esgstrategy116'|'supplychain117'|'pricingstrategy118'|'digitaltransform119'|'talentintel120'|'innovationrd121'|'crisismgmt122'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'|'finscenario63'|'marketintel64'|'pmfgrowth65'|'talentiq66'|'supplychain67'|'cyberintel68'|'finmodel69'|'legalintel70'|'healthintel71'|'realestate72'|'climateintel73'|'eduintel74'|'salesintel75'|'launchcmd76'|'talentintel77'|'brandarch78'|'opsintel79'|'investorintel80'|'cxintel81'|'datastrat82'|'compintelcmd83'|'growtheng84'|'enterprisesalescmd85'|'pmfanalyzer86'|'finscenario87'|'supplyresilience88'|'orgresilience89'|'regintel90'|'innovportfolio91'|'pricingpsych92'|'clvretention93'|'talentintel94'|'brandarch95'|'cxjourney96'|'revintel97'|'digitransform98'|'esgintel99'|'warroom100'|'maintel101'|'plgmonetize102'|'crisiscomms103'|'supplychain104'|'workforceai105'|'innovpipeline106'|'pricingintel107'|'partnershipai108'|'regulatoryai109'|'customersuccess110'|'gtmlaunch111'|'execcoaching112'|'datastrategy113'|'madiligence114'|'cyberintel115'|'esgstrategy116'|'supplychain117'|'pricingstrategy118'|'digitaltransform119'|'talentintel120'|'innovationrd121'|'crisismgmt122'|'brandstrategy123'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -33075,6 +33175,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -33216,6 +33317,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -33416,6 +33518,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -33557,6 +33660,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -33743,6 +33847,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -33884,6 +33989,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -34026,6 +34132,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -34167,6 +34274,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -34359,6 +34467,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -34500,6 +34609,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'talentintel120', label: '🧠 Talent Intel' },
     { id: 'innovationrd121', label: '🔬 Innovation R&D' },
     { id: 'crisismgmt122', label: '🚨 Crisis Mgmt' },
+    { id: 'brandstrategy123', label: '🎨 Brand Strategy' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -34788,6 +34898,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'talentintel120' && <TalentIntelPanel api={api} />}
       {tab === 'innovationrd121' && <InnovationRdPanel api={api} />}
       {tab === 'crisismgmt122' && <CrisisMgmtPanel api={api} />}
+      {tab === 'brandstrategy123' && <BrandStrategyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
