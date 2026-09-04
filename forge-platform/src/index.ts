@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.59 AI Digital Transformation & Technology Roadmap Engine ---
+app.post('/api/digital-transform-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, currentTechStack, digitalMaturity, transformationGoals, budget, timeline, painPoints, competitors, regulatoryConstraints, changeReadiness } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a digital transformation and enterprise technology strategy expert. Create a comprehensive digital transformation roadmap.
+Company: ${company}, Industry: ${industry}, Size: ${companySize}
+Current Tech Stack: ${currentTechStack}, Digital Maturity: ${digitalMaturity}
+Goals: ${transformationGoals}, Budget: ${budget}, Timeline: ${timeline}
+Pain Points: ${painPoints}, Competitors: ${competitors}
+Regulatory Constraints: ${regulatoryConstraints}, Change Readiness: ${changeReadiness}
+Return ONLY valid JSON (no markdown):
+{
+  "maturityAssessment": { "overall": 0-100, "dataAnalytics": 0-100, "cloudAdoption": 0-100, "automation": 0-100, "aiReadiness": 0-100, "customerExperience": 0-100, "cybersecurity": 0-100 },
+  "transformationRoadmap": [{ "phase": "", "duration": "", "initiatives": [], "budget": "", "expectedOutcome": "", "dependencies": [], "riskLevel": "high|medium|low" }],
+  "technologyStack": [{ "domain": "", "currentState": "", "recommendedSolution": "", "vendors": [], "estimatedCost": "", "implementationComplexity": "high|medium|low", "roi": "" }],
+  "aiOpportunities": [{ "useCase": "", "businessValue": "", "feasibility": 0-100, "timeToValue": "", "dataRequirements": [], "priority": "high|medium|low" }],
+  "changeManagement": { "readinessScore": 0-100, "keyStakeholders": [], "resistanceAreas": [], "trainingNeeds": [], "communicationPlan": [], "quickWins": [] },
+  "investmentModel": { "totalBudget": "", "phaseBreakdown": [], "expectedROI": "", "paybackPeriod": "", "riskAdjustedROI": "" },
+  "successMetrics": [{ "kpi": "", "baseline": "", "target": "", "timeline": "", "measurement": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.58 AI Pricing Strategy & Revenue Optimization Engine ---
 app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, businessModel, currentPrice, costStructure, targetMargin, competitors, customerSegments, priceElasticity, revenueGoal, marketPosition, pricingChallenges } = req.body;
