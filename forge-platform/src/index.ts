@@ -39634,6 +39634,98 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.10 AI Climate Tech & Sustainability Strategy Engine ---
+app.post('/api/climate-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { organizationType, climateChallenge, targetMarket, fundingContext } = req.body;
+    const p = `You are an elite Climate Tech & Sustainability Strategy advisor. Analyze:
+Organization Type: ${organizationType || 'Climate tech startup, Series A, industrial decarbonization software'}
+Climate Challenge: ${climateChallenge || 'Helping heavy industry (steel, cement, chemicals) measure and reduce Scope 1&2 emissions'}
+Target Market: ${targetMarket || 'Fortune 500 industrials with net-zero commitments, EU taxonomy compliance requirements'}
+Funding Context: ${fundingContext || '$8M raised, need to demonstrate traction for Series B, DOE grant opportunities'}
+
+Provide a comprehensive climate tech and sustainability strategy:
+
+**CLIMATE MARKET LANDSCAPE**
+- Climate tech sector sizing and investment trends
+- Carbon market dynamics (voluntary vs. compliance)
+- Policy tailwinds (IRA, EU Green Deal, Carbon Border Adjustment)
+- Corporate net-zero commitment landscape
+- Technology maturity curve by solution area
+- Competitive landscape and consolidation trends
+- Blended finance and catalytic capital opportunities
+
+**REGULATORY & POLICY STRATEGY**
+- SEC climate disclosure rules and TCFD alignment
+- EU taxonomy and CSRD compliance requirements
+- Carbon pricing mechanisms by jurisdiction
+- Clean energy tax credits (IRA provisions)
+- Government procurement and buy-clean policies
+- International carbon market access
+- Policy risk and regulatory uncertainty management
+
+**CLIMATE MEASUREMENT & REPORTING**
+- GHG Protocol alignment (Scope 1, 2, 3)
+- Science-based targets (SBTi) methodology
+- Carbon accounting standards (ISO 14064, GHG Protocol)
+- Life cycle assessment (LCA) methodology
+- Supply chain emissions measurement approach
+- Carbon credit verification standards (Verra, Gold Standard)
+- Net-zero vs. carbon neutral distinction strategy
+
+**TECHNOLOGY & SOLUTION STRATEGY**
+- Technology differentiation and defensibility
+- Hardware vs. software vs. services model tradeoffs
+- Data and measurement infrastructure
+- AI/ML application in climate solutions
+- Interoperability with ERP and operational systems
+- MRV (Measurement, Reporting, Verification) architecture
+- API and integration ecosystem strategy
+
+**GO-TO-MARKET & COMMERCIAL STRATEGY**
+- Customer segmentation by emissions intensity and commitment
+- Enterprise procurement cycle navigation
+- Chief Sustainability Officer (CSO) engagement playbook
+- ROI quantification (compliance cost avoidance, carbon cost, brand)
+- Pricing model (SaaS, per-ton, outcome-based)
+- Channel partners (Big 4, sustainability consultants, ERP vendors)
+- Pilot design for enterprise land-and-expand
+
+**CARBON MARKETS & OFFSET STRATEGY**
+- Voluntary carbon market opportunity assessment
+- Carbon credit origination and aggregation
+- Registry and verification partner selection
+- Corporate buyer relationship development
+- Carbon project development strategy
+- Article 6 compliance market positioning
+- Greenwashing risk and quality standards
+
+**CLIMATE FINANCE & FUNDING**
+- Climate VC landscape and investor targeting
+- DOE, ARPA-E, NSF grant opportunities
+- DFI and multilateral development bank funding
+- Catalytic capital and first-loss structures
+- Green bonds and sustainability-linked financing
+- Revenue-based financing for climate hardware
+- Strategic corporate and utility partnerships
+
+**IMPACT MEASUREMENT & REPORTING**
+- Avoided emissions quantification methodology
+- Social co-benefits measurement
+- Impact investor reporting requirements
+- B Corp and other certification strategy
+- UN SDG alignment mapping
+- Annual sustainability report design
+
+Deliver a climate strategy with commercial milestones, policy leverage points, and funding roadmap.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.09 AI FinTech & Financial Services Strategy Engine ---
 app.post('/api/fintech-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
