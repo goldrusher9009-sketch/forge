@@ -39634,6 +39634,27 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.77 AI M&A Due Diligence & Deal Intelligence Engine ---
+app.post('/api/ma-diligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { acquirerIndustry, targetIndustry, dealType, targetRevenue, targetEBITDA, askingPrice, targetGrowthRate, customerCount, employeeCount, keyProducts, competitivePosition, technicalDebt, ipPortfolio, regulatoryExposure, integrationComplexity } = req.body;
+    const p = `You are an AI M&A due diligence and deal intelligence expert. Analyze:
+Acquirer Industry: ${acquirerIndustry}, Target Industry: ${targetIndustry}
+Deal Type: ${dealType}, Target Revenue: $${targetRevenue}, EBITDA: $${targetEBITDA}
+Asking Price: $${askingPrice}, Growth Rate: ${targetGrowthRate}%
+Customers: ${customerCount}, Employees: ${employeeCount}
+Products: ${keyProducts}, Competitive Position: ${competitivePosition}
+Technical Debt: ${technicalDebt}, IP: ${ipPortfolio}
+Regulatory: ${regulatoryExposure}, Integration: ${integrationComplexity}
+Return JSON: { dealMetrics: { impliedMultipleRevenue: number, impliedMultipleEBITDA: number, fairValueRange:{low:number,mid:number,high:number}, recommendation: string }, dueDiligenceFindings: { redFlags:[{finding,severity,dealImpact,mitigation}], greenFlags:[{finding,valueDriver}], keyRisks:[{risk,likelihood,financialImpact,mitigationStrategy}] }, synergiesAnalysis: { revenueSynergies:[{opportunity,annualValue,timeToRealize,confidence}], costSynergies:[{area,annualSaving,oneTimeCost,timeframe}], totalSynergyValue: number }, integrationPlan: { phases:[{phase,duration,keyMilestones:[],risks:[],cost}], criticalSuccessFactors:[], estimatedTotalCost: number }, valuationBridge: [{factor,adjustment,rationale}], dealStructureRecommendations: [{structure,rationale,taxEfficiency,risk}] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.76 AI ESG & Sustainability Intelligence Engine ---
 app.post('/api/esg-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
