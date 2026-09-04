@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.02 AI Platform Engineering Engine ---
+app.post('/api/platformeng-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a platform engineering strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a platform engineering expert. Provide actionable strategies for internal developer platforms (IDP), golden paths, self-service infrastructure, paved roads, developer portals, backstage adoption, platform teams structure, and measuring developer productivity (DORA metrics, SPACE framework). ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.01 AI Open Source Strategy Engine ---
 app.post('/api/opensource-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
