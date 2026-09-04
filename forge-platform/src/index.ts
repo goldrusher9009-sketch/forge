@@ -39500,6 +39500,37 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.22 AI Data Strategy & Analytics Intelligence Engine ---
+app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, dataMaturity, objectives } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a Chief Data Officer and analytics strategy expert. Provide a comprehensive data strategy for:
+Company: ${company || 'the organization'}
+Industry: ${industry || 'general'}
+Data Maturity Level: ${dataMaturity || 'intermediate'}
+Objectives: ${objectives || 'improve data-driven decision making'}
+
+Return JSON with these exact keys:
+{
+  "maturityAssessment": { "currentLevel": string, "score": number (1-5), "gaps": string[], "strengths": string[] },
+  "dataArchitecture": { "recommended": string, "components": [{ "layer": string, "technology": string, "purpose": string, "priority": "critical"|"high"|"medium" }] },
+  "governanceFramework": { "policies": [{ "policy": string, "scope": string, "owner": string }], "dataOwnership": string, "qualityStandards": string[] },
+  "analyticsRoadmap": [{ "phase": string, "duration": string, "initiatives": string[], "outcomes": string[], "investment": string }],
+  "kpiFramework": [{ "category": string, "kpis": [{ "name": string, "definition": string, "target": string, "frequency": string }] }],
+  "dataCatalog": { "priorityDomains": [{ "domain": string, "criticalDataSets": string[], "businessValue": string }] },
+  "aiMlStrategy": { "useCases": [{ "useCase": string, "businessImpact": string, "complexity": "low"|"medium"|"high", "timeline": string }], "capabilities": string[] },
+  "quickWins": [{ "initiative": string, "effort": "low"|"medium"|"high", "impact": "low"|"medium"|"high", "timeline": string }]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = r.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(m[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.21 AI Customer Experience & Journey Intelligence Engine ---
 app.post('/api/cx-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
