@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.80 AI LegalTech & Contract Intelligence Engine ---
+app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a LegalTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a LegalTech and contract intelligence strategy expert. ${p}\n\nProvide actionable strategy covering: AI contract review and CLM market dynamics, legal workflow automation ROI, e-discovery and litigation support technology, regulatory compliance automation, legal research AI vs. incumbent Westlaw/LexisNexis, law firm technology adoption barriers, corporate legal department digitization, alternative legal service providers, legal data network effects and moat building, and pricing and packaging LegalTech for law firms vs. enterprise buyers.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.79 AI InsurTech & Risk Intelligence Engine ---
 app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
