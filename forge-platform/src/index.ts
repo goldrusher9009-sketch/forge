@@ -39634,6 +39634,25 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.80 AI Customer Journey & Experience Intelligence Engine ---
+app.post('/api/customer-journey-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const key = await getUserKey(req.user!.id, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { industry, productType, targetPersona, currentNPS, avgSessionDuration, conversionRate, churnRate, supportTicketVolume, topComplaints, topPraises, acquisitionChannels, avgContractValue } = req.body;
+    const p = `You are an AI customer journey and experience intelligence expert. Analyze:
+Industry: ${industry}, Product: ${productType}, Persona: ${targetPersona}
+NPS: ${currentNPS}, Avg Session: ${avgSessionDuration}min, Conversion: ${conversionRate}%
+Churn Rate: ${churnRate}%, Support Tickets: ${supportTicketVolume}/month
+Top Complaints: ${topComplaints}, Top Praises: ${topPraises}
+Channels: ${acquisitionChannels}, ACV: $${avgContractValue}
+Return JSON: { journeyMap: { stages:[{stage,touchpoints:[],emotions:[],painPoints:[],opportunities:[],metrics:{current:string,target:string}}] }, experienceGaps: [{gap,stage,severity,impactOnNPS,fixComplexity,recommendedAction,expectedImprovement}], personaInsights: { primaryNeeds:[string], motivations:[string], frustrations:[string], decisionCriteria:[string], preferredChannels:[string] }, improvementInitiatives: [{initiative,stage,priority,estimatedNPSImpact,effort,timeline,kpis:[]}], experienceMetrics: { currentCXScore: number, targetCXScore: number, estimatedRevenueImpact: number, churnReductionPotential: number }, quickWins: [{action,effort,impact,timeToImplement}] }`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = JSON.parse(result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+    res.json(json);
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.79 AI Product Innovation & R&D Pipeline Engine ---
 app.post('/api/product-innovation-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
