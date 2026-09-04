@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.01 AI Digital Health & MedTech Engine ---
+app.post('/api/digitalhealth-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Digital Health strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a digital health and medical technology strategy expert. ${p}\n\nProvide a comprehensive strategy covering: telehealth platform economics and reimbursement, AI-powered diagnostics and clinical decision support, remote patient monitoring and wearables, EHR interoperability and health data infrastructure, mental health tech and digital therapeutics, medical device software (SaMD) regulatory strategy, value-based care and population health management, hospital at home and care delivery innovation, health insurance tech and prior authorization automation, and direct-to-consumer health services. Include market sizing, key players, investment landscape, and actionable implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.00 AI Gaming & Interactive Entertainment Engine ---
 app.post('/api/gaming-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
