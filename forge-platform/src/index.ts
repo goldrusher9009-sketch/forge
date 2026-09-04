@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.82 AI Competitive Intelligence Engine ---
+app.post('/api/competintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our competitive landscape and identify strategic opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a competitive intelligence expert. Analyze the following competitive scenario and provide: 1) Competitive landscape mapping (direct, indirect, emerging threats), 2) Competitor strengths, weaknesses, and strategic intent, 3) White space and differentiation opportunities, 4) Win/loss analysis framework, 5) Competitive response playbook, 6) Sustainable competitive moat recommendations. Be specific and strategically sharp.\n\n${p}` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.81 AI Pricing Strategy Engine ---
 app.post('/api/pricingstrat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
