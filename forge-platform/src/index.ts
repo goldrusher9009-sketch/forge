@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.28 AI Crisis Management Engine ---
+app.post('/api/crisis-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze crisis management and business continuity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a crisis management and business continuity expert. Help organizations prepare for, respond to, and recover from crises. ${p}\n\nProvide: 1) Crisis scenario mapping and probability-impact matrix 2) Early warning indicators and trigger thresholds 3) Crisis response team structure and decision authority 4) Communication strategy (internal, external, media, regulators) 5) Business continuity plan essentials 6) Stakeholder management and reputation protection 7) Post-crisis recovery and lessons learned framework 8) Resilience investment priorities and readiness score` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.27 AI Ecosystem Partnership Engine ---
 app.post('/api/ecosystem-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
