@@ -39500,6 +39500,48 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.76 AI Regulatory Intelligence & Compliance Engine ---
+app.post('/api/regulatory-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, industry, jurisdictions, businessActivities, dataTypes, employeeCount, revenueSize, currentCompliance, plannedExpansion, recentChanges, regulatoryHistory, riskTolerance, complianceTeamSize, budget, keyProducts, partnerships, publicCompany } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic API key required' });
+    const p = `You are a world-class regulatory intelligence and compliance expert. Analyze the regulatory landscape and build a comprehensive compliance strategy.
+
+Company: ${companyName}, Industry: ${industry}, Jurisdictions: ${jurisdictions}
+Business Activities: ${businessActivities}, Data Types: ${dataTypes}, Employees: ${employeeCount}
+Revenue: ${revenueSize}, Current Compliance: ${currentCompliance}, Planned Expansion: ${plannedExpansion}
+Recent Changes: ${recentChanges}, Regulatory History: ${regulatoryHistory}, Risk Tolerance: ${riskTolerance}
+Compliance Team: ${complianceTeamSize}, Budget: ${budget}, Products: ${keyProducts}
+Partnerships: ${partnerships}, Public Company: ${publicCompany}
+
+Return ONLY valid JSON (no markdown):
+{
+  "reportTitle": "string",
+  "executiveSummary": "string",
+  "overallRiskScore": 0-100,
+  "complianceHealthScore": 0-100,
+  "urgencyLevel": "Critical|High|Medium|Low",
+  "estimatedPenaltyExposure": "string",
+  "regulatoryLandscape": [{"regulation": "string", "jurisdiction": "string", "effectiveDate": "string", "applicability": "Direct|Indirect|Monitoring", "complianceStatus": "Compliant|Partial|Non-Compliant|Unknown", "penaltyExposure": "string", "keyRequirements": ["string"], "deadline": "string"}],
+  "gapAnalysis": [{"area": "string", "currentState": "string", "requiredState": "string", "gap": "string", "remediationEffort": "High|Medium|Low", "priority": "Critical|High|Medium|Low", "estimatedCost": "string", "deadline": "string"}],
+  "dataPrivacyCompliance": {"gdprStatus": "string", "ccpaStatus": "string", "otherRegimes": ["string"], "dataInventoryNeeded": "boolean string", "privacyByDesignGaps": ["string"], "dpoRequired": "boolean string", "crossBorderTransferIssues": ["string"], "subjectRightsCapability": "string"},
+  "sectorSpecificRequirements": [{"sector": "string", "regulator": "string", "licenseRequired": "string", "reportingObligations": ["string"], "conductRequirements": ["string"], "capitalRequirements": "string", "examSchedule": "string"}],
+  "complianceProgramAssessment": {"maturityScore": 0-100, "policyFramework": "string", "trainingProgram": "string", "monitoringCapability": "string", "incidentResponse": "string", "thirdPartyManagement": "string", "boardOversight": "string", "quickImprovements": ["string"]},
+  "remediationRoadmap": [{"phase": "string", "timeline": "string", "actions": ["string"], "owner": "string", "estimatedCost": "string", "riskReduction": "string"}],
+  "upcomingRegulations": [{"regulation": "string", "jurisdiction": "string", "expectedDate": "string", "impactLevel": "High|Medium|Low", "preparationNeeded": ["string"], "monitoringActions": ["string"]}],
+  "regulatoryRelationships": [{"regulator": "string", "currentRelationship": "string", "recommendedActions": ["string"], "examinationPrep": ["string"]}],
+  "complianceBudgetPlan": {"totalRequired": "string", "breakdown": [{"category": "string", "amount": "string", "priority": "string"}], "roiJustification": "string"},
+  "quickWins": ["string"]
+}`;
+    const t = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    let data: any;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.75 AI Product-Market Fit & Growth Engine ---
 app.post('/api/pmf-growth', requireAuth, async (req: AuthRequest, res) => {
   try {
