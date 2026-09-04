@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.85 AI CyberSecurity & Zero Trust Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a cybersecurity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cybersecurity and zero trust architecture expert. Provide comprehensive analysis covering: zero trust network architecture, threat modeling and attack surface reduction, SOC design and SIEM implementation, identity and access management (IAM/PAM), vulnerability management programs, incident response playbooks, ransomware defense strategies, cloud security posture management, DevSecOps integration, compliance frameworks (SOC2, ISO27001, NIST), red team/blue team exercises, and security awareness training. ${p}\n\nProvide actionable, risk-based recommendations with implementation priorities.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.84 AI SpaceTech & Satellite Innovation Engine ---
 app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
