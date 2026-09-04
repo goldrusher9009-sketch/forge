@@ -39500,6 +39500,63 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.77 AI Talent Intelligence & Workforce Strategy Engine ---
+app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, headcount, hiringVolume, targetRoles, keySkills, competitorCompanies, geographies, remotePolicies, salaryBands, diversityGoals, attritionRate, timeToHire, hiringChallenges, employerBrand, recruitingChannels, techStack, cultureValues, benefitsOffered, growthStage } = req.body;
+    const p = `You are an elite talent intelligence and workforce strategy advisor. Analyze the talent landscape for this company and provide comprehensive strategic intelligence.
+
+Company: ${companyName}
+Industry: ${industry}
+Current Headcount: ${headcount}
+Hiring Volume (next 12mo): ${hiringVolume}
+Target Roles: ${targetRoles}
+Key Skills Needed: ${keySkills}
+Competitor Companies: ${competitorCompanies}
+Geographies: ${geographies}
+Remote Policy: ${remotePolicies}
+Salary Bands: ${salaryBands}
+Diversity Goals: ${diversityGoals}
+Current Attrition Rate: ${attritionRate}
+Average Time-to-Hire: ${timeToHire}
+Hiring Challenges: ${hiringChallenges}
+Employer Brand Perception: ${employerBrand}
+Recruiting Channels: ${recruitingChannels}
+Tech Stack: ${techStack}
+Culture Values: ${cultureValues}
+Benefits Offered: ${benefitsOffered}
+Growth Stage: ${growthStage}
+
+Return a JSON object with:
+{
+  "reportTitle": string,
+  "executiveSummary": string,
+  "talentMarketScore": number (0-100),
+  "hiringDifficultyScore": number (0-100),
+  "employerBrandScore": number (0-100),
+  "urgencyLevel": "Critical"|"High"|"Medium"|"Low",
+  "talentMarketAnalysis": { "supplyDemandBalance": string, "salaryTrends": string, "skillScarcity": string, "geographicHotspots": string[], "emergingSkills": string[], "decliningSkills": string[] },
+  "competitorTalentIntel": [{ "company": string, "hiringVelocity": string, "keyStrengths": string, "talentPoachingRisk": "High"|"Medium"|"Low", "compensationPosition": string }],
+  "roleAnalysis": [{ "role": string, "marketAvailability": "Abundant"|"Moderate"|"Scarce"|"Critical", "avgSalaryRange": string, "timeToFill": string, "topSources": string[], "keyQualifications": string, "retentionRisk": "High"|"Medium"|"Low" }],
+  "employerBrandAssessment": { "currentPerception": string, "glassdoorPosition": string, "linkedinStrength": string, "candidateExperienceScore": number, "strengthAreas": string[], "weaknessAreas": string[], "brandImprovements": string[] },
+  "diversityInclusion": { "currentState": string, "gapAreas": string[], "benchmarkComparison": string, "initiatives": string[], "sourcingStrategies": string[] },
+  "compensationStrategy": { "marketPosition": "Below"|"At"|"Above"|"Top 10%", "adjustmentNeeded": string, "totalRewardsGaps": string[], "equityStrategy": string, "benefitsCompetitiveness": string },
+  "recruitingOptimization": { "channelEffectiveness": [{ "channel": string, "quality": "High"|"Medium"|"Low", "cost": string, "recommendation": string }], "processImprovements": string[], "automationOpportunities": string[], "assessmentRecommendations": string[] },
+  "retentionStrategy": { "attritionDrivers": string[], "riskSegments": string[], "retentionInitiatives": string[], "engagementActions": string[], "expectedImpact": string },
+  "workforcePlanning": { "12monthPlan": string, "skillGapMitigation": string, "buildBuyBorrowStrategy": string, "successionPriorities": string[], "contingencyPlanning": string },
+  "hiringRoadmap": [{ "quarter": string, "roles": string, "priority": "Critical"|"High"|"Medium", "budget": string, "strategy": string }],
+  "quickWins": string[]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = result.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(match[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.76 AI Regulatory Intelligence & Compliance Engine ---
 app.post('/api/regulatory-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
