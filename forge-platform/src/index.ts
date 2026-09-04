@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.85 AI CyberSecurity & Threat Intelligence Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a CyberSecurity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cybersecurity and threat intelligence strategy expert. ${p}\n\nProvide actionable strategy covering: zero-trust architecture implementation roadmaps, SIEM and SOC automation economics, ransomware defense and incident response playbooks, cloud security posture management market dynamics, identity and access management modernization, AI-powered threat detection vs. signature-based approaches, cybersecurity talent shortage and MSSP market growth, compliance automation for SOC2/ISO27001/HIPAA, vulnerability management prioritization frameworks, and building cybersecurity SaaS businesses with durable customer retention.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.84 AI MediaTech & Creator Economy Engine ---
 app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
