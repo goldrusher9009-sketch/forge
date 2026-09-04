@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.00 AI Gaming & Interactive Entertainment Engine ---
+app.post('/api/gaming-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Gaming strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a gaming and interactive entertainment strategy expert. ${p}\n\nProvide a comprehensive strategy covering: mobile gaming monetization and UA economics, AAA vs indie studio economics, live service and seasonal content models, AI-generated content and procedural generation, cloud gaming and streaming platforms, VR/AR gaming and spatial computing, Web3 gaming and play-to-earn mechanics, esports organization and tournament strategy, game engine licensing and developer tooling, and gaming IP licensing and transmedia expansion. Include market sizing, key players, investment landscape, and actionable implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.99 AI ConstructionTech & Smart Infrastructure Engine ---
 app.post('/api/constructiontech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
