@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.38 AI Digital Transformation & Technology Roadmap Engine ---
+app.post('/api/digital-transform-ai', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, currentTechStack, maturityLevel, transformationGoals, budget, timeline, constraints } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a digital transformation and technology strategy expert. Create a comprehensive transformation roadmap.
+Company: ${company}
+Industry: ${industry}
+Current Tech Stack: ${currentTechStack}
+Maturity Level: ${maturityLevel}
+Transformation Goals: ${transformationGoals}
+Budget: ${budget}
+Timeline: ${timeline}
+Constraints: ${constraints}
+
+Return JSON:
+{
+  "maturityAssessment": { "overall": 0-100, "people": 0-100, "process": 0-100, "technology": 0-100, "data": 0-100, "culture": 0-100 },
+  "roadmap": [{ "phase": "", "duration": "", "initiatives": [""], "technologies": [""], "investment": "", "expectedOutcomes": [""], "risks": [""], "kpis": [""] }],
+  "techRecommendations": [{ "technology": "", "category": "", "priority": "must-have|should-have|nice-to-have", "rationale": "", "vendor": "", "estimatedCost": "", "implementationTime": "" }],
+  "changeManagement": { "readinessScore": 0-100, "keyStakeholders": [""], "trainingNeeds": [""], "communicationPlan": [""], "resistanceFactors": [""] },
+  "roiProjection": { "year1": "", "year2": "", "year3": "", "breakEven": "", "totalInvestment": "", "totalBenefit": "" },
+  "quickWins": [{ "initiative": "", "timeframe": "", "cost": "", "benefit": "", "owner": "" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.37 AI Revenue Intelligence & Sales Forecasting Engine ---
 app.post('/api/rev-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
