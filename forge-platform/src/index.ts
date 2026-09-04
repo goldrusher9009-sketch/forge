@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.35 AI Brand Architecture & Market Positioning Engine ---
+app.post('/api/brand-arch', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, currentBrand, targetAudience, competitors, differentiators } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'No Anthropic key configured' });
+  const p = `You are a brand strategy and market positioning expert. Analyze this company's brand and provide comprehensive architecture and positioning recommendations.
+
+Company: ${company}
+Industry: ${industry}
+Current Brand: ${currentBrand}
+Target Audience: ${targetAudience}
+Competitors: ${competitors}
+Differentiators: ${differentiators}
+
+Return ONLY valid JSON:
+{
+  "brandScore": { "overall": 71, "clarity": 75, "differentiation": 68, "consistency": 72, "emotionalResonance": 68 },
+  "positioningStatement": "For [target audience] who [need], [brand] is the [category] that [key benefit] because [reason to believe]",
+  "brandArchitecture": { "model": "Branded house", "masterBrand": "Company Name", "subBrands": [{ "name": "Product Line A", "role": "Flanker brand", "audience": "SMB" }], "rationale": "Unified brand maximizes awareness efficiency" },
+  "messagingHierarchy": [{ "level": "Brand Promise", "message": "We make X simple for Y", "audience": "All", "channel": "All" }, { "level": "Value Proposition", "message": "Save 10hrs/week on Z", "audience": "Decision makers", "channel": "Sales" }],
+  "competitivePositioning": [{ "competitor": "Competitor A", "theirPosition": "Enterprise-focused", "yourAdvantage": "SMB-friendly pricing", "vulnerability": "Complex onboarding", "counterMove": "Highlight 5-min setup" }],
+  "brandVoice": { "personality": ["Bold", "Empathetic", "Expert"], "tone": "Conversational but authoritative", "doSay": ["transformative", "effortless"], "dontSay": ["leverage", "synergy"] },
+  "quickWins": ["Rewrite homepage headline to lead with outcome", "Create unified brand guidelines doc", "Audit all touchpoints for message consistency"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.30 AI Regulatory Intelligence & Compliance Forecasting Engine ---
 app.post('/api/reg-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
