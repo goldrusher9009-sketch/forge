@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.61 AI AgriTech & Food Systems Engine ---
+app.post('/api/agritech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an AgriTech & Food Systems strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an AgriTech and food systems expert. Analyze precision agriculture, vertical farming, food supply chain optimization, alternative proteins, AgriAI platforms, smart irrigation, crop monitoring drones, soil sensors, and food security innovation. ${p}\n\nProvide actionable insights on sustainable food production, farm-to-table tech, food waste reduction, and the future of global agriculture.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.60 AI SportsTech & Wellness Engine ---
 app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
