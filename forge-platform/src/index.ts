@@ -39634,6 +39634,42 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.47 AI Pricing Intelligence & Revenue Optimization Engine ---
+app.post('/api/pricing-intel', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, product, currentPrice, costStructure, competitors, customerSegments, pricingModel, marketPosition, revenueGoal, elasticityData } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a pricing intelligence and revenue optimization expert. Analyze and optimize pricing strategy.
+Company: ${company}
+Product: ${product}
+Current Price: ${currentPrice}
+Cost Structure: ${costStructure}
+Competitors: ${competitors}
+Customer Segments: ${customerSegments}
+Pricing Model: ${pricingModel}
+Market Position: ${marketPosition}
+Revenue Goal: ${revenueGoal}
+Elasticity Data: ${elasticityData}
+
+Return JSON:
+{
+  "pricingHealth": { "marginScore": 0-100, "competitivePosition": 0-100, "capturedValue": 0-100, "revenueOptimization": 0-100 },
+  "competitiveBenchmark": [{ "competitor": "", "price": "", "positioning": "", "differentiators": [""], "priceGap": "", "recommendation": "" }],
+  "segmentPricing": [{ "segment": "", "currentPrice": "", "optimalPrice": "", "willingness": "", "rationale": "", "revenueImpact": "" }],
+  "pricingModels": [{ "model": "", "description": "", "bestFor": "", "revenueUpside": "", "complexity": "low|medium|high", "timeToImplement": "" }],
+  "discountStrategy": { "currentDiscountRate": "", "recommendedMax": "", "triggerConditions": [""], "approvalMatrix": [""], "guardrails": [""] },
+  "revenueLevers": [{ "lever": "", "currentState": "", "opportunity": "", "effort": "low|medium|high", "impact": "low|medium|high", "action": "" }],
+  "implementationPlan": [{ "phase": "", "changes": [""], "timeline": "", "expectedLift": "", "risks": [""] }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.46 AI Innovation Pipeline & R&D Intelligence Engine ---
 app.post('/api/innovation-pipeline', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
