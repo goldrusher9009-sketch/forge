@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.94 AI MarTech & Growth Hacking Engine ---
+app.post('/api/martech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MarTech and growth hacking strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MarTech and growth hacking expert. Provide actionable marketing technology strategies, growth experiments, funnel optimization, attribution modeling, customer acquisition tactics, retention playbooks, and data-driven campaign frameworks. ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.93 AI HRTech & Future of Work Engine ---
 app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
