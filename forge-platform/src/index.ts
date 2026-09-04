@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.19 AI ConstructionTech & PropDev Engine ---
+app.post('/api/constructiontech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a ConstructionTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a construction technology and property development strategy expert. ${p}\n\nProvide comprehensive analysis covering: BIM (Building Information Modeling) adoption and digital twin implementation, modular and prefabricated construction economics, construction robotics and automation ROI, drone surveying and site monitoring systems, AI-powered project scheduling and risk management, green building certification strategies (LEED, BREEAM, WELL), smart building IoT infrastructure design, construction fintech and payment automation, labor productivity technology and workforce management, material procurement optimization and supply chain resilience, real estate development feasibility modeling, and PropTech integration across the asset lifecycle. Include technology adoption barriers, ROI timelines, and vendor landscape assessment frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.18 AI TravelTech & Hospitality Engine ---
 app.post('/api/traveltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
