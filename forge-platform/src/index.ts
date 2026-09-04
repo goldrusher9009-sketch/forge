@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.47 AI Product Roadmap Engine ---
+app.post('/api/prodroad-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a product roadmap';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a product strategy expert and roadmap architect. Create a comprehensive product roadmap for: ${p}\n\nProvide:\n1. Strategic themes and north star metric\n2. Q1-Q4 roadmap with epics and milestones\n3. Feature prioritization framework (RICE/ICE scores)\n4. Dependencies and risk flags\n5. Success metrics and OKRs per quarter\n6. Resource requirements and team allocation` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.46 AI Customer Segmentation Engine ---
 app.post('/api/custseg-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
