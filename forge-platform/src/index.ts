@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.68 AI EnergyTech & Grid Innovation Engine ---
+app.post('/api/energytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an EnergyTech & Grid Innovation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an EnergyTech and grid innovation expert. Analyze solar and wind energy platforms, battery storage technology, smart grid infrastructure, energy trading markets, demand response systems, microgrids, hydrogen economy, carbon capture tech, and the future of distributed energy resources. ${p}\n\nProvide actionable insights on energy transition strategies, regulatory frameworks, financing models, technology commercialization, and investment opportunities in the clean energy sector.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.67 AI Web3 & Blockchain Innovation Engine ---
 app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
