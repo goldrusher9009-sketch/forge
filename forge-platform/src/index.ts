@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.60 AI MarTech & Growth Intelligence Strategy Engine ---
+app.post('/api/martech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MarTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MarTech and growth intelligence strategy expert. ${p}\n\nProvide actionable strategy covering: customer data platforms, AI-driven personalization, marketing attribution modeling, first-party data strategy post-cookie, growth loops vs paid acquisition, product-led growth instrumentation, A/B testing infrastructure, revenue operations alignment, martech stack consolidation, and building compounding growth engines.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.59 AI LegalTech & Contract Intelligence Strategy Engine ---
 app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
