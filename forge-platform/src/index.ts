@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.99 AI ConstructionTech & Smart Infrastructure Engine ---
+app.post('/api/constructiontech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a ConstructionTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a construction technology and smart infrastructure strategy expert. ${p}\n\nProvide a comprehensive strategy covering: BIM and digital twin adoption for project management, drone and robotics automation on job sites, prefabrication and modular construction economics, AI-driven project scheduling and cost estimation, construction workforce management and safety tech, smart building systems and IoT integration, infrastructure asset management and predictive maintenance, green building certification and embodied carbon tracking, construction fintech and payment automation, and public-private partnership models for infrastructure. Include market sizing, key players, investment landscape, and actionable implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.98 AI FashionTech & Luxury Engine ---
 app.post('/api/fashiontech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
