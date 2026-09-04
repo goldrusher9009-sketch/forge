@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.07 AI ESG & Sustainability Engine ---
+app.post('/api/esg-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build an ESG and sustainability strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an ESG and sustainability strategy expert. Help organizations build credible, measurable sustainability programs. ${p}\n\nProvide: 1) ESG materiality assessment 2) Carbon footprint reduction roadmap 3) Social impact metrics and programs 4) Governance framework improvements 5) ESG reporting standards (GRI/SASB/TCFD) alignment 6) Stakeholder engagement strategy` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.06 AI Cybersecurity Intelligence Engine ---
 app.post('/api/cybersec-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
