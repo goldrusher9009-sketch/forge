@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.26 AI Data Monetization Engine ---
+app.post('/api/datamon-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze data monetization strategy and revenue opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a data strategy and monetization expert. Help organizations unlock the revenue potential of their data assets. ${p}\n\nProvide: 1) Data asset inventory and value assessment 2) Monetization model options (direct sale, data products, analytics-as-a-service, licensing) 3) Data quality and governance requirements 4) Privacy and compliance framework (GDPR, CCPA) 5) Pricing strategy for data products 6) Partner and marketplace strategy 7) Build vs buy vs partner decision for data infrastructure 8) Data monetization roadmap and quick-win opportunities` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.25 AI Operational Excellence Engine ---
 app.post('/api/opexcell-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
