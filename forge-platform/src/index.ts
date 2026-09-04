@@ -39634,6 +39634,81 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.93 AI Market Entry & Expansion Strategy Engine ---
+app.post('/api/market-entry-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { product, currentMarket, targetMarket, budget } = req.body;
+    const p = `You are an elite Market Entry & Expansion Strategy advisor. Analyze:
+Product/Service: ${product || 'B2B HR software platform'}
+Current Market: ${currentMarket || 'United States, SMB segment'}
+Target Market: ${targetMarket || 'United Kingdom and Germany, mid-market'}
+Expansion Budget: ${budget || '$2M over 18 months'}
+
+Provide comprehensive market entry intelligence:
+
+**MARKET OPPORTUNITY ASSESSMENT**
+- Total Addressable Market (TAM) sizing
+- Serviceable Addressable Market (SAM) estimate
+- Competitive density and white spaces
+- Timing and market readiness assessment
+
+**MARKET ENTRY MODE SELECTION**
+- Direct entry vs. partnership vs. acquisition
+- Channel partner strategy for this market
+- Sales motion adaptation (direct, PLG, channel)
+- Recommended entry sequencing
+
+**LOCALIZATION REQUIREMENTS**
+- Product localization priorities
+- Language and cultural adaptation needs
+- Local compliance and regulatory requirements
+- Pricing localization (PPP adjustments)
+
+**GO-TO-MARKET STRATEGY**
+- Beachhead customer segment to target first
+- Channel mix recommendation for this market
+- Partnership and ecosystem strategy
+- Events and community presence
+
+**COMPETITIVE LANDSCAPE**
+- Incumbent players and their weaknesses
+- Local champions to watch
+- Differentiation narrative for this market
+- Win/loss dynamics to expect
+
+**TEAM & OPERATIONAL SETUP**
+- First hire recommendations (in-market)
+- Remote vs. local office decision framework
+- Legal entity and tax structure considerations
+- HR and compliance requirements
+
+**FINANCIAL PROJECTIONS**
+- Customer acquisition cost assumptions
+- Revenue ramp expectations (month 1-18)
+- Break-even timeline
+- Key financial milestones
+
+**RISK MITIGATION**
+- Top 5 market entry risks
+- Mitigation strategies for each
+- Early warning indicators
+- Exit/pivot criteria if market doesn't respond
+
+**90-DAY LAUNCH PLAN**
+- Week 1-4: Foundation (entity, hires, partnerships)
+- Week 5-8: Pilot customers and validation
+- Week 9-12: Scale what's working
+- Success criteria for each phase
+
+Deliver a market entry playbook ready for board approval.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.92 AI Legal Intelligence & Contract Strategy Engine ---
 app.post('/api/legal-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
