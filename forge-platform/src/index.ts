@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.45 AI ConstructionTech & Smart Buildings Engine ---
+app.post('/api/constructiontech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a ConstructionTech and smart buildings strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a ConstructionTech and smart buildings intelligence expert. Provide comprehensive analysis covering BIM (Building Information Modeling), construction project management platforms, drone surveying and site monitoring, modular and prefab construction, smart building IoT and HVAC optimization, digital twin technology for buildings, safety and compliance tech, materials procurement platforms, AR/VR for design visualization, workforce management in construction, and sustainable building certifications (LEED, BREEAM). ${p}\n\nProvide actionable insights with technology roadmaps, cost-benefit analysis, and implementation frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.44 AI TravelTech & Hospitality Engine ---
 app.post('/api/traveltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
