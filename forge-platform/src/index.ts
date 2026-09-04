@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.25 AI Web3 & Blockchain Strategy Engine ---
+app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { web3Vertical, protocolType, tokenomicsGoal, communityProfile } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a Web3 & Blockchain strategy expert. Analyze this Web3 venture:
+
+Web3 Vertical: ${web3Vertical}
+Protocol Type: ${protocolType}
+Tokenomics Goal: ${tokenomicsGoal}
+Community Profile: ${communityProfile}
+
+Provide:
+1. PROTOCOL ARCHITECTURE — L1/L2/L3 positioning, consensus mechanism, throughput/latency tradeoffs
+2. TOKENOMICS DESIGN — supply schedule, utility vs. governance, vesting, inflation/deflation mechanics
+3. GO-TO-MARKET — community bootstrapping, developer ecosystem, liquidity mining, airdrop strategy
+4. REGULATORY POSITIONING — securities law considerations, DAO legal structure, jurisdiction selection
+5. DeFi INTEGRATION — AMM/DEX liquidity, yield strategies, composability with blue-chip protocols
+6. SECURITY STRATEGY — audit approach, bug bounty, multisig treasury, emergency pause mechanisms
+7. COMMUNITY & GOVERNANCE — DAO design, voting mechanisms, contributor incentives, treasury management
+8. DEVELOPER ECOSYSTEM — SDK/API design, grants program, hackathon strategy, documentation
+9. COMPETITIVE MOAT — network effects, liquidity depth, cross-chain interoperability advantages
+10. 18-MONTH MILESTONES — testnet → mainnet → ecosystem growth → protocol revenue targets`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.24 AI BioTech & Life Sciences Strategy Engine ---
 app.post('/api/biotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { biotechFocus, scienceStage, targetDisease, fundingProfile } = req.body;
