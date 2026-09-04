@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.75 AI AR/VR & Metaverse Engine ---
+app.post('/api/arvr-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an AR/VR and metaverse strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an AR/VR and metaverse industry expert. Analyze and provide deep insights on: ${p}\n\nCover: enterprise AR adoption, VR training applications, spatial computing platforms, WebXR standards, hardware landscape (headsets, haptics), metaverse economics, digital twin integration, immersive retail, content creation pipelines, and platform monetization strategies.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.74 AI OceanTech & Blue Economy Engine ---
 app.post('/api/oceantech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
