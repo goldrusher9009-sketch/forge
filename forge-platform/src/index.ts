@@ -39500,6 +39500,42 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.18 AI Brand Architecture & Identity Engine ---
+app.post('/api/brand-arch', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, industry, targetAudience, currentTagline, competitors, values, personality, pricePoint } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class brand strategist and creative director who has built iconic brands.
+Company: ${companyName}
+Industry: ${industry}
+Target Audience: ${targetAudience}
+Current Tagline: ${currentTagline}
+Competitors: ${competitors}
+Brand Values: ${values}
+Desired Personality: ${personality}
+Price Point: ${pricePoint}
+
+Return a comprehensive brand architecture as JSON:
+{
+  "brandFoundation": {"purpose": "string", "vision": "string", "mission": "string", "values": [{"value": "string", "definition": "string", "behavior": "string"}]},
+  "brandPersonality": {"archetype": "string", "archetypeReason": "string", "traits": ["string"], "tone": {"formal": number, "playful": number, "bold": number, "warm": number, "innovative": number}, "voiceGuide": [{"do": "string", "dont": "string"}]},
+  "positioning": {"statement": "string", "category": "string", "differentiator": "string", "targetInsight": "string", "rtb": ["string"]},
+  "messaging": {"tagline": "string", "taglineAlternatives": ["string"], "elevator pitch": "string", "headlines": ["string"], "keyMessages": [{"audience": "string", "message": "string", "proof": "string"}]},
+  "visualIdentity": {"colorPalette": [{"name": "string", "hex": "string", "usage": "string"}], "typographyDirection": "string", "logoConceptDirections": ["string"], "visualStyle": "string", "moodKeywords": ["string"]},
+  "brandArchitecture": {"model": "string", "subBrands": ["string"], "namingConventions": "string"},
+  "competitivePositioning": [{"competitor": "string", "theirPosition": "string", "ourAdvantage": "string"}],
+  "brandActivation": [{"touchpoint": "string", "brandExpression": "string", "priority": "high|medium|low"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.17 AI Talent Intelligence & Workforce Planning Engine ---
 app.post('/api/talent-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
