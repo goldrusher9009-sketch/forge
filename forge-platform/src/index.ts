@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.36 AI CyberSecurity & InfoSec Strategy Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a cybersecurity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cybersecurity and InfoSec strategy expert. ${p}\n\nProvide actionable strategy covering: threat landscape, zero-trust architecture, SOC setup, incident response, compliance (SOC2/ISO27001/GDPR), product security, and go-to-market for security products.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.35 AI SpaceTech & Aerospace Strategy Engine ---
 app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
