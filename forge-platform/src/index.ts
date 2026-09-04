@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.72 AI SportsTech & Gaming Strategy Engine ---
+app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SportsTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a SportsTech and gaming strategy expert. ${p}\n\nProvide actionable strategy covering: sports analytics and performance intelligence, fan engagement and second-screen experiences, sports betting and fantasy market dynamics, esports team and tournament monetization, gaming studio economics and live service models, athlete data rights and biometric IP, sports media rights and streaming disruption, youth sports platform opportunity, wearables and injury prevention tech, and building sustainable sports technology businesses.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.71 AI GovTech & Public Sector Strategy Engine ---
 app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
