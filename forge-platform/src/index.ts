@@ -39634,6 +39634,68 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.85 AI Talent Intelligence & Workforce Strategy Engine ---
+app.post('/api/talent-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { role, skills, market, budget } = req.body;
+    const p = `You are an elite Talent Intelligence & Workforce Strategy advisor. Analyze:
+Role/Position: ${role || 'Senior Software Engineer'}
+Required Skills: ${skills || 'TypeScript, React, Node.js, AWS'}
+Market/Location: ${market || 'Remote, US market'}
+Compensation Budget: ${budget || '$150k-$200k'}
+
+Provide comprehensive talent intelligence:
+
+**TALENT MARKET ANALYSIS**
+- Supply/demand dynamics for this role
+- Salary benchmarks (P25/P50/P75/P90)
+- Geographic hotspots and remote availability
+- Time-to-fill estimates
+
+**SKILLS INTELLIGENCE**
+- Skill adjacencies (what else candidates typically have)
+- Emerging skills trending in this role
+- Rare vs. common skill combinations
+- Learning curve for skill gaps
+
+**SOURCING STRATEGY**
+- Top sourcing channels ranked by ROI
+- Boolean search strings for LinkedIn/GitHub
+- Communities and events to target
+- Referral network activation tactics
+
+**COMPETITIVE LANDSCAPE**
+- Key competitors hiring for this role
+- Their compensation packages (estimated)
+- Your EVP differentiation opportunities
+- Counter-offer risk assessment
+
+**SCREENING FRAMEWORK**
+- Must-have vs. nice-to-have criteria
+- Technical assessment recommendations
+- Interview scorecard dimensions
+- Red flags to watch for
+
+**RETENTION RISK**
+- Flight risk indicators for this profile
+- Retention levers that matter most
+- Career path to offer candidates
+- Engagement strategies
+
+**DIVERSITY & INCLUSION**
+- Bias-check for job description language
+- Diverse sourcing channel recommendations
+- Inclusive interview process tips
+
+Deliver actionable intelligence a hiring manager can use today.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.84 AI People Analytics & HR Intelligence Engine ---
 app.post('/api/people-analytics-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
