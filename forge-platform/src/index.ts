@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.15 AI Mobility & Transportation Tech Strategy Engine ---
+app.post('/api/mobility-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { mobilityType, mobilityChallenge, marketContext, fleetProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite mobility and transportation technology strategist with deep expertise in autonomous vehicles, fleet electrification, MaaS platforms, logistics tech, and smart city infrastructure.
+
+Mobility Type/Company: ${mobilityType}
+Mobility Challenge: ${mobilityChallenge}
+Market Context: ${marketContext}
+Fleet/Growth Profile: ${fleetProfile}
+
+Provide a comprehensive Mobility Tech strategy covering:
+1. Autonomous Vehicle Intelligence — AV stack architecture, perception AI, safety validation, regulatory pathway
+2. Fleet Electrification Strategy — EV transition economics, charging infrastructure, range anxiety solutions
+3. Mobility-as-a-Service (MaaS) — ride-sharing platform design, multimodal integration, pricing algorithms
+4. Logistics & Last-Mile Innovation — route optimization AI, drone delivery, micro-fulfillment centers
+5. Smart City Infrastructure — V2X communication, traffic AI, smart parking, urban planning APIs
+6. Predictive Maintenance & Telematics — IoT sensor networks, failure prediction, OTA software updates
+7. Regulatory & Safety Compliance — NHTSA/EU frameworks, safety case methodology, insurance models
+8. Revenue Model & GTM — B2B fleet sales, government contracts, data monetization, platform fees
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.14 AI AgriTech & Food Systems Strategy Engine ---
 app.post('/api/agritech-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
