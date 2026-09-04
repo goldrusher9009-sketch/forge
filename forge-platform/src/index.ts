@@ -39634,6 +39634,88 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.01 AI M&A Due Diligence & Deal Intelligence Engine ---
+app.post('/api/ma-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { dealType, targetProfile, acquirerProfile, dealRationale } = req.body;
+    const p = `You are an elite M&A Due Diligence & Deal Intelligence advisor. Analyze:
+Deal Type: ${dealType || 'Strategic acquisition — technology buy vs. build decision'}
+Target Profile: ${targetProfile || 'Series B SaaS company, $8M ARR, 120% NRR, 45 employees, HR tech space'}
+Acquirer Profile: ${acquirerProfile || 'Public enterprise software company, $800M ARR, PE-backed, acquisitive strategy'}
+Deal Rationale: ${dealRationale || 'Accelerate HR product roadmap by 18 months, acquire engineering talent and customer base'}
+
+Provide comprehensive M&A intelligence:
+
+**STRATEGIC FIT ASSESSMENT**
+- Product and market overlap analysis
+- Revenue synergy opportunities (cross-sell, upsell, new markets)
+- Cost synergy identification (headcount, infrastructure, procurement)
+- Technology and IP complementarity
+- Cultural alignment indicators
+- Build vs. buy vs. partner analysis
+
+**FINANCIAL DUE DILIGENCE FRAMEWORK**
+- Revenue quality assessment (ARR vs. services, churn, concentration)
+- Unit economics deep dive (LTV, CAC, payback, gross margin)
+- Cash flow and burn rate analysis
+- Working capital requirements
+- Off-balance sheet liabilities and contingencies
+- Financial modeling assumptions to test
+
+**COMMERCIAL DUE DILIGENCE**
+- Customer reference check framework (questions to ask)
+- Win/loss analysis and competitive positioning
+- Pipeline quality and sales productivity
+- Customer concentration and key account risk
+- Renewal and expansion pipeline validation
+- Go-to-market integration planning
+
+**TECHNOLOGY & PRODUCT DUE DILIGENCE**
+- Technical architecture review checklist
+- Technical debt quantification approach
+- Security and compliance audit scope
+- IP ownership and licensing review
+- Engineering team quality assessment
+- Integration complexity and cost estimate
+
+**PEOPLE & ORGANIZATIONAL DILIGENCE**
+- Key person dependency and retention risk
+- Compensation benchmarking and retention packages
+- Culture assessment methodology
+- Org structure and reporting changes needed
+- Integration management office design
+
+**LEGAL & REGULATORY REVIEW**
+- Common red flags in SaaS M&A
+- IP chain of title and assignment issues
+- Customer contract assignability
+- Regulatory approvals required
+- Representations and warranties to negotiate
+- Escrow and indemnification structure
+
+**VALUATION & DEAL STRUCTURE**
+- Comparable transactions and multiples
+- DCF assumptions and sensitivity analysis
+- Earnout structure considerations
+- Payment structure (cash, stock, earnout mix)
+- Closing conditions and timeline
+
+**100-DAY INTEGRATION PLAN**
+- Day 1 communications (employees, customers, market)
+- Quick wins to demonstrate deal value
+- Systems and process integration priorities
+- Culture integration program
+- Value realization tracking
+
+Deliver a deal intelligence brief ready for investment committee review.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.00 AI Digital Transformation & Change Management Engine ---
 app.post('/api/digital-transformation-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
