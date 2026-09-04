@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.14 AI AgriTech & Food Systems Strategy Engine ---
+app.post('/api/agritech-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { agriType, agriChallenge, marketContext, scaleProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite AgriTech and food systems strategy expert with deep expertise in precision agriculture, food supply chain innovation, ag-biotech, and sustainable farming technology.
+
+AgriTech Type/Company: ${agriType}
+Agricultural Challenge: ${agriChallenge}
+Market Context: ${marketContext}
+Scale/Growth Profile: ${scaleProfile}
+
+Provide a comprehensive AgriTech strategy covering:
+1. Precision Agriculture AI — yield prediction, soil intelligence, drone analytics, satellite imagery
+2. Supply Chain & Traceability — farm-to-fork visibility, blockchain provenance, cold chain optimization
+3. Sustainable Farming Tech — carbon sequestration measurement, regenerative ag tools, water optimization
+4. Ag Biotech & Genomics — CRISPR crop development, microbiome intelligence, pest resistance modeling
+5. Food Systems Innovation — alternative protein platforms, vertical farming economics, waste reduction
+6. AgriFinTech — crop insurance AI, commodity risk management, smallholder credit scoring
+7. IoT & Sensor Networks — soil sensors, livestock monitoring, climate-adaptive irrigation
+8. Market Access & GTM — farmer adoption strategy, distributor networks, institutional buyer relationships
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.13 AI EdTech & Learning Intelligence Engine ---
 app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
   try {

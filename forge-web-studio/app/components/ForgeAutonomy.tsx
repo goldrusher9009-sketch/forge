@@ -2397,6 +2397,34 @@ function CXOptimizationPanel({ api }:{ api:string }) {
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
+// v12.14 AI AgriTech & Food Systems Strategy Engine
+function AgriTechPanel({ api }: { api: string }) {
+  const [agriType, setAgriType] = React.useState('');
+  const [agriChallenge, setAgriChallenge] = React.useState('');
+  const [marketContext, setMarketContext] = React.useState('');
+  const [scaleProfile, setScaleProfile] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/agritech-ai`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ agriType, agriChallenge, marketContext, scaleProfile }) });
+      const d = await r.json(); setResult(d.result || d.error || JSON.stringify(d));
+    } catch(e: any) { setResult(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-4 space-y-3">
+      <h2 className="text-xl font-bold">🌾 AI AgriTech & Food Systems Strategy</h2>
+      <input className="w-full border rounded p-2" placeholder="AgriTech type (precision ag startup, food brand, ag cooperative, vertical farm)" value={agriType} onChange={e=>setAgriType(e.target.value)} />
+      <textarea className="w-full border rounded p-2 h-20" placeholder="Agricultural challenge (yield optimization, supply chain, sustainability, food waste)" value={agriChallenge} onChange={e=>setAgriChallenge(e.target.value)} />
+      <input className="w-full border rounded p-2" placeholder="Market context (crop type, geography, regulatory environment, buyer relationships)" value={marketContext} onChange={e=>setMarketContext(e.target.value)} />
+      <input className="w-full border rounded p-2" placeholder="Scale/growth profile (acreage, revenue, farmer count, funding stage)" value={scaleProfile} onChange={e=>setScaleProfile(e.target.value)} />
+      <button className="bg-green-700 text-white px-4 py-2 rounded" onClick={run} disabled={loading}>{loading ? 'Analyzing...' : 'Generate AgriTech Strategy'}</button>
+      {result && <pre className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap">{result}</pre>}
+    </div>
+  );
+}
+
 // v12.13 AI EdTech & Learning Intelligence Engine
 function EdTechPanel({ api }: { api: string }) {
   const [edtechType, setEdtechType] = React.useState('');
@@ -36055,7 +36083,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'|'finscenario63'|'marketintel64'|'pmfgrowth65'|'talentiq66'|'supplychain67'|'cyberintel68'|'finmodel69'|'legalintel70'|'healthintel71'|'realestate72'|'climateintel73'|'eduintel74'|'salesintel75'|'launchcmd76'|'talentintel77'|'brandarch78'|'opsintel79'|'investorintel80'|'cxintel81'|'datastrat82'|'compintelcmd83'|'growtheng84'|'enterprisesalescmd85'|'pmfanalyzer86'|'finscenario87'|'supplyresilience88'|'orgresilience89'|'regintel90'|'innovportfolio91'|'pricingpsych92'|'clvretention93'|'talentintel94'|'brandarch95'|'cxjourney96'|'revintel97'|'digitransform98'|'esgintel99'|'warroom100'|'maintel101'|'plgmonetize102'|'crisiscomms103'|'supplychain104'|'workforceai105'|'innovpipeline106'|'pricingintel107'|'partnershipai108'|'regulatoryai109'|'customersuccess110'|'gtmlaunch111'|'execcoaching112'|'datastrategy113'|'madiligence114'|'cyberintel115'|'esgstrategy116'|'supplychain117'|'pricingstrategy118'|'digitaltransform119'|'talentintel120'|'innovationrd121'|'crisismgmt122'|'brandstrategy123'|'clvretention124'|'competitiveintel125'|'pmfgrowth126'|'revenueintel127'|'legalrisk128'|'financialmodel129'|'edtech173'|'legaltech172'|'proptechstrategy171'|'climatestrategy170'|'fintechstrategy169'|'healthcarestrategy168'|'governanceintel167'|'brandstrategy166'|'supplychain165'|'pricingstrategy164'|'talentintel163'|'crisismanagement162'|'maintelligence161'|'digitaltransform160'|'esgstrategy159'|'revopsintel158'|'plgstrategy157'|'partnershipstrategy156'|'customersuccess155'|'innovationscouting154'|'marketentry153'|'legalintel152'|'investorrelations151'|'pricingstrategy150'|'growthhack149'|'cybersecurity148'|'supplychain147'|'brandintel146'|'talentintel145'|'peopleanalytics144'|'opsexcellence143'|'financialplanning142'|'salesintelligence141'|'customerjourney140'|'productinnovation139'|'regcompliance138'|'madiligence137'|'esgintel136'|'cybersecurity135'|'digitalmarketing134'|'pricingstrat133'|'supplychain132'|'talentintel131'|'cshealth130'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'|'finscenario63'|'marketintel64'|'pmfgrowth65'|'talentiq66'|'supplychain67'|'cyberintel68'|'finmodel69'|'legalintel70'|'healthintel71'|'realestate72'|'climateintel73'|'eduintel74'|'salesintel75'|'launchcmd76'|'talentintel77'|'brandarch78'|'opsintel79'|'investorintel80'|'cxintel81'|'datastrat82'|'compintelcmd83'|'growtheng84'|'enterprisesalescmd85'|'pmfanalyzer86'|'finscenario87'|'supplyresilience88'|'orgresilience89'|'regintel90'|'innovportfolio91'|'pricingpsych92'|'clvretention93'|'talentintel94'|'brandarch95'|'cxjourney96'|'revintel97'|'digitransform98'|'esgintel99'|'warroom100'|'maintel101'|'plgmonetize102'|'crisiscomms103'|'supplychain104'|'workforceai105'|'innovpipeline106'|'pricingintel107'|'partnershipai108'|'regulatoryai109'|'customersuccess110'|'gtmlaunch111'|'execcoaching112'|'datastrategy113'|'madiligence114'|'cyberintel115'|'esgstrategy116'|'supplychain117'|'pricingstrategy118'|'digitaltransform119'|'talentintel120'|'innovationrd121'|'crisismgmt122'|'brandstrategy123'|'clvretention124'|'competitiveintel125'|'pmfgrowth126'|'revenueintel127'|'legalrisk128'|'financialmodel129'|'agritech174'|'edtech173'|'legaltech172'|'proptechstrategy171'|'climatestrategy170'|'fintechstrategy169'|'healthcarestrategy168'|'governanceintel167'|'brandstrategy166'|'supplychain165'|'pricingstrategy164'|'talentintel163'|'crisismanagement162'|'maintelligence161'|'digitaltransform160'|'esgstrategy159'|'revopsintel158'|'plgstrategy157'|'partnershipstrategy156'|'customersuccess155'|'innovationscouting154'|'marketentry153'|'legalintel152'|'investorrelations151'|'pricingstrategy150'|'growthhack149'|'cybersecurity148'|'supplychain147'|'brandintel146'|'talentintel145'|'peopleanalytics144'|'opsexcellence143'|'financialplanning142'|'salesintelligence141'|'customerjourney140'|'productinnovation139'|'regcompliance138'|'madiligence137'|'esgintel136'|'cybersecurity135'|'digitalmarketing134'|'pricingstrat133'|'supplychain132'|'talentintel131'|'cshealth130'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -36289,7 +36317,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -36481,7 +36510,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -36732,7 +36762,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -36924,7 +36955,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -37161,7 +37193,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -37353,7 +37386,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -37546,7 +37580,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -37738,7 +37773,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -37981,7 +38017,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -38173,7 +38210,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'edtech173', label: '🎓 EdTech AI' },
+              { id: 'agritech174', label: '🌾 AgriTech AI' },
+      { id: 'edtech173', label: '🎓 EdTech AI' },
       { id: 'legaltech172', label: '⚖️ Legal Tech AI' },
       { id: 'proptechstrategy171', label: '🏢 PropTech Strategy' },
               { id: 'climatestrategy170', label: '🌍 Climate Strategy' },
@@ -38512,6 +38550,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'revenueintel127' && <RevenueIntelPanel api={api} />}
       {tab === 'legalrisk128' && <LegalRiskPanel api={api} />}
       {tab === 'financialmodel129' && <FinancialModelPanel api={api} />}
+      {tab === 'agritech174' && <AgriTechPanel api={api} />}
       {tab === 'edtech173' && <EdTechPanel api={api} />}
       {tab === 'legaltech172' && <LegalTechPanel api={api} />}
       {tab === 'proptechstrategy171' && <PropTechStrategyPanel api={api} />}
