@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.18 AI TravelTech & Hospitality Engine ---
+app.post('/api/traveltech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a TravelTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a travel technology and hospitality strategy expert. ${p}\n\nProvide comprehensive analysis covering: OTA and metasearch competitive landscape (Booking, Expedia, Airbnb dynamics), revenue management and dynamic pricing optimization, loyalty program redesign and direct booking incentives, AI-powered personalization in travel and hospitality, sustainable tourism product development, bleisure and remote work travel market opportunities, short-term rental regulatory navigation, hotel technology stack modernization (PMS, CRS, CRM integration), travel distribution channel optimization, experience economy and activity marketplace growth, accessible tourism market expansion, and travel fintech and BNPL adoption. Include recovery trend analysis, customer lifetime value modeling, and technology investment prioritization frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.17 AI MediaTech & Streaming Engine ---
 app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
