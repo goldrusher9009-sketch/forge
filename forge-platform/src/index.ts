@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.37 AI InsurTech & Risk Management Strategy Engine ---
+app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an InsurTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an InsurTech and risk management strategy expert. ${p}\n\nProvide actionable strategy covering: digital insurance products, underwriting automation, claims AI, parametric insurance, embedded insurance, regulatory compliance, reinsurance models, and customer acquisition.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.36 AI CyberSecurity & InfoSec Strategy Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
