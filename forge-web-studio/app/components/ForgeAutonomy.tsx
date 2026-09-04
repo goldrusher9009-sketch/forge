@@ -2397,6 +2397,29 @@ function CXOptimizationPanel({ api }:{ api:string }) {
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
+// v13.47 AI BioTech & Life Sciences Engine
+function BioTechPanel({ api }: { api: string }) {
+  const [input, setInput] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/biotech-ai`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ prompt: input }) });
+      const d = await r.json(); setResult(d.result || d.error || 'No response');
+    } catch (e: any) { setResult(e.message); } finally { setLoading(false); }
+  };
+  return (
+    <div className="p-6 space-y-4">
+      <h2 className="text-2xl font-bold text-gray-800">🧬 BioTech & Life Sciences</h2>
+      <p className="text-gray-600">Analyze genomics, drug discovery, CRISPR, bioinformatics, clinical trials, and biotech commercialization strategies.</p>
+      <textarea className="w-full border rounded-lg p-3 h-28 text-sm" placeholder="Describe your biotech challenge, pipeline, or research area..." value={input} onChange={e => setInput(e.target.value)} />
+      <button onClick={run} disabled={loading} className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50">{loading ? 'Analyzing...' : 'Generate Strategy'}</button>
+      {result && <div className="bg-gray-50 border rounded-lg p-4 text-sm whitespace-pre-wrap">{result}</div>}
+    </div>
+  );
+}
+
 // v13.46 AI SpaceTech & Satellite Intelligence Engine
 function SpaceTechPanel({ api }: { api: string }) {
   const [input, setInput] = React.useState('');
@@ -39422,7 +39445,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -39747,7 +39771,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -40131,7 +40156,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -40456,7 +40482,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -40826,7 +40853,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -41151,7 +41179,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -41477,7 +41506,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -41802,7 +41832,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -42178,7 +42209,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -42503,7 +42535,8 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'revenueintel127', label: '💰 Revenue Intel' },
               { id: 'legalrisk128', label: '⚖️ Legal Risk' },
               { id: 'financialmodel129', label: '📈 Financial Model' },
-              { id: 'spacetech306', label: '🚀 SpaceTech AI' },
+              { id: 'biotech307', label: '🧬 BioTech AI' },
+    { id: 'spacetech306', label: '🚀 SpaceTech AI' },
     { id: 'constructiontech305', label: '🏗️ ConstrTech AI' },
     { id: 'traveltech304', label: '✈️ TravelTech AI' },
     { id: 'retailtech303', label: '🛒 RetailTech AI' },
@@ -42975,6 +43008,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'revenueintel127' && <RevenueIntelPanel api={api} />}
       {tab === 'legalrisk128' && <LegalRiskPanel api={api} />}
       {tab === 'financialmodel129' && <FinancialModelPanel api={api} />}
+      {tab === 'biotech307' && <BioTechPanel api={api} />}
       {tab === 'spacetech306' && <SpaceTechPanel api={api} />}
       {tab === 'constructiontech305' && <ConstructionTechPanel api={api} />}
       {tab === 'traveltech304' && <TravelTechPanel api={api} />}
