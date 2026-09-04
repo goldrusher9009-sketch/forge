@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.34 AI CleanTech & Sustainability Strategy Engine ---
+app.post('/api/cleantech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a CleanTech and sustainability strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a CleanTech and sustainability expert. ${p}\n\nProvide actionable strategy covering: green tech opportunities, carbon reduction roadmap, ESG frameworks, circular economy models, regulatory compliance, and investor appeal.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.33 AI Travel & Hospitality Tech Strategy Engine ---
 app.post('/api/traveltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { travelSegment, techFocus, customerType, revenueModel } = req.body;
