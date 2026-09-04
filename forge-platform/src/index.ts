@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.94 AI Crisis Communication & Reputation Management Engine ---
+app.post('/api/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { situation, company, audience, severity, timeline, facts } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Crisis Communication & Reputation Management expert who has handled crises for Fortune 500s, governments, and high-profile individuals — data breaches, product recalls, executive scandals, regulatory actions, and viral social media crises. Analyze:
+Crisis Situation: ${situation}
+Organization: ${company || 'Not specified'}
+Primary Audiences: ${audience || 'Media, customers, employees, investors'}
+Severity Level: ${severity || 'High'}
+Timeline: ${timeline || 'Active crisis (last 24 hours)'}
+Known Facts: ${facts || 'Not specified'}
+
+Deliver a comprehensive Crisis Communication & Reputation Management playbook:
+1. CRISIS ASSESSMENT - severity score (1-10), reputational risk matrix, stakeholder impact map, and contagion risk
+2. IMMEDIATE RESPONSE (0-2 HOURS) - holding statement templates, social media pause protocol, internal alert cascade
+3. SPOKESPERSON STRATEGY - who speaks, what they say, what they don't say, and media training bullet points
+4. STAKEHOLDER COMMUNICATION MATRIX - tailored messages for: media, customers, employees, investors, regulators, board
+5. PRESS STATEMENT DRAFTS - initial statement, 24-hour update, and resolution statement (fill-in-the-blank templates)
+6. SOCIAL MEDIA RESPONSE PLAYBOOK - platform-by-platform response strategy, comment moderation rules, hashtag monitoring
+7. DARK SITE / CRISIS PAGE - recommended content structure for a dedicated crisis information hub
+8. MEDIA INQUIRY HANDLING - Q&A preparation for top 20 likely journalist questions with approved answer frameworks
+9. REPUTATION RECOVERY ROADMAP - 30/60/90-day plan to rebuild trust with specific campaigns and milestones
+10. POST-CRISIS AUDIT - what to measure (sentiment, coverage, NPS), when to declare recovery, and lessons-learned framework
+
+Provide specific, actionable language. Include what NOT to do (common mistakes that worsen crises).`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.93 AI ESG & Sustainability Intelligence Engine ---
 app.post('/api/esg-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
