@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.26 AI Quantum Computing & Deep Tech Strategy Engine ---
+app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { quantumFocus, techMaturity, targetMarket, competitorLandscape } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a Quantum Computing & Deep Tech strategy expert. Analyze this deep tech venture:
+
+Quantum/Deep Tech Focus: ${quantumFocus}
+Technology Maturity: ${techMaturity}
+Target Market: ${targetMarket}
+Competitor Landscape: ${competitorLandscape}
+
+Provide:
+1. TECHNOLOGY DIFFERENTIATION — qubit type/count, gate fidelity, error correction approach, or deep tech IP moat
+2. NEAR-TERM vs. LONG-TERM ROADMAP — NISQ-era applications now vs. fault-tolerant quantum future
+3. MARKET ENTRY STRATEGY — quantum-as-a-service, hybrid classical-quantum, vertical-specific solutions
+4. CUSTOMER SEGMENTS — pharma/drug discovery, finance/optimization, materials science, logistics, cryptography
+5. PARTNERSHIP STRATEGY — cloud provider integration (AWS Braket, Azure Quantum, Google), academic labs, national labs
+6. IP & DEFENSIBILITY — patent strategy, trade secrets, talent moat, hardware vs. software layer defense
+7. TALENT & TEAM BUILDING — PhD pipeline, industry poaching strategy, research vs. engineering balance
+8. FUNDING LANDSCAPE — DARPA/DOE grants, deep tech VCs, strategic corporate investment, government contracts
+9. COMPETITIVE POSITIONING vs. IBM/Google/IonQ/Rigetti/startups — differentiation angles
+10. 3-YEAR MILESTONE MAP — technical milestones, first commercial customers, revenue inflections`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.25 AI Web3 & Blockchain Strategy Engine ---
 app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
   const { web3Vertical, protocolType, tokenomicsGoal, communityProfile } = req.body;
