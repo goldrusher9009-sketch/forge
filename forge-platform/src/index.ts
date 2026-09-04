@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.48 AI QuantumTech & Computing Strategy Engine ---
+app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a QuantumTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a QuantumTech and quantum computing strategy expert. ${p}\n\nProvide actionable strategy covering: quantum hardware roadmaps, quantum algorithms, post-quantum cryptography, quantum networking, near-term NISQ applications, quantum-classical hybrid systems, enterprise quantum readiness, investment landscape, and talent acquisition.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.47 AI GovTech & Public Sector Strategy Engine ---
 app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
