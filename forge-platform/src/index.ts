@@ -39634,6 +39634,81 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.99 AI ESG & Sustainability Strategy Engine ---
+app.post('/api/esg-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { industry, companySize, currentESG, stakeholderPressure } = req.body;
+    const p = `You are an elite ESG (Environmental, Social, Governance) & Sustainability strategist. Analyze:
+Industry: ${industry || 'Manufacturing & Consumer Goods'}
+Company Size: ${companySize || '$500M revenue, 2,000 employees, publicly traded'}
+Current ESG Maturity: ${currentESG || 'Early stage — basic carbon reporting, no formal ESG program'}
+Stakeholder Pressure: ${stakeholderPressure || 'Investors demanding ESG disclosure, customers asking about sustainability'}
+
+Provide a comprehensive ESG & sustainability strategy:
+
+**ESG MATERIALITY ASSESSMENT**
+- Top material ESG issues for this industry (GRI/SASB)
+- Stakeholder mapping and expectations by group
+- Double materiality analysis (impact + financial)
+- Peer benchmarking on ESG ratings (MSCI, Sustainalytics)
+- Regulatory requirements (SEC climate disclosure, CSRD, TCFD)
+
+**ENVIRONMENTAL STRATEGY**
+- Carbon footprint baseline methodology (Scope 1, 2, 3)
+- Net zero commitment framework and timeline
+- Renewable energy transition roadmap
+- Circular economy and waste reduction initiatives
+- Water and biodiversity impact management
+- Science-based targets (SBTi) pathway
+
+**SOCIAL STRATEGY**
+- DEI metrics, targets, and accountability framework
+- Supply chain human rights due diligence
+- Employee wellbeing and safety programs
+- Community investment and social impact measurement
+- Fair pay and living wage commitments
+- Customer data privacy and product safety
+
+**GOVERNANCE FRAMEWORK**
+- Board ESG oversight structure
+- Executive ESG compensation linkage
+- ESG risk management integration
+- Anti-corruption and business ethics program
+- Whistleblower and accountability mechanisms
+- Shareholder engagement strategy
+
+**ESG REPORTING & DISCLOSURE**
+- Reporting framework selection (GRI, SASB, TCFD, ISSB)
+- ESG data collection and verification process
+- Annual sustainability report design
+- ESG ratings improvement strategy
+- Third-party assurance roadmap
+- Investor relations ESG communication
+
+**ESG BUSINESS VALUE**
+- Cost savings from sustainability initiatives
+- Revenue opportunities from ESG leadership
+- Access to green financing and ESG bonds
+- Employee attraction and retention impact
+- Customer loyalty and brand value uplift
+- Risk mitigation from ESG resilience
+
+**12-MONTH ESG ROADMAP**
+- Q1: Foundation (governance, baseline, materiality)
+- Q2: Strategy (targets, programs, reporting framework)
+- Q3: Implementation (quick wins, pilot programs)
+- Q4: Reporting (first ESG report, ratings submissions)
+- Investment required and ROI at each phase
+
+Deliver a board-ready ESG strategy that creates measurable business value.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.98 AI Revenue Operations & Sales Intelligence Engine ---
 app.post('/api/revops-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
