@@ -39500,6 +39500,38 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.26 AI Product-Market Fit Analyzer ---
+app.post('/api/pmf-analyzer', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, targetSegment, currentUsers, feedback, metrics } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a product strategy expert specializing in PMF assessment. Analyze product-market fit for:
+Product: ${product || 'SaaS product'}
+Target Segment: ${targetSegment || 'SMB'}
+Current Users: ${currentUsers || 'early adopters'}
+User Feedback: ${feedback || 'limited feedback available'}
+Key Metrics: ${metrics || 'early stage'}
+
+Return JSON with these exact keys:
+{
+  "pmfScore": { "score": number (0-100), "verdict": "strong-pmf"|"weak-pmf"|"no-pmf"|"approaching-pmf", "summary": string },
+  "segmentAnalysis": { "bestFitSegment": string, "worstFitSegment": string, "icp": string, "segments": [{ "segment": string, "fitScore": number, "reasoning": string, "signals": string[] }] },
+  "retentionSignals": { "mustHaveScore": number, "niceToHaveFeatures": string[], "coreValueProp": string, "switchingCost": string },
+  "growthSignals": { "organicGrowth": string, "viralCoefficient": string, "referralRate": string, "expansionRevenue": string },
+  "pmfGaps": [{ "gap": string, "severity": "critical"|"major"|"minor", "fix": string, "timeline": string }],
+  "pivotOptions": [{ "pivot": string, "rationale": string, "riskLevel": "low"|"medium"|"high", "effort": string }],
+  "roadToStrongPMF": [{ "milestone": string, "metric": string, "target": string, "actions": string[] }],
+  "experimentPlan": [{ "experiment": string, "hypothesis": string, "successCriteria": string, "duration": string }]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = r.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(m[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.25 AI Enterprise Sales Intelligence ---
 app.post('/api/enterprise-sales-cmd', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
