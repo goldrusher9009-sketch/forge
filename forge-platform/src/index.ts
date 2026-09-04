@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.62 AI CyberSecurity & Zero Trust Strategy Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a CyberSecurity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a CyberSecurity and Zero Trust strategy expert. ${p}\n\nProvide actionable strategy covering: zero trust architecture implementation, SASE adoption, AI-driven threat detection, SOC automation, identity and access management modernization, ransomware defense playbooks, security platform consolidation, MSSP vs in-house security, compliance automation (SOC2, ISO27001), and building recurring revenue in cybersecurity SaaS.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.61 AI HRTech & Future of Work Strategy Engine ---
 app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
