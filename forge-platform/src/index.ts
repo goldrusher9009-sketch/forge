@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.90 AI HealthTech & Digital Therapeutics Engine ---
+app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a healthtech and digital therapeutics strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a healthtech and digital therapeutics expert. Provide comprehensive analysis covering: digital therapeutics (DTx) regulatory pathways (FDA, CE Mark), remote patient monitoring systems, AI-powered diagnostics, electronic health record (EHR) integration, telehealth platform architecture, wearable health data analytics, precision medicine and pharmacogenomics, mental health tech platforms, chronic disease management apps, hospital operations AI, value-based care models, and HIPAA/GDPR compliance frameworks. ${p}\n\nProvide actionable, clinically grounded recommendations with regulatory pathway analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.89 AI MediaTech & Content Distribution Engine ---
 app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
