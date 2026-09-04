@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.87 AI InsurTech & Risk Innovation Engine ---
+app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an insurtech and risk innovation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an insurtech and risk innovation expert. Provide comprehensive analysis covering: usage-based insurance (UBI) models, AI-powered underwriting, claims automation with computer vision, parametric insurance design, embedded insurance distribution, reinsurance technology, cyber insurance products, climate risk modeling, fraud detection systems, digital-first customer experience, IoT-based risk monitoring, and regulatory compliance (Solvency II, NAIC). ${p}\n\nProvide actionable, data-driven recommendations with product innovation roadmaps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.86 AI WealthTech & Personal Finance Engine ---
 app.post('/api/wealthtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
