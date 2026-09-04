@@ -39634,6 +39634,40 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.42 AI Product-Led Growth & Monetization Engine ---
+app.post('/api/plg-monetize', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, industry, currentModel, arpu, churnRate, userBase, freemiumTier, expansionRevenue } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a PLG and monetization strategy expert. Design a comprehensive product-led growth and monetization system.
+Product: ${product}
+Industry: ${industry}
+Current Model: ${currentModel}
+ARPU: ${arpu}
+Churn Rate: ${churnRate}
+User Base: ${userBase}
+Freemium Tier: ${freemiumTier}
+Expansion Revenue: ${expansionRevenue}
+
+Return JSON:
+{
+  "plgScore": { "overall": 0-100, "virality": 0-100, "activation": 0-100, "retention": 0-100, "monetization": 0-100, "expansion": 0-100 },
+  "pricingStrategy": { "recommendedModel": "", "tiers": [{ "name": "", "price": "", "features": [""], "targetSegment": "", "conversionTarget": "" }], "freemiumGate": "", "expansionTriggers": [""] },
+  "growthLoops": [{ "loop": "", "type": "viral|product|paid|content", "flywheel": "", "metrics": [""], "accelerators": [""] }],
+  "activationPlaybook": { "ahamoment": "", "timeToValue": "", "onboardingSteps": [""], "activationMilestones": [""], "dropoffIntervention": [""] },
+  "expansionMotions": [{ "motion": "", "trigger": "", "offer": "", "timing": "", "expectedUplift": "" }],
+  "retentionEngine": { "healthScore": "", "earlyWarning": [""], "interventions": [""], "winbackPlaybook": [""] },
+  "monetizationForecast": [{ "scenario": "", "mrr": "", "arr": "", "payback": "", "ltv": "", "assumptions": [""] }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.41 AI M&A Deal Intelligence & Due Diligence Engine ---
 app.post('/api/ma-intelligence', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
