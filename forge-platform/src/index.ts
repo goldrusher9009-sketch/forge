@@ -39500,6 +39500,38 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.25 AI Enterprise Sales Intelligence ---
+app.post('/api/enterprise-sales-cmd', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, targetAccount, dealSize, stage, stakeholders } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are an elite enterprise sales strategist. Build a comprehensive enterprise sales playbook for:
+Product: ${product || 'B2B SaaS platform'}
+Target Account: ${targetAccount || 'Fortune 500 enterprise'}
+Deal Size: ${dealSize || '$100k-$500k ARR'}
+Sales Stage: ${stage || 'discovery'}
+Known Stakeholders: ${stakeholders || 'unknown'}
+
+Return JSON with these exact keys:
+{
+  "accountIntelligence": { "buyingCenter": [{ "role": string, "persona": string, "painPoints": string[], "motivations": string[], "influence": "economic"|"technical"|"user"|"champion" }], "organizationalDynamics": string, "budgetCycle": string },
+  "dealStrategy": { "approach": string, "keyTheme": string, "competitivePositioning": string, "riskFactors": string[], "winProbability": string },
+  "championPlaybook": { "identificationCriteria": string[], "enablementTools": string[], "coSellingMotion": string, "executiveSponsorStrategy": string },
+  "valueFramework": { "businessCase": string, "roi": string, "riskOfInaction": string, "valueProposition": [{ "stakeholder": string, "value": string, "metric": string }] },
+  "negotiationStrategy": { "anchorPosition": string, "concessions": [{ "item": string, "value": string, "condition": string }], "walkawayPoint": string, "closingTechniques": string[] },
+  "multithreadingPlan": { "contacts": [{ "role": string, "outreachAngle": string, "message": string }], "executiveAlignment": string },
+  "closingPlaybook": { "trialClose": string, "mutualActionPlan": [{ "action": string, "owner": string, "dueDate": string }], "contractStrategy": string },
+  "objectionHandlers": [{ "objection": string, "category": "price"|"timing"|"competition"|"technical"|"political", "response": string, "proofPoint": string }]
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = r.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(m[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.24 AI Growth Engineering & PLG Intelligence ---
 app.post('/api/growth-eng', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
