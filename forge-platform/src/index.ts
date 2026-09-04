@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.71 AI Mergers & Acquisitions Engine ---
+app.post('/api/mandaeng-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Evaluate M&A opportunities and develop our inorganic growth strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an M&A strategy and corporate development expert. Build a comprehensive M&A analysis covering: 1) Strategic rationale and acquisition thesis development 2) Target screening criteria and universe mapping 3) Valuation frameworks (synergy-adjusted DCF, trading comps, transaction comps) 4) Due diligence priority areas 5) Integration planning and 100-day roadmap 6) Deal structure and negotiation strategy 7) Post-merger value capture playbook. Context: ${p}\n\nProvide a structured M&A framework with decision criteria and risk mitigation.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.70 AI Technology Strategy Engine ---
 app.post('/api/techstrat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
