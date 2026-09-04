@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.27 AI HRTech & People Analytics Engine ---
+app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an HRTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an HR technology and people analytics strategy expert specializing in talent acquisition, workforce planning, employee experience, and organizational effectiveness. ${p}\n\nProvide comprehensive analysis covering: AI-powered talent acquisition and ATS optimization, predictive attrition and retention modeling, skills-based organization design, compensation benchmarking and equity analysis, learning and development platform strategy, employee experience and engagement measurement, workforce planning and headcount modeling, DEI analytics and bias detection, performance management transformation, HR tech stack architecture (HRIS/HCM), people analytics data infrastructure, manager effectiveness programs, and future-of-work strategy including hybrid/remote optimization.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.26 AI InsurTech & Risk Engine ---
 app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
