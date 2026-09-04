@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.95 AI Partnership & Channel Strategy Engine ---
+app.post('/api/partnership-strategy', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, stage, model, goals, existing, target } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Partnership & Channel Strategy expert who has built $100M+ partner ecosystems at SaaS companies, marketplaces, and platform businesses. Analyze:
+Product/Business: ${product}
+Company Stage: ${stage || 'Series A'}
+Business Model: ${model || 'Not specified'}
+Partnership Goals: ${goals || 'Revenue growth and distribution'}
+Existing Partnerships: ${existing || 'None yet'}
+Target Customer: ${target || 'Not specified'}
+
+Deliver a comprehensive Partnership & Channel Strategy report:
+1. PARTNERSHIP LANDSCAPE - map of potential partner types: technology, reseller, referral, OEM, co-sell, integration, distribution
+2. IDEAL PARTNER PROFILE - criteria matrix for evaluating and tiering partners (Gold/Silver/Bronze)
+3. TOP 20 TARGET PARTNERS - specific named companies to pursue ranked by strategic value and win probability
+4. PARTNERSHIP ECONOMICS - commission structures, revenue share models, and co-investment frameworks by partner type
+5. PARTNER RECRUITMENT PLAYBOOK - outreach sequences, value proposition by partner segment, and deal terms templates
+6. PARTNER PORTAL & ENABLEMENT - what tools, training, and resources partners need to sell effectively
+7. CO-MARKETING STRATEGY - joint campaigns, content collaboration, event co-sponsorship, and lead sharing protocols
+8. TECHNOLOGY INTEGRATION ROADMAP - API partnerships, marketplace listings (AWS, Salesforce, HubSpot AppExchange)
+9. CHANNEL CONFLICT MANAGEMENT - rules of engagement between direct sales and channel, deal registration, pricing protection
+10. PARTNERSHIP KPIs - pipeline sourced/influenced metrics, partner NPS, revenue attribution model, and QBR agenda template
+
+Be specific with named platforms, marketplaces, and partner categories relevant to this business.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.94 AI Crisis Communication & Reputation Management Engine ---
 app.post('/api/crisis-comms', requireAuth, async (req: AuthRequest, res) => {
   try {
