@@ -39634,6 +39634,37 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.36 AI Customer Experience & Journey Orchestration Engine ---
+app.post('/api/cx-journey', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, customerSegments, touchpoints, painPoints, goals } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a CX strategy expert. Analyze and orchestrate customer experience journeys.
+Company: ${company}
+Industry: ${industry}
+Customer Segments: ${customerSegments}
+Touchpoints: ${touchpoints}
+Pain Points: ${painPoints}
+Goals: ${goals}
+
+Return JSON:
+{
+  "cxScore": { "overall": 0-100, "awareness": 0-100, "consideration": 0-100, "purchase": 0-100, "retention": 0-100, "advocacy": 0-100 },
+  "journeyMap": [{ "stage": "", "touchpoints": [""], "customerEmotion": "", "painPoints": [""], "opportunities": [""], "priority": "critical|high|medium|low" }],
+  "personaInsights": [{ "segment": "", "motivations": [""], "barriers": [""], "preferredChannels": [""], "lifetimeValue": "high|medium|low" }],
+  "orchestrationPlaybook": [{ "trigger": "", "action": "", "channel": "", "message": "", "timing": "", "expectedOutcome": "" }],
+  "quickWins": [{ "initiative": "", "effort": "low|medium|high", "impact": "low|medium|high", "timeToValue": "" }],
+  "kpis": [{ "metric": "", "current": "", "target": "", "timeline": "" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.35 AI Brand Architecture & Market Positioning Engine ---
 app.post('/api/brand-arch', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
