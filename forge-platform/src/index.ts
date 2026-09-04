@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.90 AI Innovation Sprint & R&D Pipeline Engine ---
+app.post('/api/innovation-sprint', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { domain, challenge, constraints, assets, horizon, team } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an Innovation & R&D Strategy expert who has run 100+ design sprints and built R&D pipelines at Fortune 500s and hypergrowth startups. Analyze:
+Domain/Industry: ${domain}
+Innovation Challenge: ${challenge || 'Not specified'}
+Constraints: ${constraints || 'Not specified'}
+Existing Assets/Capabilities: ${assets || 'Not specified'}
+Time Horizon: ${horizon || '12 months'}
+Team Size: ${team || 'Not specified'}
+
+Deliver a comprehensive Innovation Sprint & R&D Pipeline report:
+1. OPPORTUNITY LANDSCAPE - map of white spaces, emerging trends, and unmet needs in this domain
+2. INNOVATION PORTFOLIO MATRIX - classify opportunities across: core (70%), adjacent (20%), transformational (10%)
+3. SPRINT DESIGN - detailed 5-day design sprint agenda with exercises, outcomes, and facilitation tips
+4. IDEA GENERATION - 15 specific innovation concepts ranked by novelty × feasibility × market size
+5. VALIDATION FRAMEWORK - hypothesis-driven experiments for top 3 ideas with success criteria
+6. BUILD/BUY/PARTNER ANALYSIS - for each top idea: make vs. acquire vs. partner decision tree
+7. R&D ROADMAP - 4-quarter pipeline with stage-gate criteria and resource allocation
+8. PATENT & IP STRATEGY - freedom-to-operate considerations and IP moat opportunities
+9. METRICS & GOVERNANCE - innovation KPIs, portfolio review cadence, kill/continue criteria
+10. FUNDING MODEL - internal budget, grants, strategic partnerships, venture studios
+
+Generate specific, novel ideas. Include examples from adjacent industries.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.89 AI GTM Launch Intelligence Engine ---
 app.post('/api/gtm-launch-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
