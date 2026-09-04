@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.29 AI DeepTech & Semiconductor Engine ---
+app.post('/api/deeptech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a DeepTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a deep technology and semiconductor strategy expert specializing in chip design, photonics, advanced materials, quantum hardware, and frontier technology commercialization. ${p}\n\nProvide comprehensive analysis covering: semiconductor design and fabless vs IDM strategy, EDA toolchain and IP licensing landscape, advanced node technology roadmap (2nm/1nm/angstrom), chiplet architecture and heterogeneous integration, photonics and optical computing opportunities, quantum computing hardware commercialization, neuromorphic and analog AI chip design, RISC-V ecosystem and custom silicon strategy, defense and aerospace technology transfer, materials science and manufacturing process innovation, IP portfolio strategy and standards participation, government R&D funding (DARPA/CHIPS Act/Horizon Europe), and go-to-market for frontier hardware companies.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.28 AI MarketingTech & AdTech Engine ---
 app.post('/api/marketingtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
