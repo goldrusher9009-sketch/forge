@@ -39600,6 +39600,40 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.34 AI Talent Intelligence & Workforce Planning Engine ---
+app.post('/api/talent-intel', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, currentTeamSize, openRoles, skillGaps, growthPlans, budget } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'No Anthropic key configured' });
+  const p = `You are a talent intelligence and workforce planning expert. Analyze this company's talent landscape and provide strategic workforce recommendations.
+
+Company: ${company}
+Industry: ${industry}
+Current Team Size: ${currentTeamSize}
+Open Roles: ${openRoles}
+Skill Gaps: ${skillGaps}
+Growth Plans: ${growthPlans}
+Hiring Budget: ${budget}
+
+Return ONLY valid JSON:
+{
+  "workforceScore": { "overall": 72, "talentDensity": 75, "retentionRisk": 65, "skillCoverage": 70, "hiringVelocity": 78 },
+  "criticalRoles": [{ "role": "ML Engineer", "priority": "critical", "marketDemand": "very high", "salaryRange": "$180K-$240K", "timeToFill": "45 days", "sourcingStrategy": "LinkedIn + referrals + Kaggle community" }],
+  "skillGapAnalysis": [{ "skill": "Generative AI", "currentLevel": 2, "requiredLevel": 4, "gap": "critical", "solution": "Hire 2 ML engineers + upskill 3 existing", "timeline": "Q1 2025", "cost": "$420K" }],
+  "retentionRisks": [{ "segment": "Senior engineers (3-5yr tenure)", "flightRisk": "high", "triggers": ["below-market comp", "limited growth"], "intervention": "Equity refresh + promotion track", "cost": "$80K/yr" }],
+  "hiringPlan": [{ "quarter": "Q1 2025", "headcount": 8, "roles": ["ML Engineer x2", "Product Manager x1", "Senior Engineer x3"], "budget": "$2.1M", "priority": "critical" }],
+  "compensationBenchmarks": [{ "role": "Senior Software Engineer", "p25": "$155K", "p50": "$185K", "p75": "$215K", "equity": "0.05-0.2%", "marketTrend": "rising" }],
+  "quickWins": ["Launch employee referral program", "Conduct stay interviews with senior staff", "Partner with 2 coding bootcamps"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.30 AI Regulatory Intelligence & Compliance Forecasting Engine ---
 app.post('/api/reg-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
