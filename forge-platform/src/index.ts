@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.31 AI Innovation Portfolio & R&D Intelligence Engine ---
+app.post('/api/innovation-portfolio', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, currentProjects, rdBudget, strategicGoals, competitorLandscape } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'No Anthropic key configured' });
+  const p = `You are an innovation strategy and R&D intelligence expert. Analyze this company's innovation portfolio and provide strategic recommendations.
+
+Company: ${company}
+Industry: ${industry}
+Current Projects: ${currentProjects}
+R&D Budget: ${rdBudget}
+Strategic Goals: ${strategicGoals}
+Competitor Landscape: ${competitorLandscape}
+
+Return ONLY valid JSON:
+{
+  "portfolioScore": { "overall": 7.1, "diversity": 8, "alignment": 7, "execution": 6, "marketFit": 7 },
+  "horizonMap": { "horizon1": [{ "project": "Core product enhancement", "investment": "40%", "timeToMarket": "6 months", "expectedROI": "3x" }], "horizon2": [{ "project": "Adjacent market expansion", "investment": "35%", "timeToMarket": "18 months", "expectedROI": "5x" }], "horizon3": [{ "project": "Disruptive technology bet", "investment": "25%", "timeToMarket": "36 months", "expectedROI": "10x+" }] },
+  "technologyRadar": [{ "technology": "Generative AI", "category": "adopt", "relevance": "high", "action": "Integrate into core product immediately" }],
+  "innovationGaps": [{ "gap": "No AI/ML capabilities", "impact": "critical", "recommendation": "Hire ML team or acquire startup", "timeline": "Q1 2025" }],
+  "rdOpportunities": [{ "opportunity": "AI-powered automation", "marketSize": "$45B", "competitivePosition": "early mover", "investmentRequired": "$2M", "expectedReturn": "$12M ARR" }],
+  "patentStrategy": { "currentPortfolio": 12, "gaps": ["ML algorithms", "edge computing"], "filingPriorities": ["core AI method", "data pipeline"] },
+  "quickWins": ["Partner with university research lab", "Launch internal hackathon", "Apply for R&D tax credits"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.30 AI Regulatory Intelligence & Compliance Forecasting Engine ---
 app.post('/api/reg-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
