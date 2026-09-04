@@ -39634,6 +39634,40 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.39 AI ESG & Sustainability Intelligence Engine ---
+app.post('/api/esg-intel', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, currentEsgScore, emissions, socialInitiatives, governanceFramework, stakeholders, reportingFramework } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are an ESG and sustainability strategy expert. Analyze and create a comprehensive ESG intelligence report.
+Company: ${company}
+Industry: ${industry}
+Current ESG Score: ${currentEsgScore}
+Emissions Data: ${emissions}
+Social Initiatives: ${socialInitiatives}
+Governance Framework: ${governanceFramework}
+Key Stakeholders: ${stakeholders}
+Reporting Framework: ${reportingFramework}
+
+Return JSON:
+{
+  "esgScore": { "overall": 0-100, "environmental": 0-100, "social": 0-100, "governance": 0-100, "industryBenchmark": 0-100, "trend": "improving|stable|declining" },
+  "environmentalAnalysis": { "carbonFootprint": "", "emissionsReduction": "", "energyEfficiency": "", "waterUsage": "", "wasteManagement": "", "biodiversityImpact": "", "netZeroTarget": "" },
+  "socialMetrics": [{ "area": "", "currentScore": 0-100, "benchmark": 0-100, "initiatives": [""], "gaps": [""] }],
+  "governanceAssessment": { "boardDiversity": "", "executivePay": "", "transparency": "", "riskManagement": "", "ethicsCompliance": "", "shareholder": "" },
+  "materialityMatrix": [{ "issue": "", "businessImpact": "high|medium|low", "stakeholderConcern": "high|medium|low", "priority": "critical|major|minor" }],
+  "roadmap": [{ "initiative": "", "pillar": "E|S|G", "timeline": "", "investment": "", "expectedImpact": "", "sdgAlignment": [""] }],
+  "disclosureReadiness": { "gri": 0-100, "tcfd": 0-100, "sasb": 0-100, "unGlobalCompact": 0-100, "gaps": [""] }
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.38 AI Digital Transformation & Technology Roadmap Engine ---
 app.post('/api/digital-transform-ai', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
