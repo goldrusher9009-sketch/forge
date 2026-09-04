@@ -39634,6 +39634,40 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.43 AI Crisis Communication & Reputation Management Engine ---
+app.post('/api/crisis-comms-ai', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, crisisType, severity, affectedStakeholders, mediaExposure, timeline, currentResponse, desiredOutcome } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a crisis communications and reputation management expert. Build a comprehensive crisis response playbook.
+Company: ${company}
+Crisis Type: ${crisisType}
+Severity: ${severity}
+Affected Stakeholders: ${affectedStakeholders}
+Media Exposure: ${mediaExposure}
+Timeline: ${timeline}
+Current Response: ${currentResponse}
+Desired Outcome: ${desiredOutcome}
+
+Return JSON:
+{
+  "crisisScore": { "severity": 0-100, "reputationalRisk": 0-100, "mediaRisk": 0-100, "legalRisk": 0-100, "recoveryTime": "" },
+  "immediateActions": [{ "action": "", "owner": "", "deadline": "", "priority": "critical|high|medium", "rationale": "" }],
+  "stakeholderComms": [{ "audience": "", "channel": "", "message": "", "timing": "", "tone": "", "doNotSay": "" }],
+  "mediaStrategy": { "spokespeople": [""], "keyMessages": [""], "bridgeStatements": [""], "noGoZones": [""], "pressReleaseDraft": "" },
+  "recoveryRoadmap": [{ "phase": "", "duration": "", "objectives": [""], "tactics": [""], "successMetrics": [""] }],
+  "scenarioPlanning": [{ "scenario": "", "probability": "high|medium|low", "response": "", "contingency": "" }],
+  "reputationRebuild": { "shortTerm": [""], "mediumTerm": [""], "longTerm": [""], "monitoringKPIs": [""] }
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.42 AI Product-Led Growth & Monetization Engine ---
 app.post('/api/plg-monetize', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
