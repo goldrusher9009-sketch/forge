@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.20 AI Brand Intelligence Engine ---
+app.post('/api/brandintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze brand positioning and equity strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a brand intelligence and strategic positioning expert. Help organizations build powerful, differentiated brands. ${p}\n\nProvide: 1) Brand equity assessment and gap analysis 2) Positioning differentiation vs. competitors 3) Target audience persona alignment 4) Brand voice and messaging framework 5) Channel strategy for brand building 6) Brand health metrics and measurement plan 7) Crisis resilience and reputation management playbook 8) Brand extension and portfolio strategy` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.19 AI Supply Chain Intelligence Engine ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
