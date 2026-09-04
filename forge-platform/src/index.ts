@@ -39500,6 +39500,69 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.81 AI Operations Excellence & Process Optimization Engine ---
+app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, companySize, revenue, currentProcesses, painPoints, bottlenecks, techStack, teamStructure, kpis, errorRates, cycleTime, customerComplaints, wasteAreas, automationLevel, complianceReqs, qualityMetrics, supplierCount, inventoryTurns, supportTickets, onboardingTime, reportingTime, meetingLoad, documentationGaps, changeFailRate } = req.body;
+    const p = `You are a world-class operations consultant and process excellence expert (Lean Six Sigma Master Black Belt). Analyze this company's operations and deliver a comprehensive optimization strategy.
+
+Company: ${companyName}
+Industry: ${industry}
+Company Size: ${companySize}
+Revenue: ${revenue}
+Current Processes: ${currentProcesses}
+Pain Points: ${painPoints}
+Bottlenecks: ${bottlenecks}
+Tech Stack: ${techStack}
+Team Structure: ${teamStructure}
+Current KPIs: ${kpis}
+Error Rates: ${errorRates}
+Cycle Time: ${cycleTime}
+Customer Complaints: ${customerComplaints}
+Waste Areas: ${wasteAreas}
+Automation Level: ${automationLevel}
+Compliance Requirements: ${complianceReqs}
+Quality Metrics: ${qualityMetrics}
+Supplier Count: ${supplierCount}
+Inventory Turns: ${inventoryTurns}
+Support Tickets/Month: ${supportTickets}
+Employee Onboarding Time: ${onboardingTime}
+Time Spent on Reporting: ${reportingTime}
+Meeting Load: ${meetingLoad}
+Documentation Gaps: ${documentationGaps}
+Change Failure Rate: ${changeFailRate}
+
+Return a JSON object with:
+{
+  "reportTitle": string,
+  "executiveSummary": string,
+  "opsMaturityScore": number (0-100),
+  "efficiencyScore": number (0-100),
+  "wasteScore": number (0-100, higher = more waste),
+  "estimatedAnnualWaste": string,
+  "urgencyLevel": "Critical"|"High"|"Medium"|"Low",
+  "wasteAnalysis": [{ "wasteType": string, "description": string, "impact": "High"|"Medium"|"Low", "frequency": string, "annualCost": string, "rootCause": string, "elimination": string }],
+  "processAudit": [{ "process": string, "currentState": string, "maturityLevel": "Ad-hoc"|"Defined"|"Managed"|"Optimized", "cycleTime": string, "errorRate": string, "automationPotential": "High"|"Medium"|"Low", "redesignPriority": "P0"|"P1"|"P2", "quickFix": string }],
+  "automationOpportunities": [{ "process": string, "tool": string, "estimatedSaving": string, "implementationTime": string, "complexity": "Low"|"Medium"|"High", "roi": string }],
+  "leanSixSigmaRecommendations": [{ "methodology": string, "application": string, "expectedGain": string, "timeline": string }],
+  "kpiFramework": [{ "kpi": string, "current": string, "target": string, "measurement": string, "owner": string, "frequency": string }],
+  "teamEfficiency": { "meetingOptimization": string, "reportingAutomation": string, "communicationImprovement": string, "onboardingAcceleration": string, "estimatedHoursRecovered": string },
+  "technologyRoadmap": [{ "gap": string, "solution": string, "vendor": string, "cost": string, "timeline": string, "priority": "P0"|"P1"|"P2" }],
+  "changeManagementPlan": { "readinessAssessment": string, "resistanceAreas": string[], "communicationStrategy": string, "trainingPlan": string, "successMetrics": string[] },
+  "complianceRiskAreas": [{ "area": string, "currentGap": string, "riskLevel": "High"|"Medium"|"Low", "remediation": string }],
+  "opsRoadmap": [{ "quarter": string, "initiatives": string[], "expectedImpact": string, "investmentRequired": string, "responsible": string }],
+  "quickWins": string[]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = result.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(match[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.80 AI Brand Architecture & Positioning Engine ---
 app.post('/api/brand-architecture', requireAuth, async (req: AuthRequest, res) => {
   try {

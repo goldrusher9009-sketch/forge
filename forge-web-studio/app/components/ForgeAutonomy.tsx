@@ -2395,6 +2395,140 @@ function CXOptimizationPanel({ api }:{ api:string }) {
   );
 }
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
+const OE_IMPACT_BG = (i:string) => i==='High'?'bg-red-100 text-red-700':i==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
+const OE_MATURITY_BG = (m:string) => m==='Optimized'?'bg-violet-100 text-violet-700':m==='Managed'?'bg-blue-100 text-blue-700':m==='Defined'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';
+const OE_COMPLEX_BG = (c:string) => c==='Low'?'bg-green-100 text-green-700':c==='Medium'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';
+function OpsExcellPanel({ api }:{ api:string }) {
+  const [form,setForm]=React.useState({ companyName:'',industry:'',companySize:'',revenue:'',currentProcesses:'',painPoints:'',bottlenecks:'',techStack:'',teamStructure:'',kpis:'',errorRates:'',cycleTime:'',customerComplaints:'',wasteAreas:'',automationLevel:'',complianceReqs:'',qualityMetrics:'',supplierCount:'',inventoryTurns:'',supportTickets:'',onboardingTime:'',reportingTime:'',meetingLoad:'',documentationGaps:'',changeFailRate:'' });
+  const [res,setRes]=React.useState<any>(null);
+  const [loading,setLoading]=React.useState(false);
+  const go=async()=>{
+    setLoading(true);setRes(null);
+    try{const r=await fetch(`${api}/api/ops-excellence`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)});const d=await r.json();setRes(d);}catch(e){setRes({error:String(e)});}
+    setLoading(false);
+  };
+  const F=({label,k,placeholder}:{label:string,k:keyof typeof form,placeholder?:string})=>(
+    <div><label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+    <input className="w-full border rounded px-2 py-1 text-sm" value={form[k]} placeholder={placeholder||''} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">⚙ AI Operations Excellence & Process Optimization Engine</h2>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <F label="Company Name" k="companyName" placeholder="Acme Corp"/>
+          <F label="Industry" k="industry" placeholder="Manufacturing, SaaS..."/>
+          <F label="Company Size" k="companySize" placeholder="250 employees"/>
+          <F label="Revenue" k="revenue" placeholder="$50M"/>
+          <F label="Current Key Processes" k="currentProcesses" placeholder="Order-to-cash, support..."/>
+          <F label="Main Pain Points" k="painPoints" placeholder="Slow approvals, rework..."/>
+          <F label="Known Bottlenecks" k="bottlenecks" placeholder="Finance sign-off, QA..."/>
+          <F label="Tech Stack" k="techStack" placeholder="Salesforce, SAP, Jira..."/>
+          <F label="Team Structure" k="teamStructure" placeholder="Functional, matrix..."/>
+          <F label="Current KPIs" k="kpis" placeholder="NPS 40, CSAT 3.8..."/>
+          <F label="Error/Defect Rates" k="errorRates" placeholder="3% invoice errors..."/>
+          <F label="Average Cycle Time" k="cycleTime" placeholder="Order fulfillment: 7 days"/>
+          <F label="Customer Complaints" k="customerComplaints" placeholder="50/month, late delivery..."/>
+          <F label="Known Waste Areas" k="wasteAreas" placeholder="Manual data entry, rework..."/>
+          <F label="Current Automation Level" k="automationLevel" placeholder="20% automated"/>
+          <F label="Compliance Requirements" k="complianceReqs" placeholder="ISO 9001, SOC2..."/>
+          <F label="Quality Metrics" k="qualityMetrics" placeholder="First pass yield 85%..."/>
+          <F label="Supplier Count" k="supplierCount" placeholder="45 vendors"/>
+          <F label="Inventory Turns" k="inventoryTurns" placeholder="6x/year"/>
+          <F label="Support Tickets/Month" k="supportTickets" placeholder="800"/>
+          <F label="Employee Onboarding Time" k="onboardingTime" placeholder="6 weeks"/>
+          <F label="Reporting Time/Week" k="reportingTime" placeholder="8 hours/person"/>
+          <F label="Meeting Load" k="meetingLoad" placeholder="40% of week in meetings"/>
+          <F label="Documentation Gaps" k="documentationGaps" placeholder="No SOPs for finance..."/>
+          <F label="Change Failure Rate" k="changeFailRate" placeholder="25% of changes cause issues"/>
+        </div>
+        <button onClick={go} disabled={loading||!form.companyName} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50">{loading?'Analyzing...':'Run Ops Excellence Analysis'}</button>
+      </div>
+      {res&&!res.error&&(<>
+        <div className="grid grid-cols-4 gap-4">
+          {[['Ops Maturity',res.opsMaturityScore,'%'],['Efficiency',res.efficiencyScore,'%'],['Waste Score',res.wasteScore,'%'],['Est. Annual Waste',res.estimatedAnnualWaste,'']].map(([l,v,u])=>(
+            <div key={String(l)} className="bg-white rounded-xl shadow p-4 text-center">
+              <div className="text-xl font-bold text-indigo-700">{v}{u}</div>
+              <div className="text-xs text-gray-500 mt-1">{l}</div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white rounded-xl shadow p-6">
+          <h3 className="text-lg font-bold mb-2">{res.reportTitle}</h3>
+          <p className="text-gray-700 text-sm">{res.executiveSummary}</p>
+        </div>
+        {res.wasteAnalysis?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">🗑 Waste Analysis</h3>
+            <div className="space-y-2">
+              {res.wasteAnalysis.map((w:any,i:number)=>(
+                <div key={i} className="border rounded p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`px-2 py-0.5 rounded text-xs ${OE_IMPACT_BG(w.impact)}`}>{w.impact}</span>
+                    <span className="font-semibold text-sm">{w.wasteType}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{w.annualCost}</span>
+                  </div>
+                  <p className="text-xs text-gray-600">{w.description} → {w.elimination}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {res.processAudit?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">🔍 Process Audit</h3>
+            <div className="space-y-2">
+              {res.processAudit.map((p:any,i:number)=>(
+                <div key={i} className="border rounded p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm">{p.process}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs ${OE_MATURITY_BG(p.maturityLevel)}`}>{p.maturityLevel}</span>
+                    <span className={`ml-auto px-2 py-0.5 rounded text-xs ${p.redesignPriority==='P0'?'bg-red-100 text-red-700':p.redesignPriority==='P1'?'bg-orange-100 text-orange-700':'bg-blue-100 text-blue-700'}`}>{p.redesignPriority}</span>
+                  </div>
+                  <p className="text-xs text-gray-600">{p.currentState} · Error: {p.errorRate} · Quick fix: {p.quickFix}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {res.automationOpportunities?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">🤖 Automation Opportunities</h3>
+            <div className="space-y-2">
+              {res.automationOpportunities.map((a:any,i:number)=>(
+                <div key={i} className="border rounded p-3 text-sm">
+                  <div className="flex gap-2 mb-1">
+                    <span className="font-semibold">{a.process}</span>
+                    <span className="text-gray-500">→ {a.tool}</span>
+                    <span className={`ml-auto px-2 py-0.5 rounded text-xs ${OE_COMPLEX_BG(a.complexity)}`}>{a.complexity}</span>
+                  </div>
+                  <p className="text-xs text-gray-600">Save: {a.estimatedSaving} · ROI: {a.roi} · Time: {a.implementationTime}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {res.teamEfficiency&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">👥 Team Efficiency — {res.teamEfficiency.estimatedHoursRecovered} recovered/week</h3>
+            <div className="grid grid-cols-2 gap-3 text-xs text-gray-700">
+              {[['Meetings',res.teamEfficiency.meetingOptimization],['Reporting',res.teamEfficiency.reportingAutomation],['Communication',res.teamEfficiency.communicationImprovement],['Onboarding',res.teamEfficiency.onboardingAcceleration]].map(([k,v])=>(
+                <div key={String(k)} className="border rounded p-2"><span className="font-medium">{k}: </span>{v}</div>
+              ))}
+            </div>
+          </div>
+        )}
+        {res.quickWins?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">⚡ Quick Wins</h3>
+            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">{res.quickWins.map((w:string,i:number)=><li key={i}>{w}</li>)}</ul>
+          </div>
+        )}
+      </>)}
+      {res?.error&&<div className="bg-red-50 border border-red-200 rounded p-4 text-red-700 text-sm">{res.error}</div>}
+    </div>
+  );
+}
 const BA_MEM_BG = (m:string) => m==='High'?'bg-violet-100 text-violet-700':m==='Medium'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-600';
 const BA_PRI_BG = (p:string) => p==='Primary'?'bg-indigo-600 text-white':p==='Secondary'?'bg-blue-100 text-blue-700':'bg-gray-100 text-gray-600';
 function BrandArchPanel({ api }:{ api:string }) {
@@ -26190,7 +26324,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -26335,6 +26469,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26394,6 +26529,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26512,6 +26648,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26571,6 +26708,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26675,6 +26813,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26734,6 +26873,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26794,6 +26934,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26853,6 +26994,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26963,6 +27105,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27022,6 +27165,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'finscenario39', label: '📊 Fin Scenario' },
     { id: 'brandarch40', label: '🎨 Brand Arch' },
+    { id: 'opsexcell41', label: '⚙ Ops Excellence' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27228,6 +27372,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27287,6 +27432,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27347,6 +27493,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27406,6 +27553,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27494,6 +27642,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27553,6 +27702,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27613,6 +27763,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27672,6 +27823,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27751,6 +27903,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27810,6 +27963,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27870,6 +28024,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27929,6 +28084,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28021,6 +28177,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28080,6 +28237,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28164,6 +28322,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28223,6 +28382,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28283,6 +28443,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28342,6 +28503,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28421,6 +28583,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28480,6 +28643,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28540,6 +28704,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28599,6 +28764,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28691,6 +28857,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28750,6 +28917,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28810,6 +28978,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28869,6 +29038,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28948,6 +29118,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29007,6 +29178,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29067,6 +29239,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29126,6 +29299,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29214,6 +29388,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29273,6 +29448,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29333,6 +29509,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29392,6 +29569,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
           {tab === 'finscenario39' && <FinScenarioPanel api={api} />}
           {tab === 'brandarch40' && <BrandArchPanel api={api} />}
+          {tab === 'opsexcell41' && <OpsExcellPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
