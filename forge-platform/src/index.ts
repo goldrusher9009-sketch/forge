@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.86 AI Organizational Design & Culture Intelligence Engine ---
+app.post('/api/org-culture-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { size, structure, challenges, values, growth, remote } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an Organizational Design & Culture expert with deep expertise in scaling high-performance teams. Analyze:
+Company Size: ${size || 'Not specified'}
+Current Structure: ${structure || 'Not specified'}
+Cultural Challenges: ${challenges || 'Not specified'}
+Core Values: ${values || 'Not specified'}
+Growth Stage/Rate: ${growth || 'Not specified'}
+Remote/Hybrid/Office: ${remote || 'Not specified'}
+
+Deliver a comprehensive Org Design & Culture Intelligence report:
+1. ORG HEALTH SCORE - rate across 6 dimensions: clarity, accountability, collaboration, innovation, retention, inclusion
+2. STRUCTURE ANALYSIS - current org design vs. ideal for this growth stage (flat/hierarchical/matrix/pod)
+3. CULTURE AUDIT - identify 3 toxic patterns and 3 cultural strengths with behavioral evidence
+4. SPAN OF CONTROL - optimal manager ratios and where current structure breaks down
+5. TEAM TOPOLOGY - recommended team structures (stream-aligned, platform, enabling, complicated subsystem)
+6. TALENT DENSITY STRATEGY - hiring bar, performance management, and regrettable attrition prevention
+7. PSYCHOLOGICAL SAFETY FRAMEWORK - specific interventions to build high-trust culture
+8. REMOTE/HYBRID PLAYBOOK - async-first practices, rituals, and collab infrastructure
+9. CULTURE CHANGE ROADMAP - 6-month transformation plan with leading indicators
+10. RETENTION RISK MATRIX - who's likely to leave and targeted retention interventions
+
+Be specific with org charts, ratios, and cultural intervention techniques.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.85 AI Revenue Operations Command Center ---
 app.post('/api/revops-command', requireAuth, async (req: AuthRequest, res) => {
   try {
