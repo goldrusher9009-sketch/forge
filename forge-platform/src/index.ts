@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.41 AI Sales Enablement Engine ---
+app.post('/api/salesenable-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a comprehensive sales enablement program to accelerate revenue growth';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a sales enablement and revenue acceleration expert. Help organizations build high-performing sales teams and processes. ${p}\n\nProvide: 1) Sales process audit and optimization recommendations 2) Ideal customer profile (ICP) and buyer persona refinement 3) Sales methodology selection (MEDDIC, Challenger, SPIN) and implementation 4) Content and collateral strategy by buyer stage 5) Sales training and onboarding program design 6) CRM and sales tech stack recommendations 7) Sales coaching cadence and performance management framework 8) Revenue operations alignment between sales, marketing, and customer success` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.40 AI Platform Business Model Engine ---
 app.post('/api/platbiz-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
