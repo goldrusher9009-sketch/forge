@@ -39634,6 +39634,34 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.53 AI Data Strategy & Analytics Maturity Engine ---
+app.post('/api/data-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, currentDataStack, dataTeamSize, dataProblems, businessGoals, dataMaturityLevel, budget, keyDecisions } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a chief data officer and analytics strategy expert. Create a comprehensive data strategy and analytics maturity roadmap.
+Company: ${company}, Industry: ${industry}, Size: ${companySize}
+Current Data Stack: ${currentDataStack}, Data Team: ${dataTeamSize}
+Problems: ${dataProblems}, Goals: ${businessGoals}
+Maturity Level: ${dataMaturityLevel}, Budget: ${budget}, Key Decisions: ${keyDecisions}
+Return ONLY valid JSON (no markdown):
+{
+  "maturityAssessment": { "overall": 0-100, "dataCollection": 0-100, "dataQuality": 0-100, "analytics": 0-100, "aiMl": 0-100, "dataGovernance": 0-100, "dataLiteracy": 0-100, "currentLevel": "reactive|descriptive|diagnostic|predictive|prescriptive" },
+  "stackRecommendation": { "ingestion": [], "storage": [], "transformation": [], "orchestration": [], "visualization": [], "aiMl": [], "governance": [], "estimatedCost": "", "buildVsBuy": "" },
+  "roadmap": [{ "phase": "", "duration": "", "initiatives": [], "investment": "", "expectedROI": "", "kpis": [], "dependencies": [] }],
+  "useCases": [{ "useCase": "", "businessImpact": "", "difficulty": "easy|medium|hard", "timeline": "", "dataRequired": [], "expectedValue": "", "priority": 1 }],
+  "governanceFramework": { "dataOwnership": [], "qualityStandards": [], "privacyCompliance": [], "accessControls": [], "catalogStrategy": "", "lineageTracking": "" },
+  "teamStructure": { "currentGaps": [], "hiringPlan": [], "trainingNeeds": [], "embeddedVsCentralized": "", "orgModel": "" },
+  "quickWins": [{ "initiative": "", "effort": "low|medium|high", "impact": "low|medium|high", "timeToValue": "", "owner": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.52 AI Executive Coaching & Leadership Development Engine ---
 app.post('/api/exec-coaching-ai', requireAuth, async (req: AuthRequest, res) => {
   const { name, role, company, industry, teamSize, challenges, strengths, goals, feedbackThemes, careerStage, coachingFocus } = req.body;
