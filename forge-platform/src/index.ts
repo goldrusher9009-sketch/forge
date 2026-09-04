@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.18 AI Cybersecurity & InfoSec Strategy Engine ---
+app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { securityType, securityChallenge, threatContext, orgProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite cybersecurity and information security strategy expert with deep expertise in threat intelligence, zero-trust architecture, SOC operations, AI-powered security, and enterprise risk management.
+
+Security Type/Company: ${securityType}
+Security Challenge: ${securityChallenge}
+Threat Context: ${threatContext}
+Organization Profile: ${orgProfile}
+
+Provide a comprehensive Cybersecurity strategy covering:
+1. Zero Trust Architecture — identity-centric security, microsegmentation, continuous verification design
+2. AI-Powered Threat Detection — ML anomaly detection, behavioral analytics, adversarial AI defense
+3. SOC Modernization — SIEM/SOAR integration, alert fatigue reduction, threat hunting workflows
+4. Cloud Security Posture — CSPM/CWPP architecture, misconfiguration detection, runtime protection
+5. Supply Chain & Third-Party Risk — vendor risk scoring, SBOMs, software supply chain integrity
+6. Incident Response & Recovery — IR playbook design, tabletop exercises, ransomware resilience
+7. Compliance & Regulatory Alignment — NIST CSF, SOC2, ISO 27001, GDPR, CMMC frameworks
+8. Security Product GTM — enterprise sales motion, channel strategy, MSSP partnerships, competitive positioning
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.17 AI Media & Entertainment Strategy Engine ---
 app.post('/api/media-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
