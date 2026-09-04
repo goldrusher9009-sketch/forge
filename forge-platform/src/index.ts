@@ -39500,6 +39500,41 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.19 AI Operations Excellence & Process Intelligence Engine ---
+app.post('/api/ops-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companyName, industry, processArea, teamSize, currentPainPoints, tools, kpis, budget } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a world-class COO and operations excellence consultant with expertise in process optimization.
+Company: ${companyName}
+Industry: ${industry}
+Process Area: ${processArea}
+Team Size: ${teamSize}
+Current Pain Points: ${currentPainPoints}
+Current Tools: ${tools}
+Key KPIs: ${kpis}
+Improvement Budget: ${budget}
+
+Return comprehensive operations intelligence as JSON:
+{
+  "maturityAssessment": {"overallScore": number, "dimensions": [{"dimension": "string", "score": number, "benchmark": number, "gap": "string"}]},
+  "processAnalysis": {"valueStreamMap": [{"step": "string", "currentTime": "string", "wasteType": "string", "improvementOpp": "string"}], "bottlenecks": ["string"], "quickWins": ["string"]},
+  "optimizationRoadmap": [{"initiative": "string", "phase": "now|next|later", "effort": "low|medium|high", "impact": "low|medium|high", "roi": "string", "timeline": "string"}],
+  "automationOpportunities": [{"process": "string", "automationType": "string", "toolRecommendation": "string", "savingsEstimate": "string", "implementationTime": "string"}],
+  "kpiFramework": [{"kpi": "string", "current": "string", "target": "string", "measurement": "string", "frequency": "string"}],
+  "changeManagement": {"readinessScore": number, "resistanceAreas": ["string"], "stakeholders": [{"role": "string", "influence": "high|medium|low", "stance": "champion|neutral|resistant", "action": "string"}], "communicationPlan": ["string"]},
+  "technologyStack": [{"category": "string", "recommendation": "string", "priority": "critical|important|nice-to-have", "cost": "string"}],
+  "executiveSummary": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.18 AI Brand Architecture & Identity Engine ---
 app.post('/api/brand-arch', requireAuth, async (req: AuthRequest, res) => {
   try {
