@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.05 AI CreatorEconomy & Content Monetization Engine ---
+app.post('/api/creatoreconomy-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a creator economy strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a creator economy and content monetization strategy expert. ${p}\n\nProvide comprehensive analysis covering: multi-platform content distribution strategies, subscription and membership monetization models, brand partnership and sponsorship optimization, NFT and digital ownership frameworks for creators, AI-powered content creation tools, audience analytics and growth hacking, newsletter and community monetization, live streaming revenue optimization, merch and physical product lines for creators, creator fund and platform economics, long-tail creator monetization, and building creator-first SaaS tools. Include specific revenue benchmarks, platform comparisons, and actionable growth tactics.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.04 AI MobilityTech & Future of Transportation Engine ---
 app.post('/api/mobilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
