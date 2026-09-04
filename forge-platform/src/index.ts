@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.06 AI Cybersecurity Intelligence Engine ---
+app.post('/api/cybersec-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Assess cybersecurity posture and threat landscape';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a cybersecurity expert and CISO advisor. Analyze security posture, identify threats, and provide actionable defense strategies. ${p}\n\nProvide: 1) Threat landscape analysis 2) Attack surface assessment 3) Zero-trust architecture recommendations 4) Incident response playbook 5) Compliance gaps (SOC2/ISO27001/NIST) 6) Security roadmap with priorities` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.05 AI FinOps & Cloud Cost Engine ---
 app.post('/api/finops-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
