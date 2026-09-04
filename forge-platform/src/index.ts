@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.87 AI M&A Due Diligence Intelligence Engine ---
+app.post('/api/ma-due-diligence', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { target, acquirer, dealType, valuation, rationale, concerns } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are an M&A Due Diligence expert with 20+ years of deal experience across PE, strategic acquisitions, and divestitures. Analyze:
+Target Company: ${target}
+Acquirer: ${acquirer || 'Strategic buyer'}
+Deal Type: ${dealType || 'Acquisition'}
+Indicated Valuation: ${valuation || 'Not specified'}
+Strategic Rationale: ${rationale || 'Not specified'}
+Key Concerns: ${concerns || 'None specified'}
+
+Produce a comprehensive M&A Due Diligence Intelligence report:
+1. DEAL THESIS VALIDATION - score strategic rationale on 5 dimensions with red/yellow/green flags
+2. FINANCIAL DUE DILIGENCE CHECKLIST - 20 critical items with risk level and red flag indicators
+3. VALUATION ANALYSIS - comparable transactions, DCF assumptions to stress-test, EV/EBITDA ranges
+4. SYNERGY FRAMEWORK - revenue synergies (cross-sell, pricing), cost synergies (headcount, procurement), timeline to realization
+5. INTEGRATION RISK MATRIX - cultural, technical, operational, and customer retention risks with probability × impact
+6. DEAL BREAKERS - 5 specific conditions that should kill the deal
+7. NEGOTIATION LEVERAGE - where buyer/seller has advantage and specific deal protection mechanisms
+8. 100-DAY INTEGRATION PLAN - workstreams, owners, dependencies, and quick wins
+9. REGULATORY RISK - antitrust exposure, approval timeline, remedies likely required
+10. RETURN ANALYSIS - IRR scenarios at different entry multiples and synergy realization rates
+
+Be analytical and specific. Include industry benchmarks and deal precedents.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.86 AI Organizational Design & Culture Intelligence Engine ---
 app.post('/api/org-culture-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
