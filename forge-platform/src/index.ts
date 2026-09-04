@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.32 AI Innovation Portfolio Engine ---
+app.post('/api/innovport-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build an innovation portfolio strategy for sustainable competitive advantage';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an innovation portfolio management and R&D strategy expert. Help organizations balance innovation investments across horizons. ${p}\n\nProvide: 1) Innovation portfolio assessment using Horizon 1/2/3 framework 2) Current portfolio gaps and imbalances 3) Recommended innovation investment allocation by horizon 4) Core innovation themes and technology bets 5) Build vs buy vs partner decisions for each innovation area 6) Stage-gate process and portfolio governance recommendations 7) Innovation metrics, KPIs, and portfolio health indicators 8) Resource allocation and innovation team structure recommendations` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.31 AI Scenario Planning Engine ---
 app.post('/api/scenplan-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
