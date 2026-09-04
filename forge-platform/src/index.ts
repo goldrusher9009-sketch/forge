@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.19 AI Energy & Clean Tech Strategy Engine ---
+app.post('/api/energytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { energyType, energyChallenge, marketContext, assetProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite energy technology and clean tech strategy expert with deep expertise in renewable energy, grid modernization, energy storage, carbon markets, and the energy transition.
+
+Energy Type/Company: ${energyType}
+Energy Challenge: ${energyChallenge}
+Market Context: ${marketContext}
+Asset/Growth Profile: ${assetProfile}
+
+Provide a comprehensive Energy & Clean Tech strategy covering:
+1. Renewable Energy Optimization — solar/wind asset performance, curtailment reduction, predictive maintenance
+2. Grid Modernization & Flexibility — virtual power plants, demand response, grid-edge intelligence
+3. Energy Storage Strategy — BESS economics, duration optimization, co-location with renewables
+4. Carbon Markets & ESG — voluntary carbon credits, compliance markets, scope 3 emissions tracking
+5. EV Charging Infrastructure — network economics, grid integration, managed charging platforms
+6. Energy Trading & Analytics — price forecasting, algorithmic trading, REC arbitrage
+7. Hydrogen & Long-Duration Storage — green hydrogen economics, electrolyzer cost curves, offtake strategy
+8. Clean Tech Financing & Policy — IRA/ITC/PTC incentives, green bonds, PPA structuring, permitting
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.18 AI Cybersecurity & InfoSec Strategy Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
