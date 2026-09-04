@@ -39634,6 +39634,42 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.45 AI Workforce Analytics & People Intelligence Engine ---
+app.post('/api/workforce-ai', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, headcount, industry, attritionRate, topRoles, skillGaps, hiringGoals, remotePolicy, compensationBand, cultureChallenges } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a workforce analytics and people intelligence expert. Analyze this workforce and provide strategic recommendations.
+Company: ${company}
+Headcount: ${headcount}
+Industry: ${industry}
+Attrition Rate: ${attritionRate}
+Top Roles: ${topRoles}
+Skill Gaps: ${skillGaps}
+Hiring Goals: ${hiringGoals}
+Remote Policy: ${remotePolicy}
+Compensation Band: ${compensationBand}
+Culture Challenges: ${cultureChallenges}
+
+Return JSON:
+{
+  "workforceHealth": { "overallScore": 0-100, "engagementScore": 0-100, "retentionRisk": 0-100, "productivityIndex": 0-100, "cultureScore": 0-100 },
+  "attritionAnalysis": { "riskLevel": "critical|high|medium|low", "primaryDrivers": [""], "estimatedCost": "", "highRiskSegments": [""], "retentionInterventions": [""] },
+  "skillsGapPlan": [{ "skill": "", "currentLevel": "none|basic|intermediate|advanced", "targetLevel": "", "trainingPath": "", "timeToClose": "", "priority": "high|medium|low" }],
+  "hiringStrategy": [{ "role": "", "urgency": "immediate|q1|q2|h2", "sourcingChannels": [""], "salaryBenchmark": "", "interviewProcess": "", "expectedTimeToHire": "" }],
+  "compensationAnalysis": { "marketPosition": "below|at|above", "adjustmentRecommendations": [""], "equityConsiderations": [""], "totalRewardsOpportunities": [""] },
+  "cultureInitiatives": [{ "initiative": "", "targetOutcome": "", "timeline": "", "owner": "", "successMetric": "" }],
+  "workforceKPIs": [{ "metric": "", "currentValue": "", "benchmark": "", "target": "", "action": "" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.44 AI Supply Chain Intelligence & Resilience Engine ---
 app.post('/api/supply-chain-ai', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
