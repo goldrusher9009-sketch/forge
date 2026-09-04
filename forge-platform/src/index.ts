@@ -39634,6 +39634,42 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.48 AI Partnership & Alliance Strategy Engine ---
+app.post('/api/partnership-ai', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, partnershipGoals, currentPartners, targetPartners, geographies, dealStructure, budget, timeline, competitiveContext } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a partnership and alliance strategy expert. Build a comprehensive partnership strategy.
+Company: ${company}
+Industry: ${industry}
+Partnership Goals: ${partnershipGoals}
+Current Partners: ${currentPartners}
+Target Partners: ${targetPartners}
+Geographies: ${geographies}
+Deal Structure: ${dealStructure}
+Budget: ${budget}
+Timeline: ${timeline}
+Competitive Context: ${competitiveContext}
+
+Return JSON:
+{
+  "partnershipScore": { "strategicFit": 0-100, "marketCoverage": 0-100, "executionReadiness": 0-100, "revenueImpact": 0-100 },
+  "partnerOpportunities": [{ "partner": "", "type": "technology|channel|strategic|OEM|co-sell", "strategicFit": 0-100, "revenueOpportunity": "", "approachStrategy": "", "keyContacts": "", "priority": "high|medium|low" }],
+  "allianceFramework": { "structureOptions": [{ "type": "", "pros": [""], "cons": [""], "bestFor": "" }], "recommendedStructure": "", "governanceModel": "", "exitCriteria": "" },
+  "dealTerms": [{ "term": "", "ourPosition": "", "partnerExpectation": "", "negotiationRange": "", "mustHave": true }],
+  "integrationRoadmap": [{ "phase": "", "duration": "", "activities": [""], "dependencies": [""], "successCriteria": "" }],
+  "riskMitigation": [{ "risk": "", "likelihood": "high|medium|low", "impact": "high|medium|low", "mitigation": "", "contingency": "" }],
+  "successMetrics": [{ "metric": "", "target": "", "measurement": "", "frequency": "", "owner": "" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.47 AI Pricing Intelligence & Revenue Optimization Engine ---
 app.post('/api/pricing-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
