@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.12 AI Legal Tech & Contract Intelligence Engine ---
+app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { contractType, legalChallenge, jurisdiction, dealProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite legal technology and contract intelligence strategist with deep expertise in LegalTech, CLM platforms, AI-driven contract analysis, and legal operations transformation.
+
+Contract/Company Type: ${contractType}
+Legal Challenge: ${legalChallenge}
+Jurisdiction/Market: ${jurisdiction}
+Deal/Growth Profile: ${dealProfile}
+
+Provide a comprehensive LegalTech strategy covering:
+1. AI Contract Analysis & Risk Intelligence — clause extraction, anomaly detection, risk scoring
+2. Contract Lifecycle Management (CLM) — workflow automation, approval routing, obligation tracking
+3. Legal Operations Transformation — matter management, spend analytics, outside counsel optimization
+4. Regulatory Compliance Intelligence — jurisdiction-specific risk mapping, regulatory change monitoring
+5. eDiscovery & Litigation Tech — document review automation, predictive coding, case strategy
+6. IP & Patent Intelligence — freedom-to-operate analysis, portfolio optimization, prior art search
+7. Legal AI Platform Strategy — build vs. buy, integration with DMS/ERP, data governance
+8. Pricing & GTM for LegalTech — law firm vs. enterprise vs. SMB segmentation, ROI frameworks
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.11 AI Real Estate & PropTech Strategy Engine ---
 app.post('/api/proptech-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
