@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.39 AI MobilityTech & Transportation Engine ---
+app.post('/api/mobilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MobilityTech and transportation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MobilityTech and transportation intelligence expert. Provide comprehensive analysis covering autonomous vehicle development, EV charging infrastructure, ride-hailing and micro-mobility platforms, urban air mobility (eVTOL/drones), fleet management AI, connected vehicle ecosystems, public transit optimization, logistics and last-mile delivery tech, smart traffic management, hyperloop and high-speed rail, and sustainable transportation policy. ${p}\n\nProvide actionable insights with technology roadmaps, regulatory frameworks, and market opportunity analysis.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.38 AI FoodTech & AgriTech Intelligence Engine ---
 app.post('/api/foodtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
