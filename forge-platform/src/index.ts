@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.60 AI SportsTech & Wellness Engine ---
+app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SportsTech & Wellness strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a SportsTech and wellness technology expert. Analyze sports performance platforms, athlete health monitoring, fan engagement tech, esports infrastructure, wellness apps, wearables, and fitness innovation. ${p}\n\nProvide actionable insights on performance optimization, athlete data analytics, sports betting tech, stadium technology, and the convergence of health and sports ecosystems.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.59 AI DeepTech & Emerging Technologies Engine ---
 app.post('/api/deeptech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
