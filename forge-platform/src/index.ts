@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.32 AI ClimateTech & ESG Intelligence Engine ---
+app.post('/api/climatetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a ClimateTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a climate technology and ESG strategy expert specializing in carbon markets, nature-based solutions, climate finance, sustainability reporting, and the net-zero transition. ${p}\n\nProvide comprehensive analysis covering: corporate net-zero strategy and Science Based Targets (SBTi), carbon credit markets (voluntary vs compliance, REDD+, DAC), ESG reporting frameworks (CSRD/TCFD/GRI/SASB/SEC climate disclosure), green bond and sustainability-linked finance, Scope 1/2/3 emissions measurement and reduction, climate risk assessment (physical and transition risk), nature-based solutions and biodiversity credits, clean energy procurement (PPAs, RECs, additionality), carbon border adjustment mechanisms (CBAM), circular economy strategy, climate tech investment landscape, sustainable supply chain decarbonization, and policy tailwinds (IRA/EU Green Deal/carbon pricing).` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.31 AI Web3 & Blockchain Strategy Engine ---
 app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
