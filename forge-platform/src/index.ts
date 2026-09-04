@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.60 AI Talent Intelligence & Workforce Planning Engine ---
+app.post('/api/talent-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, headcount, growthPlan, criticalRoles, skillGaps, attritionRate, competitorTalent, hiringBudget, remotePolicy, diversityGoals, hrChallenges } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a talent intelligence and workforce planning expert. Create a comprehensive talent strategy and workforce plan.
+Company: ${company}, Industry: ${industry}, Headcount: ${headcount}
+Growth Plan: ${growthPlan}, Critical Roles: ${criticalRoles}, Skill Gaps: ${skillGaps}
+Attrition Rate: ${attritionRate}, Competitor Talent: ${competitorTalent}
+Hiring Budget: ${hiringBudget}, Remote Policy: ${remotePolicy}
+Diversity Goals: ${diversityGoals}, HR Challenges: ${hrChallenges}
+Return ONLY valid JSON (no markdown):
+{
+  "workforceSnapshot": { "healthScore": 0-100, "retentionRisk": 0-100, "skillCoverage": 0-100, "diversityScore": 0-100, "productivityIndex": 0-100, "pipelineStrength": 0-100 },
+  "criticalRoleAnalysis": [{ "role": "", "urgency": "critical|high|medium", "supplyDemand": "scarce|balanced|abundant", "timeToHire": "", "salaryBenchmark": "", "sourcingChannels": [], "retentionRisk": "high|medium|low" }],
+  "skillGapPlan": [{ "skill": "", "gap": "", "buildVsBuy": "build|buy|partner", "timeline": "", "investment": "", "approach": [] }],
+  "retentionStrategy": [{ "segment": "", "retentionRisk": 0-100, "rootCauses": [], "interventions": [], "cost": "", "expectedImpact": "" }],
+  "hiringPlan": [{ "quarter": "", "headcount": 0, "roles": [], "budget": "", "sourceBreakdown": { "inbound": "", "outbound": "", "referral": "", "agency": "" } }],
+  "diversityPlan": { "currentState": "", "targets": [], "initiatives": [], "metrics": [], "timeline": "" },
+  "employerBrand": { "evpStrength": 0-100, "glassdoorScore": "", "competitivePosition": "", "keyDifferentiators": [], "improvementAreas": [] }
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.59 AI Digital Transformation & Technology Roadmap Engine ---
 app.post('/api/digital-transform-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, currentTechStack, digitalMaturity, transformationGoals, budget, timeline, painPoints, competitors, regulatoryConstraints, changeReadiness } = req.body;
