@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.56 AI Customer Success Engine ---
+app.post('/api/custsuccess-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a customer success strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a customer success and retention expert. Develop a comprehensive CS strategy for: ${p}\n\nProvide:\n1. Customer health scoring model (usage, engagement, NPS, support tickets)\n2. Segmented success playbooks by customer tier\n3. Onboarding journey optimization\n4. Churn prediction signals and intervention triggers\n5. Expansion revenue (upsell/cross-sell) motion\n6. CS team structure, tooling, and KPI framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.55 AI Market Entry Engine ---
 app.post('/api/marketentry-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
