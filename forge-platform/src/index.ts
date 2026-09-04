@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.48 AI Brand Strategy Engine ---
+app.post('/api/brandstrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop a brand strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a brand strategy expert with deep expertise in brand positioning and identity. Develop a comprehensive brand strategy for: ${p}\n\nProvide:\n1. Brand positioning statement and unique value proposition\n2. Target audience personas and emotional drivers\n3. Brand personality, voice, and tone guidelines\n4. Messaging hierarchy and key narratives\n5. Visual identity direction and brand associations\n6. Brand activation roadmap across channels` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.47 AI Product Roadmap Engine ---
 app.post('/api/prodroad-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
