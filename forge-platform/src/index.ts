@@ -39634,6 +39634,38 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.40 AI Competitive War Room & Market Intelligence Engine ---
+app.post('/api/war-room', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, competitors, targetMarket, productCategory, differentiators, weaknesses } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a competitive intelligence and war room strategy expert. Build a comprehensive competitive analysis.
+Company: ${company}
+Industry: ${industry}
+Competitors: ${competitors}
+Target Market: ${targetMarket}
+Product Category: ${productCategory}
+Our Differentiators: ${differentiators}
+Our Weaknesses: ${weaknesses}
+
+Return JSON:
+{
+  "marketPosition": { "marketShare": "", "growthRate": "", "brandStrength": 0-100, "competitiveIndex": 0-100, "moatScore": 0-100 },
+  "competitorProfiles": [{ "name": "", "strengths": [""], "weaknesses": [""], "strategy": "", "threat": "critical|high|medium|low", "recentMoves": [""], "vulnerabilities": [""] }],
+  "battlecards": [{ "competitor": "", "ourWins": [""], "theirWins": [""], "objectionHandlers": [{ "objection": "", "response": "" }], "talkingPoints": [""] }],
+  "marketIntel": { "trends": [""], "threats": [""], "opportunities": [""], "whitespace": [""], "disruptions": [""] },
+  "strategicMoves": [{ "move": "", "rationale": "", "timeline": "", "expectedImpact": "", "counterResponse": "" }],
+  "warRoomAlerts": [{ "alert": "", "severity": "critical|high|medium", "competitor": "", "recommendation": "", "deadline": "" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.39 AI ESG & Sustainability Intelligence Engine ---
 app.post('/api/esg-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
