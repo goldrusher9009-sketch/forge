@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.88 AI Customer Success & Retention Intelligence Engine ---
+app.post('/api/cs-retention-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { segment, churnRate, nps, onboarding, healthScore, expansion } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Customer Success expert who has built CS organizations at scale. Analyze:
+Customer Segment: ${segment || 'B2B SaaS'}
+Monthly Churn Rate: ${churnRate || 'Not specified'}
+NPS Score: ${nps || 'Not specified'}
+Onboarding Process: ${onboarding || 'Not specified'}
+Health Score System: ${healthScore || 'Not defined'}
+Expansion Revenue: ${expansion || 'Not specified'}
+
+Deliver a comprehensive CS & Retention Intelligence report:
+1. RETENTION HEALTH SCORE - grade across: onboarding, adoption, engagement, satisfaction, expansion, advocacy
+2. CHURN ROOT CAUSE ANALYSIS - segment churn by reason (product gaps, competition, budget, champion loss, poor fit)
+3. HEALTH SCORE FRAMEWORK - build a 5-signal health score model with weights and thresholds
+4. EARLY WARNING SYSTEM - 10 leading indicators of churn risk with detection timing
+5. SEGMENTED PLAYBOOKS - tailored success plays for: new (0-90 days), at-risk, champion-less, expansion-ready
+6. ONBOARDING OPTIMIZATION - time-to-value reduction strategies and activation milestones
+7. QBR FRAMEWORK - executive business review template with ROI proof points
+8. EXPANSION TRIGGERS - product usage signals that predict upsell/cross-sell readiness
+9. SAVE PLAYBOOK - step-by-step rescue process for red accounts with scripts
+10. CS TEAM STRUCTURE - optimal CSM:account ratio, segmentation model, tools stack
+
+Include specific metrics, email templates, and conversation frameworks.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.87 AI M&A Due Diligence Intelligence Engine ---
 app.post('/api/ma-due-diligence', requireAuth, async (req: AuthRequest, res) => {
   try {

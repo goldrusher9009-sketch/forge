@@ -2397,6 +2397,77 @@ function CXOptimizationPanel({ api }:{ api:string }) {
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
+const CS_HEALTH_BG = (h:string) => h==='Green'?'bg-green-100 text-green-700':h==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';
+const CS_SEGMENT_BG: Record<string,string> = { 'Enterprise':'bg-violet-100 text-violet-700', 'Mid-Market':'bg-blue-100 text-blue-700', 'SMB':'bg-green-100 text-green-700', 'Startup':'bg-orange-100 text-orange-700' };
+function CSRetentionPanel({ api }: { api: string }) {
+  const [segment, setSegment] = React.useState('B2B SaaS');
+  const [churnRate, setChurnRate] = React.useState('');
+  const [nps, setNps] = React.useState('');
+  const [onboarding, setOnboarding] = React.useState('');
+  const [healthScore, setHealthScore] = React.useState('');
+  const [expansion, setExpansion] = React.useState('');
+  const [result, setResult] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+  const run = async () => {
+    if (!churnRate && !nps) return;
+    setLoading(true); setResult('');
+    try {
+      const r = await fetch(`${api}/api/cs-retention-intel`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ segment, churnRate, nps, onboarding, healthScore, expansion }) });
+      const d = await r.json();
+      setResult(d.analysis || d.error || 'No result');
+    } catch (e: any) { setResult(e.message); }
+    setLoading(false);
+  };
+  const segments = ['B2B SaaS', 'Enterprise Software', 'SMB Platform', 'Marketplace', 'Developer Tools', 'Vertical SaaS'];
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">💚 Customer Success & Retention Intelligence</h2>
+        <p className="text-gray-500 text-sm">AI-powered health scoring, churn analysis, and CS playbooks</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Business Segment</label>
+          <select value={segment} onChange={e=>setSegment(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400">
+            {segments.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Monthly Churn Rate *</label>
+          <input value={churnRate} onChange={e=>setChurnRate(e.target.value)} placeholder="e.g. 3.2%, $45K MRR churn..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">NPS Score</label>
+          <input value={nps} onChange={e=>setNps(e.target.value)} placeholder="e.g. 42, based on 200 responses..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-600 mb-1">Expansion Revenue</label>
+          <input value={expansion} onChange={e=>setExpansion(e.target.value)} placeholder="e.g. NRR 105%, low upsell motion..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+        </div>
+      </div>
+      <div className="mb-3">
+        <label className="block text-xs font-semibold text-gray-600 mb-1">Onboarding Process</label>
+        <input value={onboarding} onChange={e=>setOnboarding(e.target.value)} placeholder="e.g. 30-day guided onboarding, 60% activation rate, 14-day TTV..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+      </div>
+      <div className="mb-4">
+        <label className="block text-xs font-semibold text-gray-600 mb-1">Current Health Score System</label>
+        <input value={healthScore} onChange={e=>setHealthScore(e.target.value)} placeholder="e.g. Login frequency + feature adoption + support tickets..." className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-400" />
+      </div>
+      <button onClick={run} disabled={loading||(!churnRate&&!nps)} className="w-full bg-green-700 text-white py-3 rounded-lg font-semibold hover:bg-green-800 disabled:opacity-50 transition-colors">
+        {loading ? '🔄 Analyzing Customer Success...' : '💚 Generate CS Retention Report'}
+      </button>
+      {result && (
+        <div className="mt-6 bg-gray-50 border rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg">📊</span>
+            <span className="font-bold text-gray-800">CS & Retention Intelligence Report</span>
+          </div>
+          <div className="prose prose-sm max-w-none text-gray-700 whitespace-pre-wrap text-sm leading-relaxed">{result}</div>
+        </div>
+      )}
+    </div>
+  );
+}
 const MA_DEAL_BG: Record<string,string> = { Acquisition:'bg-blue-100 text-blue-700', Merger:'bg-violet-100 text-violet-700', Divestiture:'bg-orange-100 text-orange-700', 'PE Buyout':'bg-emerald-100 text-emerald-700', 'Asset Purchase':'bg-yellow-100 text-yellow-700' };
 function MADueDilPanel({ api }: { api: string }) {
   const [target, setTarget] = React.useState('');
@@ -26747,7 +26818,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -26899,6 +26970,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26965,6 +27037,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27090,6 +27163,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27156,6 +27230,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27267,6 +27342,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27333,6 +27409,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27400,6 +27477,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27466,6 +27544,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27583,6 +27662,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27649,6 +27729,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'revopscmd45', label: '💰 RevOps Command' },
     { id: 'orgculture46', label: '🏛 Org & Culture' },
     { id: 'maduedil47', label: '🤝 M&A Diligence' },
+    { id: 'csretention48', label: '💚 CS Retention' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27862,6 +27943,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27928,6 +28010,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27995,6 +28078,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28061,6 +28145,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28156,6 +28241,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28222,6 +28308,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28289,6 +28376,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28355,6 +28443,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28441,6 +28530,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28507,6 +28597,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28574,6 +28665,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28640,6 +28732,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28739,6 +28832,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28805,6 +28899,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28896,6 +28991,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28962,6 +29058,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29029,6 +29126,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29095,6 +29193,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29181,6 +29280,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29247,6 +29347,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29314,6 +29415,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29380,6 +29482,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29479,6 +29582,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29545,6 +29649,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29612,6 +29717,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29678,6 +29784,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29764,6 +29871,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29830,6 +29938,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29897,6 +30006,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29963,6 +30073,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30058,6 +30169,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30124,6 +30236,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30191,6 +30304,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30257,6 +30371,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'revopscmd45' && <RevOpsCmdPanel api={api} />}
           {tab === 'orgculture46' && <OrgCulturePanel api={api} />}
           {tab === 'maduedil47' && <MADueDilPanel api={api} />}
+          {tab === 'csretention48' && <CSRetentionPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
