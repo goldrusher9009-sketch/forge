@@ -39634,6 +39634,97 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.09 AI FinTech & Financial Services Strategy Engine ---
+app.post('/api/fintech-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { companyType, strategicChallenge, regulatoryJurisdiction, growthGoals } = req.body;
+    const p = `You are an elite FinTech & Financial Services Strategy advisor. Analyze:
+Company Type: ${companyType || 'Embedded finance startup, Series A, offering BNPL for B2B SaaS companies'}
+Strategic Challenge: ${strategicChallenge || 'Banking-as-a-service partner instability, need to build own lending license'}
+Regulatory Jurisdiction: ${regulatoryJurisdiction || 'US (federal + state), targeting EU expansion, money transmitter licenses in 40 states'}
+Growth Goals: ${growthGoals || 'Scale from $50M to $500M GMV in 24 months, profitability by month 30'}
+
+Provide a comprehensive FinTech and financial services strategy:
+
+**MARKET & REGULATORY LANDSCAPE**
+- FinTech market segment analysis and TAM sizing
+- Regulatory environment overview by jurisdiction
+- Banking charter options (national bank, state charter, industrial loan company)
+- Money transmission licensing requirements by state
+- Open banking and PSD2/PSD3 opportunities
+- CFPB, OCC, Fed regulatory posture analysis
+- Crypto/DeFi regulatory developments if relevant
+
+**LICENSING & COMPLIANCE STRATEGY**
+- Optimal licensing pathway analysis
+- Bank Secrecy Act (BSA) and AML program design
+- KYC/KYB/AML technology stack requirements
+- OFAC and sanctions screening
+- Fair lending and CRA considerations
+- State-by-state licensing prioritization
+- Fintech charter and sandbox opportunities
+- Compliance technology and RegTech vendor evaluation
+
+**BANKING & INFRASTRUCTURE PARTNERSHIPS**
+- Bank partner (BaaS) selection criteria and evaluation
+- Sponsor bank relationship management
+- Core banking system options (legacy vs. modern)
+- Payment rail access (ACH, wire, RTP, FedNow)
+- Card network relationships (Visa, Mastercard, Amex)
+- API banking infrastructure providers
+- Fraud and risk management infrastructure
+
+**PRODUCT & BUSINESS MODEL STRATEGY**
+- Revenue model design (interchange, interest, fees, SaaS)
+- Unit economics modeling (CAC, LTV, default rates)
+- Credit underwriting model development
+- Deposit and funding strategy
+- Product roadmap prioritization
+- Embedded finance vs. direct-to-consumer tradeoffs
+- International expansion product considerations
+
+**RISK MANAGEMENT FRAMEWORK**
+- Credit risk modeling and scorecarding
+- Fraud detection and prevention architecture
+- Operational risk controls
+- Liquidity and capital management
+- Model risk management (MRM) program
+- Third-party and vendor risk management
+- Cybersecurity and data protection
+
+**CAPITAL & FUNDING STRATEGY**
+- Equity vs. debt funding optimization
+- Warehouse facility and securitization strategy
+- Venture debt considerations
+- Forward flow and loan sale arrangements
+- Ratings agency engagement strategy
+- Institutional investor development
+
+**GROWTH & DISTRIBUTION STRATEGY**
+- Distribution channel optimization
+- Partnership and white-label strategy
+- Merchant/enterprise acquisition playbook
+- Consumer acquisition and LTV optimization
+- Geographic expansion sequencing
+- M&A and partnership targets
+
+**TECHNOLOGY & DATA STRATEGY**
+- Core technology architecture decisions
+- Data strategy and proprietary data moat
+- AI/ML in underwriting and fraud
+- API-first architecture for embedded products
+- Cloud and security infrastructure
+- Technology debt and scalability planning
+
+Deliver a FinTech strategy playbook with regulatory milestones, product roadmap, and unit economics targets.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.08 AI Healthcare & Life Sciences Strategy Engine ---
 app.post('/api/healthcare-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
