@@ -39634,6 +39634,77 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.92 AI Legal Intelligence & Contract Strategy Engine ---
+app.post('/api/legal-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { situation, contractType, jurisdiction, counterparty } = req.body;
+    const p = `You are an elite Legal Intelligence & Contract Strategy advisor (note: not legal advice — educational intelligence only). Analyze:
+Situation: ${situation || 'Negotiating SaaS subscription agreement with enterprise customer'}
+Contract Type: ${contractType || 'SaaS Master Subscription Agreement (MSA)'}
+Jurisdiction: ${jurisdiction || 'United States, Delaware governing law'}
+Counterparty: ${counterparty || 'Fortune 500 enterprise, procurement-led'}
+
+Provide comprehensive legal intelligence:
+
+**CONTRACT RISK ASSESSMENT**
+- High-risk clauses to flag for legal review
+- One-sided terms that need negotiation
+- Missing protective clauses (from your perspective)
+- Indemnification and liability cap analysis
+
+**KEY NEGOTIATION POINTS**
+- Must-have positions (non-negotiable)
+- Strong preferences (negotiate hard)
+- Nice-to-haves (concede if needed)
+- Concessions you can offer in exchange
+
+**COUNTERPARTY DYNAMICS**
+- Typical enterprise procurement tactics
+- How to counter standard pushback
+- Decision-maker vs. legal team dynamics
+- Timeline management strategies
+
+**STANDARD CLAUSE INTELLIGENCE**
+- IP ownership and license scope
+- Data privacy and security obligations
+- SLA commitments and service credits
+- Termination rights and notice periods
+- Change of control provisions
+- Auto-renewal and cancellation terms
+
+**RED LINE IDENTIFICATION**
+- Clauses that create unacceptable risk
+- Unlimited liability scenarios
+- Intellectual property traps
+- Non-compete and non-solicitation risks
+
+**NEGOTIATION STRATEGY**
+- Opening position vs. walk-away position
+- Package deal structure
+- Concession sequencing
+- Escalation path if negotiation stalls
+
+**COMPLIANCE CHECKLIST**
+- GDPR/CCPA data processing requirements
+- Security certifications to reference
+- Audit right limitations
+- Regulatory compliance representations
+
+**POST-SIGNATURE MANAGEMENT**
+- Key dates and renewal triggers to track
+- Performance obligations timeline
+- Dispute resolution escalation path
+- Amendment process recommendations
+
+Provide educational intelligence to help prepare for legal discussions. Always consult qualified legal counsel for actual legal advice.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.91 AI Investor Relations & Fundraising Intelligence Engine ---
 app.post('/api/investor-relations-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
