@@ -2395,6 +2395,141 @@ function CXOptimizationPanel({ api }:{ api:string }) {
   );
 }
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
+const CX_EMOTION_BG = (e:string) => e==='Delighted'?'bg-violet-100 text-violet-700':e==='Satisfied'?'bg-green-100 text-green-700':e==='Neutral'?'bg-gray-100 text-gray-600':e==='Frustrated'?'bg-orange-100 text-orange-700':'bg-red-100 text-red-700';
+const CX_IMPACT_BG = (i:string) => i==='Critical'?'bg-red-600 text-white':i==='High'?'bg-orange-500 text-white':i==='Medium'?'bg-yellow-500 text-white':'bg-blue-100 text-blue-700';
+const CX_EFFORT_BG = (e:string) => e==='Low'?'bg-green-100 text-green-700':e==='Medium'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';
+function CXJourneyPanel({ api }:{ api:string }) {
+  const [form,setForm]=React.useState({ companyName:'',industry:'',businessModel:'',customerSegments:'',currentNPS:'',avgCLTV:'',churnRate:'',avgOrderValue:'',purchaseFrequency:'',supportTicketVolume:'',csat:'',firstContactResolution:'',avgResolutionTime:'',onboardingCompletion:'',featureAdoption:'',touchpoints:'',currentPainPoints:'',competitorCX:'',techStack:'',teamSize:'',budget:'',cxGoals:'' });
+  const [res,setRes]=React.useState<any>(null);
+  const [loading,setLoading]=React.useState(false);
+  const go=async()=>{
+    setLoading(true);setRes(null);
+    try{const r=await fetch(`${api}/api/cx-journey-optimizer`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)});const d=await r.json();setRes(d);}catch(e){setRes({error:String(e)});}
+    setLoading(false);
+  };
+  const F=({label,k,placeholder}:{label:string,k:keyof typeof form,placeholder?:string})=>(
+    <div><label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+    <input className="w-full border rounded px-2 py-1 text-sm" value={form[k]} placeholder={placeholder||''} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} /></div>
+  );
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-xl shadow p-6">
+        <h2 className="text-xl font-bold text-gray-800 mb-4">🛤 AI Customer Experience & Journey Optimization Engine</h2>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <F label="Company Name" k="companyName" placeholder="Acme Corp"/>
+          <F label="Industry" k="industry" placeholder="SaaS, E-commerce..."/>
+          <F label="Business Model" k="businessModel" placeholder="B2B SaaS, D2C..."/>
+          <F label="Customer Segments" k="customerSegments" placeholder="SMB, Enterprise..."/>
+          <F label="Current NPS" k="currentNPS" placeholder="32"/>
+          <F label="Avg CLTV" k="avgCLTV" placeholder="$2,400"/>
+          <F label="Churn Rate" k="churnRate" placeholder="5%/month"/>
+          <F label="Avg Order Value" k="avgOrderValue" placeholder="$150"/>
+          <F label="Purchase Frequency" k="purchaseFrequency" placeholder="3x/year"/>
+          <F label="Support Ticket Volume" k="supportTicketVolume" placeholder="500/month"/>
+          <F label="CSAT Score" k="csat" placeholder="3.8/5"/>
+          <F label="First Contact Resolution" k="firstContactResolution" placeholder="65%"/>
+          <F label="Avg Resolution Time" k="avgResolutionTime" placeholder="24 hours"/>
+          <F label="Onboarding Completion" k="onboardingCompletion" placeholder="45%"/>
+          <F label="Feature Adoption Rate" k="featureAdoption" placeholder="30%"/>
+          <F label="Key Touchpoints" k="touchpoints" placeholder="Website, app, email..."/>
+          <F label="Current Pain Points" k="currentPainPoints" placeholder="Slow support, confusing UI..."/>
+          <F label="Competitor CX" k="competitorCX" placeholder="Intercom, Zendesk..."/>
+          <F label="Tech Stack" k="techStack" placeholder="Salesforce, Segment..."/>
+          <F label="CX Team Size" k="teamSize" placeholder="12"/>
+          <F label="CX Budget" k="budget" placeholder="$800K/year"/>
+          <F label="CX Goals" k="cxGoals" placeholder="NPS 60, churn < 2%..."/>
+        </div>
+        <button onClick={go} disabled={loading||!form.companyName} className="bg-indigo-600 text-white px-6 py-2 rounded-lg font-semibold disabled:opacity-50">{loading?'Analyzing...':'Run CX Analysis'}</button>
+      </div>
+      {res&&!res.error&&(<>
+        <div className="grid grid-cols-4 gap-4">
+          {[['CX Maturity',res.cxMaturityScore,'%'],['Sentiment',res.customerSentimentScore,'%'],['Retention Risk',res.retentionRiskScore,'%'],['Revenue at Risk',res.revenueAtRisk,'']].map(([l,v,u])=>(
+            <div key={String(l)} className="bg-white rounded-xl shadow p-4 text-center">
+              <div className="text-xl font-bold text-indigo-700">{v}{u}</div>
+              <div className="text-xs text-gray-500 mt-1">{l}</div>
+            </div>
+          ))}
+        </div>
+        <div className="bg-white rounded-xl shadow p-6">
+          <div className="flex items-center gap-3 mb-3">
+            <h3 className="text-lg font-bold">{res.reportTitle}</h3>
+            <span className={`px-2 py-1 rounded text-xs font-bold ${CX_IMPACT_BG(res.urgencyLevel)}`}>{res.urgencyLevel}</span>
+          </div>
+          <p className="text-gray-700 text-sm">{res.executiveSummary}</p>
+        </div>
+        {res.journeyMapAnalysis?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">🗺 Journey Map Analysis</h3>
+            <div className="space-y-2">
+              {res.journeyMapAnalysis.map((j:any,i:number)=>(
+                <div key={i} className="border rounded p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm">{j.stage}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs ${CX_EMOTION_BG(j.emotionalState)}`}>{j.emotionalState}</span>
+                    <span className={`ml-auto px-2 py-0.5 rounded text-xs ${j.dropoffRisk==='High'?'bg-red-100 text-red-700':j.dropoffRisk==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}`}>Drop: {j.dropoffRisk}</span>
+                  </div>
+                  <p className="text-xs text-gray-600 mb-1">{j.currentExperience}</p>
+                  {j.opportunities?.length>0&&<p className="text-xs text-indigo-600">↗ {j.opportunities.join(' · ')}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {res.frictionPointAudit?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">⚠ Friction Point Audit</h3>
+            <div className="space-y-2">
+              {res.frictionPointAudit.map((f:any,i:number)=>(
+                <div key={i} className="border rounded p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`px-2 py-0.5 rounded text-xs ${CX_IMPACT_BG(f.impactLevel)}`}>{f.impactLevel}</span>
+                    <span className="font-semibold text-sm">{f.touchpoint}</span>
+                    <span className="text-xs text-gray-500 ml-auto">{f.revenueImpact}</span>
+                    <span className={`px-2 py-0.5 rounded text-xs ${CX_EFFORT_BG(f.effortLevel)}`}>Effort: {f.effortLevel}</span>
+                  </div>
+                  <p className="text-xs text-gray-600">{f.frictionType} → {f.fix}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {res.churnPreventionStrategy&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">🔒 Churn Prevention — Expected Reduction: {res.churnPreventionStrategy.expectedChurnReduction}</h3>
+            <p className="text-xs font-semibold text-gray-700 mb-1">Early Warning Signals:</p>
+            <ul className="list-disc list-inside text-xs text-gray-600 mb-3 space-y-1">{res.churnPreventionStrategy.earlyWarningSignals?.map((s:string,i:number)=><li key={i}>{s}</li>)}</ul>
+            {res.churnPreventionStrategy.interventionPlaybook?.length>0&&(
+              <div><p className="text-xs font-semibold text-gray-700 mb-1">Intervention Playbook:</p>
+              <div className="space-y-1">{res.churnPreventionStrategy.interventionPlaybook.map((p:any,i:number)=>(
+                <div key={i} className="text-xs border rounded p-2 flex gap-2"><span className="text-orange-600 font-medium">{p.trigger}</span><span>→</span><span className="text-gray-600">{p.action}</span><span className="ml-auto text-gray-400">{p.channel} · {p.timing}</span></div>
+              ))}</div></div>
+            )}
+          </div>
+        )}
+        {res.personalizationRoadmap?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">🎯 Personalization Roadmap</h3>
+            <div className="space-y-2">
+              {res.personalizationRoadmap.map((p:any,i:number)=>(
+                <div key={i} className="border rounded p-3 text-sm flex gap-2 items-start">
+                  <span className={`mt-0.5 px-2 py-0.5 rounded text-xs font-bold ${p.priority==='P0'?'bg-red-100 text-red-700':p.priority==='P1'?'bg-orange-100 text-orange-700':'bg-blue-100 text-blue-700'}`}>{p.priority}</span>
+                  <div><p className="font-semibold">{p.initiative}</p><p className="text-xs text-gray-500">{p.dataRequired} · Lift: {p.expectedLift} · {p.implementation}</p></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        {res.quickWins?.length>0&&(
+          <div className="bg-white rounded-xl shadow p-6">
+            <h3 className="text-lg font-bold mb-3">⚡ Quick Wins</h3>
+            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">{res.quickWins.map((w:string,i:number)=><li key={i}>{w}</li>)}</ul>
+          </div>
+        )}
+      </>)}
+      {res?.error&&<div className="bg-red-50 border border-red-200 rounded p-4 text-red-700 text-sm">{res.error}</div>}
+    </div>
+  );
+}
 const TI_AVAIL_BG = (a:string) => a==='Abundant'?'bg-green-100 text-green-700':a==='Moderate'?'bg-blue-100 text-blue-700':a==='Scarce'?'bg-yellow-100 text-yellow-700':'bg-red-100 text-red-700';
 const TI_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const TI_MKT_COLOR = (p:string) => p==='Top 10%'?'text-violet-700':p==='Above'?'text-blue-600':p==='At'?'text-gray-600':'text-red-600';
@@ -25781,7 +25916,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -25923,6 +26058,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -25979,6 +26115,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26094,6 +26231,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26150,6 +26288,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26251,6 +26390,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26307,6 +26447,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26364,6 +26505,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26420,6 +26562,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26527,6 +26670,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26583,6 +26727,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltx31', label: '⚡ Digital Transformation' },
     { id: 'regintel36', label: '⚖ Regulatory Intel' },
     { id: 'talintel37', label: '🧠 Talent Intel' },
+    { id: 'cxjourney38', label: '🛤 CX Journey' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -26786,6 +26931,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -26842,6 +26988,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -26899,6 +27046,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -26955,6 +27103,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27040,6 +27189,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27096,6 +27246,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27153,6 +27304,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27209,6 +27361,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27285,6 +27438,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27341,6 +27495,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27398,6 +27553,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27454,6 +27610,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27543,6 +27700,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27599,6 +27757,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27680,6 +27839,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27736,6 +27896,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27793,6 +27954,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27849,6 +28011,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27925,6 +28088,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -27981,6 +28145,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28038,6 +28203,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28094,6 +28260,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28183,6 +28350,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28239,6 +28407,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28296,6 +28465,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28352,6 +28522,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28428,6 +28599,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28484,6 +28656,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28541,6 +28714,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28597,6 +28771,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28682,6 +28857,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28738,6 +28914,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28795,6 +28972,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28851,6 +29029,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
           {tab === 'digitaltx31' && <DigitalTransformPanel api={api} />}
           {tab === 'regintel36' && <RegIntelPanel api={api} />}
           {tab === 'talintel37' && <TalIntelPanel api={api} />}
+          {tab === 'cxjourney38' && <CXJourneyPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}

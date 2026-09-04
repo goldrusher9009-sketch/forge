@@ -39500,6 +39500,67 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.78 AI Customer Experience & Journey Optimization Engine ---
+app.post('/api/cx-journey-optimizer', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+    const { companyName, industry, businessModel, customerSegments, currentNPS, avgCLTV, churnRate, avgOrderValue, purchaseFrequency, supportTicketVolume, csat, firstContactResolution, avgResolutionTime, onboardingCompletion, featureAdoption, touchpoints, currentPainPoints, competitorCX, techStack, teamSize, budget, cxGoals } = req.body;
+    const p = `You are a world-class customer experience strategist. Analyze this company's customer experience and provide a comprehensive CX optimization strategy.
+
+Company: ${companyName}
+Industry: ${industry}
+Business Model: ${businessModel}
+Customer Segments: ${customerSegments}
+Current NPS: ${currentNPS}
+Avg CLTV: ${avgCLTV}
+Churn Rate: ${churnRate}
+Avg Order Value: ${avgOrderValue}
+Purchase Frequency: ${purchaseFrequency}
+Support Ticket Volume: ${supportTicketVolume}
+CSAT Score: ${csat}
+First Contact Resolution: ${firstContactResolution}
+Avg Resolution Time: ${avgResolutionTime}
+Onboarding Completion Rate: ${onboardingCompletion}
+Feature Adoption Rate: ${featureAdoption}
+Key Touchpoints: ${touchpoints}
+Current Pain Points: ${currentPainPoints}
+Competitor CX: ${competitorCX}
+Tech Stack: ${techStack}
+CX Team Size: ${teamSize}
+CX Budget: ${budget}
+CX Goals: ${cxGoals}
+
+Return a JSON object with:
+{
+  "reportTitle": string,
+  "executiveSummary": string,
+  "cxMaturityScore": number (0-100),
+  "customerSentimentScore": number (0-100),
+  "retentionRiskScore": number (0-100),
+  "revenueAtRisk": string,
+  "urgencyLevel": "Critical"|"High"|"Medium"|"Low",
+  "journeyMapAnalysis": [{ "stage": string, "currentExperience": string, "painPoints": string[], "emotionalState": "Delighted"|"Satisfied"|"Neutral"|"Frustrated"|"Angry", "dropoffRisk": "High"|"Medium"|"Low", "opportunities": string[] }],
+  "segmentAnalysis": [{ "segment": string, "cltv": string, "satisfactionLevel": string, "churnRisk": "High"|"Medium"|"Low", "keyNeeds": string[], "personalizationOpportunity": string }],
+  "frictionPointAudit": [{ "touchpoint": string, "frictionType": string, "impactLevel": "Critical"|"High"|"Medium"|"Low", "affectedUsers": string, "revenueImpact": string, "fix": string, "effortLevel": "Low"|"Medium"|"High" }],
+  "npsDriverAnalysis": { "promoterDrivers": string[], "detractorDrivers": string[], "passiveConversionOpportunities": string[], "projectedNPSLift": string },
+  "churnPreventionStrategy": { "earlyWarningSignals": string[], "interventionPlaybook": [{ "trigger": string, "action": string, "channel": string, "timing": string }], "winbackStrategy": string, "expectedChurnReduction": string },
+  "onboardingOptimization": { "currentGaps": string[], "milestoneRedesign": string[], "activationMetrics": string[], "timeToValue": string, "personalizationTactics": string[] },
+  "supportExcellence": { "deflectionOpportunities": string[], "selfServiceExpansion": string[], "agentEnablement": string[], "automationPriorities": string[], "knowledgeBaseGaps": string[] },
+  "personalizationRoadmap": [{ "initiative": string, "dataRequired": string, "expectedLift": string, "implementation": "Quick"|"Medium"|"Complex", "priority": "P0"|"P1"|"P2" }],
+  "loyaltyStrategy": { "programDesign": string, "tierStructure": string[], "rewardMechanics": string[], "communityBuilding": string, "advocacyProgram": string },
+  "techStackRecommendations": [{ "capability": string, "tool": string, "justification": string, "estimatedCost": string }],
+  "cxRoadmap": [{ "quarter": string, "initiatives": string[], "kpis": string[], "budget": string, "expectedImpact": string }],
+  "quickWins": string[]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const match = result.match(/\{[\s\S]*\}/);
+    if (!match) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(match[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.77 AI Talent Intelligence & Workforce Strategy Engine ---
 app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
