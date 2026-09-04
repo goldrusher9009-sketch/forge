@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.74 AI OceanTech & Blue Economy Engine ---
+app.post('/api/oceantech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an ocean technology and blue economy strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an ocean technology and blue economy expert. Analyze and provide deep insights on: ${p}\n\nCover: offshore wind, aquaculture innovation, ocean mining, desalination tech, marine biotech, plastic remediation, autonomous underwater vehicles, ocean data platforms, maritime logistics optimization, and sustainable fisheries management.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.73 AI SyntheticBiology & BioFoundry Engine ---
 app.post('/api/synbio-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
