@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.64 AI MobilityTech & Transportation Engine ---
+app.post('/api/mobilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MobilityTech & Transportation strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MobilityTech and transportation technology expert. Analyze electric vehicles, autonomous driving, ride-sharing platforms, urban air mobility, fleet management software, smart infrastructure, micromobility, logistics automation, and the future of transportation systems. ${p}\n\nProvide actionable insights on mobility platform business models, regulatory navigation, infrastructure requirements, and investment opportunities in the transportation technology sector.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.63 AI PropTech & Real Estate Engine ---
 app.post('/api/proptech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
