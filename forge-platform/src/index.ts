@@ -39500,6 +39500,37 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.23 AI Competitive Intelligence Command Center ---
+app.post('/api/compintel-cmd', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, competitors, industry, focus } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a competitive intelligence expert and strategic advisor. Provide comprehensive competitive intelligence for:
+Company: ${company || 'our company'}
+Competitors: ${competitors || 'top 3 market leaders'}
+Industry: ${industry || 'general'}
+Focus Areas: ${focus || 'market position, product, pricing, strategy'}
+
+Return JSON with these exact keys:
+{
+  "competitiveLandscape": { "marketDynamics": string, "keyTrends": string[], "disruptionRisks": string[] },
+  "competitorProfiles": [{ "name": string, "marketShare": string, "strengths": string[], "weaknesses": string[], "recentMoves": string[], "strategy": string }],
+  "battleCards": [{ "competitor": string, "winAgainst": string[], "loseAgainst": string[], "differentiators": string[], "objectionHandlers": [{ "objection": string, "response": string }] }],
+  "productComparison": [{ "feature": string, "us": string, "competitors": [{ "name": string, "rating": "leader"|"parity"|"gap" }] }],
+  "pricingIntelligence": { "marketPricing": string, "competitorPricing": [{ "competitor": string, "model": string, "range": string, "positioning": string }], "recommendations": string[] },
+  "strategicOpportunities": [{ "opportunity": string, "rationale": string, "urgency": "immediate"|"near-term"|"long-term", "effort": "low"|"medium"|"high" }],
+  "threatAssessment": [{ "threat": string, "source": string, "likelihood": "high"|"medium"|"low", "impact": "high"|"medium"|"low", "mitigation": string }],
+  "winLossInsights": { "winThemes": string[], "lossThemes": string[], "switchingTriggers": string[] }
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = r.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(m[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.22 AI Data Strategy & Analytics Intelligence Engine ---
 app.post('/api/data-strategy', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
