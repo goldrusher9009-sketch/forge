@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.82 AI MarTech & Growth Intelligence Engine ---
+app.post('/api/martech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MarTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a MarTech and growth intelligence strategy expert. ${p}\n\nProvide actionable strategy covering: customer data platform architecture and first-party data strategy, attribution modeling in a cookieless world, marketing automation ROI and stack rationalization, AI-powered personalization at scale, growth loops vs. paid acquisition economics, product-led growth instrumentation, content distribution and SEO moats, influencer and creator economy marketing, account-based marketing for enterprise sales, and building durable MarTech businesses amid Adobe and Salesforce consolidation.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.81 AI HRTech & Future of Work Engine ---
 app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
