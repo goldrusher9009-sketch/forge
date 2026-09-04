@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.97 AI DeepTech & Semiconductor Engine ---
+app.post('/api/deeptech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a DeepTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a deep technology and semiconductor strategy expert. ${p}\n\nProvide a comprehensive strategy covering: chip design and fabless semiconductor business models, AI accelerator and GPU market dynamics, advanced packaging and chiplet architectures, photonics and quantum computing hardware, RISC-V and open ISA ecosystem plays, semiconductor supply chain resilience and geopolitics (CHIPS Act, export controls), EDA software and IP licensing strategy, edge AI chips and embedded systems, memory and storage innovation, and deep tech venture financing and IP commercialization. Include market sizing, key players, investment landscape, and actionable implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.96 AI TravelTech & Hospitality Engine ---
 app.post('/api/traveltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
