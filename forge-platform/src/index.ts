@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.15 AI Sales Enablement Engine ---
+app.post('/api/salesenable-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a comprehensive sales enablement program';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a sales enablement and revenue effectiveness expert. Help build world-class sales teams and processes. ${p}\n\nProvide: 1) Sales methodology and process design (MEDDIC/Challenger/SPIN) 2) Onboarding and ramp acceleration program 3) Battlecard and competitive positioning library 4) Objection handling playbook 5) Sales content and collateral strategy 6) Coaching and performance management framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.14 AI Pricing Intelligence Engine ---
 app.post('/api/pricingintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
