@@ -39634,6 +39634,75 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.89 AI Growth Hacking & Viral Acquisition Engine ---
+app.post('/api/growth-hacking-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { product, stage, cac, channels } = req.body;
+    const p = `You are an elite Growth Hacking & Viral Acquisition strategist. Analyze:
+Product: ${product || 'B2B SaaS project management tool'}
+Stage: ${stage || 'Post-product-market fit, $500k ARR'}
+Current CAC: ${cac || '$350 blended CAC'}
+Active Channels: ${channels || 'LinkedIn ads, content marketing, cold outbound'}
+
+Provide comprehensive growth intelligence:
+
+**VIRAL LOOP DESIGN**
+- Product-led viral mechanisms to embed
+- Referral program architecture
+- Network effect levers specific to this product
+- K-factor improvement tactics
+
+**ACQUISITION CHANNEL BREAKDOWN**
+- Top 5 highest-leverage channels for this stage
+- CAC estimates and payback periods per channel
+- Quick-win channel experiments (1-2 week tests)
+- Long-term channel bets worth investing in
+
+**PRODUCT-LED GROWTH PLAYBOOK**
+- Freemium/free trial structure recommendation
+- Activation moment definition and optimization
+- Time-to-value compression tactics
+- In-product upgrade triggers
+
+**CONTENT & SEO GROWTH**
+- Content moat opportunities vs. competitors
+- Programmatic SEO plays for this vertical
+- Thought leadership topics that drive pipeline
+- Distribution multipliers (newsletters, communities)
+
+**PARTNERSHIP & ECOSYSTEM GROWTH**
+- Integration partnership priorities
+- Co-marketing opportunities
+- Channel partner program design
+- Platform ecosystem plays
+
+**RETENTION & EXPANSION**
+- Churn prediction signals to monitor
+- Expansion revenue triggers (usage limits, team seats)
+- Customer success touchpoints that prevent churn
+- NPS-to-revenue conversion tactics
+
+**GROWTH EXPERIMENTS BACKLOG**
+- 10 ranked experiments by expected impact/effort
+- Success metrics and test duration for each
+- Minimum sample size requirements
+- Decision criteria (when to scale vs. kill)
+
+**90-DAY GROWTH SPRINT**
+- Week 1-4: Foundation experiments
+- Week 5-8: Double down on winners
+- Week 9-12: Scale and systematize
+- Target metrics by end of sprint
+
+Deliver a growth roadmap that can 3x acquisition within 90 days.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.88 AI Cybersecurity & Threat Intelligence Engine ---
 app.post('/api/cybersecurity-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
