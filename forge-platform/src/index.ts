@@ -39634,6 +39634,81 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.96 AI Partnership & Alliance Strategy Engine ---
+app.post('/api/partnership-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { companyType, goal, targetPartners, currentRevenue } = req.body;
+    const p = `You are an elite Partnership & Alliance Strategy advisor. Analyze:
+Company Type: ${companyType || 'B2B SaaS — Project Management Platform'}
+Partnership Goal: ${goal || 'Accelerate growth through channel and technology partnerships'}
+Target Partner Types: ${targetPartners || 'System integrators, technology platforms, resellers'}
+Current Revenue: ${currentRevenue || '$8M ARR, Series A'}
+
+Provide a comprehensive partnership strategy:
+
+**PARTNERSHIP TYPES & PRIORITIZATION**
+- Technology/integration partnerships (API, marketplace)
+- Channel partnerships (resellers, VARs, agencies)
+- Strategic alliances (co-sell, co-market)
+- OEM and white-label opportunities
+- Referral and affiliate programs
+- Priority ranking by revenue impact and effort
+
+**IDEAL PARTNER PROFILE (IPP)**
+- Partner firmographics (size, market, tech stack)
+- Partner revenue model alignment
+- Customer overlap and complementarity
+- Partner sales motion compatibility
+- Red flags and disqualifying criteria
+
+**PARTNER DISCOVERY & OUTREACH**
+- Where to find ideal partners
+- Outreach sequence and messaging templates
+- Partner qualification scorecard
+- First meeting agenda and discovery questions
+
+**PARTNERSHIP STRUCTURE & AGREEMENTS**
+- Revenue share models (typical ranges by type)
+- Co-sell vs. referral vs. reseller structures
+- Joint GTM commitment requirements
+- Legal and commercial agreement essentials
+- Integration depth requirements
+
+**PARTNER ENABLEMENT PROGRAM**
+- Partner portal and resource design
+- Training and certification curriculum
+- Co-marketing materials and MDF program
+- Partner success metrics and QBRs
+- Champions and sponsorship within partner org
+
+**CO-SELL & REVENUE MOTION**
+- Deal registration and opportunity management
+- Partner-sourced vs. partner-influenced tracking
+- Joint account mapping methodology
+- Sales overlay and field alignment
+- Partner incentive structures
+
+**PARTNERSHIP METRICS & ROI**
+- KPIs: partner-sourced ARR, influenced pipeline, activation rate
+- Partner tiers and thresholds
+- Expected ramp timeline per partnership type
+- 12-month revenue projection from partnerships
+
+**90-DAY PARTNERSHIP LAUNCH PLAN**
+- Week 1-4: Foundation and target list
+- Week 5-8: Outreach and first agreements
+- Week 9-12: Activation and first joint deals
+- Success milestones at each checkpoint
+
+Deliver a board-ready partnership strategy with specific revenue projections.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.95 AI Customer Success & Churn Prevention Engine ---
 app.post('/api/customer-success-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
