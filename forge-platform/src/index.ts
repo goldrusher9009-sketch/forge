@@ -39500,6 +39500,66 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.07 AI Supply Chain & Vendor Risk Intelligence Engine ---
+app.post('/api/supply-chain-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { industry, vendors, productCategories, geographies, riskConcerns, supplyChainMaturity } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a world-class supply chain strategist and vendor risk management expert.
+Industry: ${industry}
+Key Vendors: ${vendors}
+Product Categories: ${productCategories}
+Geographies: ${geographies}
+Risk Concerns: ${riskConcerns}
+Supply Chain Maturity: ${supplyChainMaturity}
+
+Deliver comprehensive supply chain intelligence. Return ONLY valid JSON:
+{
+  "riskAssessment": {
+    "overallRiskScore": "1-10",
+    "riskLevel": "low|moderate|elevated|high|critical",
+    "topRisks": [{"risk": "description", "likelihood": "low|medium|high", "impact": "low|medium|high|severe", "category": "geopolitical|financial|operational|quality|cyber|climate"}],
+    "concentrationRisks": ["single-source dependency", "geographic concentration"],
+    "emergingThreats": ["threat1"]
+  },
+  "vendorIntelligence": {
+    "vendorTiers": [{"tier": "T1|T2|T3", "description": "what this tier covers", "riskProfile": "assessment", "strategicImportance": "critical|high|medium|low"}],
+    "vendorRedFlags": ["warning sign to watch for"],
+    "dueDiligenceChecklist": ["item to verify"],
+    "contractualProtections": ["key clause to include"]
+  },
+  "resiliencyStrategy": {
+    "resiliencyScore": "1-10",
+    "bufferInventoryStrategy": "recommendation",
+    "dualSourcingOpportunities": [{"category": "product category", "action": "what to do", "benefit": "why"}],
+    "nearshoring": [{"from": "current location", "to": "suggested location", "rationale": "why", "savings": "estimate"}],
+    "digitalTwinOpportunity": "how digital twins could improve this supply chain"
+  },
+  "costOptimization": {
+    "savingsOpportunities": [{"area": "category", "method": "how", "estimatedSavings": "% or $", "effort": "low|medium|high"}],
+    "procurementStrategy": "strategic sourcing recommendation",
+    "paymentTermsOptimization": "cash flow optimization suggestion",
+    "totalCostOfOwnership": "key TCO factors to consider"
+  },
+  "complianceESG": {
+    "regulatoryRequirements": ["regulation to comply with"],
+    "esgRisks": ["environmental/social risk in supply chain"],
+    "traceabilityNeeds": "transparency and traceability recommendations",
+    "certifications": ["certification to pursue or require"]
+  },
+  "executiveSummary": "3 sentence supply chain health assessment and top priorities"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.06 AI Talent Intelligence & Team Optimization Engine ---
 app.post('/api/talent-intelligence', requireAuth, async (req: AuthRequest, res) => {
   try {
