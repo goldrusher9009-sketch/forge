@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.42 AI CreativeTech & Media Production Engine ---
+app.post('/api/creativetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a CreativeTech and media production strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a CreativeTech and media production intelligence expert. Provide comprehensive analysis covering AI-generated content tools, generative art and music platforms, creator economy monetization, streaming and OTT strategy, podcast and audio tech, virtual production and LED volume stages, 3D rendering and real-time graphics, content rights and licensing frameworks, influencer platform ecosystems, brand content partnerships, and audience analytics. ${p}\n\nProvide actionable insights with platform strategy, technology stack recommendations, and monetization frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.41 AI HealthTech & Digital Therapeutics Engine ---
 app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
