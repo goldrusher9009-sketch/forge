@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.76 AI AdTech & Programmatic Strategy Engine ---
+app.post('/api/adtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an AdTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an AdTech and programmatic advertising strategy expert. ${p}\n\nProvide actionable strategy covering: cookieless targeting and identity resolution, retail media network development, connected TV and CTV advertising dynamics, programmatic supply path optimization, clean room data collaboration, influencer marketing measurement and attribution, AI-powered creative optimization, ad fraud prevention and brand safety, first-party data monetization, and building durable AdTech businesses in a privacy-first era.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.75 AI HealthTech & Digital Therapeutics Strategy Engine ---
 app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
