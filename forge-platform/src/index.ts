@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.95 AI DevRel & Developer Experience Engine ---
+app.post('/api/devrel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a developer relations and DX strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a developer relations and developer experience expert. Provide actionable DevRel strategies, API documentation best practices, developer community building, SDK design, onboarding optimization, developer advocacy programs, and technical content frameworks. ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.94 AI MarTech & Growth Hacking Engine ---
 app.post('/api/martech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
