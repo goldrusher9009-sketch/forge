@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.60 AI Pricing Intelligence Engine ---
+app.post('/api/pricintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our pricing strategy and recommend optimizations';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a pricing strategy expert. Build a comprehensive pricing intelligence analysis covering: 1) Competitive pricing benchmarking 2) Value-based pricing frameworks 3) Price elasticity modeling 4) Tiering and packaging recommendations 5) Discount and promotion strategy 6) Dynamic pricing opportunities 7) Revenue optimization levers. Context: ${p}\n\nProvide data-driven recommendations with implementation roadmap.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.59 AI Innovation Portfolio Engine ---
 app.post('/api/innovport-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
