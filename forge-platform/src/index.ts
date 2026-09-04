@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.40 AI Platform Business Model Engine ---
+app.post('/api/platbiz-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Design a platform business model to create network effects and marketplace dominance';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a platform business model and marketplace strategy expert. Help organizations design and scale platform businesses with powerful network effects. ${p}\n\nProvide: 1) Platform type selection (transaction, innovation, integration, investment) 2) Multi-sided market design and participant identification 3) Network effects strategy and flywheel mechanics 4) Cold start problem solutions and initial liquidity strategies 5) Platform governance, rules, and trust mechanisms 6) Monetization model and take-rate strategy 7) Competitive moat building through data and switching costs 8) Platform expansion strategy and adjacency opportunities` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.39 AI Sustainability Strategy Engine ---
 app.post('/api/sustain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
