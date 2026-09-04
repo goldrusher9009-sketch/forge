@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.19 AI Supply Chain Intelligence Engine ---
+app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze supply chain resilience and optimization strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a supply chain intelligence and operations expert. Help organizations build resilient, efficient, and cost-optimized supply chains. ${p}\n\nProvide: 1) Supply chain risk mapping and resilience score 2) Supplier diversification strategy 3) Inventory optimization recommendations 4) Logistics and transportation efficiency opportunities 5) Demand forecasting improvement approaches 6) Nearshoring vs offshoring trade-off analysis 7) Technology and automation investment priorities 8) Key supply chain KPIs and monitoring framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.18 AI Talent Intelligence Engine ---
 app.post('/api/talentiq-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
