@@ -39500,6 +39500,75 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.03 AI Financial Scenario Planning & Modeling Engine ---
+app.post('/api/financial-scenario', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { businessType, currentRevenue, growthStage, keyAssumptions, scenarioType, timeHorizon } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a top-tier CFO advisor and financial modeling expert with deep expertise in SaaS, growth-stage companies, and strategic finance.
+Business Type: ${businessType}
+Current Revenue/ARR: ${currentRevenue}
+Growth Stage: ${growthStage}
+Key Assumptions: ${keyAssumptions}
+Scenario Type: ${scenarioType}
+Time Horizon: ${timeHorizon}
+
+Build a comprehensive financial scenario model. Return ONLY valid JSON:
+{
+  "scenarios": {
+    "base": {
+      "label": "Base Case",
+      "revenue": [{"period": "Q1 Y1", "amount": "number", "growth": "pct"}],
+      "keyMetrics": {"grossMargin": "pct", "ebitda": "amount", "burnRate": "monthly", "runway": "months", "cac": "amount", "ltv": "amount", "ltvCac": "ratio"},
+      "milestones": ["milestone1"],
+      "risks": ["risk1"]
+    },
+    "bull": {
+      "label": "Bull Case",
+      "revenue": [{"period": "Q1 Y1", "amount": "number", "growth": "pct"}],
+      "keyMetrics": {"grossMargin": "pct", "ebitda": "amount", "burnRate": "monthly", "runway": "months", "cac": "amount", "ltv": "amount", "ltvCac": "ratio"},
+      "triggers": ["what must happen"],
+      "milestones": ["milestone1"]
+    },
+    "bear": {
+      "label": "Bear Case",
+      "revenue": [{"period": "Q1 Y1", "amount": "number", "growth": "pct"}],
+      "keyMetrics": {"grossMargin": "pct", "ebitda": "amount", "burnRate": "monthly", "runway": "months", "cac": "amount", "ltv": "amount", "ltvCac": "ratio"},
+      "triggers": ["what causes this"],
+      "mitigations": ["mitigation1"]
+    }
+  },
+  "sensitivityAnalysis": [
+    {"variable": "name", "baseValue": "value", "impact1pctChange": "revenue impact", "sensitivity": "high|medium|low"}
+  ],
+  "unitEconomics": {
+    "paybackPeriod": "months",
+    "grossProfitPerCustomer": "amount",
+    "revenuePerEmployee": "amount",
+    "magicNumber": "value",
+    "ruleOf40": "score"
+  },
+  "fundingImplications": {
+    "nextRoundTiming": "timeframe",
+    "recommendedRaiseAmount": "amount",
+    "useOfFunds": ["allocation1"],
+    "expectedValuation": "range",
+    "keyMetricsForRaise": ["metric1"]
+  },
+  "strategicInsights": ["insight1", "insight2"],
+  "executiveSummary": "3 sentence financial overview with key takeaways"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.02 AI Operations Excellence & Process Intelligence Engine ---
 app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
   try {

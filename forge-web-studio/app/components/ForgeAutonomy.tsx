@@ -2398,6 +2398,144 @@ const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 // v10.98 Fundraising & Investor Relations
+const FIN_SCENARIO_COLORS: Record<string, { bg: string; border: string; label: string; text: string }> = {
+  base: { bg: 'bg-blue-900/30', border: 'border-blue-700/50', label: 'Base Case', text: 'text-blue-400' },
+  bull: { bg: 'bg-green-900/30', border: 'border-green-700/50', label: 'Bull Case', text: 'text-green-400' },
+  bear: { bg: 'bg-red-900/30', border: 'border-red-700/50', label: 'Bear Case', text: 'text-red-400' },
+};
+const FIN_STAGES = ['Pre-Revenue', 'Early Stage', 'Growth', 'Scale', 'Mature'];
+const FIN_TYPES = ['SaaS / Subscription', 'Marketplace', 'E-Commerce', 'Services', 'Hardware', 'Other'];
+const FIN_SCENARIOS = ['Revenue Expansion', 'Market Contraction', 'New Product Launch', 'Geographic Expansion', 'Fundraising Round', 'M&A'];
+function FinScenarioPanel({ api }: { api: string }) {
+  const [businessType, setBusinessType] = React.useState('SaaS / Subscription');
+  const [currentRevenue, setCurrentRevenue] = React.useState('');
+  const [growthStage, setGrowthStage] = React.useState('Growth');
+  const [keyAssumptions, setKeyAssumptions] = React.useState('');
+  const [scenarioType, setScenarioType] = React.useState('Revenue Expansion');
+  const [timeHorizon, setTimeHorizon] = React.useState('12 months');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [activeScenario, setActiveScenario] = React.useState<'base'|'bull'|'bear'>('base');
+  const run = async () => {
+    if (!currentRevenue) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/financial-scenario`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ businessType, currentRevenue, growthStage, keyAssumptions, scenarioType, timeHorizon }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const sc = result?.scenarios?.[activeScenario];
+  const col = FIN_SCENARIO_COLORS[activeScenario];
+  return (
+    <div className="p-6 space-y-6">
+      <div className="bg-gradient-to-r from-emerald-900/40 to-slate-900 rounded-xl p-6 border border-emerald-700/50">
+        <h2 className="text-2xl font-bold text-white mb-1">📊 AI Financial Scenario Modeler</h2>
+        <p className="text-slate-400 text-sm">Build base/bull/bear financial models, sensitivity analysis, unit economics, and fundraising implications</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Business Model</label>
+          <div className="grid grid-cols-2 gap-1.5">{FIN_TYPES.map(t => <button key={t} onClick={()=>setBusinessType(t)} className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${businessType===t ? 'bg-emerald-700 border-emerald-500 text-white' : 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-400'}`}>{t}</button>)}</div>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700 space-y-3">
+          <div>
+            <label className="text-slate-300 text-sm font-medium block mb-1">Current Revenue / ARR</label>
+            <input value={currentRevenue} onChange={e=>setCurrentRevenue(e.target.value)} placeholder="e.g. $2.4M ARR, $200K MRR" className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm border border-slate-600 focus:border-emerald-500 outline-none" />
+          </div>
+          <div>
+            <label className="text-slate-300 text-sm font-medium block mb-1">Time Horizon</label>
+            <input value={timeHorizon} onChange={e=>setTimeHorizon(e.target.value)} placeholder="e.g. 12 months, 3 years" className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm border border-slate-600 focus:border-emerald-500 outline-none" />
+          </div>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Growth Stage</label>
+          <div className="flex flex-wrap gap-2">{FIN_STAGES.map(s => <button key={s} onClick={()=>setGrowthStage(s)} className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all ${growthStage===s ? 'bg-emerald-700 border-emerald-500 text-white' : 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-400'}`}>{s}</button>)}</div>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Scenario Focus</label>
+          <div className="grid grid-cols-2 gap-1.5">{FIN_SCENARIOS.map(s => <button key={s} onClick={()=>setScenarioType(s)} className={`px-2 py-1.5 rounded-lg text-xs font-medium border transition-all ${scenarioType===s ? 'bg-emerald-700 border-emerald-500 text-white' : 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-400'}`}>{s}</button>)}</div>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700 col-span-2">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Key Assumptions</label>
+          <textarea value={keyAssumptions} onChange={e=>setKeyAssumptions(e.target.value)} placeholder="e.g. Current growth rate: 15% MoM, Churn: 3%, Gross margin: 72%, Sales cycle: 45 days..." rows={2} className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm border border-slate-600 focus:border-emerald-500 outline-none resize-none" />
+        </div>
+      </div>
+      <button onClick={run} disabled={loading || !currentRevenue} className="w-full bg-gradient-to-r from-emerald-700 to-teal-700 text-white font-semibold py-3 rounded-xl hover:opacity-90 disabled:opacity-50 transition-all">
+        {loading ? '📊 Building financial model...' : '📊 Generate Financial Scenarios'}
+      </button>
+      {error && <div className="bg-red-900/30 border border-red-700 rounded-xl p-4 text-red-400 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-5">
+          {result.executiveSummary && <div className="bg-emerald-900/20 rounded-xl p-5 border border-emerald-700/40"><h3 className="text-emerald-400 font-semibold mb-2">Financial Overview</h3><p className="text-slate-300 text-sm">{result.executiveSummary}</p></div>}
+          {result.scenarios && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <div className="flex gap-2 mb-5">
+                {(['base','bull','bear'] as const).map(s => (
+                  <button key={s} onClick={()=>setActiveScenario(s)} className={`flex-1 py-2 rounded-lg text-sm font-semibold border transition-all ${activeScenario===s ? FIN_SCENARIO_COLORS[s].bg+' '+FIN_SCENARIO_COLORS[s].border+' '+FIN_SCENARIO_COLORS[s].text : 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-400'}`}>{FIN_SCENARIO_COLORS[s].label}</button>
+                ))}
+              </div>
+              {sc && col && (
+                <div className="space-y-4">
+                  {sc.keyMetrics && (
+                    <div className="grid grid-cols-4 gap-2">
+                      {[['Gross Margin', sc.keyMetrics.grossMargin], ['EBITDA', sc.keyMetrics.ebitda], ['Runway', sc.keyMetrics.runway+' mo'], ['LTV:CAC', sc.keyMetrics.ltvCac]].map(([l, v]) => (
+                        <div key={l as string} className={`${col.bg} rounded-lg p-3 border ${col.border} text-center`}><p className="text-slate-400 text-xs">{l as string}</p><p className={`text-sm font-bold ${col.text}`}>{v as string}</p></div>
+                      ))}
+                    </div>
+                  )}
+                  {sc.revenue && sc.revenue.length > 0 && (
+                    <div>
+                      <p className="text-slate-400 text-xs font-semibold mb-2 uppercase">Revenue Projection</p>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {sc.revenue.map((r: any, i: number) => (
+                          <div key={i} className={`${col.bg} rounded-lg p-2 border ${col.border} min-w-[90px] text-center flex-shrink-0`}>
+                            <p className="text-slate-500 text-xs">{r.period}</p>
+                            <p className={`text-sm font-bold ${col.text}`}>{r.amount}</p>
+                            <p className="text-slate-400 text-xs">{r.growth}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    {sc.milestones && <div><p className="text-slate-400 text-xs font-semibold mb-1">Milestones</p>{sc.milestones.map((m: string, i: number) => <p key={i} className="text-slate-300 text-xs">✓ {m}</p>)}</div>}
+                    {(sc.risks||sc.triggers||sc.mitigations) && <div><p className="text-slate-400 text-xs font-semibold mb-1">{activeScenario==='base'?'Risks':activeScenario==='bull'?'Triggers':'Mitigations'}</p>{(sc.risks||sc.triggers||sc.mitigations||[]).map((r: string, i: number) => <p key={i} className="text-slate-300 text-xs">• {r}</p>)}</div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+          {result.unitEconomics && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Unit Economics</h3>
+              <div className="grid grid-cols-5 gap-2">{[['Payback', result.unitEconomics.paybackPeriod], ['Gross Profit/Customer', result.unitEconomics.grossProfitPerCustomer], ['Rev/Employee', result.unitEconomics.revenuePerEmployee], ['Magic Number', result.unitEconomics.magicNumber], ['Rule of 40', result.unitEconomics.ruleOf40]].map(([l, v]) => <div key={l as string} className="bg-slate-700/40 rounded-lg p-3 text-center"><p className="text-slate-500 text-xs">{l as string}</p><p className="text-emerald-400 text-sm font-bold">{v as string}</p></div>)}</div>
+            </div>
+          )}
+          {result.fundingImplications && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">💰 Funding Implications</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  {[['Next Round Timing', result.fundingImplications.nextRoundTiming], ['Raise Amount', result.fundingImplications.recommendedRaiseAmount], ['Expected Valuation', result.fundingImplications.expectedValuation]].map(([l, v]) => <div key={l as string} className="bg-slate-700/30 rounded-lg p-3"><p className="text-slate-500 text-xs">{l as string}</p><p className="text-white text-sm font-medium">{v as string}</p></div>)}
+                </div>
+                <div>
+                  <p className="text-slate-400 text-xs font-semibold mb-2">Key Metrics for Raise</p>
+                  {(result.fundingImplications.keyMetricsForRaise||[]).map((m: string, i: number) => <p key={i} className="text-slate-300 text-xs">• {m}</p>)}
+                  <p className="text-slate-400 text-xs font-semibold mt-3 mb-2">Use of Funds</p>
+                  {(result.fundingImplications.useOfFunds||[]).map((u: string, i: number) => <p key={i} className="text-slate-300 text-xs">• {u}</p>)}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const OPS_MATURITY: Record<string,string> = {
   'initial': 'bg-red-900/40 border-red-600',
   'developing': 'bg-orange-900/40 border-orange-600',
@@ -28030,7 +28168,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'|'finscenario63'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -28197,6 +28335,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28278,6 +28417,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28418,6 +28558,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28499,6 +28640,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28625,6 +28767,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28706,6 +28849,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28788,6 +28932,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28869,6 +29014,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -29001,6 +29147,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -29082,6 +29229,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'cxoptimize60', label: '🌟 CX Optimizer' },
     { id: 'salesintel61', label: '🎯 Sales Intel' },
     { id: 'opsexcel62', label: '⚙️ Ops Excellence' },
+    { id: 'finscenario63', label: '📊 Financial Scenarios' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -29310,6 +29458,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29391,6 +29540,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29473,6 +29623,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29554,6 +29705,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29664,6 +29816,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29745,6 +29898,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29827,6 +29981,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29908,6 +30063,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30009,6 +30165,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30090,6 +30247,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30172,6 +30330,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30253,6 +30412,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30367,6 +30527,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30448,6 +30609,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30554,6 +30716,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30635,6 +30798,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30717,6 +30881,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30798,6 +30963,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30899,6 +31065,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30980,6 +31147,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31062,6 +31230,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31143,6 +31312,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31257,6 +31427,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31338,6 +31509,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31420,6 +31592,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31501,6 +31674,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31602,6 +31776,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31683,6 +31858,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31765,6 +31941,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31846,6 +32023,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31956,6 +32134,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -32037,6 +32216,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -32119,6 +32299,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -32200,6 +32381,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'cxoptimize60' && <CXOptimizePanel api={api} />}
         {tab === 'salesintel61' && <SalesIntelPanel api={api} />}
         {tab === 'opsexcel62' && <OpsExcelPanel api={api} />}
+        {tab === 'finscenario63' && <FinScenarioPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
