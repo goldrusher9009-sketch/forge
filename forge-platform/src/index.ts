@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.01 AI Open Source Strategy Engine ---
+app.post('/api/opensource-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an open source project strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an open source strategy expert. Provide actionable strategies for OSS community building, contributor onboarding, governance models, license selection, commercial open core models, foundation relationships, developer adoption, and open source sustainability. ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.00 AI Enterprise Sales Intelligence Engine ---
 app.post('/api/enterprise-sales-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
