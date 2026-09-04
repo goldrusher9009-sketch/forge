@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.27 AI Robotics & Autonomous Systems Strategy Engine ---
+app.post('/api/robotics-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { roboticsType, autonomyLevel, industryVertical, hardwareSoftwareSplit } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a Robotics & Autonomous Systems strategy expert. Analyze this robotics venture:
+
+Robotics Type: ${roboticsType}
+Autonomy Level: ${autonomyLevel}
+Industry Vertical: ${industryVertical}
+Hardware/Software Split: ${hardwareSoftwareSplit}
+
+Provide:
+1. AUTONOMY ARCHITECTURE — perception stack, planning algorithms, control systems, safety layers
+2. HARDWARE STRATEGY — build vs. buy, COTS vs. custom, sensor fusion (lidar/vision/radar), compute
+3. SOFTWARE MOAT — proprietary AI models, simulation environments, fleet learning, OTA update strategy
+4. GO-TO-MARKET — pilot design, land-and-expand, robotics-as-a-service vs. outright sale
+5. SAFETY & CERTIFICATION — ISO 13849, IEC 62443, ANSI/RIA R15.06, FDA for medical, NHTSA for automotive
+6. MANUFACTURING SCALE — contract manufacturing, supply chain risk, BOM cost reduction roadmap
+7. DATA FLYWHEEL — fleet data collection, sim-to-real transfer, continuous model improvement
+8. COMPETITIVE POSITIONING — vs. Boston Dynamics, ABB, Fanuc, Figure, Agility Robotics, sector leaders
+9. UNIT ECONOMICS — hardware margin, software attach rate, service/maintenance revenue, RaaS pricing
+10. 24-MONTH MILESTONES — prototype → pilot → first fleet deployment → manufacturing scale`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.26 AI Quantum Computing & Deep Tech Strategy Engine ---
 app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { quantumFocus, techMaturity, targetMarket, competitorLandscape } = req.body;
