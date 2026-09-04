@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.22 AI Fundraising Intelligence Engine ---
+app.post('/api/fundraise-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze fundraising strategy and investor readiness';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a venture capital and startup fundraising expert. Help founders raise capital strategically. ${p}\n\nProvide: 1) Fundraising readiness assessment (traction, team, market, product) 2) Optimal funding stage and round size recommendation 3) Investor targeting strategy (tier, thesis fit, warm intro paths) 4) Pitch narrative and story arc framework 5) Key metrics and milestones to highlight 6) Due diligence preparation checklist 7) Term sheet negotiation priorities 8) Post-close investor relationship management playbook` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.21 AI Product Market Fit Engine ---
 app.post('/api/pmfit-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
