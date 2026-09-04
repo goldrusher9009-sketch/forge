@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.33 AI Travel & Hospitality Tech Strategy Engine ---
+app.post('/api/traveltech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { travelSegment, techFocus, customerType, revenueModel } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a Travel & Hospitality Tech strategy expert. Analyze this travel tech venture:
+
+Travel Segment: ${travelSegment}
+Tech Focus: ${techFocus}
+Customer Type: ${customerType}
+Revenue Model: ${revenueModel}
+
+Provide:
+1. DISTRIBUTION STRATEGY — OTA vs. direct booking, GDS integration, metasearch, channel mix optimization
+2. DYNAMIC PRICING ENGINE — demand forecasting, competitor rate monitoring, AI-driven yield management
+3. PERSONALIZATION — customer profile building, recommendation engine, loyalty program AI, upsell triggers
+4. SUPPLIER INTEGRATION — API connectivity (Amadeus/Sabre/Travelport), NDC compliance, content aggregation
+5. CUSTOMER ACQUISITION — SEO for travel intent, paid search, social inspiration channels, affiliate strategy
+6. OPERATIONS & OPS TECH — PMS/POS integration, housekeeping optimization, predictive maintenance
+7. POST-BOOKING EXPERIENCE — disruption management, AI concierge, ancillary upsell, review generation
+8. SUSTAINABILITY — carbon offset integration, sustainable supplier ranking, green certifications
+9. COMPETITIVE POSITIONING — vs. Airbnb, Booking.com, Expedia, or niche players in your segment
+10. 18-MONTH ROADMAP — GMV targets, supplier count, repeat booking rate, NPS improvement milestones`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.32 AI DevOps & Platform Engineering Strategy Engine ---
 app.post('/api/devops-ai', requireAuth, async (req: AuthRequest, res) => {
   const { infraChallenge, techStack, teamSize, scalingGoal } = req.body;
