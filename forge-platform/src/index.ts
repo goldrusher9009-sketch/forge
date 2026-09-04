@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.51 AI NanoTech & Advanced Materials Strategy Engine ---
+app.post('/api/nanotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a NanoTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a NanoTech and advanced materials strategy expert. ${p}\n\nProvide actionable strategy covering: nanomaterial applications, semiconductor advances, metamaterials, smart coatings, carbon nanotubes, graphene commercialization, nano-drug delivery, manufacturing at atomic scale, IP strategy, regulatory considerations, and market entry for deep tech.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.50 AI RoboTech & Automation Strategy Engine ---
 app.post('/api/robotech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
