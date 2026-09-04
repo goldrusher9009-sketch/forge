@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.75 AI Talent Intelligence Engine ---
+app.post('/api/talentintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our talent strategy and identify gaps and opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a talent intelligence and workforce strategy expert. Analyze the following talent situation and provide: 1) Talent gap analysis and critical skills mapping, 2) Recruitment strategy and sourcing channels, 3) Retention risk assessment and mitigation, 4) Learning & development roadmap, 5) Compensation benchmarking insights, 6) Future workforce planning for emerging roles. Be specific and actionable.\n\n${p}` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.74 AI Supply Chain Intelligence Engine ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
