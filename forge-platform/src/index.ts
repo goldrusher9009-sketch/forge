@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.35 AI Pricing Strategy Engine ---
+app.post('/api/pricestrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop an optimal pricing strategy to maximize revenue and market share';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a pricing strategy and revenue optimization expert. Help organizations design pricing models that maximize value capture and competitive positioning. ${p}\n\nProvide: 1) Pricing model options (value-based, cost-plus, competitive, freemium, usage-based) with pros/cons 2) Customer willingness-to-pay analysis framework 3) Price segmentation and tiering recommendations 4) Competitive pricing positioning analysis 5) Price elasticity considerations and testing approach 6) Packaging and bundling strategy 7) Discount and promotion governance framework 8) Pricing change implementation roadmap and communication strategy` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.34 AI Customer Lifetime Value Engine ---
 app.post('/api/clvengine-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
