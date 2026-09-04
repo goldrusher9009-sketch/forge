@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.37 AI Revenue Intelligence & Sales Forecasting Engine ---
+app.post('/api/rev-intel', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, currentRevenue, growthRate, salesChannels, customerBase, targetMarkets, timeHorizon } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are a revenue intelligence and sales forecasting expert. Analyze and forecast revenue performance.
+Company: ${company}
+Industry: ${industry}
+Current Revenue: ${currentRevenue}
+Growth Rate: ${growthRate}
+Sales Channels: ${salesChannels}
+Customer Base: ${customerBase}
+Target Markets: ${targetMarkets}
+Time Horizon: ${timeHorizon}
+
+Return JSON:
+{
+  "revenueHealth": { "score": 0-100, "mrr": "", "arr": "", "churnRate": "", "expansionRevenue": "", "nrr": "" },
+  "forecast": [{ "period": "", "conservative": "", "base": "", "optimistic": "", "keyAssumptions": [""], "riskFactors": [""] }],
+  "segmentAnalysis": [{ "segment": "", "revenue": "", "growthRate": "", "margin": "", "opportunity": "high|medium|low", "recommendation": "" }],
+  "pipelineInsights": [{ "stage": "", "conversionRate": "", "avgDealSize": "", "velocity": "", "bottleneck": "", "fix": "" }],
+  "growthLevers": [{ "lever": "", "currentState": "", "potential": "", "effort": "low|medium|high", "timeToRevenue": "", "actions": [""] }],
+  "alerts": [{ "type": "risk|opportunity", "severity": "critical|high|medium|low", "description": "", "recommendation": "" }]
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.36 AI Customer Experience & Journey Orchestration Engine ---
 app.post('/api/cx-journey', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
