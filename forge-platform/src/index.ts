@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.81 AI Pricing Strategy Engine ---
+app.post('/api/pricingstrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop an optimal pricing strategy to maximize revenue and market share';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a pricing strategy expert. Analyze the following product/service and provide: 1) Pricing model options (subscription, usage, tiered, freemium, etc.) with pros/cons, 2) Value-based pricing framework and willingness-to-pay analysis, 3) Competitive pricing positioning, 4) Price elasticity considerations and testing strategy, 5) Packaging and bundling recommendations, 6) Price increase strategy and customer communication plan. Be specific and revenue-focused.\n\n${p}` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.80 AI Digital Transformation Engine ---
 app.post('/api/digitaltrans-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
