@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.04 AI MobilityTech & Future of Transportation Engine ---
+app.post('/api/mobilitytech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a MobilityTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a mobility technology and future of transportation strategy expert. ${p}\n\nProvide comprehensive analysis covering: autonomous vehicle technology stacks and regulatory pathways, EV infrastructure and charging network business models, urban air mobility and eVTOL commercialization, ride-sharing and MaaS platform economics, micromobility fleet operations and unit economics, fleet electrification strategies for logistics, smart traffic management and V2X communication, hydrogen fuel cell transport applications, multimodal journey planning platforms, and mobility-as-a-service subscription models. Include go-to-market strategies, partnership opportunities, and regulatory considerations.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.03 AI EdTech & Learning Platform Engine ---
 app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
