@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.11 AI SupplyChain & Logistics Intelligence Engine ---
+app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a supply chain strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a supply chain and logistics intelligence strategy expert. ${p}\n\nProvide comprehensive analysis covering: AI-powered demand forecasting and inventory optimization, supply chain resilience and nearshoring strategies, warehouse automation and robotics ROI, last-mile delivery optimization and route intelligence, supplier risk monitoring and diversification, digital twin supply chain modeling, freight tech and visibility platforms, cold chain and pharmaceutical logistics, reverse logistics and circular economy models, supply chain finance and working capital optimization, IoT and sensor integration for real-time tracking, and control tower platform architecture. Include technology vendor landscape, implementation sequencing, and risk mitigation frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.10 AI LegalTech & RegTech Compliance Engine ---
 app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
