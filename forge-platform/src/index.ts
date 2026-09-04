@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.22 AI SportsTech & Fitness Intelligence Engine ---
+app.post('/api/sportstech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SportsTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a sports technology and fitness intelligence strategy expert. ${p}\n\nProvide comprehensive analysis covering: athlete performance analytics and wearable technology integration, sports betting and fantasy sports platform economics, stadium and venue smart technology transformation, fan engagement and second-screen experience design, eSports ecosystem business models and monetization, sports streaming rights economics and OTT strategy, fitness app and connected equipment market dynamics (Peloton, Strava, Whoop landscape), sports nutrition and recovery technology, AI-powered coaching and training optimization, sports data licensing and commercialization, athlete brand and NIL monetization strategies, and sports private equity and club valuation frameworks. Include fan lifetime value modeling, technology vendor landscape, and media rights negotiation frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.21 AI GovTech & PublicSector Engine ---
 app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
