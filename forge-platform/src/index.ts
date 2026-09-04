@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.21 AI InsurTech & Risk Management Strategy Engine ---
+app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { insurtechType, riskChallenge, marketContext, businessProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite InsurTech and risk management strategy expert with deep expertise in AI underwriting, parametric insurance, embedded insurance, claims automation, and insurance distribution innovation.
+
+InsurTech Type/Company: ${insurtechType}
+Risk Challenge: ${riskChallenge}
+Market Context: ${marketContext}
+Business Profile: ${businessProfile}
+
+Provide a comprehensive InsurTech & Risk Management strategy covering:
+1. AI Underwriting & Pricing — ML risk scoring, alternative data sources, real-time pricing engines
+2. Parametric Insurance Design — trigger mechanisms, index construction, basis risk management
+3. Embedded Insurance Distribution — API-first distribution, white-label products, ecosystem partnerships
+4. Claims Automation & Fraud Detection — computer vision claims processing, NLP fraud signals, STP rates
+5. Reinsurance & Capital Strategy — ILS/cat bond structuring, quota share optimization, retrocession
+6. Regulatory & Compliance Navigation — state-by-state filing, Lloyd's market access, MGA/MGU structuring
+7. Customer Acquisition & Retention — digital distribution economics, renewal optimization, CX transformation
+8. Emerging Risk Products — cyber insurance, climate risk, gig economy, AI liability coverage design
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.20 AI Retail & E-Commerce Strategy Engine ---
 app.post('/api/retail-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
