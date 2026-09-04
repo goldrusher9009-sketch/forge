@@ -39634,6 +39634,86 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.02 AI Crisis Management & Reputation Recovery Engine ---
+app.post('/api/crisis-management-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { crisisType, companyContext, currentStatus, stakeholders } = req.body;
+    const p = `You are an elite Crisis Management & Reputation Recovery strategist. Analyze:
+Crisis Type: ${crisisType || 'Product data breach — 500K customer records exposed'}
+Company Context: ${companyContext || 'FinTech startup, $50M ARR, Series C, 18 months from IPO'}
+Current Status: ${currentStatus || 'Breach discovered 6 hours ago, not yet public, regulators not notified'}
+Key Stakeholders: ${stakeholders || 'Board, investors, customers, regulators (GDPR/CCPA), media, employees'}
+
+Provide a comprehensive crisis management strategy:
+
+**IMMEDIATE CRISIS TRIAGE (First 24 Hours)**
+- Hour-by-hour action checklist (0-6, 6-12, 12-24)
+- Crisis command structure and war room setup
+- Legal counsel engagement priorities
+- Evidence preservation and forensic response
+- Initial stakeholder notification sequence
+- Media holding statement (draft)
+
+**STAKEHOLDER COMMUNICATION PLAN**
+- Board and investor communication (timing, content, format)
+- Regulatory notification requirements and deadlines
+- Customer notification strategy (what to say, when, via what channel)
+- Employee communication to prevent leaks and maintain trust
+- Media and public statement strategy
+- Social media monitoring and response protocol
+
+**LEGAL & REGULATORY RESPONSE**
+- Mandatory breach notification timelines by jurisdiction
+- Regulatory bodies to notify and sequence
+- Legal privilege and documentation protocols
+- Litigation risk assessment and mitigation
+- Insurance claim activation steps
+- Law enforcement coordination if applicable
+
+**MEDIA & PUBLIC RELATIONS**
+- Spokesperson selection and preparation
+- Press statement framework (acknowledge, explain, act, compensate)
+- Proactive vs. reactive media strategy
+- Social media crisis playbook
+- Influencer and analyst briefing plan
+- Dark site/crisis microsite activation
+
+**CUSTOMER REMEDIATION**
+- Affected customer identification and segmentation
+- Remediation offering design (credit monitoring, compensation)
+- Customer support surge capacity plan
+- Retention strategy for at-risk customers
+- Trust rebuilding communication sequence
+
+**ROOT CAUSE & REMEDIATION**
+- Technical remediation priorities and timeline
+- Third-party security audit engagement
+- Process and control improvements required
+- Vendor and supply chain review
+- Documentation for regulatory response
+
+**REPUTATION RECOVERY ROADMAP**
+- 30-day crisis stabilization plan
+- 60-90 day trust rebuilding initiatives
+- 6-month reputation recovery strategy
+- Long-term brand narrative repositioning
+- Metrics to track reputation recovery
+
+**LESSONS LEARNED & PREVENTION**
+- Crisis playbook gaps to close
+- Prevention investments to prioritize
+- Crisis simulation and tabletop exercise design
+- Board-level crisis governance improvements
+
+Deliver a crisis management playbook ready to execute immediately.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.01 AI M&A Due Diligence & Deal Intelligence Engine ---
 app.post('/api/ma-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
