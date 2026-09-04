@@ -39634,6 +39634,37 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.64 AI Customer Lifetime Value & Retention Intelligence Engine ---
+app.post('/api/clv-retention-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { industry, avgOrderValue, purchaseFrequency, customerLifespan, acquisitionCost, churnRate, topSegments, retentionChallenges, currentLoyaltyProgram, npsScore, revenueGoal, customerCount } = req.body;
+    const p = `You are a CLV and retention strategy expert. Analyze customer data and generate a comprehensive CLV & retention intelligence report.
+
+Business Context:
+- Industry: ${industry}
+- Avg Order Value: ${avgOrderValue}
+- Purchase Frequency: ${purchaseFrequency}
+- Customer Lifespan: ${customerLifespan}
+- Acquisition Cost (CAC): ${acquisitionCost}
+- Churn Rate: ${churnRate}
+- Top Segments: ${topSegments}
+- Retention Challenges: ${retentionChallenges}
+- Current Loyalty Program: ${currentLoyaltyProgram}
+- NPS Score: ${npsScore}
+- Revenue Goal: ${revenueGoal}
+- Total Customers: ${customerCount}
+
+Return JSON with: clvMetrics (object: currentCLV number, targetCLV number, ltcacRatio number, paybackPeriodMonths number, revenuePotential number), churnAnalysis (object: churnRiskFactors array of strings, predictedChurnImpact string, recoveryRate number), retentionSegments (array: segment string, clvScore number 0-100, retentionRate number, strategy string, priority 'critical'|'high'|'medium'), loyaltyStrategy (object: programType string, tiers array of objects with name/threshold/benefit, projectedLift string), retentionPlaybook (array: initiative string, impact 'high'|'medium'|'low', timeframe string, expectedROI string, tactics array of strings), winbackCampaigns (array: segment string, trigger string, offer string, channel string, expectedRecovery string).`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.63 AI Brand Strategy & Positioning Intelligence Engine ---
 app.post('/api/brand-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, targetAudience, currentBrandPerception, competitors, brandValues, uniqueValueProp, marketingBudget, channels, brandChallenges, expansionGoals, customerInsights } = req.body;
