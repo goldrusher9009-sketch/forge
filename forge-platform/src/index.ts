@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.72 AI BioInformatics & Genomics Engine ---
+app.post('/api/bioinformatics-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a bioinformatics and genomics strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a bioinformatics and genomics expert. Analyze and provide deep insights on: ${p}\n\nCover: genomic data analysis pipelines, precision medicine applications, CRISPR opportunities, proteomics, drug target discovery, clinical genomics, data privacy/ethics, computational biology tools, cloud genomics infrastructure, and commercialization pathways.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.71 AI DronesTech & UAV Innovation Engine ---
 app.post('/api/dronestech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
