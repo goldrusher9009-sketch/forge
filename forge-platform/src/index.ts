@@ -39500,6 +39500,36 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.82 AI Supply Chain & Procurement Intelligence Engine ---
+app.post('/api/supply-chain-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const { product, suppliers, volume, timeline, risks } = req.body;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) { res.status(402).json({ error: 'No API key' }); return; }
+    const p = `You are a Supply Chain & Procurement Intelligence expert. Analyze:
+Product/Category: ${product}
+Current Suppliers: ${suppliers || 'Not specified'}
+Volume/Spend: ${volume || 'Not specified'}
+Timeline: ${timeline || 'Not specified'}
+Risk Factors: ${risks || 'Not specified'}
+
+Provide:
+1. SUPPLIER RISK ASSESSMENT - score each supplier on financial stability, geo risk, capacity
+2. ALTERNATIVE SUPPLIERS - 3-5 vetted alternatives with pros/cons
+3. PROCUREMENT STRATEGY - optimal sourcing mix, dual/multi-sourcing recommendations
+4. COST OPTIMIZATION - volume leverage, payment terms, should-cost analysis
+5. RISK MITIGATION - buffer stock, contract clauses, supplier diversity targets
+6. MARKET INTELLIGENCE - commodity price trends, lead time benchmarks, tariff impacts
+7. ESG SCORECARD - sustainability ratings, compliance requirements
+8. ACTION PLAN - 30/60/90-day procurement roadmap
+
+Be specific with percentages, dollar ranges, and actionable steps.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ analysis: result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.81 AI Operations Excellence & Process Optimization Engine ---
 app.post('/api/ops-excellence', requireAuth, async (req: AuthRequest, res) => {
   try {
