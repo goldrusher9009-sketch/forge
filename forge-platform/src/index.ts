@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.21 AI Product Market Fit Engine ---
+app.post('/api/pmfit-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze product-market fit and growth readiness';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a product-market fit and growth strategy expert. Help founders and product teams find and strengthen PMF. ${p}\n\nProvide: 1) PMF signal assessment (retention, NPS, Sean Ellis test interpretation) 2) ICP (ideal customer profile) refinement 3) Value proposition clarity and differentiation 4) Usage pattern analysis and aha-moment identification 5) Cohort health and churn root-cause analysis 6) Go-to-market channel fit recommendations 7) PMF strengthening roadmap with prioritized experiments 8) Readiness-to-scale checklist` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.20 AI Brand Intelligence Engine ---
 app.post('/api/brandintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
