@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.51 AI Go-to-Market Launch Intelligence Engine ---
+app.post('/api/gtm-launch-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, product, targetMarket, icp, competitiveLandscape, pricing, launchTimeline, budget, channels, goals, teamSize } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class GTM strategist and product launch expert. Create a comprehensive go-to-market launch intelligence report.
+Company: ${company}, Product: ${product}, Target Market: ${targetMarket}
+ICP: ${icp}, Competitive Landscape: ${competitiveLandscape}
+Pricing: ${pricing}, Launch Timeline: ${launchTimeline}
+Budget: ${budget}, Channels: ${channels}, Goals: ${goals}, Team Size: ${teamSize}
+Return ONLY valid JSON (no markdown):
+{
+  "launchReadinessScore": { "overall": 0-100, "productReadiness": 0-100, "marketReadiness": 0-100, "salesReadiness": 0-100, "marketingReadiness": 0-100, "supportReadiness": 0-100 },
+  "icpAnalysis": { "primaryPersona": "", "painPoints": [], "buyingTriggers": [], "decisionCriteria": [], "objections": [], "championProfile": "", "economicBuyer": "" },
+  "channelStrategy": [{ "channel": "", "priority": "primary|secondary|experimental", "tactics": [], "budget": "", "expectedReach": "", "conversionRate": "", "cac": "", "timeline": "" }],
+  "messagingFramework": { "positioningStatement": "", "valueProposition": "", "tagline": "", "elevatorPitch": "", "differentiators": [], "proofPoints": [] },
+  "launchPhases": [{ "phase": "", "duration": "", "objectives": [], "keyActivities": [], "milestones": [], "budget": "", "successMetrics": [] }],
+  "competitiveStrategy": [{ "competitor": "", "weakness": "", "ourAdvantage": "", "battlecard": "", "counterNarrative": "" }],
+  "revenueModel": { "week4Target": "", "month3Target": "", "month6Target": "", "month12Target": "", "breakeven": "", "unitEconomics": "" },
+  "riskMitigation": [{ "risk": "", "probability": "high|medium|low", "impact": "high|medium|low", "mitigation": "", "contingency": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.50 AI Customer Success & Churn Prevention Engine ---
 app.post('/api/customer-success-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, customerSegments, churnRate, ltv, nps, supportTickets, usageMetrics, contractValues, healthScoreFactors, retentionGoals } = req.body;
