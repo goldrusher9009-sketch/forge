@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.67 AI SpaceTech & Deep Tech Strategy Engine ---
+app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SpaceTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a SpaceTech and deep technology strategy expert. ${p}\n\nProvide actionable strategy covering: commercial launch market dynamics, satellite constellation economics, in-space manufacturing, lunar and Mars economy, defense and dual-use space technology, space tourism market development, quantum computing commercialization, advanced materials and nanotechnology, fusion energy timelines, and building deep tech ventures that survive long R&D cycles.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.66 AI FoodTech & AgriFood Strategy Engine ---
 app.post('/api/foodtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
