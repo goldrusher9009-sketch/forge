@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.31 AI Web3 & Blockchain Strategy Engine ---
+app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a Web3 strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a Web3 and blockchain strategy expert specializing in tokenomics, DeFi protocol design, NFT ecosystems, Layer 2 scaling, and institutional crypto adoption. ${p}\n\nProvide comprehensive analysis covering: tokenomics design and token distribution strategy, DeFi protocol architecture (AMM/lending/yield), Layer 2 and rollup strategy (Optimism/Arbitrum/zkEVM), DAO governance design and voting mechanisms, NFT utility and creator economy models, institutional custody and compliance infrastructure, cross-chain interoperability and bridge security, smart contract audit strategy and security best practices, regulatory compliance (MiCA/SEC/CFTC), stablecoin and RWA (real world asset) tokenization, GameFi and play-to-earn economics, Web3 community building and go-to-market, and traditional enterprise blockchain adoption use cases.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.30 AI MedTech & Digital Health Engine ---
 app.post('/api/medtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
