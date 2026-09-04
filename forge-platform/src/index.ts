@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.67 AI Stakeholder Management Engine ---
+app.post('/api/stakeholder-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Help us map and manage our key stakeholders effectively';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a stakeholder management and communications expert. Build a comprehensive stakeholder strategy covering: 1) Stakeholder mapping and power/interest grid analysis 2) Influence and communication strategies per stakeholder group 3) Board and investor relations best practices 4) Change management and buy-in sequencing 5) Conflict resolution and alignment techniques 6) Executive communication cadence design 7) Crisis communications playbook. Context: ${p}\n\nProvide tailored engagement plans with messaging frameworks for each stakeholder tier.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.66 AI Regulatory Intelligence Engine ---
 app.post('/api/regintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
