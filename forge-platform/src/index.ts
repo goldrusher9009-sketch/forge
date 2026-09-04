@@ -39634,6 +39634,98 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.07 AI Corporate Governance & Board Intelligence Engine ---
+app.post('/api/governance-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { companyStage, governanceChallenge, boardComposition, regulatoryContext } = req.body;
+    const p = `You are an elite Corporate Governance & Board Intelligence advisor. Analyze:
+Company Stage: ${companyStage || 'Series C startup, $40M raised, 18 months from IPO preparation'}
+Governance Challenge: ${governanceChallenge || 'Transitioning from founder-led board to institutional governance, adding independent directors'}
+Board Composition: ${boardComposition || '5 members: 2 founders, 2 VCs, 1 independent — need 3 more independents for IPO'}
+Regulatory Context: ${regulatoryContext || 'Delaware C-Corp, planning Nasdaq IPO, SOX compliance required, international operations'}
+
+Provide a comprehensive corporate governance and board intelligence strategy:
+
+**BOARD COMPOSITION & DESIGN**
+- Optimal board size and composition for stage/goals
+- Skills matrix: gaps vs. needed capabilities
+- Independent director profile requirements
+- Diversity considerations and best practices
+- Lead independent director role design
+- Committee structure (Audit, Compensation, Nominating/Governance)
+- Advisory board vs. board of directors tradeoffs
+
+**DIRECTOR RECRUITMENT & ONBOARDING**
+- Director sourcing channels and search process
+- Evaluation criteria and interview framework
+- Reference and background check approach
+- Director compensation benchmarks (cash, equity, D&O coverage)
+- Onboarding program design
+- Director education and development
+- Conflict of interest assessment
+
+**BOARD GOVERNANCE FRAMEWORK**
+- Board meeting cadence and structure
+- Committee charter templates
+- Board information package design
+- Executive session protocols
+- Board evaluation and effectiveness assessment
+- Director independence standards
+- Related party transaction policy
+
+**CEO-BOARD RELATIONSHIP**
+- Information flow and reporting cadence
+- Board expectations setting framework
+- CEO evaluation process design
+- Succession planning framework
+- Crisis communication protocols
+- Escalation thresholds and triggers
+- Board support vs. oversight balance
+
+**IPO READINESS & PUBLIC COMPANY GOVERNANCE**
+- SOX 302/404 compliance readiness
+- Audit committee financial expert requirements
+- Disclosure committee setup
+- Insider trading policy and 10b5-1 plans
+- Reg FD compliance protocols
+- D&O insurance requirements and benchmarks
+- Equity compensation plan shareholder approval
+
+**SHAREHOLDER & STAKEHOLDER MANAGEMENT**
+- Shareholder rights and voting structure design
+- Dual-class share structure considerations
+- Investor relations governance
+- Proxy advisory firm (ISS, Glass Lewis) engagement
+- Activist investor preparedness
+- ESG governance disclosure requirements
+- Annual meeting preparation
+
+**RISK OVERSIGHT & COMPLIANCE**
+- Enterprise risk management framework
+- Board risk oversight structure
+- Audit committee oversight of financial reporting
+- Cybersecurity and data privacy oversight
+- Legal and regulatory compliance monitoring
+- Ethics and whistleblower program
+- Business continuity and crisis governance
+
+**GOVERNANCE DOCUMENTATION**
+- Certificate of Incorporation and Bylaw review
+- Board committee charters
+- Corporate governance guidelines
+- Code of business conduct and ethics
+- Director and officer indemnification agreements
+- Clawback policy design
+
+Deliver a governance roadmap with 30/60/90-day milestones toward IPO readiness.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.06 AI Brand Strategy & Marketing Intelligence Engine ---
 app.post('/api/brand-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
