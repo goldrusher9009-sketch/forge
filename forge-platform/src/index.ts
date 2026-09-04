@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.91 AI ClimaTech & Carbon Markets Engine ---
+app.post('/api/climatech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a climatech and carbon markets strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a climate technology and carbon markets expert. Provide comprehensive analysis covering: voluntary carbon market (VCM) opportunities, carbon credit verification standards (Verra, Gold Standard), direct air capture technology, green hydrogen production and storage, carbon border adjustment mechanisms (CBAM), climate risk disclosure (TCFD), nature-based solutions financing, battery storage economics, grid-scale renewable deployment, carbon accounting software, climate fintech platforms, and net-zero transition roadmaps for enterprises. ${p}\n\nProvide actionable, science-based recommendations with financial modeling insights.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.90 AI HealthTech & Digital Therapeutics Engine ---
 app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
