@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.24 AI Market Entry Strategy Engine ---
+app.post('/api/marketentry-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze market entry strategy and expansion approach';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a market entry strategy and international expansion expert. Help companies enter new markets with confidence. ${p}\n\nProvide: 1) Market attractiveness assessment (TAM, growth rate, competitive intensity) 2) Entry mode selection (greenfield, acquisition, JV, licensing, partnership) 3) Regulatory and compliance landscape analysis 4) Localization requirements (product, pricing, messaging) 5) Go-to-market sequencing and phasing 6) Key partnerships and distribution channel strategy 7) Resource requirements and investment timeline 8) Risk matrix and mitigation strategies` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.23 AI Customer Experience Engine ---
 app.post('/api/cxengine-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
