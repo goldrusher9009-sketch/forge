@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.05 AI FinOps & Cloud Cost Engine ---
+app.post('/api/finops-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze cloud costs and FinOps opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a FinOps and cloud cost optimization expert. Analyze cloud spending, identify waste, and recommend cost reduction strategies. ${p}\n\nProvide: 1) Cost breakdown analysis 2) Top waste areas 3) Reserved instance/savings plan recommendations 4) Rightsizing opportunities 5) Tagging and governance strategy 6) FinOps maturity roadmap` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.04 AI Revenue Operations Engine ---
 app.post('/api/revops-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
