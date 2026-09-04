@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.52 AI Executive Coaching & Leadership Development Engine ---
+app.post('/api/exec-coaching-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { name, role, company, industry, teamSize, challenges, strengths, goals, feedbackThemes, careerStage, coachingFocus } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a world-class executive coach with 30 years experience coaching C-suite leaders. Create a comprehensive leadership development plan.
+Name: ${name}, Role: ${role}, Company: ${company}, Industry: ${industry}
+Team Size: ${teamSize}, Career Stage: ${careerStage}
+Challenges: ${challenges}, Strengths: ${strengths}
+Goals: ${goals}, Feedback Themes: ${feedbackThemes}, Coaching Focus: ${coachingFocus}
+Return ONLY valid JSON (no markdown):
+{
+  "leadershipProfile": { "dominantStyle": "", "secondaryStyle": "", "derailers": [], "superPowers": [], "blindSpots": [], "executivePresenceScore": 0-100, "strategicThinkingScore": 0-100, "influenceScore": 0-100, "resilienceScore": 0-100 },
+  "developmentPlan": [{ "area": "", "currentState": "", "targetState": "", "actions": [], "resources": [], "timeline": "", "successMetric": "", "accountabilityPartner": "" }],
+  "weeklyRituals": [{ "ritual": "", "purpose": "", "duration": "", "frequency": "", "expectedOutcome": "" }],
+  "communicationBlueprint": { "boardPresence": [], "teamCommunication": [], "stakeholderInfluence": [], "crisisMessaging": [], "feedbackDelivery": [] },
+  "decisionFrameworks": [{ "scenario": "", "framework": "", "steps": [], "pitfalls": [], "example": "" }],
+  "networkingStrategy": { "keyRelationships": [], "boardReadiness": [], "industryPresence": [], "mentorCriteria": "", "sponsorStrategy": "" },
+  "ninetyDayPlan": { "days1to30": [], "days31to60": [], "days61to90": [], "keyMilestone": "", "quickWins": [] },
+  "coachingQuestions": [{ "theme": "", "question": "", "reflection": "", "journalPrompt": "" }]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.51 AI Go-to-Market Launch Intelligence Engine ---
 app.post('/api/gtm-launch-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, product, targetMarket, icp, competitiveLandscape, pricing, launchTimeline, budget, channels, goals, teamSize } = req.body;
