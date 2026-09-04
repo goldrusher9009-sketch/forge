@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.59 AI LegalTech & Contract Intelligence Strategy Engine ---
+app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a LegalTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a LegalTech and contract intelligence strategy expert. ${p}\n\nProvide actionable strategy covering: contract lifecycle management, AI-powered legal research, e-signature adoption, legal ops transformation, document automation, alternative legal service providers, legal AI regulation, law firm vs in-house tech adoption, pricing models for legal SaaS, and building trust in high-stakes legal AI products.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.58 AI RetailTech & Commerce Intelligence Strategy Engine ---
 app.post('/api/retailtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
