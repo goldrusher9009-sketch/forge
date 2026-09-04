@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.68 AI Financial Modeling Engine ---
+app.post('/api/finmodel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a financial model framework for our business';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a financial modeling and corporate finance expert. Build a comprehensive financial modeling framework covering: 1) Revenue model structure and driver assumptions 2) Unit economics deep-dive (CAC, LTV, payback period, gross margin) 3) Three-statement model architecture (P&L, balance sheet, cash flow) 4) Scenario analysis (base, bull, bear cases) 5) Valuation methodology (DCF, comparables, precedent transactions) 6) Capital requirements and funding strategy 7) Key financial KPIs and board-ready metrics. Context: ${p}\n\nProvide specific formulas, assumption ranges, and sensitivity analysis guidance.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.67 AI Stakeholder Management Engine ---
 app.post('/api/stakeholder-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
