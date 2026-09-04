@@ -39634,6 +39634,40 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.41 AI M&A Deal Intelligence & Due Diligence Engine ---
+app.post('/api/ma-intelligence', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { acquirer, target, dealType, dealSize, industry, rationale, synergies, concerns } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = `You are an M&A investment banking and due diligence expert. Analyze this potential deal comprehensively.
+Acquirer: ${acquirer}
+Target: ${target}
+Deal Type: ${dealType}
+Deal Size: ${dealSize}
+Industry: ${industry}
+Strategic Rationale: ${rationale}
+Expected Synergies: ${synergies}
+Concerns: ${concerns}
+
+Return JSON:
+{
+  "dealScore": { "overall": 0-100, "strategic": 0-100, "financial": 0-100, "cultural": 0-100, "risk": 0-100, "recommendation": "strong-buy|buy|neutral|pass|strong-pass" },
+  "valuationAnalysis": { "dcfRange": "", "comparableRange": "", "precedentRange": "", "suggestedOffer": "", "premiumAnalysis": "", "earnoutStructure": "" },
+  "synergyModel": { "costSynergies": "", "revenueSynergies": "", "timeToRealize": "", "integrationCost": "", "netSynergies": "" },
+  "dueDiligenceChecklist": [{ "area": "", "status": "complete|in-progress|not-started|red-flag", "findings": "", "risks": [""], "priority": "critical|high|medium|low" }],
+  "riskMatrix": [{ "risk": "", "category": "financial|legal|operational|cultural|market", "likelihood": "high|medium|low", "impact": "high|medium|low", "mitigation": "" }],
+  "integrationRoadmap": [{ "phase": "", "duration": "", "workstreams": [""], "keyMilestones": [""], "risks": [""] }],
+  "negotiationStrategy": { "walkAwayPrice": "", "targetPrice": "", "tactics": [""], "dealbreakers": [""], "concessions": [""] }
+}`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.40 AI Competitive War Room & Market Intelligence Engine ---
 app.post('/api/war-room', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;

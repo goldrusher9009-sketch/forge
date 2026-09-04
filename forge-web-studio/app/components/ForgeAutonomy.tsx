@@ -2397,6 +2397,119 @@ function CXOptimizationPanel({ api }:{ api:string }) {
 const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-red-700', Competitive:'bg-orange-100 text-orange-700', 'Value-Based':'bg-yellow-100 text-yellow-700', Dynamic:'bg-blue-100 text-blue-700', 'AI-Optimized':'bg-green-100 text-green-700' };
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
+// v11.41 M&A Deal Intelligence & Due Diligence Engine
+const MA_STATUS_BG = (s:string) => s==='red-flag'?'bg-red-100 text-red-700':s==='in-progress'?'bg-yellow-100 text-yellow-700':s==='complete'?'bg-green-100 text-green-700':'bg-gray-100 text-gray-700';
+const MA_RECO_BG = (r:string) => r?.includes('strong-buy')?'bg-green-600':r?.includes('buy')?'bg-green-400':r?.includes('pass')?'bg-red-500':'bg-yellow-400';
+function MaintelPanel({ api }: { api: string }) {
+  const [form, setForm] = useState({ acquirer:'', target:'', dealType:'Acquisition', dealSize:'', industry:'', rationale:'', synergies:'', concerns:'' });
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [innerTab, setInnerTab] = useState<'score'|'valuation'|'diligence'|'risks'|'integration'|'negotiation'>('score');
+  const submit = async () => {
+    setLoading(true);
+    try {
+      const r = await fetch(`${api}/api/ma-intelligence`, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(form) });
+      setResult(await r.json());
+    } catch(e) { setResult({ error: String(e) }); }
+    setLoading(false);
+  };
+  return (
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold">🤝 M&A Deal Intelligence & Due Diligence</h2>
+      <div className="grid grid-cols-2 gap-3">
+        {(['acquirer','target','dealType','dealSize','industry','rationale','synergies','concerns'] as const).map(f => (
+          <div key={f}>
+            <label className="text-xs font-medium capitalize">{f}</label>
+            <textarea className="w-full border rounded p-2 text-sm" rows={2} value={form[f]} onChange={e=>setForm(p=>({...p,[f]:e.target.value}))} placeholder={f} />
+          </div>
+        ))}
+      </div>
+      <button onClick={submit} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded disabled:opacity-50">{loading?'Analyzing…':'Run Deal Intelligence'}</button>
+      {result?.error && <p className="text-red-600">{result.error}</p>}
+      {result?.dealScore && (
+        <div className="space-y-4">
+          <div className={`${MA_RECO_BG(result.dealScore.recommendation)} text-white rounded p-3 text-center`}>
+            <div className="text-2xl font-bold">{result.dealScore.overall}/100</div>
+            <div className="text-sm capitalize">{result.dealScore.recommendation?.replace(/-/g,' ')}</div>
+          </div>
+          <div className="grid grid-cols-4 gap-3">
+            {['strategic','financial','cultural','risk'].map(k=>(
+              <div key={k} className="bg-white border rounded p-3 text-center">
+                <div className={`text-xl font-bold ${Number(result.dealScore[k])>=70?'text-green-600':Number(result.dealScore[k])>=50?'text-yellow-600':'text-red-600'}`}>{result.dealScore[k]}</div>
+                <div className="text-xs capitalize">{k}</div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 border-b flex-wrap">
+            {(['score','valuation','diligence','risks','integration','negotiation'] as const).map(t=>(
+              <button key={t} onClick={()=>setInnerTab(t)} className={`px-3 py-1 text-sm capitalize ${innerTab===t?'border-b-2 border-indigo-600 font-medium':''}`}>{t}</button>
+            ))}
+          </div>
+          {innerTab==='valuation' && result.valuationAnalysis && (
+            <div className="bg-white border rounded p-4 grid grid-cols-2 gap-3">
+              {Object.entries(result.valuationAnalysis).map(([k,v]:any)=>(
+                <div key={k}><div className="text-xs text-gray-500 capitalize">{k.replace(/([A-Z])/g,' $1')}</div><div className="text-sm font-bold text-indigo-600">{v}</div></div>
+              ))}
+            </div>
+          )}
+          {innerTab==='score' && result.synergyModel && (
+            <div className="bg-white border rounded p-4 grid grid-cols-2 gap-3">
+              {Object.entries(result.synergyModel).map(([k,v]:any)=>(
+                <div key={k}><div className="text-xs text-gray-500 capitalize">{k.replace(/([A-Z])/g,' $1')}</div><div className="text-sm font-bold text-green-600">{v}</div></div>
+              ))}
+            </div>
+          )}
+          {innerTab==='diligence' && result.dueDiligenceChecklist?.map((d:any,i:number)=>(
+            <div key={i} className="bg-white border rounded p-4 space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-sm">{d.area}</span>
+                <span className={`text-xs px-2 py-0.5 rounded ${MA_STATUS_BG(d.status)}`}>{d.status}</span>
+              </div>
+              <div className="text-xs">{d.findings}</div>
+              <div className="text-xs text-red-600">Risks: {d.risks?.join(' · ')}</div>
+            </div>
+          ))}
+          {innerTab==='risks' && result.riskMatrix?.map((r:any,i:number)=>(
+            <div key={i} className="bg-white border rounded p-4 space-y-1">
+              <div className="font-medium text-sm">{r.risk}</div>
+              <div className="flex gap-2 text-xs">
+                <span className="bg-gray-100 px-2 py-0.5 rounded">{r.category}</span>
+                <span className={`px-2 py-0.5 rounded ${r.likelihood==='high'?'bg-red-100 text-red-700':r.likelihood==='medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}`}>Likelihood: {r.likelihood}</span>
+                <span className={`px-2 py-0.5 rounded ${r.impact==='high'?'bg-red-100 text-red-700':r.impact==='medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700'}`}>Impact: {r.impact}</span>
+              </div>
+              <div className="text-xs italic text-blue-700">{r.mitigation}</div>
+            </div>
+          ))}
+          {innerTab==='integration' && result.integrationRoadmap?.map((p:any,i:number)=>(
+            <div key={i} className="bg-white border rounded p-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="font-bold">Phase {i+1}: {p.phase}</span>
+                <span className="text-xs text-gray-500">{p.duration}</span>
+              </div>
+              <div className="text-xs"><strong>Workstreams:</strong> {p.workstreams?.join(' · ')}</div>
+              <div className="text-xs text-green-700"><strong>Milestones:</strong> {p.keyMilestones?.join(' · ')}</div>
+              <div className="text-xs text-red-600"><strong>Risks:</strong> {p.risks?.join(' · ')}</div>
+            </div>
+          ))}
+          {innerTab==='negotiation' && result.negotiationStrategy && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-red-50 border border-red-200 rounded p-3 text-center"><div className="font-bold text-red-600">{result.negotiationStrategy.walkAwayPrice}</div><div className="text-xs">Walk-Away Price</div></div>
+                <div className="bg-green-50 border border-green-200 rounded p-3 text-center"><div className="font-bold text-green-600">{result.negotiationStrategy.targetPrice}</div><div className="text-xs">Target Price</div></div>
+              </div>
+              {[['Tactics', result.negotiationStrategy.tactics],['Dealbreakers',result.negotiationStrategy.dealbreakers],['Concessions',result.negotiationStrategy.concessions]].map(([label,items]:any)=>(
+                <div key={label} className="bg-white border rounded p-3">
+                  <div className="text-sm font-medium mb-1">{label}</div>
+                  <ul className="text-xs list-disc list-inside">{items?.map((it:string,j:number)=><li key={j}>{it}</li>)}</ul>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 // v11.40 Competitive War Room & Market Intelligence Engine
 const WR_THREAT_BG = (t:string) => t==='critical'?'bg-red-100 text-red-700':t==='high'?'bg-orange-100 text-orange-700':t==='medium'?'bg-yellow-100 text-yellow-700':'bg-gray-100 text-gray-700';
 function WarRoomPanel({ api }: { api: string }) {
@@ -31114,7 +31227,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'|'finscenario63'|'marketintel64'|'pmfgrowth65'|'talentiq66'|'supplychain67'|'cyberintel68'|'finmodel69'|'legalintel70'|'healthintel71'|'realestate72'|'climateintel73'|'eduintel74'|'salesintel75'|'launchcmd76'|'talentintel77'|'brandarch78'|'opsintel79'|'investorintel80'|'cxintel81'|'datastrat82'|'compintelcmd83'|'growtheng84'|'enterprisesalescmd85'|'pmfanalyzer86'|'finscenario87'|'supplyresilience88'|'orgresilience89'|'regintel90'|'innovportfolio91'|'pricingpsych92'|'clvretention93'|'talentintel94'|'brandarch95'|'cxjourney96'|'revintel97'|'digitransform98'|'esgintel99'|'warroom100'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'|'cxoptimize60'|'salesintel61'|'opsexcel62'|'finscenario63'|'marketintel64'|'pmfgrowth65'|'talentiq66'|'supplychain67'|'cyberintel68'|'finmodel69'|'legalintel70'|'healthintel71'|'realestate72'|'climateintel73'|'eduintel74'|'salesintel75'|'launchcmd76'|'talentintel77'|'brandarch78'|'opsintel79'|'investorintel80'|'cxintel81'|'datastrat82'|'compintelcmd83'|'growtheng84'|'enterprisesalescmd85'|'pmfanalyzer86'|'finscenario87'|'supplyresilience88'|'orgresilience89'|'regintel90'|'innovportfolio91'|'pricingpsych92'|'clvretention93'|'talentintel94'|'brandarch95'|'cxjourney96'|'revintel97'|'digitransform98'|'esgintel99'|'warroom100'|'maintel101'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -31319,6 +31432,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -31438,6 +31552,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -31616,6 +31731,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -31735,6 +31851,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -31899,6 +32016,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -32018,6 +32136,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -32138,6 +32257,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -32257,6 +32377,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -32427,6 +32548,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -32546,6 +32668,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
               { id: 'digitransform98', label: '🔄 DigiTransform' },
               { id: 'esgintel99', label: '🌱 ESG Intel' },
               { id: 'warroom100', label: '⚔️ War Room' },
+              { id: 'maintel101', label: '🤝 M&A Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -32812,6 +32935,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
       {tab === 'digitransform98' && <DigiTransformPanel api={api} />}
       {tab === 'esgintel99' && <EsgIntelPanel api={api} />}
       {tab === 'warroom100' && <WarRoomPanel api={api} />}
+      {tab === 'maintel101' && <MaintelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
