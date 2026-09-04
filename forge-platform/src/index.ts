@@ -39634,6 +39634,85 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.00 AI Digital Transformation & Change Management Engine ---
+app.post('/api/digital-transformation-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { orgType, transformationGoal, currentTech, changeResistance } = req.body;
+    const p = `You are an elite Digital Transformation & Change Management strategist. Analyze:
+Organization Type: ${orgType || 'Mid-size financial services firm, 1,500 employees'}
+Transformation Goal: ${transformationGoal || 'Modernize legacy core banking system and digitize customer journeys'}
+Current Tech Stack: ${currentTech || 'On-premise mainframe, 20-year-old core banking, Excel-heavy operations'}
+Change Resistance Level: ${changeResistance || 'High — long-tenured workforce, past failed IT projects, union considerations'}
+
+Provide a comprehensive digital transformation strategy:
+
+**TRANSFORMATION READINESS ASSESSMENT**
+- Digital maturity baseline (people, process, technology, data)
+- Capability gap analysis vs. target state
+- Legacy system risk and technical debt inventory
+- Organizational change capacity assessment
+- Quick wins vs. long-term transformation opportunities
+
+**TECHNOLOGY MODERNIZATION ROADMAP**
+- Core system migration strategy (lift-shift vs. rebuild vs. buy)
+- Cloud adoption framework (public, private, hybrid)
+- API-first and microservices architecture plan
+- Data platform and analytics modernization
+- Cybersecurity in transformation design
+- Vendor and partner ecosystem strategy
+
+**DIGITAL CUSTOMER EXPERIENCE**
+- Customer journey mapping and pain points
+- Self-service and digital channel strategy
+- Omnichannel experience design
+- AI/ML customer personalization opportunities
+- Mobile-first design principles
+- Customer feedback and iteration loops
+
+**PROCESS AUTOMATION & AI**
+- High-ROI automation candidates (RPA, AI, workflow)
+- Intelligent process automation prioritization matrix
+- Decision automation and AI model governance
+- Human-in-loop design for high-stakes decisions
+- Cost savings and efficiency projections
+
+**CHANGE MANAGEMENT FRAMEWORK**
+- Stakeholder analysis and resistance mapping
+- Executive sponsorship and coalition building
+- Communication plan (what, when, to whom, via what channel)
+- Training and capability building program
+- Culture change interventions
+- Incentive alignment for transformation behaviors
+
+**GOVERNANCE & EXECUTION MODEL**
+- Transformation office (PMO/TMO) design
+- Agile vs. waterfall program delivery
+- Investment governance and stage gates
+- Risk management and contingency planning
+- Vendor management and partner governance
+
+**METRICS & VALUE REALIZATION**
+- Transformation KPIs and OKRs
+- Benefits realization tracking
+- Employee adoption metrics
+- Customer experience improvement measures
+- Financial ROI model (costs vs. benefits over 3 years)
+
+**PHASED IMPLEMENTATION PLAN**
+- Phase 1 (0-6 months): Foundation and quick wins
+- Phase 2 (6-18 months): Core transformation
+- Phase 3 (18-36 months): Scale and optimize
+- Investment by phase and expected ROI
+
+Deliver a transformation blueprint ready for board and C-suite approval.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.99 AI ESG & Sustainability Strategy Engine ---
 app.post('/api/esg-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
