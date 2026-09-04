@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.08 AI Global Expansion Engine ---
+app.post('/api/globalexpand-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Build a global market expansion strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a global expansion and international business strategy expert. Help companies enter new markets successfully. ${p}\n\nProvide: 1) Target market analysis and prioritization 2) Market entry mode selection (JV, acquisition, greenfield, partnership) 3) Localization strategy (product, pricing, distribution) 4) Regulatory and compliance landscape 5) Cultural adaptation recommendations 6) Go-to-market timeline and budget framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.07 AI ESG & Sustainability Engine ---
 app.post('/api/esg-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
