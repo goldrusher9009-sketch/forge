@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.34 AI EdTech & Learning Intelligence Engine ---
+app.post('/api/edtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an EdTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an education technology and learning intelligence strategy expert specializing in AI tutoring, adaptive learning, workforce upskilling, and institutional EdTech deployment. ${p}\n\nProvide comprehensive analysis covering: AI-powered personalized learning and adaptive content delivery, learning management system (LMS) architecture and vendor selection, workforce development and corporate L&D platform strategy, competency-based education and skills credentialing, microlearning and content atomization strategy, gamification and engagement mechanics, accessibility and universal design for learning (UDL), learning analytics and outcome measurement, higher education digital transformation, K-12 edtech procurement and implementation, tutoring marketplace economics and quality control, international expansion and localization strategy, and generative AI integration for content creation and assessment.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.33 AI LegalTech & RegTech Engine ---
 app.post('/api/legaltech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
