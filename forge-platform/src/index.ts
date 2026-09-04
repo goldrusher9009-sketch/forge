@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.13 AI Customer Lifetime Value Engine ---
+app.post('/api/clv-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze customer lifetime value and retention strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a customer lifetime value and retention strategy expert. Help maximize CLV through data-driven strategies. ${p}\n\nProvide: 1) CLV segmentation model and calculation framework 2) High-value customer identification criteria 3) Retention and expansion playbooks by segment 4) Churn prediction signals and early warning system 5) Upsell/cross-sell opportunity mapping 6) CLV improvement roadmap with expected ROI` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.12 AI Innovation Portfolio Engine ---
 app.post('/api/innovport-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
