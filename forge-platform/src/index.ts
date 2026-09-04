@@ -39500,6 +39500,55 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v10.99 AI Regulatory Intelligence & Compliance Monitoring Engine ---
+app.post('/api/regulatory-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { industry, jurisdiction, regulationType, companyProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are an expert regulatory intelligence analyst and compliance strategist.
+Industry: ${industry}
+Jurisdiction(s): ${jurisdiction}
+Regulation Type: ${regulationType}
+Company Profile: ${companyProfile}
+
+Provide a comprehensive regulatory intelligence report. Return ONLY valid JSON:
+{
+  "regulatoryLandscape": {
+    "currentFramework": "overview of existing regulations",
+    "keyRegulators": ["regulator1", "regulator2"],
+    "complianceDeadlines": [{"regulation": "name", "deadline": "date", "requirement": "desc"}]
+  },
+  "emergingRegulations": [
+    {"name": "reg name", "status": "proposed|in-review|enacted", "impactLevel": "high|medium|low", "effectiveDate": "date", "keyRequirements": ["req1"], "actionNeeded": "what to do"}
+  ],
+  "complianceGaps": [
+    {"area": "compliance area", "currentState": "where you are", "requiredState": "where you need to be", "priority": "critical|high|medium", "remediationSteps": ["step1"], "estimatedEffort": "timeframe"}
+  ],
+  "riskAssessment": {
+    "overallRiskLevel": "high|medium|low",
+    "topRisks": [{"risk": "desc", "likelihood": "high|medium|low", "impact": "desc", "mitigation": "strategy"}],
+    "penaltyExposure": "estimated penalty range"
+  },
+  "complianceRoadmap": {
+    "immediate": ["action1 (0-30 days)"],
+    "shortTerm": ["action1 (30-90 days)"],
+    "longTerm": ["action1 (90+ days)"],
+    "governanceRecommendations": ["rec1"]
+  },
+  "competitiveBenchmark": "how peers are handling compliance",
+  "executiveSummary": "2-3 sentence strategic overview"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v10.98 AI Fundraising & Investor Relations Engine ---
 app.post('/api/fundraising-ir', requireAuth, async (req: AuthRequest, res) => {
   try {

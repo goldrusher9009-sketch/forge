@@ -2398,6 +2398,147 @@ const PS_MATURITY_COLOR: Record<string,string> = { 'Cost-Plus':'bg-red-100 text-
 const MA_RISK_BG = (r:string) => r==='High'?'bg-red-100 text-red-700':r==='Medium'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 const MA_FLAG_BG = (f:string) => f==='Red'?'bg-red-100 text-red-700':f==='Yellow'?'bg-yellow-100 text-yellow-700':'bg-green-100 text-green-700';
 // v10.98 Fundraising & Investor Relations
+const RI_TYPE_BG: Record<string,string> = {
+  'Environmental': 'bg-green-900/40 border-green-600',
+  'Financial': 'bg-blue-900/40 border-blue-600',
+  'Data Privacy': 'bg-purple-900/40 border-purple-600',
+  'Labor & Employment': 'bg-yellow-900/40 border-yellow-600',
+  'Industry-Specific': 'bg-orange-900/40 border-orange-600',
+  'Cross-Border': 'bg-red-900/40 border-red-600',
+};
+function RegulatoryIntelPanel({ api }: { api: string }) {
+  const [industry, setIndustry] = React.useState('');
+  const [jurisdiction, setJurisdiction] = React.useState('');
+  const [regulationType, setRegulationType] = React.useState('Environmental');
+  const [companyProfile, setCompanyProfile] = React.useState('');
+  const [result, setResult] = React.useState<any>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const run = async () => {
+    if (!industry || !jurisdiction) return;
+    setLoading(true); setError(''); setResult(null);
+    try {
+      const r = await fetch(`${api}/api/regulatory-intel`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('forge_token')}` }, body: JSON.stringify({ industry, jurisdiction, regulationType, companyProfile }) });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setResult(d);
+    } catch(e: any) { setError(e.message); } finally { setLoading(false); }
+  };
+  const riskColor = (l: string) => l === 'high' ? 'text-red-400' : l === 'medium' ? 'text-yellow-400' : 'text-green-400';
+  return (
+    <div className="p-6 space-y-6">
+      <div className="bg-gradient-to-r from-gray-900 to-slate-900 rounded-xl p-6 border border-slate-700">
+        <h2 className="text-2xl font-bold text-white mb-1">⚖️ AI Regulatory Intelligence</h2>
+        <p className="text-slate-400 text-sm">Monitor emerging regulations, assess compliance gaps, and build proactive risk strategies</p>
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700 col-span-2 md:col-span-1">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Industry</label>
+          <input value={industry} onChange={e=>setIndustry(e.target.value)} placeholder="e.g. Financial Services, Healthcare, Energy" className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm border border-slate-600 focus:border-blue-500 outline-none" />
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700 col-span-2 md:col-span-1">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Jurisdiction(s)</label>
+          <input value={jurisdiction} onChange={e=>setJurisdiction(e.target.value)} placeholder="e.g. US (Federal), EU, California, UK" className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm border border-slate-600 focus:border-blue-500 outline-none" />
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Regulation Type</label>
+          <div className="grid grid-cols-2 gap-2">
+            {Object.keys(RI_TYPE_BG).map(t => (
+              <button key={t} onClick={()=>setRegulationType(t)} className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${regulationType===t ? RI_TYPE_BG[t]+' text-white' : 'bg-slate-700 border-slate-600 text-slate-400 hover:border-slate-400'}`}>{t}</button>
+            ))}
+          </div>
+        </div>
+        <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+          <label className="text-slate-300 text-sm font-medium block mb-2">Company Profile</label>
+          <textarea value={companyProfile} onChange={e=>setCompanyProfile(e.target.value)} placeholder="Company size, operations, current compliance maturity, key concerns..." rows={4} className="w-full bg-slate-700 text-white rounded-lg px-3 py-2 text-sm border border-slate-600 focus:border-blue-500 outline-none resize-none" />
+        </div>
+      </div>
+      <button onClick={run} disabled={loading || !industry || !jurisdiction} className="w-full bg-gradient-to-r from-slate-600 to-blue-700 text-white font-semibold py-3 rounded-xl hover:opacity-90 disabled:opacity-50 transition-all">
+        {loading ? '⚖️ Analyzing regulatory landscape...' : '⚖️ Generate Regulatory Intelligence Report'}
+      </button>
+      {error && <div className="bg-red-900/30 border border-red-700 rounded-xl p-4 text-red-400 text-sm">{error}</div>}
+      {result && (
+        <div className="space-y-5">
+          {result.executiveSummary && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-blue-700/50">
+              <h3 className="text-blue-400 font-semibold mb-2">Executive Summary</h3>
+              <p className="text-slate-300 text-sm">{result.executiveSummary}</p>
+            </div>
+          )}
+          {result.riskAssessment && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Risk Assessment — Overall: <span className={riskColor(result.riskAssessment.overallRiskLevel)}>{result.riskAssessment.overallRiskLevel?.toUpperCase()}</span></h3>
+              <p className="text-slate-400 text-sm mb-3">Penalty Exposure: {result.riskAssessment.penaltyExposure}</p>
+              <div className="space-y-2">
+                {(result.riskAssessment.topRisks || []).map((r: any, i: number) => (
+                  <div key={i} className="bg-slate-700/50 rounded-lg p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-slate-300 text-sm font-medium">{r.risk}</p>
+                      <span className={`text-xs font-bold ${riskColor(r.likelihood)}`}>{r.likelihood}</span>
+                    </div>
+                    <p className="text-slate-400 text-xs mt-1">Impact: {r.impact}</p>
+                    <p className="text-green-400 text-xs mt-1">Mitigation: {r.mitigation}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.complianceGaps && result.complianceGaps.length > 0 && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Compliance Gaps</h3>
+              <div className="space-y-3">
+                {result.complianceGaps.map((g: any, i: number) => (
+                  <div key={i} className={`rounded-lg p-4 border ${g.priority==='critical' ? 'bg-red-900/20 border-red-700/50' : g.priority==='high' ? 'bg-orange-900/20 border-orange-700/50' : 'bg-slate-700/30 border-slate-600'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-white text-sm font-medium">{g.area}</p>
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded ${g.priority==='critical' ? 'bg-red-800 text-red-300' : g.priority==='high' ? 'bg-orange-800 text-orange-300' : 'bg-slate-600 text-slate-300'}`}>{g.priority}</span>
+                    </div>
+                    <p className="text-slate-400 text-xs">Current: {g.currentState} → Required: {g.requiredState}</p>
+                    <p className="text-slate-500 text-xs mt-1">Effort: {g.estimatedEffort}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.emergingRegulations && result.emergingRegulations.length > 0 && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Emerging Regulations</h3>
+              <div className="space-y-3">
+                {result.emergingRegulations.map((r: any, i: number) => (
+                  <div key={i} className="bg-slate-700/30 rounded-lg p-4 border border-slate-600">
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <p className="text-white text-sm font-medium">{r.name}</p>
+                      <div className="flex gap-1">
+                        <span className="text-xs bg-slate-600 text-slate-300 px-2 py-0.5 rounded">{r.status}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded font-bold ${r.impactLevel==='high' ? 'bg-red-800 text-red-300' : r.impactLevel==='medium' ? 'bg-yellow-800 text-yellow-300' : 'bg-green-800 text-green-300'}`}>{r.impactLevel}</span>
+                      </div>
+                    </div>
+                    {r.effectiveDate && <p className="text-slate-400 text-xs">Effective: {r.effectiveDate}</p>}
+                    {r.actionNeeded && <p className="text-blue-400 text-xs mt-1">Action: {r.actionNeeded}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {result.complianceRoadmap && (
+            <div className="bg-slate-800/50 rounded-xl p-5 border border-slate-700">
+              <h3 className="text-white font-semibold mb-3">Compliance Roadmap</h3>
+              <div className="grid grid-cols-3 gap-3">
+                {[['Immediate (0-30d)', result.complianceRoadmap.immediate, 'border-red-700/50'], ['Short-Term (30-90d)', result.complianceRoadmap.shortTerm, 'border-yellow-700/50'], ['Long-Term (90d+)', result.complianceRoadmap.longTerm, 'border-green-700/50']].map(([label, items, border]) => (
+                  <div key={label as string} className={`bg-slate-700/30 rounded-lg p-3 border ${border}`}>
+                    <p className="text-slate-300 text-xs font-semibold mb-2">{label as string}</p>
+                    <ul className="space-y-1">{((items as string[])||[]).map((a: string, j: number) => <li key={j} className="text-slate-400 text-xs">• {a}</li>)}</ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const FR_STAGE_BG: Record<string,string> = {
   'Pre-seed': 'bg-gray-700/60', Seed: 'bg-green-900/40', 'Series A': 'bg-blue-900/40', 'Series B': 'bg-purple-900/40', 'Series C+': 'bg-orange-900/40'
 };
@@ -27468,7 +27609,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
   api: Api; username?: string; onClose: () => void;
   onOpenOnboarding?: () => void; onModeChange?: (mode: string) => void;
 }) {
-  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'>('dashboard');
+  const [tab, setTab] = useState<'dashboard'|'approvals'|'agents'|'market'|'modes'|'voice'|'moonshots'|'hub'|'cascade'|'goals'|'monitors'|'webhooks'|'rss'|'apikeys'|'chains'|'conditions'|'playground'|'history'|'templates'|'leaderboard'|'events'|'digest'|'playbook'|'memory'|'myschedules'|'runs'|'autopilot'|'health'|'relay'|'scoreboard'|'mutate'|'diff'|'tokens'|'costs'|'retry'|'tags'|'agentdigest'|'milestones'|'benchmark'|'optimizer'|'distill'|'debate'|'persona'|'validate'|'writecoach'|'decision'|'risk'|'pitch'|'okr'|'userstories'|'apidocs'|'changelog'|'brandvoice'|'contentcal'|'headline'|'threadwriter'|'newsletter'|'coldemail'|'landingcopy'|'adcopy'|'podscript'|'vidscript'|'ytdesc'|'threadopt'|'igcaption'|'linkedinpost'|'pressrelease'|'faqgen'|'testimonialreq'|'casestudy'|'whitepaper'|'webinarscript'|'socialaudit'|'blogoutline'|'salesproposal'|'grantproposal'|'productroadmap'|'personabuilder'|'abcopy'|'pitchdeck'|'onboardingseq'|'battlecard'|'sopgen'|'swotanalysis'|'execsummary'|'pricingstrategy'|'partnershipproposal'|'csplaybook'|'investorupdate'|'marketentry'|'fundraisingstrategy'|'kpidashboard'|'changemgmt'|'crisiscomms'|'boardagenda'|'launchchecklist'|'talentstrategy'|'journeymap'|'agencyproposal'|'perfreview'|'vendoreval'|'digitaltransform'|'duediligence'|'engagementsurvey'|'customerseg'|'bcp'|'changemgmtplan'|'territoryplan'|'maintegration'|'supplychainrisk'|'esgreport'|'innovationlab'|'financialmodeler'|'contractintelligence'|'journeyorchestrator'|'talentintelligence'|'plgengine'|'revenueintelligence'|'esgreportbuilder'|'supplychainriskanalyzer'|'digitaltransform'|'csplaybookbuilder'|'boardprep'|'maduediligence'|'pricingengine'|'competitivemoat'|'globalexpansion'|'innovationlab'|'accelerator'|'revops'|'plgstrategy'|'journeyorch'|'aiethics'|'datastrategy'|'prdgenerator'|'fundraisingstrat'|'partnershipstrat'|'csplaybook2'|'contentcalendar'|'competitiveintel'|'financialmodeling'|'workforceplanning'|'brandaudit'|'journeymapping'|'salesforecasting'|'productlaunch'|'marketsizing'|'innovationsprint'|'negotiationcoach'|'execcoaching'|'pricingstrategy'|'csplaybook'|'digitaltransform'|'duediligence'|'competitivewarroom'|'pricingpsychology'|'csplaybookbuilder'|'boardprep2'|'marketentry2'|'workforceplanner'|'brandaudit2'|'salesforecast2'|'productlaunchcmd'|'execcoaching'|'crisiscommand'|'talentacq'|'cxoptimizer'|'complianceintel'|'innovationlab2'|'supplychain'|'pricingintel'|'culturetransform'|'gtmplanner'|'csretention'|'fundraisingcmd'|'pmfanalyzer'|'moatanalyzer'|'execcomp'|'boardprep3'|'crisiscomms'|'partnershipbld'|'talentintel'|'revopscmd'|'cxoptimizer'|'datastrategy'|'madiligence'|'gtmstrategy'|'pricingintel2'|'salesplaybook2'|'okrframework'|'churnprevention'|'launchcommand'|'partnershipstrategy'|'talentacquisition'|'digitaltransform2'|'revopscommand'|'esgstrategy'|'supplychainrisk'|'competitiveintelcmd'|'cxoptimizer2'|'pricingintel3'|'workforceplanner2'|'brandarchitect'|'finmodel'|'productroadmapcmd'|'salesintelligence'|'opsexcellence2'|'csretention2'|'growthengine'|'legalintel'|'partnerintel'|'investorrel'|'plgoptimizer'|'communitygrowth'|'pricingintel4'|'enterprisesales'|'datastrategy'|'csintel'|'brandarch2'|'gtmlaunch'|'maintel'|'innovstrat'|'talentintel'|'finscenario'|'supplyresil'|'digtransform'|'complianceesg'|'plgmonetize'|'execleadership'|'csrevretention'|'marketintel'|'opsexcellence3'|'fundraisingir'|'gtmlaunch'|'datastrategy2'|'brandarch3'|'supplychain3'|'cybersec3'|'esgstrat3'|'digitaltx4'|'talentiq4'|'pricingstrat5'|'cxoptimize5'|'innovationstrat6'|'salesiq6'|'legaliq7'|'finmodel8'|'gtmstrat9'|'orgdesign10'|'pmfgrowth11'|'customersuccess12'|'pricingstrat13'|'brandstrat14'|'partnerdev15'|'talentstrat16'|'legalcomp17'|'finmodel18'|'supplychain19'|'marketexp20'|'customersuccess21'|'brandarch22'|'salesintel23'|'productroadmap24'|'investorrel25'|'partnerintel26'|'pricingopto27'|'competintel28'|'cxjourney29'|'orgdesign30'|'digitaltx31'|'esgstrategy32'|'crisismanagement33'|'maintelligence34'|'pmfgrowth35'|'regintel36'|'talintel37'|'cxjourney38'|'finscenario39'|'brandarch40'|'opsexcell41'|'supplychain42'|'cyberthreat43'|'pmfaccel44'|'revopscmd45'|'orgculture46'|'maduedil47'|'csretention48'|'gtmlaunch49'|'innovsprint50'|'pricingstrat51'|'talentintel52'|'esgintel53'|'crisiscomms54'|'partnerstrat55'|'digitaltrans56'|'brandstrat57'|'fundraiseir58'|'regulatoryintel59'>('dashboard');
   const tabs: { id: typeof tab; label: string }[] = [
     { id: 'dashboard', label: '≡ƒîà Morning' },
     { id: 'approvals', label: 'Γ£à Approvals' },
@@ -27631,6 +27772,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27708,6 +27850,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27844,6 +27987,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -27921,6 +28065,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28043,6 +28188,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28120,6 +28266,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28198,6 +28345,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28275,6 +28423,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28403,6 +28552,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28480,6 +28630,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
     { id: 'digitaltrans56', label: '⚡ Digital Transform' },
     { id: 'brandstrat57', label: '✨ Brand Strategy' },
     { id: 'fundraiseir58', label: '💼 Fundraising & IR' },
+    { id: 'regulatoryintel59', label: '⚖️ Regulatory Intel' },
     { id: 'pmfgrowth35', label: '🚀 PMF & Growth' },
     { id: 'maintelligence34', label: '🤝 M&A Intelligence' },
     { id: 'crisismanagement33', label: '🚨 Crisis Management' },
@@ -28704,6 +28855,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28781,6 +28933,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28859,6 +29012,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -28936,6 +29090,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29042,6 +29197,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29119,6 +29275,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29197,6 +29354,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29274,6 +29432,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29371,6 +29530,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29448,6 +29608,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29526,6 +29687,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29603,6 +29765,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29713,6 +29876,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29790,6 +29954,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29892,6 +30057,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -29969,6 +30135,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30047,6 +30214,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30124,6 +30292,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30221,6 +30390,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30298,6 +30468,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30376,6 +30547,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30453,6 +30625,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30563,6 +30736,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30640,6 +30814,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30718,6 +30893,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30795,6 +30971,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30892,6 +31069,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -30969,6 +31147,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31047,6 +31226,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31124,6 +31304,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31230,6 +31411,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31307,6 +31489,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31385,6 +31568,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
@@ -31462,6 +31646,7 @@ export function ForgeAutonomyHub({ api, username, onClose, onOpenOnboarding, onM
         {tab === 'digitaltrans56' && <DigitalTransPanel api={api} />}
         {tab === 'brandstrat57' && <BrandStratPanel api={api} />}
         {tab === 'fundraiseir58' && <FundraiseIRPanel api={api} />}
+        {tab === 'regulatoryintel59' && <RegulatoryIntelPanel api={api} />}
     {tab === 'pmfgrowth35' && <PMFGrowthPanel api={api} />}
     {tab === 'maintelligence34' && <MAIntelligencePanel api={api} />}
     {tab === 'crisismanagement33' && <CrisisManagementPanel api={api} />}
