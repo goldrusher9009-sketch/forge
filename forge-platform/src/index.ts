@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.66 AI Regulatory Intelligence Engine ---
+app.post('/api/regintel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze the regulatory landscape relevant to our business';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a regulatory intelligence and compliance strategy expert. Build a comprehensive regulatory analysis covering: 1) Key regulatory bodies and frameworks by jurisdiction 2) Compliance gap assessment and risk prioritization 3) Regulatory change monitoring strategy 4) Compliance program design (policies, controls, training) 5) Regulatory relationship management 6) Proactive engagement and lobbying strategy 7) Compliance tech stack recommendations. Context: ${p}\n\nProvide jurisdiction-specific guidance with priority rankings and implementation timeline.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.65 AI Market Expansion Engine ---
 app.post('/api/marketexpand-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
