@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.91 AI SpaceTech & Satellite Economy Engine ---
+app.post('/api/spacetech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a SpaceTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a space technology and satellite economy strategy expert. ${p}\n\nProvide a comprehensive strategy covering: satellite communications and broadband constellations, Earth observation and geospatial analytics, launch vehicle innovation and reusability economics, in-space manufacturing and resource utilization, space tourism and commercial habitats, defense and dual-use satellite applications, spectrum licensing and orbital slot strategy, and regulatory frameworks (FCC, ITU, FAA). Include market sizing, key players, investment landscape, and actionable implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.90 AI AgriTech & Food Systems Engine ---
 app.post('/api/agritech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
