@@ -39634,6 +39634,75 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.90 AI Pricing Strategy & Revenue Optimization Engine ---
+app.post('/api/pricing-strategy-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { product, currentPrice, model, competitors } = req.body;
+    const p = `You are an elite Pricing Strategy & Revenue Optimization advisor. Analyze:
+Product: ${product || 'B2B SaaS analytics platform'}
+Current Price: ${currentPrice || '$99/mo per seat'}
+Pricing Model: ${model || 'Per-seat subscription'}
+Competitors: ${competitors || 'Mixpanel ($25-$833/mo), Amplitude ($0-$995/mo), Heap'}
+
+Provide comprehensive pricing intelligence:
+
+**PRICING MODEL ANALYSIS**
+- Current model strengths and weaknesses
+- Alternative models to consider (usage-based, outcome-based, tiered)
+- Value metric alignment assessment
+- Model migration path if change recommended
+
+**WILLINGNESS-TO-PAY RESEARCH**
+- Estimated WTP by customer segment
+- Price sensitivity analysis
+- Good-better-best tier structure recommendation
+- Anchoring and framing strategies
+
+**COMPETITIVE PRICING INTELLIGENCE**
+- Competitor price positioning map
+- Where you're over- or under-priced
+- Differentiation justification for premium
+- Race-to-bottom avoidance tactics
+
+**PACKAGING STRATEGY**
+- Feature bundling recommendations
+- What to include in each tier
+- Freemium/free trial boundary design
+- Add-on and expansion revenue structure
+
+**PRICING PAGE OPTIMIZATION**
+- Recommended number of plans
+- Highlighted plan psychology
+- Decoy pricing options
+- Annual vs. monthly discount strategy
+
+**DISCOUNT & NEGOTIATION POLICY**
+- When to discount and by how much
+- Deal desk criteria and approval thresholds
+- Multi-year contract incentives
+- Partner and reseller margin structure
+
+**REVENUE OPTIMIZATION LEVERS**
+- Quick wins to increase ARPU this quarter
+- Expansion revenue triggers
+- Price increase communication playbook
+- Grandfathering strategy for existing customers
+
+**PRICING EXPERIMENT ROADMAP**
+- A/B tests to run on pricing page
+- Cohort analysis approach
+- Success metrics and decision criteria
+- Timeline and rollout plan
+
+Deliver a pricing strategy that maximizes revenue while minimizing churn risk.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.89 AI Growth Hacking & Viral Acquisition Engine ---
 app.post('/api/growth-hacking-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
