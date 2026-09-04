@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.87 AI QuantumTech & Next-Gen Computing Engine ---
+app.post('/api/quantumtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a QuantumTech strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a quantum computing and next-generation technology strategy expert. ${p}\n\nProvide actionable strategy covering: quantum computing commercialization timelines and qubit roadmaps, quantum advantage use cases in finance, pharma, and logistics, post-quantum cryptography migration urgency and standards, neuromorphic and edge AI chip architectures, photonic computing market development, quantum sensing and metrology commercial applications, hybrid classical-quantum algorithm development, talent and IP landscape in quantum, government quantum investment and national security implications, and positioning a technology company for the quantum transition.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.86 AI RetailTech & Commerce Intelligence Engine ---
 app.post('/api/retailtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
