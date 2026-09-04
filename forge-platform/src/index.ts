@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.79 AI Partnership Strategy Engine ---
+app.post('/api/partnerstrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop a partnership strategy to accelerate growth and expand reach';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a partnership strategy expert. Analyze the following partnership opportunity and provide: 1) Partnership landscape mapping and ideal partner profiles, 2) Value proposition for each partner type, 3) Partnership structure and deal terms framework, 4) Go-to-market collaboration model, 5) Success metrics and governance model, 6) Partnership pipeline prioritization and outreach strategy. Be specific and commercially rigorous.\n\n${p}` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.78 AI Investment Intelligence Engine ---
 app.post('/api/investintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
