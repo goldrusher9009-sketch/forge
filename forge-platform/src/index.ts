@@ -39500,6 +39500,39 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.12 AI Real Estate & Property Intelligence Engine ---
+app.post('/api/realestate-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { propertyType, location, budget, investmentGoal, marketConditions, propertyDetails } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const p = `You are a top real estate investment advisor and property analyst.
+Property Type: ${propertyType}
+Location: ${location}
+Budget: ${budget}
+Investment Goal: ${investmentGoal}
+Market Conditions: ${marketConditions}
+Property Details: ${propertyDetails}
+
+Return comprehensive JSON real estate analysis:
+{
+  "marketAnalysis": {"priceAppreciation": "string", "rentGrowth": "string", "vacancyRate": "string", "supplyDemand": "string", "marketPhase": "buyer|seller|balanced", "outlook": "string"},
+  "investmentMetrics": {"capRate": "string", "cashOnCash": "string", "grossRentMultiplier": "string", "noi": "string", "irr5yr": "string", "breakEven": "string"},
+  "comparableAnalysis": [{"address": "string", "salePrice": "string", "pricePerSqft": "string", "daysOnMarket": "string", "similarity": "string"}],
+  "dueDiligence": [{"item": "string", "status": "critical|important|routine", "action": "string"}],
+  "riskFactors": [{"risk": "string", "probability": "string", "impact": "string", "mitigation": "string"}],
+  "negotiationStrategy": {"openingOffer": "string", "targetPrice": "string", "walkAwayPrice": "string", "contingencies": ["string"], "tactics": ["string"]},
+  "financingOptions": [{"type": "string", "rate": "string", "terms": "string", "pros": "string", "cons": "string"}],
+  "investmentThesis": "string"
+}`;
+    const raw = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    return res.json(JSON.parse(m[0]));
+  } catch (e: any) { return res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.11 AI Healthcare & Clinical Intelligence Engine ---
 app.post('/api/health-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
