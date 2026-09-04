@@ -39634,6 +39634,18 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.36 AI PropTech & Real Estate Intelligence Engine ---
+app.post('/api/proptech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a PropTech real estate strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a PropTech and real estate intelligence expert. Provide comprehensive analysis covering market analysis, property valuation models, rental yield optimization, smart building technology integration, real estate tokenization, iBuying platforms, co-living and co-working trends, REITs and fractional ownership, zoning and regulatory intelligence, and data-driven investment strategies. ${p}\n\nProvide actionable insights with market data, technology stack recommendations, and investment frameworks.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
 // --- v13.35 AI Robotics & Autonomous Systems Engine ---
 app.post('/api/robotics-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
