@@ -39634,6 +39634,39 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.66 AI Product-Market Fit & Growth Loop Engine ---
+app.post('/api/pmf-growth-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { product, targetSegment, currentMRR, growthRate, retentionRate, activationRate, nps, topUseCases, featureRequests, churnReasons, acquisitionChannels, avgContractValue, teamSize, runway } = req.body;
+    const p = `You are a product-market fit and growth strategy expert. Analyze the product and generate a comprehensive PMF assessment and growth loop strategy.
+
+Product Context:
+- Product: ${product}
+- Target Segment: ${targetSegment}
+- Current MRR: ${currentMRR}
+- Growth Rate: ${growthRate}
+- Retention Rate: ${retentionRate}
+- Activation Rate: ${activationRate}
+- NPS: ${nps}
+- Top Use Cases: ${topUseCases}
+- Feature Requests: ${featureRequests}
+- Churn Reasons: ${churnReasons}
+- Acquisition Channels: ${acquisitionChannels}
+- Avg Contract Value: ${avgContractValue}
+- Team Size: ${teamSize}
+- Runway: ${runway}
+
+Return JSON with: pmfScore (object: overall number 0-100, retention number, engagement number, willingness number, wordOfMouth number, verdict string), pmfGaps (array: gap string, severity 'critical'|'high'|'medium', fix string), growthLoops (array: loopName string, type 'viral'|'paid'|'content'|'product', mechanism string, keyMetric string, estimatedMultiplier string, implementationSteps array), northStarMetric (object: metric string, currentValue string, targetValue string, rationale string, weeklyActions array), experimentPipeline (array: hypothesis string, channel string, effort 'low'|'medium'|'high', expectedLift string, successCriteria string), growthModel (object: phase string, focus string, targetMRR string, keyActions array, risks array).`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.65 AI Competitive Intelligence & Market Positioning Engine ---
 app.post('/api/competitive-intel-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
