@@ -39500,6 +39500,38 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.24 AI Growth Engineering & PLG Intelligence ---
+app.post('/api/growth-eng', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { product, stage, model, metrics, challenges } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'Anthropic key required' });
+  try {
+    const p = `You are a world-class growth engineer and PLG strategist. Design a comprehensive growth engineering system for:
+Product: ${product || 'SaaS platform'}
+Growth Stage: ${stage || 'growth'}
+Business Model: ${model || 'freemium'}
+Current Metrics: ${metrics || 'early stage'}
+Key Challenges: ${challenges || 'acquisition and activation'}
+
+Return JSON with these exact keys:
+{
+  "growthDiagnosis": { "stage": string, "primaryConstraint": string, "growthLevers": string[], "northStarMetric": string },
+  "acquisitionEngine": { "channels": [{ "channel": string, "strategy": string, "expectedCAC": string, "timeline": string, "priority": "P0"|"P1"|"P2" }], "viralLoops": string[], "seoStrategy": string },
+  "activationPlaybook": { "ahamoment": string, "onboardingSteps": [{ "step": string, "goal": string, "metric": string }], "timeToValue": string, "dropOffPoints": string[] },
+  "retentionSystem": { "engagementHooks": string[], "habitLoops": [{ "trigger": string, "action": string, "reward": string }], "churnPredictors": string[], "winbackStrategy": string },
+  "monetizationOptimization": { "pricingModel": string, "expansionRevenue": string[], "upsellTriggers": string[], "freeToPaidConversion": string },
+  "plgMotion": { "productLedSignals": string[], "selfServeFlow": string, "viralCoefficient": string, "networkEffects": string[] },
+  "growthExperiments": [{ "hypothesis": string, "metric": string, "test": string, "expectedLift": string, "effort": "low"|"medium"|"high" }],
+  "growthModel": { "weeklyTargets": [{ "week": string, "metric": string, "target": string }], "milestones": string[] }
+}`;
+    const r = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const m = r.match(/\{[\s\S]*\}/);
+    if (!m) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(m[0]));
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.23 AI Competitive Intelligence Command Center ---
 app.post('/api/compintel-cmd', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
