@@ -39634,6 +39634,38 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.65 AI Competitive Intelligence & Market Positioning Engine ---
+app.post('/api/competitive-intel-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { company, industry, competitors, targetMarket, currentPosition, productStrengths, productWeaknesses, pricePoint, salesCycle, winRate, lossReasons, marketTrends, expansionTarget } = req.body;
+    const p = `You are a competitive intelligence and market positioning expert. Generate a comprehensive competitive analysis and market positioning strategy.
+
+Company Context:
+- Company: ${company}
+- Industry: ${industry}
+- Competitors: ${competitors}
+- Target Market: ${targetMarket}
+- Current Position: ${currentPosition}
+- Product Strengths: ${productStrengths}
+- Product Weaknesses: ${productWeaknesses}
+- Price Point: ${pricePoint}
+- Sales Cycle: ${salesCycle}
+- Win Rate: ${winRate}
+- Loss Reasons: ${lossReasons}
+- Market Trends: ${marketTrends}
+- Expansion Target: ${expansionTarget}
+
+Return JSON with: competitiveMatrix (array: competitor string, marketShare string, pricePosition string, strengths array, weaknesses array, threatLevel 'high'|'medium'|'low'), swotAnalysis (object: strengths/weaknesses/opportunities/threats each array of strings), marketPositioning (object: currentQuadrant string, targetQuadrant string, positioningStatement string, keyDifferentiators array), battlecards (array: competitor string, winStrategy string, talkingPoints array, landmines array, proofPoints array), marketOpportunities (array: opportunity string, size string, difficulty 'hard'|'medium'|'easy', timeframe string, recommendation string), competitivePlaybook (object: immediateActions array, quarterlyGoals array, annualStrategy string).`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(500).json({ error: 'Parse error' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.64 AI Customer Lifetime Value & Retention Intelligence Engine ---
 app.post('/api/clv-retention-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
