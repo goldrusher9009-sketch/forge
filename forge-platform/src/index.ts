@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.61 AI Channel Strategy Engine ---
+app.post('/api/channelstrat-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our go-to-market channels and recommend optimization strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a go-to-market and channel strategy expert. Build a comprehensive channel strategy covering: 1) Channel mix analysis and ROI by channel 2) Direct vs indirect channel trade-offs 3) Partner ecosystem design 4) Channel conflict resolution 5) Digital vs physical channel optimization 6) Channel enablement and incentive structures 7) Omnichannel integration roadmap. Context: ${p}\n\nProvide specific frameworks and actionable recommendations.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.60 AI Pricing Intelligence Engine ---
 app.post('/api/pricintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
