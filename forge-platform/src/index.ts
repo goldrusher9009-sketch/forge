@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.74 AI Supply Chain Intelligence Engine ---
+app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Analyze our supply chain for risks and optimization opportunities';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a supply chain intelligence expert. Analyze the following supply chain scenario and provide: 1) Risk assessment (geopolitical, supplier, logistics, demand), 2) Resilience strategies and diversification recommendations, 3) Cost optimization opportunities, 4) Inventory management improvements, 5) Supplier relationship strategies, 6) Technology and automation opportunities. Be specific and data-driven.\n\n${p}` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.73 AI Crisis Management Engine ---
 app.post('/api/crisismgmt-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
