@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.22 AI GovTech & Public Sector Strategy Engine ---
+app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { govtechType, govChallenge, agencyContext, contractProfile } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(400).json({ error: 'Anthropic API key required' });
+    const p = `You are an elite GovTech and public sector strategy expert with deep expertise in government digital transformation, federal/state/local procurement, civic technology, and AI applications in public administration.
+
+GovTech Type/Company: ${govtechType}
+Government Challenge: ${govChallenge}
+Agency/Jurisdiction Context: ${agencyContext}
+Contract/Growth Profile: ${contractProfile}
+
+Provide a comprehensive GovTech & Public Sector strategy covering:
+1. Government Digital Transformation — legacy modernization, cloud migration, API-first architecture for agencies
+2. Procurement & Contracting Strategy — FAR/DFAR compliance, SBIR/OTAs, GSA schedules, prime vs. sub strategy
+3. AI in Government Services — benefits delivery automation, fraud detection, permitting AI, constituent services
+4. Civic Data & Open Government — data infrastructure, interoperability standards, privacy compliance (FedRAMP, FISMA)
+5. Smart City & Infrastructure — IoT for public safety, traffic optimization, utility management, digital twin
+6. Defense & Intelligence Tech — dual-use technology strategy, clearance requirements, classified system architecture
+7. Healthcare & Social Services Tech — Medicaid/Medicare platforms, benefits eligibility, case management AI
+8. GovTech GTM & Sales Motion — RFP response excellence, incumbent displacement, champion building inside agencies
+
+Be specific, data-driven, and actionable.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.21 AI InsurTech & Risk Management Strategy Engine ---
 app.post('/api/insurtech-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
