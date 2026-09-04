@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.43 AI Knowledge Management Engine ---
+app.post('/api/knowledgemgmt-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Design a knowledge management strategy to capture and leverage organizational intelligence';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a knowledge management and organizational learning expert. Help organizations capture, share, and leverage their collective intelligence. ${p}\n\nProvide: 1) Knowledge audit framework (explicit vs tacit knowledge mapping) 2) Critical knowledge risk assessment (key person dependencies) 3) Knowledge capture and documentation strategy 4) Communities of practice and knowledge sharing mechanisms 5) Technology stack recommendations (wiki, knowledge base, search) 6) Onboarding and knowledge transfer program design 7) Knowledge governance and quality management 8) Learning organization metrics and continuous improvement loops` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.42 AI Organizational Culture Engine ---
 app.post('/api/orgculture-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
