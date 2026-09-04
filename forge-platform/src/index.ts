@@ -39500,6 +39500,40 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.29 AI Organizational Resilience & Change Management Engine ---
+app.post('/api/org-resilience', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { company, industry, changeInitiative, currentChallenges, orgSize, culture } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'No Anthropic key configured' });
+  const p = `You are an organizational resilience and change management expert. Analyze this organization and provide a comprehensive resilience assessment and change management plan.
+
+Company: ${company}
+Industry: ${industry}
+Change Initiative: ${changeInitiative}
+Current Challenges: ${currentChallenges}
+Organization Size: ${orgSize}
+Culture Description: ${culture}
+
+Return ONLY valid JSON:
+{
+  "resilienceScore": { "overall": 7.2, "adaptability": 8, "cohesion": 7, "innovation": 6, "recovery": 8 },
+  "changeReadiness": { "level": "moderate", "score": 68, "keyBarriers": ["resistance to change", "unclear vision"], "enablers": ["strong leadership", "clear communication"] },
+  "stakeholderMap": [{ "group": "Senior Leadership", "influence": "high", "support": "champion", "engagementStrategy": "regular briefings and co-creation" }],
+  "changeRoadmap": [{ "phase": "Awareness", "duration": "4 weeks", "activities": ["town halls", "FAQ docs"], "successMetrics": ["80% awareness rate"] }],
+  "riskMitigation": [{ "risk": "Change fatigue", "likelihood": "high", "impact": "high", "mitigation": "Pace initiatives and celebrate wins" }],
+  "cultureInterventions": [{ "intervention": "Psychological safety workshops", "targetGroup": "All teams", "timeline": "Month 1-2", "expectedOutcome": "Increased risk-taking" }],
+  "kpis": [{ "metric": "Employee Engagement Score", "baseline": "62%", "target": "75%", "timeline": "12 months" }],
+  "quickWins": ["Launch change champion network", "CEO video message", "Anonymous feedback channel"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.28 AI Supply Chain Resilience Engine ---
 app.post('/api/supply-resilience', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
