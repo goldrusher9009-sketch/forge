@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.00 AI Enterprise Sales Intelligence Engine ---
+app.post('/api/enterprise-sales-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an enterprise sales strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an enterprise sales intelligence expert. Provide actionable strategies for complex deal navigation, multi-stakeholder management, procurement process optimization, executive alignment, RFP response excellence, competitive displacement, and enterprise account expansion. ${p}\n\nProvide specific, tactical recommendations with expected impact and implementation steps.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.99 AI Web3 & Blockchain Strategy Engine ---
 app.post('/api/web3-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
