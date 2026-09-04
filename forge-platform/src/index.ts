@@ -39634,6 +39634,75 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.94 AI Innovation & Technology Scouting Engine ---
+app.post('/api/innovation-scouting-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { industry, challenge, horizon, budget } = req.body;
+    const p = `You are an elite Innovation & Technology Scouting advisor. Analyze:
+Industry: ${industry || 'Financial Services / Banking'}
+Innovation Challenge: ${challenge || 'Reduce loan processing time from 5 days to same-day'}
+Time Horizon: ${horizon || '2-3 years'}
+Investment Budget: ${budget || '$5M innovation budget'}
+
+Provide comprehensive innovation intelligence:
+
+**TECHNOLOGY LANDSCAPE SCAN**
+- Emerging technologies directly applicable to this challenge
+- Maturity level assessment (TRL 1-9) for each technology
+- Leading vendors and startups to evaluate
+- Academic research and patent activity
+
+**INNOVATION OPPORTUNITY MAPPING**
+- Incremental vs. breakthrough opportunities
+- Adjacent industry solutions to borrow
+- Platform and ecosystem opportunities
+- Data and AI leverage points
+
+**BUILD vs. BUY vs. PARTNER ANALYSIS**
+- Core capabilities to build internally
+- Best-in-class solutions to acquire/license
+- Partnership and co-development opportunities
+- Open source foundations to leverage
+
+**STARTUP ECOSYSTEM INTELLIGENCE**
+- Key startups solving this problem (by stage)
+- Accelerator and incubator programs relevant
+- Investment/acqui-hire opportunities
+- POC partnership approach for each
+
+**INNOVATION PROGRAM DESIGN**
+- Internal innovation structure recommendation
+- Hackathon and ideation program design
+- Innovation lab vs. embedded team debate
+- Governance and decision-making framework
+
+**POC & PILOT ROADMAP**
+- Prioritized experiments to run (by impact/effort)
+- POC success criteria and duration
+- Pilot scaling criteria
+- Failure fast checkpoints
+
+**ORGANIZATIONAL CHANGE**
+- Culture and mindset shifts required
+- Skills and talent gaps to address
+- Innovation metrics and KPIs
+- Executive sponsorship structure
+
+**ROI PROJECTION**
+- Expected value if challenge is solved
+- Innovation investment benchmarks (% of revenue)
+- Time to value estimates per approach
+- Risk-adjusted return scenarios
+
+Deliver an innovation roadmap ready for a Chief Innovation Officer to execute.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.93 AI Market Entry & Expansion Strategy Engine ---
 app.post('/api/market-entry-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
