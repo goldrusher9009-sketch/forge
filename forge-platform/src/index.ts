@@ -39634,6 +39634,81 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.03 AI Talent Intelligence & Workforce Strategy Engine ---
+app.post('/api/talent-intelligence-ai', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+    const { analysisType, companyContext, roleProfile, marketContext } = req.body;
+    const p = `You are an elite Talent Intelligence & Workforce Strategy advisor. Analyze:
+Analysis Type: ${analysisType || 'Talent acquisition strategy for hyper-growth Series B startup'}
+Company Context: ${companyContext || 'B2B SaaS, 50 employees, doubling headcount in 12 months, remote-first'}
+Role Profile: ${roleProfile || 'Engineering leadership: VP Engineering + 10 senior engineers'}
+Market Context: ${marketContext || 'Competitive SF/NYC tech market, post-layoff talent pool, AI skills premium'}
+
+Provide a comprehensive talent intelligence strategy:
+
+**TALENT MARKET ANALYSIS**
+- Current supply/demand dynamics for target roles
+- Compensation benchmarks (base, equity, bonus) by market and level
+- Competing employers and their talent value proposition
+- Emerging talent pools and non-obvious sourcing channels
+- Skills adjacency mapping — roles that translate to your needs
+- Market timing: best/worst seasons for hiring specific roles
+
+**TALENT ACQUISITION STRATEGY**
+- Employer brand positioning vs. key competitors
+- Sourcing channel prioritization with ROI analysis
+- Candidate pipeline architecture (passive vs. active ratio)
+- Referral program design and incentive structures
+- Campus and early-career pipeline strategy
+- Diversity sourcing channels and inclusive hiring practices
+
+**COMPENSATION & EQUITY DESIGN**
+- Total compensation benchmarking by role/level/market
+- Equity refresh and retention grant strategy
+- Non-monetary compensation differentiators
+- Geographic pay philosophy (location-based vs. role-based)
+- Bonus structure and performance incentive design
+- Benefits differentiation strategy
+
+**ASSESSMENT & SELECTION**
+- Competency framework for target roles
+- Interview process design (stages, assessments, panels)
+- Technical assessment best practices
+- Structured interview scorecard design
+- Reference check intelligence framework
+- Offer negotiation playbook
+
+**ONBOARDING & RETENTION**
+- 30/60/90-day onboarding program design
+- Manager effectiveness in retention
+- Early warning indicators of flight risk
+- Stay interview framework
+- Career pathing and internal mobility strategy
+- Recognition and engagement programs
+
+**WORKFORCE PLANNING**
+- Headcount model tied to business milestones
+- Build vs. buy vs. partner decision framework
+- Skills gap analysis and upskilling strategy
+- Succession planning for key roles
+- Contingent workforce and contractor strategy
+- Org design principles for scale
+
+**TALENT ANALYTICS**
+- Key metrics to track (time-to-fill, quality of hire, retention by cohort)
+- Leading indicators of talent health
+- Compensation equity audit framework
+- Competitive intelligence monitoring
+
+Deliver an actionable talent strategy with 30/60/90-day priorities.`;
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.02 AI Crisis Management & Reputation Recovery Engine ---
 app.post('/api/crisis-management-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
