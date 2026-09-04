@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.55 AI Market Entry Engine ---
+app.post('/api/marketentry-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Plan a market entry strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a market entry strategy expert. Develop a comprehensive market entry plan for: ${p}\n\nProvide:\n1. Market attractiveness assessment (TAM/SAM/SOM, growth rate, competition)\n2. Entry mode selection (organic, partnership, acquisition, licensing)\n3. Regulatory and compliance landscape\n4. Localization requirements (product, pricing, go-to-market)\n5. Phased entry roadmap with milestones and investment requirements\n6. Risk matrix and mitigation strategies` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.54 AI Talent Intelligence Engine ---
 app.post('/api/talentintel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
