@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.93 AI HRTech & Future of Work Engine ---
+app.post('/api/hrtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an HRtech and future of work strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an HRtech and future of work expert. Provide comprehensive analysis covering: AI-powered talent acquisition and screening, skills-based hiring platforms, employee experience platforms, workforce analytics and people data, remote work infrastructure, continuous performance management, learning and development (L&D) tech, compensation benchmarking tools, DEI analytics, gig economy and workforce flexibility, HR automation (HRIS, payroll), and predictive attrition modeling. ${p}\n\nProvide actionable, people-centric recommendations with ROI and engagement metrics.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.92 AI SupplyChainTech & Logistics Engine ---
 app.post('/api/supplychain-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
