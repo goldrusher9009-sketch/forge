@@ -39500,6 +39500,68 @@ app.post('/api/podcast-script', requireAuth, async (req: any, res: any) => {
   } catch(e:any) { res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.08 AI Cybersecurity Posture & Threat Intelligence Engine ---
+app.post('/api/cyber-intel', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { companySize, industry, techStack, currentControls, recentIncidents, complianceNeeds } = req.body;
+    const userId = req.user!.id;
+    const key = await getUserKey(userId, 'anthropic', true);
+    if (!key) return res.status(402).json({ error: 'No API key' });
+    const provider = 'anthropic';
+    const p = `You are a world-class CISO and cybersecurity strategist with expertise in threat intelligence and security posture assessment.
+Company Size: ${companySize}
+Industry: ${industry}
+Tech Stack: ${techStack}
+Current Security Controls: ${currentControls}
+Recent Incidents: ${recentIncidents}
+Compliance Requirements: ${complianceNeeds}
+
+Deliver comprehensive cybersecurity intelligence. Return ONLY valid JSON:
+{
+  "postureAssessment": {
+    "postureScore": "1-10",
+    "maturityLevel": "initial|developing|defined|managed|optimizing",
+    "riskRating": "critical|high|medium|low",
+    "topVulnerabilities": [{"vulnerability": "description", "severity": "critical|high|medium|low", "likelihood": "high|medium|low", "attackVector": "network|social|physical|supply-chain"}],
+    "securityDebt": ["area with technical debt"]
+  },
+  "threatLandscape": {
+    "topThreats": [{"threat": "name", "description": "what it is", "relevance": "why it targets you", "mitre": "MITRE ATT&CK technique"}],
+    "industrySpecificThreats": ["threat specific to your industry"],
+    "emergingThreats": ["new threat to watch"],
+    "threatActors": ["type of attacker most likely to target you"]
+  },
+  "controlsGapAnalysis": {
+    "strongControls": ["what you're doing well"],
+    "criticalGaps": [{"gap": "missing control", "risk": "what this enables", "priority": "immediate|short-term|long-term"}],
+    "quickWins": ["low-effort high-impact security improvement"],
+    "frameworkAlignment": [{"framework": "NIST|ISO27001|SOC2|CIS", "currentAlignment": "% or level", "gaps": ["key gap"]}]
+  },
+  "incidentResponseReadiness": {
+    "irMaturity": "1-10",
+    "detectionCapability": "excellent|good|fair|poor",
+    "responseCapability": "excellent|good|fair|poor",
+    "irPlanStatus": "mature|basic|missing",
+    "keyImprovements": ["specific IR improvement"]
+  },
+  "remediationRoadmap": {
+    "immediate": [{"action": "what to do", "effort": "hours|days|weeks", "impact": "risk reduction"}],
+    "shortTerm": [{"action": "what to do", "effort": "estimate", "impact": "risk reduction"}],
+    "strategic": [{"initiative": "program name", "timeframe": "estimate", "outcome": "expected result"}]
+  },
+  "complianceReadiness": {
+    "requirements": [{"framework": "name", "currentStatus": "compliant|partial|non-compliant", "gaps": ["gap1"], "deadline": "if applicable"}]
+  },
+  "executiveSummary": "3 sentence security posture assessment and top priorities"
+}`;
+    const r = await callLLM(provider, key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const t = (r.content || '').trim();
+    let data: any = null;
+    try { data = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}')+1)); } catch(_) { return res.status(500).json({ error: 'Parse error' }); }
+    res.json({ success: true, ...data });
+  } catch(e:any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.07 AI Supply Chain & Vendor Risk Intelligence Engine ---
 app.post('/api/supply-chain-intel', requireAuth, async (req: AuthRequest, res) => {
   try {
