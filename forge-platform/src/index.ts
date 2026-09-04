@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.65 AI Market Expansion Engine ---
+app.post('/api/marketexpand-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Identify the best markets for us to expand into next';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a market expansion and international growth expert. Build a comprehensive market expansion strategy covering: 1) TAM/SAM/SOM analysis for target markets 2) Market prioritization framework (attractiveness vs. fit scoring) 3) Localization requirements and cultural adaptation 4) Regulatory and compliance landscape 5) Competitive intensity by geography 6) Entry mode options (organic, partnership, acquisition) 7) Resource requirements and phased expansion roadmap. Context: ${p}\n\nProvide data-driven market scoring and a prioritized expansion sequence.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.64 AI Revenue Operations Engine ---
 app.post('/api/revops-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
