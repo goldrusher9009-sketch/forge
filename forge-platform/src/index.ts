@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.66 AI AudioTech & Creator Economy Engine ---
+app.post('/api/audiotech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate an AudioTech & Creator Economy strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are an AudioTech and creator economy expert. Analyze podcast platforms, music streaming, AI-generated audio, voice tech, creator monetization tools, NFT music, spatial audio, live audio platforms, and the future of the creator economy. ${p}\n\nProvide actionable insights on creator platform business models, monetization strategies, audience growth, technology trends, and investment opportunities in audio and creator tech.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.65 AI FashionTech & Retail Innovation Engine ---
 app.post('/api/fashiontech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
