@@ -39566,6 +39566,40 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.33 AI Customer Lifetime Value & Retention Intelligence Engine ---
+app.post('/api/clv-retention', requireAuth, async (req: AuthRequest, res) => {
+  const userId = req.user!.id;
+  const { business, industry, avgOrderValue, purchaseFrequency, churnRate, acquisitionCost, segments } = req.body;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(400).json({ error: 'No Anthropic key configured' });
+  const p = `You are a customer lifetime value and retention strategy expert. Analyze this business's customer economics and provide CLV optimization and retention recommendations.
+
+Business: ${business}
+Industry: ${industry}
+Average Order Value: ${avgOrderValue}
+Purchase Frequency: ${purchaseFrequency}
+Churn Rate: ${churnRate}
+Customer Acquisition Cost: ${acquisitionCost}
+Customer Segments: ${segments}
+
+Return ONLY valid JSON:
+{
+  "clvMetrics": { "averageCLV": "$1,240", "highValueCLV": "$4,800", "ltcacRatio": 3.1, "paybackPeriod": "8 months", "revenueAtRisk": "$180K/month" },
+  "segmentAnalysis": [{ "segment": "Champions", "size": "15%", "clv": "$4,800", "churnRisk": "low", "strategy": "Loyalty rewards + upsell", "revenueContribution": "42%" }],
+  "churnPredictors": [{ "predictor": "No login in 14 days", "churnProbability": "68%", "affectedCustomers": 240, "revenueAtRisk": "$28K", "intervention": "Personalized re-engagement email" }],
+  "retentionPlaybook": [{ "stage": "Onboarding (Days 0-30)", "tactics": ["Welcome sequence", "First value milestone"], "target": "Activate 80% within 7 days", "metric": "Activation rate" }],
+  "upsellOpportunities": [{ "opportunity": "Annual plan upgrade", "eligibleCustomers": 380, "conversionRate": "22%", "revenueImpact": "+$84K ARR", "trigger": "After 3 successful monthly payments" }],
+  "loyaltyProgram": { "structure": "Points-based", "tiers": ["Bronze", "Silver", "Gold", "Platinum"], "expectedRetentionLift": "+18%", "estimatedROI": "4.2x" },
+  "quickWins": ["Implement 14-day no-login alert", "Launch annual billing incentive", "Create VIP customer success tier"]
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const text = typeof result === 'string' ? result : JSON.stringify(result);
+    const match = text.match(/\{[\s\S]*\}/);
+    res.json(match ? JSON.parse(match[0]) : { error: 'Parse error', raw: text });
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.30 AI Regulatory Intelligence & Compliance Forecasting Engine ---
 app.post('/api/reg-intel', requireAuth, async (req: AuthRequest, res) => {
   const userId = req.user!.id;
