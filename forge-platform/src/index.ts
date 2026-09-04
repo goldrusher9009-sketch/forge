@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v13.58 AI MediaTech & Entertainment Engine ---
+app.post('/api/mediatech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Generate a mediatech and entertainment strategy';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a mediatech and entertainment industry expert. Provide comprehensive analysis covering streaming platform strategy, content monetization, creator economy tools, OTT/CTV advertising, AI-generated content, audience analytics, rights management, podcast tech, live streaming infrastructure, sports media rights, metaverse entertainment, and platform algorithm optimization. ${p}\n\nProvide actionable insights with audience growth strategies and revenue model recommendations.` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v13.57 AI GovTech & Public Sector Engine ---
 app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
