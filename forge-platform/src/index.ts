@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.37 AI Workforce Planning Engine ---
+app.post('/api/workplan-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Develop a strategic workforce plan aligned with business growth objectives';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a strategic workforce planning and organizational design expert. Help organizations build the right talent infrastructure for future success. ${p}\n\nProvide: 1) Current workforce capability assessment framework 2) Future skills gap analysis based on strategic direction 3) Headcount planning model by function and timeline 4) Build vs buy vs partner decisions for critical capabilities 5) Talent acquisition strategy and employer brand recommendations 6) Learning & development roadmap for upskilling 7) Succession planning and leadership pipeline design 8) Workforce analytics and planning metrics dashboard` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.36 AI Channel Strategy Engine ---
 app.post('/api/chanstrat-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
