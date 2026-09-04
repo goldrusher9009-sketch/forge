@@ -39634,6 +39634,19 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v14.44 AI Strategic Partnerships Engine ---
+app.post('/api/stratpartner-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { prompt } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'No Anthropic key' });
+  try {
+    const p = prompt || 'Identify and structure strategic partnerships to accelerate growth and create competitive advantage';
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: `You are a strategic partnerships and business development expert. Help organizations identify, structure, and manage high-value partnerships. ${p}\n\nProvide: 1) Partnership opportunity landscape and strategic rationale 2) Partner segmentation (technology, channel, integration, co-sell) 3) Ideal partner profile and qualification criteria 4) Partnership structure options (reseller, OEM, co-marketing, JV) 5) Value proposition design for potential partners 6) Partnership economics and incentive structure 7) Partner recruitment, onboarding, and enablement playbook 8) Partnership health metrics and relationship management framework` }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch (e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v14.43 AI Knowledge Management Engine ---
 app.post('/api/knowledgemgmt-ai', requireAuth, async (req: AuthRequest, res) => {
   const { prompt } = req.body;
