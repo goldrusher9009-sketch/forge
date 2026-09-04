@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.23 AI HealthTech & Digital Health Strategy Engine ---
+app.post('/api/healthtech-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { healthVertical, clinicalChallenge, regulatoryContext, businessModel } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a HealthTech & Digital Health strategy expert. Analyze this health technology venture:
+
+Health Vertical: ${healthVertical}
+Clinical Challenge: ${clinicalChallenge}
+Regulatory Context: ${regulatoryContext}
+Business Model: ${businessModel}
+
+Provide:
+1. CLINICAL VALUE PROPOSITION — measurable outcomes, patient impact, clinical workflow fit
+2. REGULATORY PATHWAY — FDA clearance/510(k)/De Novo, HIPAA/HITECH, CE marking if applicable
+3. PAYER & REIMBURSEMENT STRATEGY — CPT codes, coverage pathways, value-based care alignment
+4. HEALTH SYSTEM SALES — EHR integration, procurement cycles, clinical champion strategy
+5. CLINICAL EVIDENCE STRATEGY — trial design, real-world evidence, peer-reviewed publications
+6. PATIENT ENGAGEMENT — acquisition, adherence, outcomes tracking, digital therapeutics angles
+7. DATA STRATEGY — EHR interoperability (HL7/FHIR), de-identification, AI model training rights
+8. COMPETITIVE MOAT — network effects, proprietary data, clinician relationships, switching costs
+9. MARKET ENTRY — direct-to-consumer vs. B2B2C vs. enterprise, pilot program design
+10. 18-MONTH ROADMAP — clinical validation → payer coverage → scale milestones`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.22 AI GovTech & Public Sector Strategy Engine ---
 app.post('/api/govtech-ai', requireAuth, async (req: AuthRequest, res) => {
   try {
