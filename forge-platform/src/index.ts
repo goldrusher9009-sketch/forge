@@ -39634,6 +39634,36 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v12.32 AI DevOps & Platform Engineering Strategy Engine ---
+app.post('/api/devops-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { infraChallenge, techStack, teamSize, scalingGoal } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) { res.status(400).json({ error: 'Anthropic key required' }); return; }
+  const p = `You are a DevOps & Platform Engineering strategy expert. Analyze this infrastructure challenge:
+
+Infrastructure Challenge: ${infraChallenge}
+Tech Stack: ${techStack}
+Team Size: ${teamSize}
+Scaling Goal: ${scalingGoal}
+
+Provide:
+1. PLATFORM ARCHITECTURE — IDP (Internal Developer Platform) design, golden paths, self-service abstractions
+2. CI/CD PIPELINE — pipeline architecture, build time optimization, deployment frequency targets, rollback strategy
+3. CLOUD STRATEGY — multi-cloud vs. single cloud, FinOps optimization, reserved vs. spot instances, egress reduction
+4. KUBERNETES & ORCHESTRATION — cluster design, namespace strategy, resource quotas, HPA/VPA/KEDA autoscaling
+5. OBSERVABILITY STACK — metrics/logs/traces (OTel), alerting philosophy, SLO/SLI/error budget framework
+6. SECURITY & COMPLIANCE — shift-left security, SAST/DAST/SCA, secrets management, zero-trust networking
+7. DEVELOPER EXPERIENCE — DORA metrics baseline, cognitive load reduction, onboarding time targets
+8. INCIDENT RESPONSE — on-call rotation design, runbook automation, chaos engineering program
+9. DATA PLATFORM — streaming vs. batch, lake/warehouse/lakehouse decision, real-time analytics readiness
+10. 12-MONTH ROADMAP — reliability targets (99.9% → 99.99%), deployment frequency, MTTR reduction milestones`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    res.json({ result });
+  } catch(e: any) { res.status(500).json({ error: e.message }); }
+});
+
 // --- v12.31 AI MarTech & Growth Hacking Strategy Engine ---
 app.post('/api/martech-ai', requireAuth, async (req: AuthRequest, res) => {
   const { martechStack, growthChallenge, customerJourney, budgetProfile } = req.body;
