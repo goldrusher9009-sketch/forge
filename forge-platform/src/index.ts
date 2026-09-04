@@ -39634,6 +39634,35 @@ Return ONLY valid JSON:
   } catch(e:any){ res.status(500).json({ error: e.message }); }
 });
 
+// --- v11.56 AI ESG & Sustainability Intelligence Engine ---
+app.post('/api/esg-intel-ai', requireAuth, async (req: AuthRequest, res) => {
+  const { company, industry, companySize, currentEsgScore, carbonFootprint, supplyChainExposure, investorExpectations, regulatoryContext, esgGoals, reportingFrameworks, materialityTopics } = req.body;
+  const userId = req.user!.id;
+  const key = await getUserKey(userId, 'anthropic', true);
+  if (!key) return res.status(402).json({ error: 'Anthropic key required' });
+  const p = `You are a chief sustainability officer and ESG strategy expert. Create a comprehensive ESG intelligence and sustainability roadmap.
+Company: ${company}, Industry: ${industry}, Size: ${companySize}
+Current ESG Score: ${currentEsgScore}, Carbon Footprint: ${carbonFootprint}
+Supply Chain: ${supplyChainExposure}, Investor Expectations: ${investorExpectations}
+Regulatory Context: ${regulatoryContext}, Goals: ${esgGoals}
+Reporting Frameworks: ${reportingFrameworks}, Materiality Topics: ${materialityTopics}
+Return ONLY valid JSON (no markdown):
+{
+  "esgScorecard": { "overall": 0-100, "environmental": 0-100, "social": 0-100, "governance": 0-100, "climateRisk": 0-100, "supplyChainEsg": 0-100, "disclosure": 0-100 },
+  "materialityMatrix": [{ "topic": "", "businessImpact": 0-100, "stakeholderImportance": 0-100, "priority": "high|medium|low", "sdgAlignment": [] }],
+  "climateStrategy": { "scope1Emissions": "", "scope2Emissions": "", "scope3Emissions": "", "netZeroTarget": "", "reductionPathway": [], "carbonCredits": "", "climateRisks": [], "opportunities": [] },
+  "socialImpact": [{ "area": "", "currentState": "", "initiative": "", "kpi": "", "target": "", "timeline": "" }],
+  "governanceFramework": { "boardDiversity": "", "executiveCompensation": "", "ethicsProgram": [], "transparencyScore": 0-100, "stakeholderEngagement": [] },
+  "reportingRoadmap": [{ "framework": "", "currentStatus": "published|in-progress|not-started", "nextReport": "", "gaps": [], "actions": [] }],
+  "investorNarrative": { "esgRating": "", "peerBenchmark": "", "keyStrengths": [], "improvementAreas": [], "talkingPoints": [], "riskFactors": [] }
+}`;
+  try {
+    const result = await callLLM('anthropic', key, null as any, [{ role: 'user', content: p }], undefined, { maxTokens: 4000 });
+    const json = result.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+    res.json(JSON.parse(json));
+  } catch(e:any){ res.status(500).json({ error: e.message }); }
+});
+
 // --- v11.55 AI Cybersecurity Threat Intelligence & Posture Engine ---
 app.post('/api/cyber-intel-ai', requireAuth, async (req: AuthRequest, res) => {
   const { company, industry, companySize, currentSecurityStack, knownVulnerabilities, complianceRequirements, incidentHistory, securityTeamSize, budget, cloudProviders, criticalAssets } = req.body;
