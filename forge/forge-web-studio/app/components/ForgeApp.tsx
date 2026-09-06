@@ -3438,7 +3438,7 @@ function ForgeTab_stripe() {
   );
 }
 
-function ForgeTab_jira__legacy3431() {
+function ForgeTab_jira() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ email: '', apiToken: '', domain: '' });
   const [status, setStatus] = React.useState('');
@@ -3520,7 +3520,7 @@ function ForgeTab_jira__legacy3431() {
   );
 }
 
-function ForgeTab_slack__legacy3513() {
+function ForgeTab_slack() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -3998,7 +3998,7 @@ function ForgeTab_mailchimp() {
   );
 }
 
-function ForgeTab_notion__legacy3991() {
+function ForgeTab_notion() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4086,7 +4086,7 @@ function ForgeTab_notion__legacy3991() {
   );
 }
 
-function ForgeTab_linear__legacy4079() {
+function ForgeTab_linear() {
   const [connected, setConnected] = React.useState(false);
   const [apiKey, setApiKey] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4179,7 +4179,7 @@ function ForgeTab_linear__legacy4079() {
   );
 }
 
-function ForgeTab_github__legacy4172() {
+function ForgeTab_github() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4758,7 +4758,7 @@ function ForgeTab_gsheets() {
   );
 }
 
-function ForgeTab_figma__legacy4751() {
+function ForgeTab_figma() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [teamId, setTeamId] = React.useState('');
@@ -4865,7 +4865,7 @@ function ForgeTab_figma__legacy4751() {
   );
 }
 
-function ForgeTab_zendesk__legacy4858() {
+function ForgeTab_zendesk() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ subdomain: '', email: '', apiToken: '' });
   const [status, setStatus] = React.useState('');
@@ -5058,7 +5058,7 @@ function ForgeTab_monday() {
   );
 }
 
-function ForgeTab_airtable__legacy5051() {
+function ForgeTab_airtable() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -5145,7 +5145,7 @@ function ForgeTab_airtable__legacy5051() {
   );
 }
 
-function ForgeTab_hubspot__legacy5138() {
+function ForgeTab_hubspot() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -5218,7 +5218,7 @@ function ForgeTab_hubspot__legacy5138() {
   );
 }
 
-function ForgeTab_asana__legacy5211() {
+function ForgeTab_asana() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
