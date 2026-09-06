@@ -8,13 +8,17 @@
   },
   "scripts": {
     "dev": "nodemon --exec 'ts-node --transpile-only src/index.ts'",
-    "build": "esbuild src/index.ts src/sandbox-contract.ts src/sqlite-backup.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist",
+    "build": "esbuild src/index.ts src/sandbox-contract.ts src/sqlite-backup.ts src/pi-runtime.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist",
     "start": "node dist/index.js",
     "test": "jest --testPathPattern='__tests__/(auth|route-manifest)' --forceExit --no-coverage",
     "test:routes": "jest --testPathPattern=route-manifest --forceExit --no-coverage",
     "test:deployment-provider": "node scripts/deployment-provider-regression.cjs",
     "test:google-drive": "node --test scripts/google-drive-regression.cjs",
     "test:backup": "node -r ts-node/register/transpile-only scripts/sqlite-backup-regression.cjs",
+    "test:sandbox-contract": "npm exec --yes --package=esbuild@0.19.12 --registry=https://registry.npmmirror.com -- esbuild src/index.ts src/sandbox-contract.ts src/sqlite-backup.ts src/pi-runtime.ts --bundle=false --platform=node --target=node18 --format=cjs --outdir=dist && node scripts/sandbox-contract-regression.cjs",
+    "test:pi": "node --test scripts/pi-integration-regression.cjs",
+    "test:sandbox-recovery": "node --test scripts/sandbox-recovery-regression.cjs",
+    "test:sandbox-integrated": "node --test scripts/sandbox-integrated-regression.cjs",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
   },

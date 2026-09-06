@@ -1,0 +1,179 @@
+name: forge-vps
+
+# Production stack for a single VPS: Forge platform + Pi worker + sandbox
+# orchestrator/egress/runtime. Only the platform is published, on loopback, for
+# the host nginx TLS terminator. Secrets come from ./.env.forge-vps (not in git).
+
+services:
+  forge-platform:
+    image: forge-platform:vps
+    build:
+      context: ./forge-platform
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DB_PATH: /data/forge.db
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?set CREDENTIAL_ENCRYPTION_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      FRONTEND_URL: ${FRONTEND_URL:?set the exact HTTPS frontend origin}
+      FORGE_AGENT_ENGINE: ${FORGE_AGENT_ENGINE:-pi}
+      FORGE_PI_WORKER_URL: http://forge-pi-worker:8791
+      FORGE_PI_WORKER_TOKEN: ${FORGE_PI_WORKER_TOKEN:?set a random token of at least 32 characters}
+      FORGE_PI_PLATFORM_URL: http://forge-platform:3000
+      FORGE_PI_MCP_READ_ONLY_TOOLS: ${FORGE_PI_MCP_READ_ONLY_TOOLS:-}
+      FORGE_SANDBOX_ORCHESTRATOR_URL: http://forge-sandbox-orchestrator:3001
+      FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+    ports:
+      - "127.0.0.1:${FORGE_VPS_BACKEND_PORT:-3400}:3000"
+    volumes:
+      - forge_vps_platform_data:/data
+    networks:
+      - control
+      - pi-private
+      - egress
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=128m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1536m
+    depends_on:
+      forge-pi-worker:
+        condition: service_healthy
+      forge-sandbox-orchestrator:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  forge-pi-worker:
+    image: forge-pi-worker:vps
+    build:
+      context: ./forge-pi-worker
+    environment:
+      PORT: "8791"
+      HOST: 0.0.0.0
+      FORGE_PI_WORKER_TOKEN: ${FORGE_PI_WORKER_TOKEN:?set a random token of at least 32 characters}
+      FORGE_PI_MAX_CONCURRENT: ${FORGE_PI_MAX_CONCURRENT:-6}
+    networks:
+      - pi-private
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=256m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    pids_limit: 256
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8791/health',{headers:{Authorization:'Bearer '+process.env.FORGE_PI_WORKER_TOKEN}}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  sandbox-runtime:
+    image: forge-sandbox-runtime:vps
+    build:
+      context: ./forge-sandbox-runtime
+    profiles: ["runtime-image"]
+
+  forge-sandbox-orchestrator:
+    image: forge-sandbox-orchestrator:vps
+    build:
+      context: ./forge-sandbox-orchestrator
+    environment:
+      PORT: "3001"
+      FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
+      FORGE_SANDBOX_RUNTIME_IMAGE: forge-sandbox-runtime:vps
+      FORGE_SANDBOX_NETWORK: forge-vps-sandbox-internal
+      FORGE_SANDBOX_PROXY_URL: http://forge-sandbox-egress:8787
+      FORGE_SANDBOX_DATA_DIR: /var/lib/forge-sandbox
+      FORGE_SANDBOX_MEMORY_BYTES: "536870912"
+      FORGE_SANDBOX_CPU_NANOS: "1000000000"
+      FORGE_SANDBOX_PIDS_LIMIT: "128"
+      FORGE_SANDBOX_BROWSER_PIDS_LIMIT: "256"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - forge_vps_sandbox_data:/var/lib/forge-sandbox
+    networks:
+      - control
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=32m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    depends_on:
+      forge-sandbox-egress:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+
+  forge-sandbox-egress:
+    image: forge-sandbox-orchestrator:vps
+    command: [node, src/proxy.js]
+    user: "10002:10002"
+    environment:
+      PORT: "8787"
+      # Empty = any public host (private/metadata IPs are always blocked). Set a comma-separated hostname list to restrict.
+      FORGE_SANDBOX_EGRESS_ALLOWLIST: ${FORGE_SANDBOX_EGRESS_ALLOWLIST?define FORGE_SANDBOX_EGRESS_ALLOWLIST (may be empty)}
+    networks:
+      - sandbox-internal
+      - egress
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "require('node:net').connect(8787,'127.0.0.1').once('connect',function(){this.end();process.exit(0)}).once('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  control:
+    name: forge-vps-control
+  pi-private:
+    name: forge-vps-pi-private
+    internal: true
+  sandbox-internal:
+    name: forge-vps-sandbox-internal
+    internal: true
+  egress:
+    name: forge-vps-egress
+
+volumes:
+  forge_vps_platform_data:
+    name: forge-vps-platform-data
+  forge_vps_sandbox_data:
+    name: forge-vps-sandbox-data

@@ -17,6 +17,10 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
     );
   };
 
+  const handleSkip = () => {
+    onComplete({ orgName: orgName || 'My Workspace', teamSize, providers });
+  };
+
   const handleNext = () => {
     if (step === 1 && !orgName.trim()) return;
     if (step < 3) setStep(step + 1);
@@ -142,6 +146,20 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
             style={{ flex: 1 }}
           >
             {step === 3 ? 'Start Building' : 'Next'}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '14px' }}>
+          <button
+            type="button"
+            onClick={handleSkip}
+            style={{
+              background: 'none', border: 'none', padding: '4px 8px',
+              color: 'var(--fg-text2)', fontSize: '13px', cursor: 'pointer',
+              textDecoration: 'underline', textUnderlineOffset: '3px',
+            }}
+          >
+            Skip for now
           </button>
         </div>
       </div>

@@ -369,7 +369,7 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string, _r
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(60000) : undefined);
-  const res = await fetch(`${API}${path}`, { ...opts, headers, credentials: 'include', ...(signal ? { signal } : {}) });
+  const res = await fetch(`${API}${path}`, { ...opts, headers, credentials: 'include', cache: 'no-store', ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
     // On the FIRST 401, try to refresh the access token and replay once before giving up.
@@ -404,27 +404,39 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string,
     throw new Error(err.error || 'Session expired. Please log in again.');
   }
   if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || err.error || `HTTP ${res.status}`); }
-  // Read SSE stream — collect lines, fire callbacks for mid-stream events, return last result
-  const reader = res.body!.getReader();
+  if (res.headers.get('content-type')?.includes('application/json')) return res.json();
+  if (!res.body) throw new Error('The response stream is unavailable. Please try again.');
+  const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = '';
   let lastResult: any = null;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop() ?? '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      try {
-        const evt = JSON.parse(line.slice(6));
-        if (evt.type === 'result') lastResult = evt.payload;
-        if (onEvent) onEvent(evt);
-      } catch {}
+  let ended = false;
+  const dispatch = (line: string) => {
+    if (!line.startsWith('data:')) return;
+    const data = line.slice(5).trim();
+    if (!data || data === '[DONE]') return;
+    let evt: any;
+    try { evt = JSON.parse(data); } catch { return; }
+    if (evt.type === 'error') throw new Error(evt.message || evt.error || 'The response was interrupted. Please try again.');
+    if (evt.type === 'result') lastResult = evt.payload ?? evt.result;
+    onEvent?.(evt);
+  };
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) { ended = true; buf += decoder.decode(); break; }
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() ?? '';
+      for (const line of lines) dispatch(line);
     }
+    if (buf.trim()) dispatch(buf);
+    if (lastResult == null) throw new Error('The response ended before completion. Your partial response is shown below.');
+    return lastResult;
+  } finally {
+    if (!ended) await reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
-  return lastResult ?? {};
 }
 
 // --- Constants ----------------------------------------------------------------
@@ -983,7 +995,7 @@ function ForgeTab_integrationsHub({ onOpen }: { onOpen: (id: string) => void }) 
       INTEGRATION_CATALOG.map(async (integ) => {
         const provider = integ.id === 'stripe_mgmt' ? 'stripe' : integ.id;
         try {
-          const r = await fetch(`/api/integrations/${provider}/status`, { headers: h });
+          const r = await fetch(`${API}/integrations/${provider}/status`, { headers: h });
           const d = await r.json();
           return { id: integ.id, connected: !!d.connected };
         } catch { return { id: integ.id, connected: false }; }
@@ -1103,7 +1115,7 @@ function ForgeTab_homeHub({ onOpen }: { onOpen: (id: string) => void }) {
       const statuses = await Promise.all(
         INTEGRATION_CATALOG.map(async i => {
           const provider = i.id === 'stripe_mgmt' ? 'stripe' : i.id;
-          try { const r = await fetch(`/api/integrations/${provider}/status`, { headers: h }); const d = await r.json(); return { ...i, connected: !!d.connected }; }
+          try { const r = await fetch(`${API}/integrations/${provider}/status`, { headers: h }); const d = await r.json(); return { ...i, connected: !!d.connected }; }
           catch { return { ...i, connected: false }; }
         })
       );
@@ -3426,7 +3438,7 @@ function ForgeTab_stripe() {
   );
 }
 
-function ForgeTab_jira() {
+function ForgeTab_jira__legacy3431() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ email: '', apiToken: '', domain: '' });
   const [status, setStatus] = React.useState('');
@@ -3508,7 +3520,7 @@ function ForgeTab_jira() {
   );
 }
 
-function ForgeTab_slack() {
+function ForgeTab_slack__legacy3513() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -3986,7 +3998,7 @@ function ForgeTab_mailchimp() {
   );
 }
 
-function ForgeTab_notion() {
+function ForgeTab_notion__legacy3991() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4074,7 +4086,7 @@ function ForgeTab_notion() {
   );
 }
 
-function ForgeTab_linear() {
+function ForgeTab_linear__legacy4079() {
   const [connected, setConnected] = React.useState(false);
   const [apiKey, setApiKey] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4167,7 +4179,7 @@ function ForgeTab_linear() {
   );
 }
 
-function ForgeTab_github() {
+function ForgeTab_github__legacy4172() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4746,7 +4758,7 @@ function ForgeTab_gsheets() {
   );
 }
 
-function ForgeTab_figma() {
+function ForgeTab_figma__legacy4751() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [teamId, setTeamId] = React.useState('');
@@ -4853,7 +4865,7 @@ function ForgeTab_figma() {
   );
 }
 
-function ForgeTab_zendesk() {
+function ForgeTab_zendesk__legacy4858() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ subdomain: '', email: '', apiToken: '' });
   const [status, setStatus] = React.useState('');
@@ -5046,7 +5058,7 @@ function ForgeTab_monday() {
   );
 }
 
-function ForgeTab_airtable() {
+function ForgeTab_airtable__legacy5051() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -5133,7 +5145,7 @@ function ForgeTab_airtable() {
   );
 }
 
-function ForgeTab_hubspot() {
+function ForgeTab_hubspot__legacy5138() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -5206,7 +5218,7 @@ function ForgeTab_hubspot() {
   );
 }
 
-function ForgeTab_asana() {
+function ForgeTab_asana__legacy5211() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -22269,7 +22281,7 @@ function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'websearch'|'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'symptomcheck'|'sleepopt'|'stressdecode'|'workoutgen'|'nutricoach'|'willgen'|'leaseanalyze'|'disputeletter'|'tosdecode'|'foiarequest'|'plottwist'|'charcreate'|'worldbuild'|'dialoguecoach'|'bookblurb'|'perfreview'|'salaryresearch'|'offercompare'|'careerpivot'|'linkedinmsg'|'competitordive'|'pricingstrat'|'custpersona2'|'gtmplan'|'okrbuilder'|'viralthread'|'captiongen'|'contentcal24'|'hashtagstrat'|'biooptimizer'|'emailseqbuilder'|'subjectlines'|'newsletterdraft'|'reengage'|'welcomeseq'|'debtpayoff'|'budgetbuilder'|'investexplain'|'firecalc'|'sidehustle'|'anxietytoolkit'|'cbtexercise'|'selfcareplan'|'boundaryscripts'|'burnoutcheck'|'studyplan'|'conceptmap'|'examprep'|'skillroadmap'|'socraticlearn'|'codereviewer'|'regexbuilder'|'apidocgen'|'sqloptimizer'|'gitcommitgen'|'timeauditor'|'secondbrainai'|'weeklyplanner'|'habitdesigner'|'energymapper'|'shortstoryai'|'poemcrafter'|'screenplayscene'|'memoirdraft'|'satiregen'|'marketanalyze'|'bizmodelai'|'pricingmodel'|'partnerpropose'|'exitplanner'|'labinterpreter'|'supplementstack'|'recoveryplan'|'longevityprotocol'|'mentalperf'|'contractanalyze'|'taxstrategy'|'estateplan'|'investanalyze'|'insuranceaudit'|'deepworkplan'|'meetingopt'|'careermap'|'promotioncase'|'linkedinrewrite'|'difficultconvo'|'feedbackcraft'|'persuasionscript'|'relaudit'|'personalceo'|'paperdecode'|'hypothesisbuild'|'experimentdesign'|'litmap'|'grantwrite'|'rightsexplain'|'contractdraft'|'complaintwrite'|'policydecode'|'smallclaimscoach'|'parentingcoach'|'lessonplan'|'collegeadvise'|'behaviordecode'|'learningstyle'|'carbonaudit'|'ecohabits'|'sustainplan'|'climateexplain'|'greenhome'|'flavorprofile'|'mealplanv2'|'recipeinvent'|'winepair'|'cookingcoach'|'trainingplan'|'sportanalyze'|'injuryadv'|'mentalgame'|'fantasyadv'|'lyricwrite'|'musictheory'|'playlistcurate'|'practicesched'|'musicpitch'|'homebuy'|'rentanalyze'|'mortgageexp'|'neighborscout'|'homerenovate'|'triparchitect'|'packingopt'|'localintel'|'travelbudget'|'solotravel'|'griefcoach'|'angermanage'|'traumaedu'|'mindsetcoach'|'innerchild'|'startupvalidate'|'pitchdeckbuild'|'investoremail'|'mvpdesign'|'cofoundermatch'|'parentadvise'|'familymeeting'|'chorechart'|'bedtimestory'|'collegeprep'|'debtstrat'|'investdecode'|'creditcoach'|'taxoptimize'|'wealthmap'|'difficultconv2'|'apologycraft'|'complimenteng'|'boundaryset'|'lovelang'|'deepworkplan2'|'procbust'|'emailzero'|'meetingaudit'|'pkmdesign'|'charbuild'|'plotweave'|'dialogsharp'|'worldbuild2'|'scenewrite'|'biohackopt'|'vo2train'|'coldtherapy'|'suppstack'|'sleeparch'|'pricingstrategy'|'churnanalyze'|'growthhack'|'investpitch'|'moatbuild'|'contractdraft2'|'ndareview2'|'termsdecode2'|'compliancecheck2'|'disputeletter2'|'homevaluate'|'mortgagecalc'|'neighborscout2'|'renovationplan'|'landlordadvise'|'emotiondecode'|'copingtoolkit'|'innercritic'|'attachcoach'|'resiliencebuild'|'storyworld'|'lyriccraft'|'charforge'|'plottwistai'|'worldbuildai'|'promotionmap'|'salarybench'|'execpresence'|'offerneg'|'careerbrand'|'conceptdecode'|'researchsynth'|'debateprep60'|'criticalthink'|'teachassist'|'convhack'|'charismav2'|'netwrkstrat'|'conflictmed'|'influencebuild'|'passiveincome'|'taxstrat62'|'investthesis'|'wealthgap'|'moneymind'|'flowoptimize'|'cogenhance'|'mentalmodels'|'decisionspeed'|'perfreview63'|'attractbuild'|'relaudit64'|'firstdate'|'textcoach'|'breakupanalyze'|'prodnamer'|'brandvoice65'|'launchstrat'|'custavatr'|'revmodel'|'mealplan'|'workoutdesign'|'sleepopt66'|'stressmgr'|'habitstack'|'parentadvice'|'bedtimestory67'|'familymtg'|'chorechart67'|'collegeprep67'|'debtstrat68'|'investdecode68'|'creditcoach68'|'taxopt68'|'wealthmap68'|'smalltalk69'|'pubspeak69'|'activelisten'|'assertive69'|'netmsg69'|'charnames70'|'writeprompt70'|'plothole70'|'dialogpol'|'booktitle70'|'procbust71'|'timeblock71'|'meetcost71'|'inboxzero71'|'deepwork71'|'conflmed72'|'appreci72'|'socianx72'|'reconnect72'|'famlegacy72'|'analogymkr73'|'mentmodel73'|'speedread73'|'feynman73'|'knowconn73'|'pivotadv74'|'fundraise74'|'uniteco74'|'pmfcheck74'|'startuplegal74'|'hormoneopt75'|'guthealth75'|'inflame75'|'energyopt75'|'prevhealth75'|'ytscript76'|'tiktokhook76'|'podplan76'|'thumbconcept76'|'repurpose76'|'perfreview77'|'linkedincont77'|'careergap77'|'execpres77'|'workbound77'|'emergfund78'|'insaudit78'|'moneymind78'|'fireplan78'|'taxloss78'|'storyout79'|'charcreate79'|'dialogue79'|'plottwist79'|'worldbuild79'|'focuscoach80'|'memtrain80'|'cogbias80'|'mentalclr80'|'peakstate80'|'empathy81'|'smalltalk81'|'lovelang81'|'relaudit81'|'diffconv81'|'sopgen82'|'kpidesign82'|'meetdesign82'|'delegcoach82'|'wfoptim82'|'longev83'|'vo2max83'|'stressdec83'|'recovopt83'|'suppstack83'|'parentcoach84'|'fammeet84'|'teencomm84'|'screentime84'|'famval84'|'rightsexp85'|'demandltr85'|'contrdec85'|'tenright85'|'smclaim85'|'carbonfp86'|'sustliv86'|'ecodiet86'|'greenhome86'|'climact86'|'pbrand87'|'contcal87'|'biowrite87'|'audgrow87'|'monetize87'|'flowstate88'|'procbust88'|'decfat88'|'atttrain88'|'mentenrg88'|'socstyle89'|'netcoach89'|'conflmed89'|'trustbld89'|'socianx89'|'firecalc90'|'debtdest90'|'investedu90'|'sidehust90'|'netwrth90'|'paperdec91'|'hypogen91'|'expdes91'|'sciexp91'|'litrev91'|'leadcoach92'|'execpres92'|'teammot92'|'stratthk92'|'fbkcultr92'|'pitchcoach93'|'viralideagen93'|'meetkill93'|'procautopsy93'|'secondbrain93'|'scriptwriter94'|'threadgen94'|'coldloom94'|'seowriter94'|'adcopy94'|'pricingpage95'|'legalease95'|'productlaunch95'|'energyaudit95'|'storyteller95'|'jobscout96'|'newsletterarch96'|'habitdna96'|'salespage96'|'teamretro96'|'codetutor97'|'emotionmap97'|'podcastguest97'|'mvpscoper97'|'reviewrespond97'|'twitterbio98'|'speakingprep98'|'debtplan98'|'productupdate98'|'therapyjournal98'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'|'toolchain'|'home'|'integrations'>('home');
+  const [mainTab, setMainTab] = useState<'websearch'|'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'symptomcheck'|'sleepopt'|'stressdecode'|'workoutgen'|'nutricoach'|'willgen'|'leaseanalyze'|'disputeletter'|'tosdecode'|'foiarequest'|'plottwist'|'charcreate'|'worldbuild'|'dialoguecoach'|'bookblurb'|'perfreview'|'salaryresearch'|'offercompare'|'careerpivot'|'linkedinmsg'|'competitordive'|'pricingstrat'|'custpersona2'|'gtmplan'|'okrbuilder'|'viralthread'|'captiongen'|'contentcal24'|'hashtagstrat'|'biooptimizer'|'emailseqbuilder'|'subjectlines'|'newsletterdraft'|'reengage'|'welcomeseq'|'debtpayoff'|'budgetbuilder'|'investexplain'|'firecalc'|'sidehustle'|'anxietytoolkit'|'cbtexercise'|'selfcareplan'|'boundaryscripts'|'burnoutcheck'|'studyplan'|'conceptmap'|'examprep'|'skillroadmap'|'socraticlearn'|'codereviewer'|'regexbuilder'|'apidocgen'|'sqloptimizer'|'gitcommitgen'|'timeauditor'|'secondbrainai'|'weeklyplanner'|'habitdesigner'|'energymapper'|'shortstoryai'|'poemcrafter'|'screenplayscene'|'memoirdraft'|'satiregen'|'marketanalyze'|'bizmodelai'|'pricingmodel'|'partnerpropose'|'exitplanner'|'labinterpreter'|'supplementstack'|'recoveryplan'|'longevityprotocol'|'mentalperf'|'contractanalyze'|'taxstrategy'|'estateplan'|'investanalyze'|'insuranceaudit'|'deepworkplan'|'meetingopt'|'careermap'|'promotioncase'|'linkedinrewrite'|'difficultconvo'|'feedbackcraft'|'persuasionscript'|'relaudit'|'personalceo'|'paperdecode'|'hypothesisbuild'|'experimentdesign'|'litmap'|'grantwrite'|'rightsexplain'|'contractdraft'|'complaintwrite'|'policydecode'|'smallclaimscoach'|'parentingcoach'|'lessonplan'|'collegeadvise'|'behaviordecode'|'learningstyle'|'carbonaudit'|'ecohabits'|'sustainplan'|'climateexplain'|'greenhome'|'flavorprofile'|'mealplanv2'|'recipeinvent'|'winepair'|'cookingcoach'|'trainingplan'|'sportanalyze'|'injuryadv'|'mentalgame'|'fantasyadv'|'lyricwrite'|'musictheory'|'playlistcurate'|'practicesched'|'musicpitch'|'homebuy'|'rentanalyze'|'mortgageexp'|'neighborscout'|'homerenovate'|'triparchitect'|'packingopt'|'localintel'|'travelbudget'|'solotravel'|'griefcoach'|'angermanage'|'traumaedu'|'mindsetcoach'|'innerchild'|'startupvalidate'|'pitchdeckbuild'|'investoremail'|'mvpdesign'|'cofoundermatch'|'parentadvise'|'familymeeting'|'chorechart'|'bedtimestory'|'collegeprep'|'debtstrat'|'investdecode'|'creditcoach'|'taxoptimize'|'wealthmap'|'difficultconv2'|'apologycraft'|'complimenteng'|'boundaryset'|'lovelang'|'deepworkplan2'|'procbust'|'emailzero'|'meetingaudit'|'pkmdesign'|'charbuild'|'plotweave'|'dialogsharp'|'worldbuild2'|'scenewrite'|'biohackopt'|'vo2train'|'coldtherapy'|'suppstack'|'sleeparch'|'pricingstrategy'|'churnanalyze'|'growthhack'|'investpitch'|'moatbuild'|'contractdraft2'|'ndareview2'|'termsdecode2'|'compliancecheck2'|'disputeletter2'|'homevaluate'|'mortgagecalc'|'neighborscout2'|'renovationplan'|'landlordadvise'|'emotiondecode'|'copingtoolkit'|'innercritic'|'attachcoach'|'resiliencebuild'|'storyworld'|'lyriccraft'|'charforge'|'plottwistai'|'worldbuildai'|'promotionmap'|'salarybench'|'execpresence'|'offerneg'|'careerbrand'|'conceptdecode'|'researchsynth'|'debateprep60'|'criticalthink'|'teachassist'|'convhack'|'charismav2'|'netwrkstrat'|'conflictmed'|'influencebuild'|'passiveincome'|'taxstrat62'|'investthesis'|'wealthgap'|'moneymind'|'flowoptimize'|'cogenhance'|'mentalmodels'|'decisionspeed'|'perfreview63'|'attractbuild'|'relaudit64'|'firstdate'|'textcoach'|'breakupanalyze'|'prodnamer'|'brandvoice65'|'launchstrat'|'custavatr'|'revmodel'|'mealplan'|'workoutdesign'|'sleepopt66'|'stressmgr'|'habitstack'|'parentadvice'|'bedtimestory67'|'familymtg'|'chorechart67'|'collegeprep67'|'debtstrat68'|'investdecode68'|'creditcoach68'|'taxopt68'|'wealthmap68'|'smalltalk69'|'pubspeak69'|'activelisten'|'assertive69'|'netmsg69'|'charnames70'|'writeprompt70'|'plothole70'|'dialogpol'|'booktitle70'|'procbust71'|'timeblock71'|'meetcost71'|'inboxzero71'|'deepwork71'|'conflmed72'|'appreci72'|'socianx72'|'reconnect72'|'famlegacy72'|'analogymkr73'|'mentmodel73'|'speedread73'|'feynman73'|'knowconn73'|'pivotadv74'|'fundraise74'|'uniteco74'|'pmfcheck74'|'startuplegal74'|'hormoneopt75'|'guthealth75'|'inflame75'|'energyopt75'|'prevhealth75'|'ytscript76'|'tiktokhook76'|'podplan76'|'thumbconcept76'|'repurpose76'|'perfreview77'|'linkedincont77'|'careergap77'|'execpres77'|'workbound77'|'emergfund78'|'insaudit78'|'moneymind78'|'fireplan78'|'taxloss78'|'storyout79'|'charcreate79'|'dialogue79'|'plottwist79'|'worldbuild79'|'focuscoach80'|'memtrain80'|'cogbias80'|'mentalclr80'|'peakstate80'|'empathy81'|'smalltalk81'|'lovelang81'|'relaudit81'|'diffconv81'|'sopgen82'|'kpidesign82'|'meetdesign82'|'delegcoach82'|'wfoptim82'|'longev83'|'vo2max83'|'stressdec83'|'recovopt83'|'suppstack83'|'parentcoach84'|'fammeet84'|'teencomm84'|'screentime84'|'famval84'|'rightsexp85'|'demandltr85'|'contrdec85'|'tenright85'|'smclaim85'|'carbonfp86'|'sustliv86'|'ecodiet86'|'greenhome86'|'climact86'|'pbrand87'|'contcal87'|'biowrite87'|'audgrow87'|'monetize87'|'flowstate88'|'procbust88'|'decfat88'|'atttrain88'|'mentenrg88'|'socstyle89'|'netcoach89'|'conflmed89'|'trustbld89'|'socianx89'|'firecalc90'|'debtdest90'|'investedu90'|'sidehust90'|'netwrth90'|'paperdec91'|'hypogen91'|'expdes91'|'sciexp91'|'litrev91'|'leadcoach92'|'execpres92'|'teammot92'|'stratthk92'|'fbkcultr92'|'pitchcoach93'|'viralideagen93'|'meetkill93'|'procautopsy93'|'secondbrain93'|'scriptwriter94'|'threadgen94'|'coldloom94'|'seowriter94'|'adcopy94'|'pricingpage95'|'legalease95'|'productlaunch95'|'energyaudit95'|'storyteller95'|'jobscout96'|'newsletterarch96'|'habitdna96'|'salespage96'|'teamretro96'|'codetutor97'|'emotionmap97'|'podcastguest97'|'mvpscoper97'|'reviewrespond97'|'twitterbio98'|'speakingprep98'|'debtplan98'|'productupdate98'|'therapyjournal98'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'|'toolchain'|'home'|'integrations'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -23805,9 +23817,6 @@ function ForgeApp() {
   const [newPrRating, setNewPrRating] = useState(3);
   const [sessionSnapshots, setSessionSnapshots] = useState<any[]>([]);
   const [newSsName, setNewSsName] = useState('');
-  const [agentRuns, setAgentRuns] = useState<any[]>([]);
-  const [newArName, setNewArName] = useState('');
-  const [newArPrompt, setNewArPrompt] = useState('');
   const [wsPolicies, setWsPolicies] = useState<any[]>([]);
   const [newWpName, setNewWpName] = useState('');
   const [newWpRule, setNewWpRule] = useState('');
@@ -24523,6 +24532,12 @@ function ForgeApp() {
   const [byosLabel, setByosLabel] = useState('');
   const [byosTesting, setByosTesting] = useState<string|null>(null);
   const [byosSyncing, setByosSyncing] = useState<string|null>(null);
+  const [dtSearch, setDtSearch] = useState('');
+  const [dtCat, setDtCat] = useState('All');
+  const [activeDreamTool, setActiveDreamTool] = useState<string|null>(null);
+  const [dreamInput, setDreamInput] = useState('');
+  const [dreamOutput, setDreamOutput] = useState('');
+  const [dreamLoading, setDreamLoading] = useState(false);
 
   // Admin panel state
   const [adminTab, setAdminTab] = useState<'stats'|'users'|'keys'|'models'|'leads'>('stats');
@@ -25147,7 +25162,7 @@ function ForgeApp() {
   // -- Auth -------------------------------------------------------------------
   useEffect(() => {
     const stored = localStorage.getItem('forge_user');
-    if (stored) { try { const u = JSON.parse(stored); setUser(u); if (u.token && !localStorage.getItem('forge_token')) localStorage.setItem('forge_token', u.token); } catch {} }
+    if (stored) { try { const u = JSON.parse(stored); const fallbackToken = localStorage.getItem('forge_access_token') || localStorage.getItem('forge_token') || ''; const merged = u.token ? u : (fallbackToken ? { ...u, token: fallbackToken } : u); setUser(merged); if (merged.token && !localStorage.getItem('forge_token')) localStorage.setItem('forge_token', merged.token); } catch {} }
   }, []);
 
   const handleLogin = (u: User) => { setUser(u); localStorage.setItem('forge_user', JSON.stringify(u)); if (u.token) localStorage.setItem('forge_token', u.token); };
@@ -27008,6 +27023,12 @@ function ForgeApp() {
       return;
     }
 
+    const liveMessageId = 'tmp-stream-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    let streamedText = '';
+    let streamFinished = false;
+    let streamUpdateTimer: ReturnType<typeof setTimeout> | undefined;
+    let streamThreadId = currentThread.id;
+    const clearStreamUpdate = () => { if (streamUpdateTimer !== undefined) { clearTimeout(streamUpdateTimer); streamUpdateTimer = undefined; } };
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
       // Guard: no model selected — tell user clearly instead of silently failing
@@ -27063,9 +27084,50 @@ function ForgeApp() {
       if (activeConnectors.size > 0) addAgentStep('🔗', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
       if (hooks.filter(h => h.enabled).length > 0) addAgentStep('🪝', `${hooks.filter(h => h.enabled).length} hook(s) applied`);
       let threadId = currentThread.id;
+      // Keep only the current assistant turn as a draft; tool and child-agent output
+      // stays in the existing progress tracker until Forge returns its final result.
+      const handleStreamEvent = (evt: any) => {
+        if (streamFinished || abortCtrl.signal.aborted) return;
+        if ((evt.type === 'token' || evt.type === 'text_delta') && !evt.childId) {
+          const delta = evt.delta ?? evt.text ?? evt.content;
+          if (typeof delta !== 'string' || !delta) return;
+          streamedText += delta;
+          if (streamUpdateTimer === undefined) streamUpdateTimer = setTimeout(() => {
+            streamUpdateTimer = undefined;
+            if (streamFinished || abortCtrl.signal.aborted || !streamedText) return;
+            const draft: Message = { id: liveMessageId, thread_id: threadId, role: 'assistant', content: '_Response in progress — draft_\n\n' + streamedText, created_at: new Date().toISOString() };
+            setMessages(prev => { const exists = prev.some(m => m.id === liveMessageId); return exists ? prev.map(m => m.id === liveMessageId ? draft : m) : [...prev, draft]; });
+          }, 50);
+        } else if (evt.type === 'tool_call') {
+          clearStreamUpdate(); streamedText = '';
+          setMessages(prev => prev.filter(m => m.id !== liveMessageId));
+          const tool = evt.tool || evt.name || 'Tool';
+          const tc = { tool, args: evt.args, result: evt.result || '', ts: Date.now() };
+          setLiveToolCalls(prev => [...prev, tc]);
+          addAgentStep('🔧', tool + '(' + JSON.stringify(evt.args || {}).slice(0, 60) + ')');
+        } else if (evt.type === 'file_created') {
+          addAgentStep('📄', 'Saved ' + evt.filename + ' to this folder');
+          loadFolderFiles();
+        } else if (evt.type === 'skill_loaded') {
+          addAgentStep('🧩', 'Loaded skill: ' + String(evt.name || 'task skill').slice(0, 100));
+        } else if (evt.type === 'plan_updated') {
+          const steps = Array.isArray(evt.steps) ? evt.steps : [];
+          const completed = steps.filter((step: any) => step.status === 'completed' || step.status === 'done').length;
+          addAgentStep('📋', 'Plan updated: ' + completed + '/' + steps.length + ' steps marked complete');
+        } else if (evt.type === 'subagent_start') {
+          addAgentStep('🤝', 'Delegating: ' + String(evt.task || 'Research task').slice(0, 120));
+        } else if (evt.type === 'subagent_end') {
+          addAgentStep('🤝', 'Delegated task returned for review');
+        } else if (evt.type === 'compaction_start' || evt.type === 'auto_compaction_start') {
+          addAgentStep('🗜', 'Summarizing earlier context…');
+        } else if (evt.type === 'compaction_end' || evt.type === 'auto_compaction_end') {
+          addAgentStep('🗜', evt.errorMessage || evt.aborted ? 'Context summary interrupted' : 'Context summary ready');
+        }
+      };
 
       // Extract AI reply from response and append directly — avoids loadMessages race condition
       const applyResp = (resp: any) => {
+        clearStreamUpdate();
         if (resp && resp.success === false) {
           if (resp.error === 'NO_API_KEY') {
             const provName = resp.providerName || resp.provider || 'your LLM provider';
@@ -27092,7 +27154,9 @@ function ForgeApp() {
           }
           throw new Error(resp.message || resp.error || 'Unknown error from server');
         }
-        // Success — append AI reply directly from response, no re-fetch needed
+        // Success — replace the live draft with the authoritative stored response.
+        streamFinished = true;
+        setMessages(prev => prev.filter(m => m.id !== liveMessageId));
         const aiData = resp?.data;
         if (aiData?.content) {
           // Auto-router: show which model was selected and why
@@ -27104,7 +27168,7 @@ function ForgeApp() {
           if (autoRoute) addAgentStep('⚡', `Auto-Router: ${autoRoute.tier} task → ${autoRoute.model}`);
           const aiMsg: Message = { id: aiData.id || 'tmp-ai', thread_id: threadId, role: 'assistant', content: finalContent, created_at: new Date().toISOString() };
           setMessages(prev => {
-            const withoutTemp = prev.filter(m => m.id !== 'tmp-u');
+            const withoutTemp = prev.filter(m => m.id !== 'tmp-u' && m.id !== liveMessageId);
             // Replace temp user message with a clean copy, then add AI reply
             const userMsg: Message = { id: aiData.id + '-u', thread_id: threadId, role: 'user', content: userContent, created_at: new Date().toISOString() };
             const already = withoutTemp.find(m => m.role === 'user' && m.content === userContent);
@@ -27118,17 +27182,7 @@ function ForgeApp() {
         addAgentStep('⚙️', `Sending to ${modelLabel}…`);
         setLiveToolCalls([]);
         setExpandedTools({});
-        const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, (evt) => {
-          if (evt.type === 'tool_call') {
-            const tc = { tool: evt.tool, args: evt.args, result: evt.result || '', ts: Date.now() };
-            setLiveToolCalls(prev => [...prev, tc]);
-            addAgentStep('🔧', `${evt.tool}(${JSON.stringify(evt.args||{}).slice(0,60)})`);
-          } else if (evt.type === 'file_created') {
-            // Agent created a file — it\'s auto-filed into this folder; refresh the left panel
-            addAgentStep('📄', `Saved ${evt.filename} to this folder`);
-            loadFolderFiles();
-          }
-        });
+        const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, handleStreamEvent);
         addAgentStep('✓', 'Response received');
         // Cross off all pending auto-steps in tracker
         setTrackerItems(prev => {
@@ -27178,9 +27232,11 @@ function ForgeApp() {
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
           const fresh = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: userContent.slice(0,60), model: cleanModel }) }, user.token);
           const newT = fresh?.data || fresh;
-          threadId = newT.id;
+          threadId = newT.id; streamThreadId = threadId;
+          clearStreamUpdate(); streamedText = '';
+          setMessages(prev => prev.filter(m => m.id !== liveMessageId));
           setActiveThread(newT);
-          const r2 = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+          const r2 = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, handleStreamEvent);
           applyResp(r2);
           await loadThreads(activeProject?.id);
         } else { throw e; }
@@ -27223,8 +27279,9 @@ function ForgeApp() {
       }
     } catch (e: any) {
       // Use abort reason if available (set by safetyTimer or Stop button with reason)
-      const abortReason = e?.name === 'AbortError' && (e as any).cause?.message;
-      const raw: string = abortReason || e.message || 'Something went wrong';
+      clearStreamUpdate();
+      const abortReason = abortCtrl.signal.aborted ? abortCtrl.signal.reason : undefined;
+      const raw: string = abortReason ? (abortReason.name === 'TimeoutError' ? abortReason.message : 'Request cancelled.') : e.message || 'Something went wrong';
       // Strip raw provider prefixes like "Anthropic error: " for clean display
       const clean = raw
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error[^:]*:\s*/i, '')
@@ -27237,9 +27294,11 @@ function ForgeApp() {
         .replace(/rate.limit.*upstream.*add your own key[^]*/i, 'Free model is rate-limited — switch to a paid model for unthrottled access.')
         .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, 'Model is rate-limited. Switch to a different model.')
         .trim();
-      const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
-      setMessages(prev => [...prev, errMsg]);
+      const partial = !streamFinished && streamedText.trim();
+      const errMsg: Message = { id: partial ? liveMessageId : 'tmp-err', thread_id: streamThreadId, role: 'assistant', content: partial ? '_Response stopped before completion — partial draft_\n\n' + streamedText + '\n\n⚠️ ' + clean : '⚠️ ' + clean, created_at: new Date().toISOString() };
+      setMessages(prev => [...prev.filter(m => m.id !== liveMessageId), errMsg]);
     } finally {
+      clearStreamUpdate();
       clearTimeout(safetyTimer);
       if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
       if (agentStepsRef.current.length > 0) setLastThinkingSteps([...agentStepsRef.current]);
@@ -27509,7 +27568,7 @@ function ForgeApp() {
 
       {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
 
-      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); if (user) setShowBizWizard(true); }} />}
+      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }} />}
       {showBizWizard && user && <OnboardingWizard api={autonomyApi} onClose={() => setShowBizWizard(false)} onDone={() => { setShowBizWizard(false); setShowAutonomy(true); }} />}
       {showAutonomy && user && <ForgeAutonomyHub api={autonomyApi} username={user?.name || user?.email} onClose={() => setShowAutonomy(false)} onOpenOnboarding={() => { setShowAutonomy(false); setShowBizWizard(true); }} onModeChange={(m) => { setForgeMode(m); try { localStorage.setItem('forge_mode', m); } catch {} }} />}
 
@@ -27541,6 +27600,7 @@ function ForgeApp() {
         <div style={{ padding:'6px 6px', borderBottom:'1px solid var(--fg-border)', overflowY:'auto', flexShrink:0, maxHeight: sidebarExpanded ? 'calc(100vh - 340px)' : 'calc(100vh - 120px)' }}>
           {/* -- ZONE 1: Core -- */}
           {([
+            { id:'workspace',    icon:'💬', label:'Chat' },
             { id:'home',         icon:'🏠', label:'Home' },
             { id:'brief',        icon:'☀️', label:'Daily Brief' },
             { id:'brain',        icon:'🧠', label:'Memory' },
@@ -33176,12 +33236,6 @@ function ForgeApp() {
             { id:'skillbuilder', icon:'🛠️', label:'Skill Builder', cat:'Productivity' },
           ];
           const cats = ['All','Career','Writing','Finance','Health','Learning','Creative','Legal','Relationships','Productivity','Business','Fun'];
-          const [dtSearch, setDtSearch] = React.useState('');
-          const [dtCat, setDtCat] = React.useState('All');
-          const [activeDreamTool, setActiveDreamTool] = React.useState<string|null>(null);
-          const [dreamInput, setDreamInput] = React.useState('');
-          const [dreamOutput, setDreamOutput] = React.useState('');
-          const [dreamLoading, setDreamLoading] = React.useState(false);
           const filtered = DREAM_TOOLS.filter(t =>
             (dtCat === 'All' || t.cat === dtCat) &&
             (dtSearch === '' || t.label.toLowerCase().includes(dtSearch.toLowerCase()) || t.cat.toLowerCase().includes(dtSearch.toLowerCase()))

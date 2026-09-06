@@ -5,6 +5,7 @@
 
 const ACCESS_TOKEN_KEY = 'forge_access_token';
 const USER_KEY = 'forge_user';
+const FORGE_APP_TOKEN_KEY = 'forge_token';
 
 export interface AuthUser {
   id: string;
@@ -12,6 +13,9 @@ export interface AuthUser {
   firstName: string;
   lastName: string;
   role: string;
+  /** Mirrors of the ForgeApp session shape, written alongside the canonical fields. */
+  name?: string;
+  token?: string;
 }
 
 // ── Token helpers ─────────────────────────────────────────────
@@ -28,6 +32,7 @@ export function setAccessToken(token: string): void {
 export function clearAccessToken(): void {
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(FORGE_APP_TOKEN_KEY);
 }
 
 export function getUser(): AuthUser | null {
@@ -82,7 +87,12 @@ async function tryRefresh(): Promise<string | null> {
     if (!res.ok) return null;
     const json = await res.json();
     const newToken = json.data?.accessToken;
-    if (newToken) setAccessToken(newToken);
+    if (newToken) {
+      setAccessToken(newToken);
+      localStorage.setItem(FORGE_APP_TOKEN_KEY, newToken);
+      const stored = getUser();
+      if (stored) setUser({ ...stored, token: newToken });
+    }
     return newToken ?? null;
   } catch {
     return null;
@@ -104,9 +114,14 @@ export async function login(email: string, password: string): Promise<AuthUser> 
   if (!res.ok || !json.success) {
     throw new Error(json.message || 'Login failed');
   }
-  setAccessToken(json.data.accessToken);
-  setUser(json.data.user);
-  return json.data.user;
+  const accessToken: string = json.data.accessToken;
+  const user: AuthUser = json.data.user;
+  setAccessToken(accessToken);
+  // ForgeApp reads `forge_user` as { id, email, name, token, role } and `forge_token`.
+  // Write a superset so the login page and ForgeApp share one session record.
+  setUser({ ...user, name: user.firstName || user.email, token: accessToken });
+  localStorage.setItem(FORGE_APP_TOKEN_KEY, accessToken);
+  return user;
 }
 
 export async function register(
