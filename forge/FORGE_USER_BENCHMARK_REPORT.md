@@ -1,5 +1,9 @@
 # Forge（Pi 内核）资深用户测试报告与可复用 Benchmark
 
+> **2026-09-06 更新（修复后）**：§2 S-1/S-2/S-3/S-4/S-5、§3.1-3.7 及 §4 1-11 已在提交 `51d5f168`、`f3403ec8` 中修复；修复后 benchmark 16/16 通过（C6 需人工），并实测：12 步任务完成、90 秒长生成完整落库、断连后计费 +1931 tokens、跨租户 project 返回 404、限流 30/min 生效、平台重启后运行中的 Pi 任务从检查点续跑完成。
+> 生产环境：后端 `https://apihub.sasaky.com`（VPS，`forge-vps.compose.yml`），前端 `https://forge-sand-two.vercel.app`。详见 `deploy/vps/README.md`。
+> 仍未修：§4.8 中各集成面板内约 1580 处相对路径 `fetch('/api/...')`（只在打开对应面板时触发）；`GET /api/keys/openai/models` 直连 OpenAI 超时 10s 返回 500；`/api/forge-tools/catalog` 路由不存在。
+
 测试日期：2026-09-06。测试对象：当前工作区 `sasaky/forge-commercial-rc` 分支（未提交状态），Pi worker 0.85.1。
 
 本报告只记录**实际跑出来**或**代码里能指出行号**的问题。所有"已验证"条目均在本机真实栈上复现：真实 Pi worker（宿主进程）、真实平台（`NODE_ENV=test`，Node 20）、真实沙箱编排服务与运行时容器（Docker）、真实模型（经本机 `127.0.0.1:8317` OpenAI 兼容代理，模型 `gpt-5.5`）。
