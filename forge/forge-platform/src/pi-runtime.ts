@@ -84,7 +84,8 @@ function resolveModel(provider: string, model: string) {
   if (provider === 'groq') resolved = ({ 'llama-3.3-70b': 'llama-3.3-70b-versatile', 'llama-3.1-70b': 'llama-3.1-70b-versatile', 'llama-3.1-8b': 'llama-3.1-8b-instant', 'mixtral-8x7b': 'mixtral-8x7b-32768', 'gemma2-9b': 'gemma2-9b-it' } as any)[model] || model;
   if (provider === 'mistral') resolved = ({ 'mistral-large': 'mistral-large-latest', 'mistral-small': 'mistral-small-latest', 'mistral-medium': 'mistral-medium-latest', codestral: 'codestral-latest' } as any)[model] || model;
   let upstream = new URL(endpoints[provider]);
-  const testUrl = process.env.FORGE_PI_TEST_MODEL_URL || process.env.FORGE_SANDBOX_TEST_OPENAI_CHAT_URL;
+  const legacyOpenAIBase = process.env.FORGE_OPENAI_TEST_API_BASE_URL ? process.env.FORGE_OPENAI_TEST_API_BASE_URL.replace(/\/$/, '') + '/chat/completions' : undefined;
+  const testUrl = process.env.FORGE_PI_TEST_MODEL_URL || process.env.FORGE_SANDBOX_TEST_OPENAI_CHAT_URL || legacyOpenAIBase;
   if (process.env.NODE_ENV === 'test' && provider === 'openai' && testUrl) {
     upstream = new URL(testUrl);
     if (!['127.0.0.1', 'localhost', '[::1]'].includes(upstream.hostname)) throw new Error('PI_TEST_MODEL_URL_MUST_BE_LOOPBACK');

@@ -111,8 +111,19 @@ async function startOpenAIMock() {
           res.end(JSON.stringify({ error: { message: 'provider-secret-must-not-leak' } }));
           return;
         }
+        const content = '{"businessName":"Metered Pilot","businessType":"other","cities":[],"services":["verification"],"pain":"commercial control"}';
+        if (payload.stream === true) {
+          // The Pi engine always streams; emit an OpenAI-compatible SSE body with usage.
+          res.setHeader('content-type', 'text/event-stream');
+          const SEP = String.fromCharCode(10, 10);
+          const chunk = (delta, finish_reason = null, usage) => res.write('data: ' + JSON.stringify({ id: 'mock', object: 'chat.completion.chunk', created: 1, model: payload.model, choices: [{ index: 0, delta, finish_reason }], ...(usage ? { usage } : {}) }) + SEP);
+          chunk({ role: 'assistant', content });
+          chunk({}, 'stop', { prompt_tokens: 100, completion_tokens: 50, total_tokens: 150 });
+          res.end('data: [DONE]' + SEP);
+          return;
+        }
         res.end(JSON.stringify({
-          choices: [{ message: { content: '{"businessName":"Metered Pilot","businessType":"other","cities":[],"services":["verification"],"pain":"commercial control"}' } }],
+          choices: [{ message: { content } }],
           usage: { prompt_tokens: 100, completion_tokens: 50, cost: 0.000045 },
         }));
         return;
@@ -781,8 +792,10 @@ test('commercial model access isolates legacy BYOK from metered platform usage a
   assert.equal(fundedThread.status, 200);
   assert.match(await fundedThread.text(), /"success":true/);
   assert.equal(openAIMock.requests.length, 3);
-  assert.ok(openAIMock.requests[2].payload.max_tokens > 0);
-  assert.ok(openAIMock.requests[2].payload.max_tokens <= 4096);
+  // The Pi engine sends the OpenAI output cap as max_completion_tokens; the legacy path sends max_tokens.
+  const threadOutputCap = Number(openAIMock.requests[2].payload.max_tokens ?? openAIMock.requests[2].payload.max_completion_tokens);
+  assert.ok(threadOutputCap > 0);
+  assert.ok(threadOutputCap <= 4096);
 
   const failedProviderChat = await fetch(`http://127.0.0.1:${port}/api/chat`, {
     method: 'POST', headers, body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 32, messages: [{ role: 'user', content: 'Trigger provider log safety failure' }] }),
@@ -830,12 +843,13 @@ test('commercial model access isolates legacy BYOK from metered platform usage a
   assert.equal(failedAgentRun.status, 200, await failedAgentRun.clone().text());
   const failedAgentRunId = (await failedAgentRun.json()).id;
   let persistedFailedRun;
-  for (let attempt = 0; attempt < 80; attempt += 1) {
+  // The Pi engine retries transient provider failures with bounded backoff before failing the run.
+  for (let attempt = 0; attempt < 400; attempt += 1) {
     const runRows = await fetch(`http://127.0.0.1:${port}/api/agent-runs`, { headers });
     assert.equal(runRows.status, 200, await runRows.clone().text());
     persistedFailedRun = (await runRows.json()).find(row => row.id === failedAgentRunId);
     if (persistedFailedRun?.status === 'error') break;
-    await new Promise(resolve => setTimeout(resolve, 25));
+    await new Promise(resolve => setTimeout(resolve, 50));
   }
   assert.equal(persistedFailedRun?.status, 'error');
   assert.equal(persistedFailedRun.error, 'AGENT_RUN_PROVIDER_FAILED');

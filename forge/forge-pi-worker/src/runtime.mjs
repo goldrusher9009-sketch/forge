@@ -102,7 +102,7 @@ export async function runAgent(request, { emit = () => {}, executeTool = async (
       if (budget.calls >= budget.maxCalls || budget.tokens >= budget.maxTokens) { fatal = new Error('PI_RUN_BUDGET_EXHAUSTED'); throw fatal; }
       return originalStream(model, context, { ...options, maxRetries: 2, maxTokens: Math.max(1, Math.min(request.model.maxTokens || 4096, budget.maxTokens - budget.tokens)) });
     };
-    const settingsManager = SettingsManager.inMemory({ compaction: { enabled: true, reserveTokens: 8192, keepRecentTokens: 12000 }, retry: { enabled: true, maxRetries: 2, provider: { maxRetries: 2 } }, defaultProjectTrust: 'never' });
+    const settingsManager = SettingsManager.inMemory({ compaction: { enabled: true, reserveTokens: 8192, keepRecentTokens: 12000 }, retry: { enabled: true, maxRetries: 2, baseDelayMs: 500, maxDelayMs: 2000, provider: { maxRetries: 2, baseDelayMs: 500, maxDelayMs: 2000 } }, defaultProjectTrust: 'never' });
     const ecosystem = await createForgeEcosystem({ tools: tools.map(t => t.name), operatorMcpConfig: depth ? undefined : operatorMcpConfig, onEvent: send,
       approveMcpTool: async call => {
         if (signal?.aborted) return 'deny';
