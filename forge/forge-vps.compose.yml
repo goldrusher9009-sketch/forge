@@ -1,4 +1,4 @@
-name: forge-vps
+name: forge-pi
 
 # Production stack for a single VPS: Forge platform + Pi worker + sandbox
 # orchestrator/egress/runtime. Only the platform is published, on loopback, for
@@ -33,6 +33,11 @@ services:
       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      GOOGLE_DRIVE_CLIENT_ID: ${GOOGLE_DRIVE_CLIENT_ID:-}
+      GOOGLE_DRIVE_CLIENT_SECRET: ${GOOGLE_DRIVE_CLIENT_SECRET:-}
+      GOOGLE_DRIVE_REDIRECT_URI: ${GOOGLE_DRIVE_REDIRECT_URI:-}
+      GOOGLE_DRIVE_DEVELOPER_KEY: ${GOOGLE_DRIVE_DEVELOPER_KEY:-}
+      GOOGLE_DRIVE_APP_ID: ${GOOGLE_DRIVE_APP_ID:-}
     ports:
       - "127.0.0.1:${FORGE_VPS_BACKEND_PORT:-3400}:3000"
     volumes:
@@ -105,7 +110,7 @@ services:
       PORT: "3001"
       FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
       FORGE_SANDBOX_RUNTIME_IMAGE: forge-sandbox-runtime:vps
-      FORGE_SANDBOX_NETWORK: forge-vps-sandbox-internal
+      FORGE_SANDBOX_NETWORK: forge-pi-sandbox-internal
       FORGE_SANDBOX_PROXY_URL: http://forge-sandbox-egress:8787
       FORGE_SANDBOX_DATA_DIR: /var/lib/forge-sandbox
       FORGE_SANDBOX_MEMORY_BYTES: "536870912"
@@ -162,18 +167,18 @@ services:
 
 networks:
   control:
-    name: forge-vps-control
+    name: forge-pi-control
   pi-private:
-    name: forge-vps-pi-private
+    name: forge-pi-private
     internal: true
   sandbox-internal:
-    name: forge-vps-sandbox-internal
+    name: forge-pi-sandbox-internal
     internal: true
   egress:
-    name: forge-vps-egress
+    name: forge-pi-egress
 
 volumes:
   forge_vps_platform_data:
-    name: forge-vps-platform-data
+    name: forge-pi-platform-data
   forge_vps_sandbox_data:
-    name: forge-vps-sandbox-data
+    name: forge-pi-sandbox-data
