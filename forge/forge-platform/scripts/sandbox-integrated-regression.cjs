@@ -47,7 +47,21 @@ async function readRequestBody(req) {
   return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 }
 
-function openAIResponse(res, message) {
+function openAIStreamResponse(res, message, model) {
+  // The Pi engine always requests streaming; emit the same message as OpenAI SSE chunks.
+  const SEP = String.fromCharCode(10, 10);
+  const id = `mock-${crypto.randomUUID()}`;
+  const chunk = (delta, finish_reason = null, usage) => res.write('data: ' + JSON.stringify({ id, object: 'chat.completion.chunk', created: 1, model, choices: [{ index: 0, delta, finish_reason }], ...(usage ? { usage } : {}) }) + SEP);
+  res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
+  chunk({ role: 'assistant', content: '' });
+  if (message.tool_calls?.length) chunk({ tool_calls: message.tool_calls.map((call, index) => ({ index, ...call })) });
+  else chunk({ content: message.content || '' });
+  chunk({}, message.tool_calls?.length ? 'tool_calls' : 'stop', { prompt_tokens: 17, completion_tokens: 9, total_tokens: 26 });
+  res.end('data: [DONE]' + SEP);
+}
+
+function openAIResponse(res, message, request) {
+  if (request?.stream === true) return openAIStreamResponse(res, message, request.model);
   const payload = JSON.stringify({
     id: `mock-${crypto.randomUUID()}`,
     object: 'chat.completion',
@@ -80,49 +94,52 @@ function createMockModel() {
       return;
     }
     const body = await readRequestBody(req);
-    const text = (body.messages || []).map(message => String(message.content || '')).join('\n');
+    // Pi sends OpenAI content as an array of parts; the legacy engine sends plain strings.
+    const partText = content => Array.isArray(content) ? content.map(part => String(part?.text || '')).join('\n') : String(content || '');
+    const text = (body.messages || []).map(message => partText(message.content)).join('\n');
     const scenario = ['complete-file', 'reject-approval', 'cancel-waiting', 'cancel-model', 'cancel-shell', 'cancel-browser']
       .find(name => text.includes(name)) || 'unknown';
     calls.set(scenario, Number(calls.get(scenario) || 0) + 1);
-    const hasToolResult = text.includes('Forge tool result for');
-    const hasRejected = text.includes('The user rejected this external action');
+    // Legacy engine feeds tool results back as user text; Pi feeds native tool messages.
+    const hasToolResult = text.includes('Forge tool result for') || (body.messages || []).some(message => message.role === 'tool');
+    const hasRejected = text.includes('The user rejected this external action') || text.includes('rejected');
 
     if (scenario === 'cancel-model') {
       const timer = setTimeout(() => {
         pendingTimers.delete(timer);
-        openAIResponse(res, { role: 'assistant', content: 'This delayed response should have been cancelled.' });
+        openAIResponse(res, { role: 'assistant', content: 'This delayed response should have been cancelled.' }, body);
       }, 60_000);
       pendingTimers.add(timer);
       req.once('close', () => { clearTimeout(timer); pendingTimers.delete(timer); });
       return;
     }
     if (scenario === 'complete-file' && !hasToolResult) {
-      openAIResponse(res, toolMessage('sandbox_file', { operation: 'write', path: 'deliverable.txt', content: 'Forge integrated sandbox evidence.\n' }));
+      openAIResponse(res, toolMessage('sandbox_file', { operation: 'write', path: 'deliverable.txt', content: 'Forge integrated sandbox evidence.\n' }), body);
       return;
     }
     if (scenario === 'reject-approval' && !hasRejected) {
       openAIResponse(res, toolMessage('sandbox_browser', {
         actions: [{ action: 'navigate', url: 'https://example.com' }, { action: 'click', selector: 'a' }],
-      }));
+      }), body);
       return;
     }
     if (scenario === 'cancel-waiting') {
       openAIResponse(res, toolMessage('sandbox_browser', {
         actions: [{ action: 'navigate', url: 'https://example.com' }, { action: 'click', selector: 'a' }],
-      }));
+      }), body);
       return;
     }
     if (scenario === 'cancel-shell' && !hasToolResult) {
-      openAIResponse(res, toolMessage('sandbox_shell', { command: 'sleep 30', cwd: '.', timeoutMs: 60_000 }));
+      openAIResponse(res, toolMessage('sandbox_shell', { command: 'sleep 30', cwd: '.', timeoutMs: 60_000 }), body);
       return;
     }
     if (scenario === 'cancel-browser' && !hasToolResult) {
       openAIResponse(res, toolMessage('sandbox_browser', {
         actions: [{ action: 'navigate', url: 'https://example.com' }, { action: 'wait', timeoutMs: 60_000 }],
-      }));
+      }), body);
       return;
     }
-    openAIResponse(res, { role: 'assistant', content: `Completed ${scenario} with durable Forge evidence.` });
+    openAIResponse(res, { role: 'assistant', content: `Completed ${scenario} with durable Forge evidence.` }, body);
   });
   return { server, calls, clearPending: () => { for (const timer of pendingTimers) clearTimeout(timer); pendingTimers.clear(); } };
 }
