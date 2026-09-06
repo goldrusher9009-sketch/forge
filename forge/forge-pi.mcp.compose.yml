@@ -1,0 +1,46 @@
+# Optional MCP overlay. The worker keeps its private network; only this reviewed
+# HTTPS proxy has egress. MCP credentials belong in the operator-owned config file.
+services:
+  forge-pi-worker:
+    environment:
+      FORGE_PI_MCP_CONFIG: /run/forge/pi-mcp.json
+      NODE_USE_ENV_PROXY: "1"
+      HTTP_PROXY: http://forge-pi-mcp-egress:8787
+      HTTPS_PROXY: http://forge-pi-mcp-egress:8787
+      NO_PROXY: forge-platform,127.0.0.1,localhost
+    configs:
+      - source: forge_pi_mcp
+        target: /run/forge/pi-mcp.json
+    depends_on:
+      forge-pi-mcp-egress:
+        condition: service_healthy
+
+  forge-pi-mcp-egress:
+    image: forge-sandbox-orchestrator:local
+    build:
+      context: ./forge-sandbox-orchestrator
+    command: [node, src/proxy.js]
+    user: "10002:10002"
+    environment:
+      PORT: "8787"
+      FORGE_SANDBOX_EGRESS_ALLOWLIST: ${FORGE_PI_MCP_EGRESS_ALLOWLIST:?set the reviewed MCP hostnames, comma-separated}
+    networks:
+      - pi-private
+      - egress
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    pids_limit: 64
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "require('node:net').connect(8787,'127.0.0.1').once('connect',function(){this.end();process.exit(0)}).once('error',()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+configs:
+  forge_pi_mcp:
+    file: ${FORGE_PI_MCP_CONFIG_FILE:?set the operator-owned MCP JSON path}

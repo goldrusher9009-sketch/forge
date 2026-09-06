@@ -1,0 +1,71 @@
+name: forge-pi-local
+
+services:
+  forge-platform:
+    image: forge-platform:pi-local
+    build:
+      context: ./forge-platform
+    environment:
+      NODE_ENV: development
+      PORT: "3000"
+      DB_PATH: /data/forge.db
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?set CREDENTIAL_ENCRYPTION_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@forge.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3001}
+      FORGE_AGENT_ENGINE: ${FORGE_AGENT_ENGINE:-pi}
+      FORGE_PI_WORKER_URL: http://forge-pi-worker:8791
+      FORGE_PI_WORKER_TOKEN: ${FORGE_PI_WORKER_TOKEN:?set a separate random token of at least 32 characters}
+      FORGE_PI_PLATFORM_URL: http://forge-platform:3000
+      FORGE_PI_MCP_READ_ONLY_TOOLS: ${FORGE_PI_MCP_READ_ONLY_TOOLS:-}
+      FORGE_SANDBOX_ORCHESTRATOR_URL: http://forge-sandbox-orchestrator:3001
+      FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
+    ports:
+      - "127.0.0.1:3300:3000"
+    volumes:
+      - forge_pi_platform_data:/data
+    networks:
+      - control
+      - pi-private
+      - egress
+    depends_on:
+      forge-pi-worker:
+        condition: service_healthy
+    restart: unless-stopped
+
+  forge-pi-worker:
+    image: forge-pi-worker:local
+    build:
+      context: ./forge-pi-worker
+    environment:
+      PORT: "8791"
+      HOST: 0.0.0.0
+      FORGE_PI_WORKER_TOKEN: ${FORGE_PI_WORKER_TOKEN:?set a separate random token of at least 32 characters}
+      FORGE_PI_MAX_CONCURRENT: "4"
+    networks:
+      - pi-private
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=256m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 1g
+    pids_limit: 128
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8791/health',{headers:{Authorization:'Bearer '+process.env.FORGE_PI_WORKER_TOKEN}}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  control:
+    external: true
+    name: forge-sandbox-control
+  pi-private:
+    internal: true
+  egress:
+
+volumes:
+  forge_pi_platform_data:

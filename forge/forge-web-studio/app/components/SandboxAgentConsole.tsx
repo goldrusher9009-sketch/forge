@@ -115,7 +115,13 @@ async function forgeJson(
     return forgeJson(apiBase, tokenRef, path, options, false);
   }
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body?.error || body?.message || `HTTP_${response.status}`);
+  if (!response.ok) {
+    const code = typeof body?.error === 'string' ? body.error : '';
+    const friendlyByCode: Record<string, string> = {
+      PI_RUNTIME_UNAVAILABLE: 'The Forge execution runtime is temporarily unavailable. Please retry in a moment.',
+    };
+    throw new Error(body?.message || friendlyByCode[code] || code || `HTTP_${response.status}`);
+  }
   return body;
 }
 
@@ -649,9 +655,39 @@ export function SandboxAgentConsole({ apiBase, token, initialModel, onModelChang
     maxToolCalls: '30',
   });
 
+  const [availableModels, setAvailableModels] = useState<Array<{ id: string; name?: string; provider?: string; tier?: string }>>([]);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
+
   useEffect(() => {
     if (initialModel && !form.model) setForm(previous => ({ ...previous, model: initialModel }));
   }, [initialModel, form.model]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await forgeJson(apiBase, tokenRef, '/models/available');
+        const list = Array.isArray(response?.data?.models) ? response.data.models : [];
+        if (!cancelled) setAvailableModels(list.filter((model: any) => model && model.id));
+      } catch {
+        if (!cancelled) setAvailableModels([]);
+      } finally {
+        if (!cancelled) setModelsLoaded(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [apiBase, tokenRef]);
+
+  useEffect(() => {
+    if (!availableModels.length) return;
+    setForm(previous => {
+      if (previous.model && availableModels.some(model => model.id === previous.model)) return previous;
+      const preferred = initialModel && availableModels.some(model => model.id === initialModel)
+        ? initialModel
+        : availableModels[0].id;
+      return { ...previous, model: preferred };
+    });
+  }, [availableModels, initialModel]);
 
   const loadRuns = useCallback(async () => {
     const response = await forgeJson(apiBase, tokenRef, '/agent-runs');
@@ -900,7 +936,10 @@ export function SandboxAgentConsole({ apiBase, token, initialModel, onModelChang
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = artifact.title || artifact.path?.split('/').pop() || 'forge-artifact';
+      const artifactFileName = String(artifact.path || '').split('/').pop() || '';
+      const pathExtension = artifactFileName.includes('.') ? artifactFileName.slice(artifactFileName.lastIndexOf('.')) : '';
+      const downloadBase = String(artifact.title || artifactFileName || 'forge-artifact').trim() || 'forge-artifact';
+      link.download = !downloadBase.includes('.') && pathExtension ? `${downloadBase}${pathExtension}` : downloadBase;
       document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
     } catch (nextError: any) { setError(nextError?.message || 'SANDBOX_ARTIFACT_DOWNLOAD_FAILED'); }
     finally { setBusy(''); }
@@ -910,7 +949,13 @@ export function SandboxAgentConsole({ apiBase, token, initialModel, onModelChang
   const isTerminal = TERMINAL_RUN_STATES.has(String(run?.status || ''));
   const canStop = ACTIVE_RUN_STATES.has(String(run?.status || '')) && !isTerminal;
   const canSteer = ['waiting_approval', 'paused'].includes(String(run?.status || ''));
-  const pendingApprovalInput = parseJson(details?.approval?.input, details?.approval?.input || {});
+  const pendingApprovalTool = (details?.tools || []).find(
+    (tool: any) => String(tool?.id) === String(details?.approval?.tool_call_id),
+  ) || null;
+  const pendingApprovalInput = pendingApprovalTool
+    ? parseJson(pendingApprovalTool.input, pendingApprovalTool.input || {})
+    : parseJson(details?.approval?.input, details?.approval?.input || {});
+  const pendingApprovalToolName = pendingApprovalTool?.tool_name || details?.approval?.tool_name || 'unknown_tool';
 
   return (
     <div className="sac-shell">
@@ -936,7 +981,21 @@ export function SandboxAgentConsole({ apiBase, token, initialModel, onModelChang
           </div>
           <div className="sac-form-grid two">
             <label><span>Run name</span><input value={form.name} onChange={event => setForm(previous => ({ ...previous, name: event.target.value }))} placeholder="Quarterly report assembly" /></label>
-            <label><span>Explicit model</span><input value={form.model} onChange={event => setForm(previous => ({ ...previous, model: event.target.value }))} placeholder="claude-sonnet-4-5" /></label>
+            <label><span>Explicit model</span>
+              {availableModels.length > 0 ? (
+                <select value={form.model} onChange={event => setForm(previous => ({ ...previous, model: event.target.value }))}>
+                  {availableModels.map(model => (
+                    <option key={model.id} value={model.id}>{[model.name || model.id, model.provider, model.tier].filter(Boolean).join(' · ')}</option>
+                  ))}
+                  <option value="">Choose a model…</option>
+                </select>
+              ) : (
+                <>
+                  <input value={form.model} onChange={event => setForm(previous => ({ ...previous, model: event.target.value }))} placeholder={modelsLoaded ? 'claude-sonnet-4-5' : 'Loading models…'} />
+                  {modelsLoaded && <small className="sac-footnote">Add an API key in Settings first</small>}
+                </>
+              )}
+            </label>
           </div>
           <label className="sac-field"><span>Objective</span><textarea rows={6} value={form.prompt} onChange={event => setForm(previous => ({ ...previous, prompt: event.target.value }))} placeholder="Use the files in this Workspace, complete the task, and commit the final result as an Artifact…" /></label>
           <div className="sac-form-grid three">
@@ -1004,13 +1063,13 @@ export function SandboxAgentConsole({ apiBase, token, initialModel, onModelChang
               </div>
 
               {run.error && <ErrorNotice message={run.error} />}
-              {run.cleanup_error && <ErrorNotice message={`Cleanup: ${run.cleanup_error}`} />}
+              {isTerminal && run.sandbox_state !== 'destroyed' && <ErrorNotice message={`Cleanup incomplete — the sandbox is still "${run.sandbox_state || 'unknown'}". Use Retry cleanup.`} />}
 
               {details?.approval && (
                 <div className="sac-approval-box">
                   <div className="sac-approval-title"><span>CLASS {details.approval.approval_class || 'B'} APPROVAL</span><b>External mutation paused</b></div>
-                  <p>{details.approval.summary || details.approval.reason || 'Review the exact tool request before allowing it to run.'}</p>
-                  <pre>{JSON.stringify(pendingApprovalInput, null, 2)}</pre>
+                  <p>{details.approval.request_summary || details.approval.reason || 'Review the exact tool request before allowing it to run.'}</p>
+                  <pre>{JSON.stringify({ tool_name: pendingApprovalToolName, input: pendingApprovalInput }, null, 2)}</pre>
                   <div className="sac-command-actions"><ActionButton tone="approval" onClick={() => decideApproval('approve')} disabled={Boolean(busy)}>{busy === 'approve' ? 'Approving…' : 'Approve exact action'}</ActionButton><ActionButton tone="danger" onClick={() => decideApproval('reject')} disabled={Boolean(busy)}>{busy === 'reject' ? 'Rejecting…' : 'Reject'}</ActionButton></div>
                 </div>
               )}
@@ -1024,7 +1083,7 @@ export function SandboxAgentConsole({ apiBase, token, initialModel, onModelChang
                   <div className="sac-subhead"><div><strong>Event timeline</strong><span>Authenticated SSE · resumes from event {latestEventId.current}</span></div></div>
                   <div className="sac-timeline">
                     {loadingDetails && !details && <div className="sac-empty compact">Loading audit trail…</div>}
-                    {(details?.events || []).map((event: any) => (
+                    {(details?.events || []).filter((event: any) => event?.type !== 'token').map((event: any) => (
                       <div className="sac-event" key={event.id || event.seq}>
                         <div><i style={{ background: statusColor(event.state) }} /><code>#{event.seq}</code><span>{event.type}</span><time>{formatDate(event.created_at)}</time></div>
                         <p>{event.message}</p>

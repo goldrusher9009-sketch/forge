@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { OnboardingFlow } from './OnboardingFlow';
 import { ForgeAutonomyHub, OnboardingWizard, CreditBadge, LIVING_STYLES } from './ForgeAutonomy';
+import { GoogleDriveConnectionCard, SandboxAgentConsole } from './SandboxAgentConsole';
 
 // --- CSS injected once for animations ----------------------------------------
 const GLOBAL_STYLES = `
@@ -369,7 +370,7 @@ async function apiFetch(path: string, opts: RequestInit = {}, token?: string, _r
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...(opts.headers as any) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
   const signal = opts.signal ?? (opts.method === 'POST' ? AbortSignal.timeout(60000) : undefined);
-  const res = await fetch(`${API}${path}`, { ...opts, headers, credentials: 'include', ...(signal ? { signal } : {}) });
+  const res = await fetch(`${API}${path}`, { ...opts, headers, credentials: 'include', cache: 'no-store', ...(signal ? { signal } : {}) });
   if (res.status === 401) {
     const err = await res.json().catch(() => ({}));
     // On the FIRST 401, try to refresh the access token and replay once before giving up.
@@ -404,27 +405,39 @@ async function apiFetchSSE(path: string, opts: RequestInit = {}, token?: string,
     throw new Error(err.error || 'Session expired. Please log in again.');
   }
   if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err.message || err.error || `HTTP ${res.status}`); }
-  // Read SSE stream — collect lines, fire callbacks for mid-stream events, return last result
-  const reader = res.body!.getReader();
+  if (res.headers.get('content-type')?.includes('application/json')) return res.json();
+  if (!res.body) throw new Error('The response stream is unavailable. Please try again.');
+  const reader = res.body.getReader();
   const decoder = new TextDecoder();
   let buf = '';
   let lastResult: any = null;
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buf += decoder.decode(value, { stream: true });
-    const lines = buf.split('\n');
-    buf = lines.pop() ?? '';
-    for (const line of lines) {
-      if (!line.startsWith('data: ')) continue;
-      try {
-        const evt = JSON.parse(line.slice(6));
-        if (evt.type === 'result') lastResult = evt.payload;
-        if (onEvent) onEvent(evt);
-      } catch {}
+  let ended = false;
+  const dispatch = (line: string) => {
+    if (!line.startsWith('data:')) return;
+    const data = line.slice(5).trim();
+    if (!data || data === '[DONE]') return;
+    let evt: any;
+    try { evt = JSON.parse(data); } catch { return; }
+    if (evt.type === 'error') throw new Error(evt.message || evt.error || 'The response was interrupted. Please try again.');
+    if (evt.type === 'result') lastResult = evt.payload ?? evt.result;
+    onEvent?.(evt);
+  };
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) { ended = true; buf += decoder.decode(); break; }
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() ?? '';
+      for (const line of lines) dispatch(line);
     }
+    if (buf.trim()) dispatch(buf);
+    if (lastResult == null) throw new Error('The response ended before completion. Your partial response is shown below.');
+    return lastResult;
+  } finally {
+    if (!ended) await reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
-  return lastResult ?? {};
 }
 
 // --- Constants ----------------------------------------------------------------
@@ -985,7 +998,7 @@ function ForgeTab_integrationsHub({ onOpen }: { onOpen: (id: string) => void }) 
       INTEGRATION_CATALOG.map(async (integ) => {
         const provider = integ.id === 'stripe_mgmt' ? 'stripe' : integ.id;
         try {
-          const r = await fetch(`/api/integrations/${provider}/status`, { headers: h });
+          const r = await fetch(`${API}/integrations/${provider}/status`, { headers: h });
           const d = await r.json();
           return { id: integ.id, connected: !!d.connected };
         } catch { return { id: integ.id, connected: false }; }
@@ -1105,7 +1118,7 @@ function ForgeTab_homeHub({ onOpen }: { onOpen: (id: string) => void }) {
       const statuses = await Promise.all(
         INTEGRATION_CATALOG.map(async i => {
           const provider = i.id === 'stripe_mgmt' ? 'stripe' : i.id;
-          try { const r = await fetch(`/api/integrations/${provider}/status`, { headers: h }); const d = await r.json(); return { ...i, connected: !!d.connected }; }
+          try { const r = await fetch(`${API}/integrations/${provider}/status`, { headers: h }); const d = await r.json(); return { ...i, connected: !!d.connected }; }
           catch { return { ...i, connected: false }; }
         })
       );
@@ -1113,11 +1126,11 @@ function ForgeTab_homeHub({ onOpen }: { onOpen: (id: string) => void }) {
 
       // Load quick data from connected services in parallel
       const fetches: Record<string, Promise<any>> = {};
-      if (connected.find(c => c.id === 'github')) fetches.github = fetch('/api/integrations/github/prs', { headers: h }).then(r => r.json()).catch(() => ({}));
-      if (connected.find(c => c.id === 'linear')) fetches.linear = fetch('/api/integrations/linear/issues', { headers: h }).then(r => r.json()).catch(() => ({}));
-      if (connected.find(c => c.id === 'pagerduty')) fetches.pagerduty = fetch('/api/integrations/pagerduty/incidents', { headers: h }).then(r => r.json()).catch(() => ({}));
-      if (connected.find(c => c.id === 'stripe_mgmt')) fetches.stripe = fetch('/api/integrations/stripe/recent', { headers: h }).then(r => r.json()).catch(() => ({}));
-      if (connected.find(c => c.id === 'sentry')) fetches.sentry = fetch('/api/integrations/sentry/issues', { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'github')) fetches.github = fetch(`${API}/integrations/github/prs`, { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'linear')) fetches.linear = fetch(`${API}/integrations/linear/issues`, { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'pagerduty')) fetches.pagerduty = fetch(`${API}/integrations/pagerduty/incidents`, { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'stripe_mgmt')) fetches.stripe = fetch(`${API}/integrations/stripe/recent`, { headers: h }).then(r => r.json()).catch(() => ({}));
+      if (connected.find(c => c.id === 'sentry')) fetches.sentry = fetch(`${API}/integrations/sentry/issues`, { headers: h }).then(r => r.json()).catch(() => ({}));
 
       const results = await Promise.all(Object.values(fetches));
       const keys = Object.keys(fetches);
@@ -3428,7 +3441,7 @@ function ForgeTab_stripe() {
   );
 }
 
-function ForgeTab_jira() {
+function ForgeTab_jira__legacy3431() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ email: '', apiToken: '', domain: '' });
   const [status, setStatus] = React.useState('');
@@ -3510,7 +3523,7 @@ function ForgeTab_jira() {
   );
 }
 
-function ForgeTab_slack() {
+function ForgeTab_slack__legacy3513() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -3988,7 +4001,7 @@ function ForgeTab_mailchimp() {
   );
 }
 
-function ForgeTab_notion() {
+function ForgeTab_notion__legacy3991() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4076,7 +4089,7 @@ function ForgeTab_notion() {
   );
 }
 
-function ForgeTab_linear() {
+function ForgeTab_linear__legacy4079() {
   const [connected, setConnected] = React.useState(false);
   const [apiKey, setApiKey] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4169,7 +4182,7 @@ function ForgeTab_linear() {
   );
 }
 
-function ForgeTab_github() {
+function ForgeTab_github__legacy4172() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -4748,7 +4761,7 @@ function ForgeTab_gsheets() {
   );
 }
 
-function ForgeTab_figma() {
+function ForgeTab_figma__legacy4751() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [teamId, setTeamId] = React.useState('');
@@ -4855,7 +4868,7 @@ function ForgeTab_figma() {
   );
 }
 
-function ForgeTab_zendesk() {
+function ForgeTab_zendesk__legacy4858() {
   const [connected, setConnected] = React.useState(false);
   const [form, setForm] = React.useState({ subdomain: '', email: '', apiToken: '' });
   const [status, setStatus] = React.useState('');
@@ -5048,7 +5061,7 @@ function ForgeTab_monday() {
   );
 }
 
-function ForgeTab_airtable() {
+function ForgeTab_airtable__legacy5051() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -5135,7 +5148,7 @@ function ForgeTab_airtable() {
   );
 }
 
-function ForgeTab_hubspot() {
+function ForgeTab_hubspot__legacy5138() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -5208,7 +5221,7 @@ function ForgeTab_hubspot() {
   );
 }
 
-function ForgeTab_asana() {
+function ForgeTab_asana__legacy5211() {
   const [connected, setConnected] = React.useState(false);
   const [token, setToken] = React.useState('');
   const [status, setStatus] = React.useState('');
@@ -22208,7 +22221,7 @@ export default function ForgeApp() {
   const [activeThread, setActiveThread] = useState<Thread | null>(null);
 
   // Main tab
-  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'symptomcheck'|'sleepopt'|'stressdecode'|'workoutgen'|'nutricoach'|'willgen'|'leaseanalyze'|'disputeletter'|'tosdecode'|'foiarequest'|'plottwist'|'charcreate'|'worldbuild'|'dialoguecoach'|'bookblurb'|'perfreview'|'salaryresearch'|'offercompare'|'careerpivot'|'linkedinmsg'|'competitordive'|'pricingstrat'|'custpersona2'|'gtmplan'|'okrbuilder'|'viralthread'|'captiongen'|'contentcal24'|'hashtagstrat'|'biooptimizer'|'emailseqbuilder'|'subjectlines'|'newsletterdraft'|'reengage'|'welcomeseq'|'debtpayoff'|'budgetbuilder'|'investexplain'|'firecalc'|'sidehustle'|'anxietytoolkit'|'cbtexercise'|'selfcareplan'|'boundaryscripts'|'burnoutcheck'|'studyplan'|'conceptmap'|'examprep'|'skillroadmap'|'socraticlearn'|'codereviewer'|'regexbuilder'|'apidocgen'|'sqloptimizer'|'gitcommitgen'|'timeauditor'|'secondbrainai'|'weeklyplanner'|'habitdesigner'|'energymapper'|'shortstoryai'|'poemcrafter'|'screenplayscene'|'memoirdraft'|'satiregen'|'marketanalyze'|'bizmodelai'|'pricingmodel'|'partnerpropose'|'exitplanner'|'labinterpreter'|'supplementstack'|'recoveryplan'|'longevityprotocol'|'mentalperf'|'contractanalyze'|'taxstrategy'|'estateplan'|'investanalyze'|'insuranceaudit'|'deepworkplan'|'meetingopt'|'careermap'|'promotioncase'|'linkedinrewrite'|'difficultconvo'|'feedbackcraft'|'persuasionscript'|'relaudit'|'personalceo'|'paperdecode'|'hypothesisbuild'|'experimentdesign'|'litmap'|'grantwrite'|'rightsexplain'|'contractdraft'|'complaintwrite'|'policydecode'|'smallclaimscoach'|'parentingcoach'|'lessonplan'|'collegeadvise'|'behaviordecode'|'learningstyle'|'carbonaudit'|'ecohabits'|'sustainplan'|'climateexplain'|'greenhome'|'flavorprofile'|'mealplanv2'|'recipeinvent'|'winepair'|'cookingcoach'|'trainingplan'|'sportanalyze'|'injuryadv'|'mentalgame'|'fantasyadv'|'lyricwrite'|'musictheory'|'playlistcurate'|'practicesched'|'musicpitch'|'homebuy'|'rentanalyze'|'mortgageexp'|'neighborscout'|'homerenovate'|'triparchitect'|'packingopt'|'localintel'|'travelbudget'|'solotravel'|'griefcoach'|'angermanage'|'traumaedu'|'mindsetcoach'|'innerchild'|'startupvalidate'|'pitchdeckbuild'|'investoremail'|'mvpdesign'|'cofoundermatch'|'parentadvise'|'familymeeting'|'chorechart'|'bedtimestory'|'collegeprep'|'debtstrat'|'investdecode'|'creditcoach'|'taxoptimize'|'wealthmap'|'difficultconv2'|'apologycraft'|'complimenteng'|'boundaryset'|'lovelang'|'deepworkplan2'|'procbust'|'emailzero'|'meetingaudit'|'pkmdesign'|'charbuild'|'plotweave'|'dialogsharp'|'worldbuild2'|'scenewrite'|'biohackopt'|'vo2train'|'coldtherapy'|'suppstack'|'sleeparch'|'pricingstrategy'|'churnanalyze'|'growthhack'|'investpitch'|'moatbuild'|'contractdraft2'|'ndareview2'|'termsdecode2'|'compliancecheck2'|'disputeletter2'|'homevaluate'|'mortgagecalc'|'neighborscout2'|'renovationplan'|'landlordadvise'|'emotiondecode'|'copingtoolkit'|'innercritic'|'attachcoach'|'resiliencebuild'|'storyworld'|'lyriccraft'|'charforge'|'plottwistai'|'worldbuildai'|'promotionmap'|'salarybench'|'execpresence'|'offerneg'|'careerbrand'|'conceptdecode'|'researchsynth'|'debateprep60'|'criticalthink'|'teachassist'|'convhack'|'charismav2'|'netwrkstrat'|'conflictmed'|'influencebuild'|'passiveincome'|'taxstrat62'|'investthesis'|'wealthgap'|'moneymind'|'flowoptimize'|'cogenhance'|'mentalmodels'|'decisionspeed'|'perfreview63'|'attractbuild'|'relaudit64'|'firstdate'|'textcoach'|'breakupanalyze'|'prodnamer'|'brandvoice65'|'launchstrat'|'custavatr'|'revmodel'|'mealplan'|'workoutdesign'|'sleepopt66'|'stressmgr'|'habitstack'|'parentadvice'|'bedtimestory67'|'familymtg'|'chorechart67'|'collegeprep67'|'debtstrat68'|'investdecode68'|'creditcoach68'|'taxopt68'|'wealthmap68'|'smalltalk69'|'pubspeak69'|'activelisten'|'assertive69'|'netmsg69'|'charnames70'|'writeprompt70'|'plothole70'|'dialogpol'|'booktitle70'|'procbust71'|'timeblock71'|'meetcost71'|'inboxzero71'|'deepwork71'|'conflmed72'|'appreci72'|'socianx72'|'reconnect72'|'famlegacy72'|'analogymkr73'|'mentmodel73'|'speedread73'|'feynman73'|'knowconn73'|'pivotadv74'|'fundraise74'|'uniteco74'|'pmfcheck74'|'startuplegal74'|'hormoneopt75'|'guthealth75'|'inflame75'|'energyopt75'|'prevhealth75'|'ytscript76'|'tiktokhook76'|'podplan76'|'thumbconcept76'|'repurpose76'|'perfreview77'|'linkedincont77'|'careergap77'|'execpres77'|'workbound77'|'emergfund78'|'insaudit78'|'moneymind78'|'fireplan78'|'taxloss78'|'storyout79'|'charcreate79'|'dialogue79'|'plottwist79'|'worldbuild79'|'focuscoach80'|'memtrain80'|'cogbias80'|'mentalclr80'|'peakstate80'|'empathy81'|'smalltalk81'|'lovelang81'|'relaudit81'|'diffconv81'|'sopgen82'|'kpidesign82'|'meetdesign82'|'delegcoach82'|'wfoptim82'|'longev83'|'vo2max83'|'stressdec83'|'recovopt83'|'suppstack83'|'parentcoach84'|'fammeet84'|'teencomm84'|'screentime84'|'famval84'|'rightsexp85'|'demandltr85'|'contrdec85'|'tenright85'|'smclaim85'|'carbonfp86'|'sustliv86'|'ecodiet86'|'greenhome86'|'climact86'|'pbrand87'|'contcal87'|'biowrite87'|'audgrow87'|'monetize87'|'flowstate88'|'procbust88'|'decfat88'|'atttrain88'|'mentenrg88'|'socstyle89'|'netcoach89'|'conflmed89'|'trustbld89'|'socianx89'|'firecalc90'|'debtdest90'|'investedu90'|'sidehust90'|'netwrth90'|'paperdec91'|'hypogen91'|'expdes91'|'sciexp91'|'litrev91'|'leadcoach92'|'execpres92'|'teammot92'|'stratthk92'|'fbkcultr92'|'pitchcoach93'|'viralideagen93'|'meetkill93'|'procautopsy93'|'secondbrain93'|'scriptwriter94'|'threadgen94'|'coldloom94'|'seowriter94'|'adcopy94'|'pricingpage95'|'legalease95'|'productlaunch95'|'energyaudit95'|'storyteller95'|'jobscout96'|'newsletterarch96'|'habitdna96'|'salespage96'|'teamretro96'|'codetutor97'|'emotionmap97'|'podcastguest97'|'mvpscoper97'|'reviewrespond97'|'twitterbio98'|'speakingprep98'|'debtplan98'|'productupdate98'|'therapyjournal98'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'|'toolchain'|'home'|'integrations'>('home');
+  const [mainTab, setMainTab] = useState<'imagegen'|'notificationbell'|'goalstreaks'|'writingcoach'|'worksessions'|'podcastnotesv2'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permissionmatrix'|'visionmapping'|'apianalytics'|'competitivepositioning'|'mealpreplog'|'onboardingflows'|'learningresources'|'campaigntracker'|'reframecoach'|'saunalog'|'datapipelines'|'affirmationsets'|'vendorcontracts'|'toneanalyzer'|'coldexposure'|'featurevotes'|'networkingevents'|'costtracker'|'emailsubjects'|'bodyscanlog'|'techdecisions'|'booksummaries'|'okrtemplates'|'taglinerefiner'|'fastingwindows'|'incidentseverity'|'readinglog'|'apikeys'|'headlinescorer'|'habitchains'|'sprintboard'|'gratitudepractice'|'deploymentenvs'|'copywritingangles'|'coldplungelog'|'featureadoption'|'moodcheckins'|'integregistry'|'meetingfacilitator'|'fitracker'|'knowledgearticles'|'learningmilestones'|'compliancepolicies'|'contentsummarizer'|'runninglog'|'featuretoggles'|'bucketlistv3'|'vendorslas'|'interviewqs'|'hydrationlog'|'sprintreviews'|'visionstatements'|'changelogentries'|'salesobjection'|'sleepgoals'|'archdiagrams'|'convscripts'|'audittrail'|'rebrandcopy'|'microhabits'|'teamgoals'|'podcastnotes'|'apiversioning'|'elevatorpitch'|'fastingv2'|'localizationkeys'|'gratitudechallenges'|'releaseblockers'|'brandstory'|'recoverylog'|'permmatrix'|'affirmchains'|'budgetforecast'|'debatecoach'|'stretchlog'|'dataretention'|'energyblocks'|'incidentrunbook'|'coldemailv2'|'networthv2'|'slav2'|'focusrituals'|'changelogv2'|'interviewcoach'|'mealplanning'|'deptracker'|'habitscore'|'apiusage'|'taglinesv3'|'symptompatterns'|'teamnorms'|'learningnotes'|'featurematrix'|'pressrelease'|'posturelog'|'costallocation'|'challengetracker'|'glossary'|'colddm'|'financialgoals'|'errorbudget'|'journalprompts'|'contentpipeline'|'pitchdeck'|'moodweather'|'accesslog'|'gratitudechain'|'alertrules'|'namingengine'|'macrotracker'|'hiringscorecard'|'readinggoals'|'sprintvelocity'|'biov2'|'energymap'|'techstack'|'promptlibrary'|'datacatalog'|'storyhook'|'sleepdebt'|'vendorscorecard'|'digitaldetox'|'experimentlog'|'objectionhandler'|'languagegoals'|'productmetrics'|'habitstacking'|'localization'|'valueprop'|'breathwork'|'onboardingchecklist'|'coffeejournal'|'decisionmatrix'|'pitchanalyzer'|'fitracker'|'feedbackcollector'|'bookwishlist'|'integhealth'|'coverletter2'|'moonlog'|'capacityforecast'|'focussprints'|'assetlib'|'slogangen'|'visionstatement'|'meetingcost'|'convstarters'|'depmap'|'faqgen'|'expensesplit'|'changelog'|'lifeareas'|'announcements'|'meetingagenda'|'detoxlog'|'kpialerts'|'habitchallenges'|'meetingrooms'|'recipegen'|'moodplaylist'|'ideapipeline'|'careerjournal'|'feedbackwall'|'poemgen'|'plants'|'datarequests'|'fitnessgoals'|'eventplanner'|'storygen'|'mindfulness'|'ratelimits'|'gratitudejar'|'contentbriefs'|'taglinev2'|'symptoms'|'sprintgoals'|'bucketlistv2'|'okrheatmap'|'emailreply'|'dreamjournal'|'techradar'|'creativeprojects'|'hiringpipeline'|'swotgen'|'skincare'|'budgetv2'|'travelwish'|'soplibrary'|'linkedinpost'|'pomodoro'|'compliancereg'|'networkingcrm'|'localization'|'coverletter'|'allergies'|'releasecal'|'bookclub'|'partnertracker'|'debateprep'|'caffeine'|'growthexp'|'stresslog'|'productfeedback'|'icebreakers'|'journalv2'|'innovationlog'|'braindump'|'sprintbacklog'|'socialcaptions'|'fasting'|'productglossary'|'flashcards'|'kpidashboard'|'meetingminutes'|'emotionaljournal'|'supportv2'|'workoutprograms'|'commlog'|'blogoutlines'|'moodboards'|'projectphases'|'bucketlist'|'vendorcontacts'|'productnames'|'waterv2'|'costcenters'|'bodymetrics'|'stakeholdermap'|'headlineopt'|'gratitudev2'|'securitylog'|'learningsprints'|'featurerequests'|'taglinegen'|'expensecats'|'archdocs'|'focusblocks'|'incidenttracker'|'contentrepurposer'|'sleepv2'|'apichangelog'|'visionboard'|'processflows'|'coldemails'|'habitsv4'|'meetingtemplates'|'affirmations'|'datadictionary'|'resumebuilder'|'portfolio'|'teamdirectory'|'interviewprep'|'okrs'|'pitchdeck'|'recipes'|'riskregister'|'dailyintentions'|'retrospectives'|'swot'|'savings'|'companalysis'|'meditationlog'|'apidocs'|'prd'|'goalmilestones'|'techdebt'|'habitsv3'|'onboardingdocs'|'emailseq'|'expenses'|'prodroadmap'|'networking'|'decisions'|'biowriter'|'subscriptions'|'custpersonas'|'langlearnin'|'wschangelog'|'meetingagenda'|'journalprompts'|'capacityplan'|'booktracker'|'wsbudget'|'contentrepurpose'|'waterintake'|'engmetrics'|'moodjournal'|'vendorcontracts'|'pressrelease'|'workoutlog'|'interviewqs'|'debttracker'|'postmortems'|'jobdesc'|'watchlist'|'slatracker'|'focussessions'|'archdiagrams'|'valueprops'|'readingnotes'|'featureflags'|'visionjournal'|'deployrunbook'|'blogoutline'|'symptomslog'|'escalation'|'painpoints'|'compliancedocs'|'headlines'|'gratitudev2'|'meetingtmpls'|'quotescoll'|'deptracker'|'personas'|'screentime'|'knowledgebase'|'mealplanner'|'brandassets'|'abtests'|'energylog'|'servicecatalog'|'affirmations'|'datadict'|'taglines'|'projlog'|'accessreqs'|'travelplans'|'releasenotes'|'faqbuilder'|'sleepqual'|'clientportal'|'learningpaths'|'retros'|'prodnames'|'bodymeasu'|'stakeholders'|'lifegoals'|'meetingactions'|'coldoutreach'|'dailychk'|'prodfeedback'|'timeblocks'|'apikeysreg'|'emailsubj'|'savingsgoals'|'onboardchk'|'pomodoro'|'designtokens'|'swotbuilder'|'networth'|'testplans'|'readingchallenge'|'adrs'|'pitchdeck'|'habitstreaks'|'secchecklist'|'skillmatrix'|'budgettrack'|'contentcal'|'personalgoals'|'accesslog'|'focussess'|'capacityplan'|'interviewprep'|'meditationlog'|'compintel'|'visionboard'|'incidentlog'|'codeopt'|'watertracker'|'techradar'|'contactbook'|'releasecal'|'debatetopics'|'langvocab'|'costcenter'|'readingnotes'|'featureflags'|'storygen'|'gratitudelog'|'slatracker'|'workoutplans'|'meetingnotes'|'resumebuilder'|'bucketlist'|'depmap'|'journal'|'vendors'|'emaildraft'|'moodboard'|'changelog'|'sleeplog'|'apicatalog'|'diagrambuilder'|'expensetracker'|'retroboards'|'portfolio'|'runbooks'|'codereviewq'|'nutritionlog'|'prreviews'|'readingq'|'sprintcap'|'tonerewrite'|'achievebadge'|'datagloss'|'decjournal'|'knowwiki'|'conceptexp'|'reflectlog'|'teamkudos'|'flashcards'|'okrcheckins'|'debatecoach'|'habitchains'|'eventcal'|'booktracker'|'projectrisks'|'writingcoach'|'mindmapnodes'|'surveyresps'|'codereviews'|'incidenttl'|'promptlib'|'langlearn'|'vendorcontacts'|'taskdeps'|'slatracker'|'contentplanner'|'interviewnotesb100'|'costtracker'|'learnobjectives'|'threatlog'|'styletransfer'|'dailycheckin'|'releasenotes'|'readingnotes'|'docvault'|'promptmetrics'|'sprintreviews'|'depmap'|'shortcutkeys'|'apicatalog'|'factchecker'|'pomodorosess'|'changereqs'|'timeblocks'|'knowledgegraph'|'toneanalyzer'|'goalstracker'|'auditlog'|'escalationlog'|'winsjournal'|'ctxsnapshots'|'vendorlist'|'npscore'|'meetingcal'|'interviewprep'|'rewritelog'|'standupconfig'|'projectlog'|'learnpaths'|'glossary'|'drafthistory'|'feedbackboard'|'sleeplog'|'habittracker'|'linkvault'|'questionbank'|'capacityplan'|'energylog'|'readprogress'|'wssops'|'aicitations'|'wsbudget'|'focusgoals'|'wsdatasrc'|'dailyintent'|'wsdesigntok'|'aiknowledge'|'teamhealth'|'wsflags'|'moodjournal'|'wsapimocks'|'aisumcache'|'wsslatargets'|'usrpomodoro'|'wsrisk'|'aioutgallery'|'wschangelog'|'writinggoals'|'wsdeclog'|'aipersonas'|'wsokrs'|'aiexpruns'|'wsmtgnotes'|'savedsearch'|'wscodesnip'|'hallurepts'|'wsretro'|'ctxnotes'|'wsintv2'|'aicostalerts'|'sprintgoals'|'achainresults'|'wsannv2'|'aimodellogs'|'wsgoalsv3'|'threadnotesv3'|'habitstreaks'|'aipersonamsgs'|'aiprompttemps'|'wslabelsv3'|'usrtimelogs'|'aisuggcache'|'wspinsv2'|'aireviewqueues'|'wskanban'|'readinglist'|'aidebuglogs'|'threadsumv3'|'aifeedbackloops'|'wseventsv2'|'growthlog'|'hallucinchk'|'wsdirs'|'aistyleguides'|'wssprints2'|'threadreactv3'|'skillgoals'|'aitestprompts'|'aioutputscores'|'wsnotesv2'|'threadflags'|'focustimers'|'aicontextwins'|'codediffexp'|'sessionreplays'|'smartrenames'|'tokenbreakdown'|'aipromptchains'|'aiconfidencescores'|'wsboards'|'threadrevisions'|'usercommitments'|'aiquestionlog'|'workspace'|'router'|'billing'|'platforms'|'keyhealth'|'settings'|'admin'|'super'|'forgeauto'|'forgemulti'|'forgeco'|'forgeasi'|'skills'|'files'|'hooks'|'runs'|'mvp'|'intelligence'|'swarm'|'desktop'|'marketplace'|'brief'|'brain'|'passport'|'hermes'|'forgevoyage'|'forgeoperator'|'forgedeepresearch'|'studymode'|'voicemode'|'forgecanvas'|'forgeshop'|'forgememory'|'forgeauto2'|'dreamlog'|'forgeiq'|'promptopt'|'shadowmode'|'debate2'|'timecapsule'|'codeexplain'|'ideavalidator'|'tonerewriter'|'resumebuilder'|'emailnegotiator'|'storygen2'|'meetingsum'|'competitorspy'|'ailawyer'|'financeadvisor'|'languagetutor'|'flashcardgen'|'linkedinopt'|'speechwriter'|'pricenegotiator'|'emailroastv2'|'startupnamer'|'coverlettergen'|'interviewcoach'|'colddmwriter'|'fitnessplanner'|'recipegen2'|'travelplanner'|'apologyletter'|'leasereview'|'booksummarizer'|'quizgen'|'salaryneg'|'breakupletter'|'bizplan'|'viralhooks'|'dreaminterp'|'roastgen'|'futureself'|'resumebullets'|'meetingbuilder'|'gratitudereflect'|'coldpitch'|'moodtracker'|'habitjournal'|'lifegoals'|'standupwriter'|'conflictresolve'|'priceanchor'|'linkedinbio'|'failurecv'|'morningritual'|'apologytext'|'excusegen'|'ventmode'|'personalbrand'|'weeklyreview'|'negotiationsim'|'challengebuilder'|'therapyletter'|'podcastpitch'|'grantproposal'|'burnletter'|'decisionoracle'|'complimentengine'|'manifestowriter'|'debateprep14'|'eulogywriter'|'villainorigin'|'secretadmirer'|'legacyletter'|'lovelanguage'|'resumeroast'|'coldemailanalyze'|'pitchdeckcritic'|'refletter'|'offereval'|'datingbio'|'dateplanner'|'relcheckin'|'breakuprecover'|'flirtytext'|'networthcalc'|'budgetroast'|'freelancerate'|'invthesis'|'subaudit'|'symptomcheck'|'sleepopt'|'stressdecode'|'workoutgen'|'nutricoach'|'willgen'|'leaseanalyze'|'disputeletter'|'tosdecode'|'foiarequest'|'plottwist'|'charcreate'|'worldbuild'|'dialoguecoach'|'bookblurb'|'perfreview'|'salaryresearch'|'offercompare'|'careerpivot'|'linkedinmsg'|'competitordive'|'pricingstrat'|'custpersona2'|'gtmplan'|'okrbuilder'|'viralthread'|'captiongen'|'contentcal24'|'hashtagstrat'|'biooptimizer'|'emailseqbuilder'|'subjectlines'|'newsletterdraft'|'reengage'|'welcomeseq'|'debtpayoff'|'budgetbuilder'|'investexplain'|'firecalc'|'sidehustle'|'anxietytoolkit'|'cbtexercise'|'selfcareplan'|'boundaryscripts'|'burnoutcheck'|'studyplan'|'conceptmap'|'examprep'|'skillroadmap'|'socraticlearn'|'codereviewer'|'regexbuilder'|'apidocgen'|'sqloptimizer'|'gitcommitgen'|'timeauditor'|'secondbrainai'|'weeklyplanner'|'habitdesigner'|'energymapper'|'shortstoryai'|'poemcrafter'|'screenplayscene'|'memoirdraft'|'satiregen'|'marketanalyze'|'bizmodelai'|'pricingmodel'|'partnerpropose'|'exitplanner'|'labinterpreter'|'supplementstack'|'recoveryplan'|'longevityprotocol'|'mentalperf'|'contractanalyze'|'taxstrategy'|'estateplan'|'investanalyze'|'insuranceaudit'|'deepworkplan'|'meetingopt'|'careermap'|'promotioncase'|'linkedinrewrite'|'difficultconvo'|'feedbackcraft'|'persuasionscript'|'relaudit'|'personalceo'|'paperdecode'|'hypothesisbuild'|'experimentdesign'|'litmap'|'grantwrite'|'rightsexplain'|'contractdraft'|'complaintwrite'|'policydecode'|'smallclaimscoach'|'parentingcoach'|'lessonplan'|'collegeadvise'|'behaviordecode'|'learningstyle'|'carbonaudit'|'ecohabits'|'sustainplan'|'climateexplain'|'greenhome'|'flavorprofile'|'mealplanv2'|'recipeinvent'|'winepair'|'cookingcoach'|'trainingplan'|'sportanalyze'|'injuryadv'|'mentalgame'|'fantasyadv'|'lyricwrite'|'musictheory'|'playlistcurate'|'practicesched'|'musicpitch'|'homebuy'|'rentanalyze'|'mortgageexp'|'neighborscout'|'homerenovate'|'triparchitect'|'packingopt'|'localintel'|'travelbudget'|'solotravel'|'griefcoach'|'angermanage'|'traumaedu'|'mindsetcoach'|'innerchild'|'startupvalidate'|'pitchdeckbuild'|'investoremail'|'mvpdesign'|'cofoundermatch'|'parentadvise'|'familymeeting'|'chorechart'|'bedtimestory'|'collegeprep'|'debtstrat'|'investdecode'|'creditcoach'|'taxoptimize'|'wealthmap'|'difficultconv2'|'apologycraft'|'complimenteng'|'boundaryset'|'lovelang'|'deepworkplan2'|'procbust'|'emailzero'|'meetingaudit'|'pkmdesign'|'charbuild'|'plotweave'|'dialogsharp'|'worldbuild2'|'scenewrite'|'biohackopt'|'vo2train'|'coldtherapy'|'suppstack'|'sleeparch'|'pricingstrategy'|'churnanalyze'|'growthhack'|'investpitch'|'moatbuild'|'contractdraft2'|'ndareview2'|'termsdecode2'|'compliancecheck2'|'disputeletter2'|'homevaluate'|'mortgagecalc'|'neighborscout2'|'renovationplan'|'landlordadvise'|'emotiondecode'|'copingtoolkit'|'innercritic'|'attachcoach'|'resiliencebuild'|'storyworld'|'lyriccraft'|'charforge'|'plottwistai'|'worldbuildai'|'promotionmap'|'salarybench'|'execpresence'|'offerneg'|'careerbrand'|'conceptdecode'|'researchsynth'|'debateprep60'|'criticalthink'|'teachassist'|'convhack'|'charismav2'|'netwrkstrat'|'conflictmed'|'influencebuild'|'passiveincome'|'taxstrat62'|'investthesis'|'wealthgap'|'moneymind'|'flowoptimize'|'cogenhance'|'mentalmodels'|'decisionspeed'|'perfreview63'|'attractbuild'|'relaudit64'|'firstdate'|'textcoach'|'breakupanalyze'|'prodnamer'|'brandvoice65'|'launchstrat'|'custavatr'|'revmodel'|'mealplan'|'workoutdesign'|'sleepopt66'|'stressmgr'|'habitstack'|'parentadvice'|'bedtimestory67'|'familymtg'|'chorechart67'|'collegeprep67'|'debtstrat68'|'investdecode68'|'creditcoach68'|'taxopt68'|'wealthmap68'|'smalltalk69'|'pubspeak69'|'activelisten'|'assertive69'|'netmsg69'|'charnames70'|'writeprompt70'|'plothole70'|'dialogpol'|'booktitle70'|'procbust71'|'timeblock71'|'meetcost71'|'inboxzero71'|'deepwork71'|'conflmed72'|'appreci72'|'socianx72'|'reconnect72'|'famlegacy72'|'analogymkr73'|'mentmodel73'|'speedread73'|'feynman73'|'knowconn73'|'pivotadv74'|'fundraise74'|'uniteco74'|'pmfcheck74'|'startuplegal74'|'hormoneopt75'|'guthealth75'|'inflame75'|'energyopt75'|'prevhealth75'|'ytscript76'|'tiktokhook76'|'podplan76'|'thumbconcept76'|'repurpose76'|'perfreview77'|'linkedincont77'|'careergap77'|'execpres77'|'workbound77'|'emergfund78'|'insaudit78'|'moneymind78'|'fireplan78'|'taxloss78'|'storyout79'|'charcreate79'|'dialogue79'|'plottwist79'|'worldbuild79'|'focuscoach80'|'memtrain80'|'cogbias80'|'mentalclr80'|'peakstate80'|'empathy81'|'smalltalk81'|'lovelang81'|'relaudit81'|'diffconv81'|'sopgen82'|'kpidesign82'|'meetdesign82'|'delegcoach82'|'wfoptim82'|'longev83'|'vo2max83'|'stressdec83'|'recovopt83'|'suppstack83'|'parentcoach84'|'fammeet84'|'teencomm84'|'screentime84'|'famval84'|'rightsexp85'|'demandltr85'|'contrdec85'|'tenright85'|'smclaim85'|'carbonfp86'|'sustliv86'|'ecodiet86'|'greenhome86'|'climact86'|'pbrand87'|'contcal87'|'biowrite87'|'audgrow87'|'monetize87'|'flowstate88'|'procbust88'|'decfat88'|'atttrain88'|'mentenrg88'|'socstyle89'|'netcoach89'|'conflmed89'|'trustbld89'|'socianx89'|'firecalc90'|'debtdest90'|'investedu90'|'sidehust90'|'netwrth90'|'paperdec91'|'hypogen91'|'expdes91'|'sciexp91'|'litrev91'|'leadcoach92'|'execpres92'|'teammot92'|'stratthk92'|'fbkcultr92'|'pitchcoach93'|'viralideagen93'|'meetkill93'|'procautopsy93'|'secondbrain93'|'scriptwriter94'|'threadgen94'|'coldloom94'|'seowriter94'|'adcopy94'|'pricingpage95'|'legalease95'|'productlaunch95'|'energyaudit95'|'storyteller95'|'jobscout96'|'newsletterarch96'|'habitdna96'|'salespage96'|'teamretro96'|'codetutor97'|'emotionmap97'|'podcastguest97'|'mvpscoper97'|'reviewrespond97'|'twitterbio98'|'speakingprep98'|'debtplan98'|'productupdate98'|'therapyjournal98'|'analytics'|'notes'|'personas'|'templates'|'collections'|'agenda'|'goals'|'captures'|'graph'|'journal'|'habits'|'changelog'|'flashcards'|'reading'|'kanban'|'digest'|'snippets'|'gsearch'|'onboarding'|'urlsaves'|'calendar'|'advstats'|'timer'|'systpl'|'heatmap'|'tokenbreak'|'savedsearch'|'prodscore'|'folders'|'quicknotes'|'export'|'wgoals'|'formatter'|'weeksummary'|'streaks'|'readlist'|'csnippets'|'tdiffs'|'aifeed'|'statssummary'|'focusmodes'|'polls'|'wtags'|'batchrename'|'wshealth'|'dailylog'|'milestones'|'archives'|'timeline'|'rxleader'|'pchains'|'compare'|'kcards'|'vnotes'|'wevents'|'personaslib'|'challenges'|'glossary'|'tscores'|'suggestions'|'ideainbox'|'sessionplans'|'threaddeps'|'wschangelog'|'writingcoach'|'decisionlog'|'threadclones'|'wsmood'|'readprog'|'aidebate'|'boards'|'sprints'|'contentcal'|'learnpath'|'aibookmarks'|'focussess'|'treactions'|'wstags'|'intentions'|'notetpl'|'snippetsv2'|'wsannounce'|'aijournal'|'threadpolls'|'insightcards'|'goalsv2'|'aireminders'|'tbookmarks2'|'exportpresets'|'aiknowledgegaps'|'wsroles'|'threadhighlights'|'userjournal'|'airankinglog'|'aidebugsess'|'wstemplatesv2'|'threadpolls'|'usertimeblocks'|'aicritiquelog'|'aichainlog'|'wsintegrations'|'threadmentions'|'userhabitlog'|'aipromptvar'|'aicontextsnapshots'|'wsgoals'|'threadvotes'|'usersprintlog'|'aisafetyflags'|'aifeedbackthreads'|'wschecklists'|'threadbookmarksv2'|'usermoodlog'|'aihallucinationlog'|'aisumlog'|'wsannouncements'|'threadstatusv2'|'userstudysess'|'aipersonamsgs'|'aitopicclusters'|'wsshortcuts'|'threadcollabs'|'userreadinglist'|'aioutputratings'|'aiclassresults'|'wsviews'|'threadremindv2'|'userachievements'|'aicodesnippets'|'aisugghistory'|'wsfiltersv2'|'threadattachv2'|'userfocussess'|'aiintentlog'|'airewritehistory'|'wslabelsv2'|'threadpinsv2'|'userdecisionlog'|'aibatchjobs'|'aidraftreviews'|'wsmilestones'|'threadreactionsv2'|'userenergylog'|'aievalresults'|'aictxinjectors'|'wssprintsv2'|'threadsubscribers'|'habitstreaksv2'|'aimodelpresets'|'aisesschkpts'|'wsreactionsv2'|'threadactionitems'|'usermoodlog'|'aioutputversions'|'aictxwindowsv2'|'wsgoalsv2'|'threadhighlights'|'learningpaths'|'aifeedbackloops'|'aiknowledgegaps'|'wsbkmksv2'|'threadeventsv2'|'userskillratings'|'aipromptchainsv2'|'aiwftriggers'|'wsnotices'|'threadsumv2'|'usertimeblocks'|'airesptemplates'|'aichainsteps'|'wstagsv3'|'threadnotesv2'|'userrituals'|'aipersonasv2'|'aidebuglogsb59'|'wspollsv2'|'threadreactv2'|'userachievv2'|'aioutcache'|'airatingsv2'|'wsmilestones'|'aictxsnaps'|'threadcollabs'|'focussessions'|'aipromptver'|'wsdigests'|'aicostbreak'|'threadments'|'userprefsv2'|'aisnippets'|'wsannounceb56'|'aimnodes'|'threadlabv2'|'ustreaksv2'|'aiplaybooks'|'wschannels'|'aibenchmarks'|'msgthreadarch'|'aibudgets'|'aitaskq'|'wsglossary'|'airoutingrules'|'threadreactsum'|'wsintegrations'|'aievalsb53'|'wskpis'|'threadarchb53'|'ctxinject'|'wswatchers'|'aifeedback'|'wsrulesb52'|'msgthreadsv2'|'embedmeta'|'wsshortcuts'|'aipersonas'|'wseventsb51'|'aioutputs'|'threadperms'|'userbadges'|'aichains'|'wsreports'|'aitestcases'|'ctxwindows'|'usergoals'|'sprintboard'|'aisumv2'|'wscolors'|'threadclips'|'promptslib'|'projnotes'|'aicostests'|'wslinks'|'msgdrafts'|'modelstats'|'savedsearch'|'wsannounce'|'airetry'|'threadlabels'|'prefsv2'|'contentblocks'|'wstimers'|'aiconflogs'|'uchecklists'|'wsmilestones'|'agentruns'|'wspolicies'|'knowlnodes'|'chatreacv2'|'aidrafthist'|'aiflows'|'wstagsv2'|'insightcards'|'promptratings'|'sessnaps'|'aievals'|'wsevents'|'resptmpls'|'archivesv3'|'userbadges'|'chatmem'|'searchidx'|'custmetrics'|'filequeue'|'tokledger'|'thrxv2'|'wsalertsv2'|'personasv3'|'docversions'|'taskcomments'|'aisuggv2'|'wsgoals'|'codesnipv2'|'feedbnotes'|'sesschkpts'|'ideavotes'|'wsbroad'|'debuglogs'|'notelinks'|'profilev2'|'meetingnotes'|'metricsv2'|'pchains'|'fileanno'|'aitasks'|'summariesv2'|'wsthemes'|'shortcuts'|'threadlabels'|'collabrooms'|'promptlib'|'wsconnect'|'aiglossary'|'rqv2'|'kanlabels'|'collabnotes'|'aiexp'|'wsrules'|'cdrafts'|'achievements'|'wswidgets'|'personasv2'|'threadmetrics'|'quickactions'|'searchhist'|'toolchain'|'home'|'integrations'>('workspace');
   const [analyticsData, setAnalyticsData] = useState<any>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsPeriod, setAnalyticsPeriod] = useState<'7'|'30'|'90'>('30');
@@ -22413,14 +22426,14 @@ export default function ForgeApp() {
   const [microHabits, setMicroHabits] = useState<any>({rows:[],total_completions:0,top_streak:0});
   const [teamGoals, setTeamGoals] = useState<any>({rows:[],avg_progress:0,total:0});
   const [podcastNotes, setPodcastNotes] = useState<any>({rows:[],podcast_count:0,total_episodes:0});
-  const [apiVersioning, setApiVersioning] = useState<any>({rows:[],deprecated_count:0,active_count:0});
-  const [elevatorPitch, setElevatorPitch] = useState<any[]>([]);
-  const [fastingV2, setFastingV2] = useState<any>({rows:[],completion_rate:0,avg_hours:0,total_fasts:0});
-  const [localizationKeys, setLocalizationKeys] = useState<any>({rows:[],namespace_count:0,key_count:0});
-  const [gratitudeChallenges, setGratitudeChallenges] = useState<any>({rows:[],active_count:0,avg_completion:0});
-  const [releaseBlockers, setReleaseBlockers] = useState<any>({rows:[],open_count:0,critical_count:0});
-  const [brandStory, setBrandStory] = useState<any[]>([]);
-  const [recoveryLog, setRecoveryLog] = useState<any>({rows:[],avg_sleep:0,avg_energy:0});
+  const [apiVersioning__legacy22416, setApiVersioning__legacy22416] = useState<any>({rows:[],deprecated_count:0,active_count:0});
+  const [elevatorPitch__legacy22417, setElevatorPitch__legacy22417] = useState<any[]>([]);
+  const [fastingV2__legacy22418, setFastingV2__legacy22418] = useState<any>({rows:[],completion_rate:0,avg_hours:0,total_fasts:0});
+  const [localizationKeys__legacy22419, setLocalizationKeys__legacy22419] = useState<any>({rows:[],namespace_count:0,key_count:0});
+  const [gratitudeChallenges__legacy22420, setGratitudeChallenges__legacy22420] = useState<any>({rows:[],active_count:0,avg_completion:0});
+  const [releaseBlockers__legacy22421, setReleaseBlockers__legacy22421] = useState<any>({rows:[],open_count:0,critical_count:0});
+  const [brandStory__legacy22422, setBrandStory__legacy22422] = useState<any[]>([]);
+  const [recoveryLog__legacy22423, setRecoveryLog__legacy22423] = useState<any>({rows:[],avg_sleep:0,avg_energy:0});
   const [permMatrix, setPermMatrix] = useState<any>({rows:[],roles:[],role_count:0});
   const [affirmChains, setAffirmChains] = useState<any>({rows:[],top_streak:0});
   const [budgetForecast, setBudgetForecast] = useState<any>({rows:[],totals:{budgeted:0,actual:0,forecasted:0,variance:0}});
@@ -22477,11 +22490,11 @@ export default function ForgeApp() {
   const [objectionHandler, setObjectionHandler] = useState<any[]>([]);
   const [languageGoals, setLanguageGoals] = useState<any[]>([]);
   const [productMetrics, setProductMetrics] = useState<any[]>([]);
-  const [digitalDetox, setDigitalDetox] = useState<any[]>([]);
-  const [experimentLog, setExperimentLog] = useState<any[]>([]);
-  const [objectionHandler, setObjectionHandler] = useState<any[]>([]);
-  const [languageGoals, setLanguageGoals] = useState<any[]>([]);
-  const [productMetrics, setProductMetrics] = useState<any[]>([]);
+  const [digitalDetox__legacy22480, setDigitalDetox__legacy22480] = useState<any[]>([]);
+  const [experimentLog__legacy22481, setExperimentLog__legacy22481] = useState<any[]>([]);
+  const [objectionHandler__legacy22482, setObjectionHandler__legacy22482] = useState<any[]>([]);
+  const [languageGoals__legacy22483, setLanguageGoals__legacy22483] = useState<any[]>([]);
+  const [productMetrics__legacy22484, setProductMetrics__legacy22484] = useState<any[]>([]);
   const [habitStacking, setHabitStacking] = useState<any[]>([]);
   const [localization, setLocalization] = useState<any[]>([]);
   const [valueProps, setValueProps] = useState<any[]>([]);
@@ -22490,7 +22503,7 @@ export default function ForgeApp() {
   const [coffeeJournal, setCoffeeJournal] = useState<any>({rows:[],avg_score:0});
   const [decisionMatrix, setDecisionMatrix] = useState<any[]>([]);
   const [pitchAnalyses, setPitchAnalyses] = useState<any[]>([]);
-  const [fiTracker, setFiTracker] = useState<any[]>([]);
+  const [fiTracker__legacy22493, setFiTracker__legacy22493] = useState<any[]>([]);
   const [feedbackCollector, setFeedbackCollector] = useState<any[]>([]);
   const [bookWishlist, setBookWishlist] = useState<any[]>([]);
   const [integHealth, setIntegHealth] = useState<any[]>([]);
@@ -22500,7 +22513,7 @@ export default function ForgeApp() {
   const [focusSprints, setFocusSprints] = useState<any[]>([]);
   const [assetLib, setAssetLib] = useState<any[]>([]);
   const [slogans, setSlogans] = useState<any[]>([]);
-  const [visionStatements, setVisionStatements] = useState<any[]>([]);
+  const [visionStatements__legacy22503, setVisionStatements__legacy22503] = useState<any[]>([]);
   const [meetingCost, setMeetingCost] = useState<any>({rows:[],total_cost:0,wasted_cost:0});
   const [convStarters, setConvStarters] = useState<any[]>([]);
   const [depMap, setDepMap] = useState<any[]>([]);
@@ -22548,7 +22561,7 @@ export default function ForgeApp() {
   const [pomodoroData, setPomodoroData] = useState<{rows:any[],stats:any}>({rows:[],stats:{}});
   const [complianceReg, setComplianceReg] = useState<any[]>([]);
   const [networkingCrm, setNetworkingCrm] = useState<any[]>([]);
-  const [localization, setLocalization] = useState<any[]>([]);
+  const [localization__legacy22551, setLocalization__legacy22551] = useState<any[]>([]);
   const [coverLetters, setCoverLetters] = useState<any[]>([]);
   const [allergies, setAllergies] = useState<any[]>([]);
   const [releaseCal, setReleaseCal] = useState<any[]>([]);
@@ -22609,7 +22622,7 @@ export default function ForgeApp() {
   const [teamDirectory, setTeamDirectory] = useState<any[]>([]);
   const [interviewPrep, setInterviewPrep] = useState<any[]>([]);
   const [okrs, setOkrs] = useState<any[]>([]);
-  const [pitchDecks, setPitchDecks] = useState<any[]>([]);
+  const [pitchDecks__legacy22612, setPitchDecks__legacy22612] = useState<any[]>([]);
   const [recipes, setRecipes] = useState<any[]>([]);
   const [risks, setRisks] = useState<any[]>([]);
   const [dailyIntentions, setDailyIntentions] = useState<any[]>([]);
@@ -22628,14 +22641,14 @@ export default function ForgeApp() {
   const [expenses, setExpenses] = useState<any[]>([]);
   const [prodRoadmap, setProdRoadmap] = useState<any[]>([]);
   const [networkingLog, setNetworkingLog] = useState<any[]>([]);
-  const [decisions, setDecisions] = useState<any[]>([]);
+  const [decisions__legacy22631, setDecisions__legacy22631] = useState<any[]>([]);
   const [bios, setBios] = useState<any[]>([]);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [custPersonas, setCustPersonas] = useState<any[]>([]);
   const [langLearning, setLangLearning] = useState<any[]>([]);
-  const [wsChangelog, setWsChangelog] = useState<any[]>([]);
+  const [wsChangelog__legacy22636, setWsChangelog__legacy22636] = useState<any[]>([]);
   const [meetingAgendas, setMeetingAgendas] = useState<any[]>([]);
-  const [journalPrompts, setJournalPrompts] = useState<any[]>([]);
+  const [journalPrompts__legacy22638, setJournalPrompts__legacy22638] = useState<any[]>([]);
   const [capacityPlan, setCapacityPlan] = useState<any[]>([]);
   const [books, setBooks] = useState<any[]>([]);
   const [wsBudget, setWsBudget] = useState<any[]>([]);
@@ -22643,29 +22656,29 @@ export default function ForgeApp() {
   const [waterIntake, setWaterIntake] = useState<any[]>([]);
   const [engMetrics, setEngMetrics] = useState<any[]>([]);
   const [moodJournal, setMoodJournal] = useState<any[]>([]);
-  const [vendorContracts, setVendorContracts] = useState<any[]>([]);
-  const [pressReleases, setPressReleases] = useState<any[]>([]);
+  const [vendorContracts__legacy22646, setVendorContracts__legacy22646] = useState<any[]>([]);
+  const [pressReleases__legacy22647, setPressReleases__legacy22647] = useState<any[]>([]);
   const [workoutLog, setWorkoutLog] = useState<any[]>([]);
-  const [interviewQs, setInterviewQs] = useState<any[]>([]);
+  const [interviewQs__legacy22649, setInterviewQs__legacy22649] = useState<any[]>([]);
   const [debtItems, setDebtItems] = useState<any[]>([]);
   const [postmortems, setPostmortems] = useState<any[]>([]);
   const [jobDescs, setJobDescs] = useState<any[]>([]);
   const [watchlist, setWatchlist] = useState<any[]>([]);
   const [slaTracker, setSlaTracker] = useState<any[]>([]);
   const [focusSessions, setFocusSessions] = useState<any[]>([]);
-  const [archDiagrams, setArchDiagrams] = useState<any[]>([]);
-  const [valueProps, setValueProps] = useState<any[]>([]);
+  const [archDiagrams__legacy22656, setArchDiagrams__legacy22656] = useState<any[]>([]);
+  const [valueProps__legacy22657, setValueProps__legacy22657] = useState<any[]>([]);
   const [readingNotes, setReadingNotes] = useState<any[]>([]);
   const [featureFlags, setFeatureFlags] = useState<any[]>([]);
   const [visionJournal, setVisionJournal] = useState<any[]>([]);
   const [deployRunbook, setDeployRunbook] = useState<any[]>([]);
-  const [blogOutlines, setBlogOutlines] = useState<any[]>([]);
+  const [blogOutlines__legacy22662, setBlogOutlines__legacy22662] = useState<any[]>([]);
   const [symptomsLog, setSymptomsLog] = useState<any[]>([]);
   const [escalationMatrix, setEscalationMatrix] = useState<any[]>([]);
   const [painPoints, setPainPoints] = useState<any[]>([]);
   const [complianceDocs, setComplianceDocs] = useState<any[]>([]);
-  const [headlines, setHeadlines] = useState<any[]>([]);
-  const [gratitudeV2, setGratitudeV2] = useState<any[]>([]);
+  const [headlines__legacy22667, setHeadlines__legacy22667] = useState<any[]>([]);
+  const [gratitudeV2__legacy22668, setGratitudeV2__legacy22668] = useState<any[]>([]);
   const [meetingTmpls, setMeetingTmpls] = useState<any[]>([]);
   const [quotes, setQuotes] = useState<any[]>([]);
   const [dependencies, setDependencies] = useState<any[]>([]);
@@ -22677,9 +22690,9 @@ export default function ForgeApp() {
   const [abTests, setAbTests] = useState<any[]>([]);
   const [energyLog, setEnergyLog] = useState<any[]>([]);
   const [serviceCatalog, setServiceCatalog] = useState<any[]>([]);
-  const [affirmations, setAffirmations] = useState<any[]>([]);
+  const [affirmations__legacy22680, setAffirmations__legacy22680] = useState<any[]>([]);
   const [dataDict, setDataDict] = useState<any[]>([]);
-  const [taglines, setTaglines] = useState<any[]>([]);
+  const [taglines__legacy22682, setTaglines__legacy22682] = useState<any[]>([]);
   const [projLog, setProjLog] = useState<any[]>([]);
   const [accessReqs, setAccessReqs] = useState<any[]>([]);
   const [travelPlans, setTravelPlans] = useState<any[]>([]);
@@ -22691,7 +22704,7 @@ export default function ForgeApp() {
   const [retros, setRetros] = useState<any[]>([]);
   const [prodNames, setProdNames] = useState<any[]>([]);
   const [bodyMeasurements, setBodyMeasurements] = useState<any[]>([]);
-  const [stakeholders, setStakeholders] = useState<any[]>([]);
+  const [stakeholders__legacy22694, setStakeholders__legacy22694] = useState<any[]>([]);
   const [lifeGoals, setLifeGoals] = useState<any[]>([]);
   const [meetingActions, setMeetingActions] = useState<any[]>([]);
   const [coldOutreach, setColdOutreach] = useState<any[]>([]);
@@ -22699,7 +22712,7 @@ export default function ForgeApp() {
   const [prodFeedback, setProdFeedback] = useState<any[]>([]);
   const [timeBlocks, setTimeBlocks] = useState<any[]>([]);
   const [apiKeysReg, setApiKeysReg] = useState<any[]>([]);
-  const [emailSubjects, setEmailSubjects] = useState<any[]>([]);
+  const [emailSubjects__legacy22702, setEmailSubjects__legacy22702] = useState<any[]>([]);
   const [savingsGoals, setSavingsGoals] = useState<any[]>([]);
   const [onboardChk, setOnboardChk] = useState<any[]>([]);
   const [pomodoroLog, setPomodoroLog] = useState<any[]>([]);
@@ -22709,50 +22722,50 @@ export default function ForgeApp() {
   const [testPlans, setTestPlans] = useState<any[]>([]);
   const [readingChallenge, setReadingChallenge] = useState<any>(null);
   const [adrs, setAdrs] = useState<any[]>([]);
-  const [pitchDecks, setPitchDecks] = useState<any[]>([]);
+  const [pitchDecks__legacy22712, setPitchDecks__legacy22712] = useState<any[]>([]);
   const [habitStreaks, setHabitStreaks] = useState<any[]>([]);
   const [secChecklist, setSecChecklist] = useState<any[]>([]);
   const [skillMatrix, setSkillMatrix] = useState<any[]>([]);
   const [budgetTracker, setBudgetTracker] = useState<any[]>([]);
   const [contentCal, setContentCal] = useState<any[]>([]);
   const [personalGoals, setPersonalGoals] = useState<any[]>([]);
-  const [accessLog, setAccessLog] = useState<any[]>([]);
-  const [focusSessions, setFocusSessions] = useState<any[]>([]);
+  const [accessLog__legacy22719, setAccessLog__legacy22719] = useState<any[]>([]);
+  const [focusSessions__legacy22720, setFocusSessions__legacy22720] = useState<any[]>([]);
   const [capacityPlans, setCapacityPlans] = useState<any[]>([]);
-  const [interviewPrep, setInterviewPrep] = useState<any[]>([]);
-  const [meditationLog, setMeditationLog] = useState<any[]>([]);
+  const [interviewPrep__legacy22722, setInterviewPrep__legacy22722] = useState<any[]>([]);
+  const [meditationLog__legacy22723, setMeditationLog__legacy22723] = useState<any[]>([]);
   const [compIntel, setCompIntel] = useState<any[]>([]);
-  const [visionBoard, setVisionBoard] = useState<any[]>([]);
-  const [incidents, setIncidents] = useState<any[]>([]);
+  const [visionBoard__legacy22725, setVisionBoard__legacy22725] = useState<any[]>([]);
+  const [incidents__legacy22726, setIncidents__legacy22726] = useState<any[]>([]);
   const [codeOpt, setCodeOpt] = useState<any[]>([]);
   const [waterLog, setWaterLog] = useState<any[]>([]);
-  const [techRadar, setTechRadar] = useState<any[]>([]);
+  const [techRadar__legacy22729, setTechRadar__legacy22729] = useState<any[]>([]);
   const [contacts, setContacts] = useState<any[]>([]);
-  const [releaseCal, setReleaseCal] = useState<any[]>([]);
+  const [releaseCal__legacy22731, setReleaseCal__legacy22731] = useState<any[]>([]);
   const [debateTopics, setDebateTopics] = useState<any[]>([]);
   const [vocab, setVocab] = useState<any[]>([]);
-  const [costCenters, setCostCenters] = useState<any[]>([]);
-  const [readingNotes, setReadingNotes] = useState<any[]>([]);
-  const [featureFlags, setFeatureFlags] = useState<any[]>([]);
+  const [costCenters__legacy22734, setCostCenters__legacy22734] = useState<any[]>([]);
+  const [readingNotes__legacy22735, setReadingNotes__legacy22735] = useState<any[]>([]);
+  const [featureFlags__legacy22736, setFeatureFlags__legacy22736] = useState<any[]>([]);
   const [stories, setStories] = useState<any[]>([]);
   const [gratitudeLog, setGratitudeLog] = useState<any[]>([]);
-  const [slaTracker, setSlaTracker] = useState<any[]>([]);
+  const [slaTracker__legacy22739, setSlaTracker__legacy22739] = useState<any[]>([]);
   const [workoutPlans, setWorkoutPlans] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
-  const [resumes, setResumes] = useState<any[]>([]);
-  const [bucketList, setBucketList] = useState<any[]>([]);
-  const [depMap, setDepMap] = useState<any[]>([]);
+  const [resumes__legacy22742, setResumes__legacy22742] = useState<any[]>([]);
+  const [bucketList__legacy22743, setBucketList__legacy22743] = useState<any[]>([]);
+  const [depMap__legacy22744, setDepMap__legacy22744] = useState<any[]>([]);
   const [journal, setJournal] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [emailDrafts, setEmailDrafts] = useState<any[]>([]);
-  const [moodBoards, setMoodBoards] = useState<any[]>([]);
+  const [moodBoards__legacy22748, setMoodBoards__legacy22748] = useState<any[]>([]);
   const [changelogs, setChangelogs] = useState<any[]>([]);
   const [sleepLog, setSleepLog] = useState<any[]>([]);
   const [apiCatalog, setApiCatalog] = useState<any[]>([]);
   const [diagrams, setDiagrams] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<any[]>([]);
+  const [expenses__legacy22753, setExpenses__legacy22753] = useState<any[]>([]);
   const [retroBoards, setRetroBoards] = useState<any[]>([]);
-  const [portfolio, setPortfolio] = useState<any[]>([]);
+  const [portfolio__legacy22755, setPortfolio__legacy22755] = useState<any[]>([]);
   const [runbooks, setRunbooks] = useState<any[]>([]);
   const [codeReviewQ, setCodeReviewQ] = useState<any[]>([]);
   const [nutritionLog, setNutritionLog] = useState<any[]>([]);
@@ -22767,10 +22780,10 @@ export default function ForgeApp() {
   const [conceptExp, setConceptExp] = useState<any[]>([]);
   const [reflectLog, setReflectLog] = useState<any[]>([]);
   const [teamKudos, setTeamKudos] = useState<any[]>([]);
-  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [flashcards__legacy22770, setFlashcards__legacy22770] = useState<any[]>([]);
   const [okrCheckins, setOkrCheckins] = useState<any[]>([]);
   const [debateItems, setDebateItems] = useState<any[]>([]);
-  const [habitChains, setHabitChains] = useState<any[]>([]);
+  const [habitChains__legacy22773, setHabitChains__legacy22773] = useState<any[]>([]);
   const [eventCal, setEventCal] = useState<any[]>([]);
   const [bookTracker, setBookTracker] = useState<any[]>([]);
   const [projectRisks, setProjectRisks] = useState<any[]>([]);
@@ -22785,7 +22798,7 @@ export default function ForgeApp() {
   const [newPrompt, setNewPrompt] = useState({ title:'', prompt_text:'', category:'general' });
   const [langItems, setLangItems] = useState<any[]>([]);
   const [newLang, setNewLang] = useState({ language:'Spanish', word_or_phrase:'', translation:'', notes:'' });
-  const [vendorContacts, setVendorContacts] = useState<any[]>([]);
+  const [vendorContacts__legacy22788, setVendorContacts__legacy22788] = useState<any[]>([]);
   const [newVendorContact, setNewVendorContact] = useState({ vendor_name:'', contact_name:'', email:'', phone:'', role:'', notes:'' });
   const [taskDeps, setTaskDeps] = useState<any[]>([]);
   const [newTaskDep, setNewTaskDep] = useState({ task_name:'', depends_on:'', dep_type:'finish_to_start', notes:'' });
@@ -22807,22 +22820,22 @@ export default function ForgeApp() {
   const [styleTarget, setStyleTarget] = useState('formal');
   const [dailyCheckins, setDailyCheckins] = useState<any[]>([]);
   const [todayCheckin, setTodayCheckin] = useState({ mood:3, energy:3, focus:3, notes:'' });
-  const [releaseNotes, setReleaseNotes] = useState<any[]>([]);
+  const [releaseNotes__legacy22810, setReleaseNotes__legacy22810] = useState<any[]>([]);
   const [newRelease, setNewRelease] = useState({ version:'', title:'', changes:'', breaking_changes:'', release_date:'' });
-  const [readingNotes, setReadingNotes] = useState<any[]>([]);
+  const [readingNotes__legacy22812, setReadingNotes__legacy22812] = useState<any[]>([]);
   const [newReadingNote, setNewReadingNote] = useState({ title:'', source_url:'', note:'', tags:'' });
   const [docVault, setDocVault] = useState<any[]>([]);
   const [newDoc, setNewDoc] = useState({ name:'', content:'', doc_type:'general' });
   const [editDocId, setEditDocId] = useState<number|null>(null);
   const [promptMetrics, setPromptMetrics] = useState<any[]>([]);
   const [promptMetricsSummary, setPromptMetricsSummary] = useState<any>(null);
-  const [sprintReviews, setSprintReviews] = useState<any[]>([]);
+  const [sprintReviews__legacy22819, setSprintReviews__legacy22819] = useState<any[]>([]);
   const [newSprintReview, setNewSprintReview] = useState({ sprint_name:'', completed_items:'', incomplete_items:'', retrospective:'', rating:3 });
-  const [depMap, setDepMap] = useState<any[]>([]);
+  const [depMap__legacy22821, setDepMap__legacy22821] = useState<any[]>([]);
   const [newDep, setNewDep] = useState({ from_item:'', to_item:'', dep_type:'blocks', notes:'' });
   const [shortcutKeys, setShortcutKeys] = useState<any[]>([]);
   const [newShortcut, setNewShortcut] = useState({ shortcut_key:'', action:'', description:'' });
-  const [apiCatalog, setApiCatalog] = useState<any[]>([]);
+  const [apiCatalog__legacy22825, setApiCatalog__legacy22825] = useState<any[]>([]);
   const [newApiEntry, setNewApiEntry] = useState({ name:'', endpoint:'', method:'GET', description:'', auth_type:'' });
   const [factChecks, setFactChecks] = useState<any[]>([]);
   const [factInput, setFactInput] = useState('');
@@ -22830,7 +22843,7 @@ export default function ForgeApp() {
   const [newPomodoro, setNewPomodoro] = useState({ task_label:'', duration_minutes:25 });
   const [changeReqs, setChangeReqs] = useState<any[]>([]);
   const [newChangeReq, setNewChangeReq] = useState({ title:'', description:'', priority:'medium' });
-  const [timeBlocks, setTimeBlocks] = useState<any[]>([]);
+  const [timeBlocks__legacy22833, setTimeBlocks__legacy22833] = useState<any[]>([]);
   const [newTbLabel, setNewTbLabel] = useState('');
   const [newTbType, setNewTbType] = useState('focus');
   const [newTbStart, setNewTbStart] = useState('09:00');
@@ -22840,7 +22853,7 @@ export default function ForgeApp() {
   const [newKgLabel, setNewKgLabel] = useState('');
   const [newKgType, setNewKgType] = useState('concept');
   const [newKgRelated, setNewKgRelated] = useState('');
-  const [toneAnalyzer, setToneAnalyzer] = useState<any[]>([]);
+  const [toneAnalyzer__legacy22843, setToneAnalyzer__legacy22843] = useState<any[]>([]);
   const [newTaText, setNewTaText] = useState('');
   const [goalsTracker, setGoalsTracker] = useState<any[]>([]);
   const [newGtGoal, setNewGtGoal] = useState('');
@@ -22871,7 +22884,7 @@ export default function ForgeApp() {
   const [newMcDate, setNewMcDate] = useState('');
   const [newMcDuration, setNewMcDuration] = useState(30);
   const [newMcAttendees, setNewMcAttendees] = useState('');
-  const [interviewPrep, setInterviewPrep] = useState<any[]>([]);
+  const [interviewPrep__legacy22874, setInterviewPrep__legacy22874] = useState<any[]>([]);
   const [newIpRole, setNewIpRole] = useState('');
   const [newIpCompany, setNewIpCompany] = useState('');
   const [newIpQuestion, setNewIpQuestion] = useState('');
@@ -22887,10 +22900,10 @@ export default function ForgeApp() {
   const [newLpTitle, setNewLpTitle] = useState('');
   const [newLpDesc, setNewLpDesc] = useState('');
   const [newLpResources, setNewLpResources] = useState('');
-  const [glossary, setGlossary] = useState<any[]>([]);
-  const [newGlTerm, setNewGlTerm] = useState('');
-  const [newGlDef, setNewGlDef] = useState('');
-  const [newGlCat, setNewGlCat] = useState('general');
+  const [glossary__legacy22890, setGlossary__legacy22890] = useState<any[]>([]);
+  const [newGlTerm__legacy22891, setNewGlTerm__legacy22891] = useState('');
+  const [newGlDef__legacy22892, setNewGlDef__legacy22892] = useState('');
+  const [newGlCat__legacy22893, setNewGlCat__legacy22893] = useState('general');
   const [draftHistory, setDraftHistory] = useState<any[]>([]);
   const [newDhContent, setNewDhContent] = useState('');
   const [newDhType, setNewDhType] = useState('message');
@@ -22898,7 +22911,7 @@ export default function ForgeApp() {
   const [newFbTitle, setNewFbTitle] = useState('');
   const [newFbDesc, setNewFbDesc] = useState('');
   const [newFbCat, setNewFbCat] = useState('feature');
-  const [sleepLog, setSleepLog] = useState<any[]>([]);
+  const [sleepLog__legacy22901, setSleepLog__legacy22901] = useState<any[]>([]);
   const [newSlHours, setNewSlHours] = useState(7);
   const [newSlQuality, setNewSlQuality] = useState(5);
   const [newSlNotes, setNewSlNotes] = useState('');
@@ -22913,11 +22926,11 @@ export default function ForgeApp() {
   const [questionBank, setQuestionBank] = useState<any[]>([]);
   const [newQbQuestion, setNewQbQuestion] = useState('');
   const [newQbContext, setNewQbContext] = useState('');
-  const [capacityPlan, setCapacityPlan] = useState<any[]>([]);
+  const [capacityPlan__legacy22916, setCapacityPlan__legacy22916] = useState<any[]>([]);
   const [newCpMember, setNewCpMember] = useState('');
   const [newCpRole, setNewCpRole] = useState('member');
   const [newCpCapacity, setNewCpCapacity] = useState(100);
-  const [energyLog, setEnergyLog] = useState<any[]>([]);
+  const [energyLog__legacy22920, setEnergyLog__legacy22920] = useState<any[]>([]);
   const [newElLevel, setNewElLevel] = useState(5);
   const [newElMood, setNewElMood] = useState('neutral');
   const [newElNotes, setNewElNotes] = useState('');
@@ -22932,7 +22945,7 @@ export default function ForgeApp() {
   const [newBmTitle, setNewBmTitle] = useState('');
   const [newBmSummary, setNewBmSummary] = useState('');
   const [bmSearch, setBmSearch] = useState('');
-  const [focusSessions, setFocusSessions] = useState<any[]>([]);
+  const [focusSessions__legacy22935, setFocusSessions__legacy22935] = useState<any[]>([]);
   const [focusStats, setFocusStats] = useState<any>(null);
   const [newFocusLabel, setNewFocusLabel] = useState('Deep Work');
   const [newFocusDur, setNewFocusDur] = useState(25);
@@ -22942,7 +22955,7 @@ export default function ForgeApp() {
   const [wsTags, setWsTags] = useState<any[]>([]);
   const [wsTagName, setWsTagName] = useState('');
   const [wsTagColor, setWsTagColor] = useState('#6366f1');
-  const [dailyIntentions, setDailyIntentions] = useState<any[]>([]);
+  const [dailyIntentions__legacy22945, setDailyIntentions__legacy22945] = useState<any[]>([]);
   const [todayIntention, setTodayIntention] = useState('');
   const [newIntention, setNewIntention] = useState('');
   const [noteTemplates, setNoteTemplates] = useState<any[]>([]);
@@ -23003,7 +23016,7 @@ export default function ForgeApp() {
   const [newDraftContent, setNewDraftContent] = useState('');
   const [newDraftType, setNewDraftType] = useState('post');
   const [achievements, setAchievements] = useState<any[]>([]);
-  const [promptLibrary, setPromptLibrary] = useState<any[]>([]);
+  const [promptLibrary__legacy23006, setPromptLibrary__legacy23006] = useState<any[]>([]);
   const [newPlTitle, setNewPlTitle] = useState('');
   const [newPlPromptB36, setNewPlPromptB36] = useState('');
   const [newPlCat, setNewPlCat] = useState('general');
@@ -23041,7 +23054,7 @@ export default function ForgeApp() {
   const [newCrName, setNewCrName] = useState('');
   const [newCrDesc, setNewCrDesc] = useState('');
   const [joinCode, setJoinCode] = useState('');
-  const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
+  const [meetingNotes__legacy23044, setMeetingNotes__legacy23044] = useState<any[]>([]);
   const [newMnTitle, setNewMnTitle] = useState('');
   const [newMnNotes, setNewMnNotes] = useState('');
   const [newMnDate, setNewMnDate] = useState('');
@@ -23191,7 +23204,7 @@ export default function ForgeApp() {
   const [newThColor, setNewThColor] = useState('yellow');
   const [newThNote, setNewThNote] = useState('');
   const [userLearningPaths, setUserLearningPaths] = useState<any[]>([]);
-  const [newLpTitle, setNewLpTitle] = useState('');
+  const [newLpTitle__legacy23194, setNewLpTitle__legacy23194] = useState('');
   const [newLpTopic, setNewLpTopic] = useState('');
   const [newLpSteps, setNewLpSteps] = useState('Step 1,Step 2,Step 3');
   const [aiFeedbackLoops, setAiFeedbackLoops] = useState<any[]>([]);
@@ -23199,7 +23212,7 @@ export default function ForgeApp() {
   const [newFlQuality, setNewFlQuality] = useState(3);
   const [newFlNotes, setNewFlNotes] = useState('');
   const [aiSessCheckpoints, setAiSessCheckpoints] = useState<any[]>([]);
-  const [newScLabel, setNewScLabel] = useState('');
+  const [newScLabel__legacy23202, setNewScLabel__legacy23202] = useState('');
   const [newScThread, setNewScThread] = useState('');
   const [newScModel, setNewScModel] = useState('claude');
   const [wsReactionsV2, setWsReactionsV2] = useState<any[]>([]);
@@ -23251,11 +23264,11 @@ export default function ForgeApp() {
   const [newMsTitle, setNewMsTitle] = useState('');
   const [newMsDesc, setNewMsDesc] = useState('');
   const [newMsDue, setNewMsDue] = useState('');
-  const [threadReactionsV2, setThreadReactionsV2] = useState<any[]>([]);
+  const [threadReactionsV2__legacy23254, setThreadReactionsV2__legacy23254] = useState<any[]>([]);
   const [newTrV2Thread, setNewTrV2Thread] = useState('');
   const [newTrV2Emoji, setNewTrV2Emoji] = useState('👍');
   const [userEnergyLog, setUserEnergyLog] = useState<any[]>([]);
-  const [newElLevel, setNewElLevel] = useState(3);
+  const [newElLevel__legacy23258, setNewElLevel__legacy23258] = useState(3);
   const [newElLabel, setNewElLabel] = useState('');
   const [newElNote, setNewElNote] = useState('');
   const [aiEvalResults, setAiEvalResults] = useState<any[]>([]);
@@ -23313,16 +23326,16 @@ export default function ForgeApp() {
   const [newWvName, setNewWvName] = useState('');
   const [newWvType, setNewWvType] = useState('list');
   const [threadRemindersV2, setThreadRemindersV2] = useState<any[]>([]);
-  const [newTrV2Thread, setNewTrV2Thread] = useState('');
+  const [newTrV2Thread__legacy23316, setNewTrV2Thread__legacy23316] = useState('');
   const [newTrV2At, setNewTrV2At] = useState('');
   const [newTrV2Msg, setNewTrV2Msg] = useState('');
   const [userAchievements, setUserAchievements] = useState<any[]>([]);
   const [newAchName, setNewAchName] = useState('');
   const [newAchDesc, setNewAchDesc] = useState('');
   const [aiCodeSnippets, setAiCodeSnippets] = useState<any[]>([]);
-  const [newCsTitle, setNewCsTitle] = useState('');
-  const [newCsLang, setNewCsLang] = useState('javascript');
-  const [newCsCode, setNewCsCode] = useState('');
+  const [newCsTitle__legacy23323, setNewCsTitle__legacy23323] = useState('');
+  const [newCsLang__legacy23324, setNewCsLang__legacy23324] = useState('javascript');
+  const [newCsCode__legacy23325, setNewCsCode__legacy23325] = useState('');
   const [newCsDesc, setNewCsDesc] = useState('');
   // Batch 70 state
   const [aiTopicClusters, setAiTopicClusters] = useState<any[]>([]);
@@ -23348,7 +23361,7 @@ export default function ForgeApp() {
   const [aiSummarizationLog, setAiSummarizationLog] = useState<any[]>([]);
   const [newSlSummary, setNewSlSummary] = useState('');
   const [newSlSourceId, setNewSlSourceId] = useState('');
-  const [wsAnnouncements, setWsAnnouncements] = useState<any[]>([]);
+  const [wsAnnouncements__legacy23351, setWsAnnouncements__legacy23351] = useState<any[]>([]);
   const [newAnTitle, setNewAnTitle] = useState('');
   const [newAnBody, setNewAnBody] = useState('');
   const [newAnAudience, setNewAnAudience] = useState('all');
@@ -23372,11 +23385,11 @@ export default function ForgeApp() {
   const [wsChecklists, setWsChecklists] = useState<any[]>([]);
   const [newClName, setNewClName] = useState('');
   const [newClDesc, setNewClDesc] = useState('');
-  const [threadBookmarksV2, setThreadBookmarksV2] = useState<any[]>([]);
+  const [threadBookmarksV2__legacy23375, setThreadBookmarksV2__legacy23375] = useState<any[]>([]);
   const [newTbV2Thread, setNewTbV2Thread] = useState('');
   const [newTbV2Label, setNewTbV2Label] = useState('');
   const [newTbV2Note, setNewTbV2Note] = useState('');
-  const [userMoodLog, setUserMoodLog] = useState<any[]>([]);
+  const [userMoodLog__legacy23379, setUserMoodLog__legacy23379] = useState<any[]>([]);
   const [newMlMood, setNewMlMood] = useState('');
   const [newMlEnergy, setNewMlEnergy] = useState(5);
   const [newMlNote, setNewMlNote] = useState('');
@@ -23389,7 +23402,7 @@ export default function ForgeApp() {
   const [newCsSnapshot, setNewCsSnapshot] = useState('');
   const [newCsThreadId, setNewCsThreadId] = useState('');
   const [newCsTokenCount, setNewCsTokenCount] = useState(0);
-  const [wsGoals, setWsGoals] = useState<any[]>([]);
+  const [wsGoals__legacy23392, setWsGoals__legacy23392] = useState<any[]>([]);
   const [newGlTitle, setNewGlTitle] = useState('');
   const [newGlDesc, setNewGlDesc] = useState('');
   const [newGlDate, setNewGlDate] = useState('');
@@ -23431,31 +23444,31 @@ export default function ForgeApp() {
   const [newTv2Name, setNewTv2Name] = useState('');
   const [newTv2Category, setNewTv2Category] = useState('');
   const [newTv2Content, setNewTv2Content] = useState('');
-  const [threadPolls, setThreadPolls] = useState<any[]>([]);
+  const [threadPolls__legacy23434, setThreadPolls__legacy23434] = useState<any[]>([]);
   const [newPlThread, setNewPlThread] = useState('');
   const [newPlQuestion, setNewPlQuestion] = useState('');
   const [newPlOptions, setNewPlOptions] = useState('');
   const [userTimeBlocks, setUserTimeBlocks] = useState<any[]>([]);
-  const [newTbLabel, setNewTbLabel] = useState('');
-  const [newTbStart, setNewTbStart] = useState('');
-  const [newTbEnd, setNewTbEnd] = useState('');
+  const [newTbLabel__legacy23439, setNewTbLabel__legacy23439] = useState('');
+  const [newTbStart__legacy23440, setNewTbStart__legacy23440] = useState('');
+  const [newTbEnd__legacy23441, setNewTbEnd__legacy23441] = useState('');
   const [newTbCategory, setNewTbCategory] = useState('');
   const [aiCritiqueLog, setAiCritiqueLog] = useState<any[]>([]);
   const [newCrContent, setNewCrContent] = useState('');
   const [newCrCritique, setNewCrCritique] = useState('');
   const [newCrModel, setNewCrModel] = useState('');
   // Batch 76
-  const [aiKnowledgeGaps, setAiKnowledgeGaps] = useState<any[]>([]);
+  const [aiKnowledgeGaps__legacy23448, setAiKnowledgeGaps__legacy23448] = useState<any[]>([]);
   const [newKgTopic, setNewKgTopic] = useState('');
   const [newKgDesc, setNewKgDesc] = useState('');
   const [newKgPriority, setNewKgPriority] = useState('medium');
   const [wsRoles, setWsRoles] = useState<any[]>([]);
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDesc, setNewRoleDesc] = useState('');
-  const [threadHighlights, setThreadHighlights] = useState<any[]>([]);
-  const [newThThread, setNewThThread] = useState('');
+  const [threadHighlights__legacy23455, setThreadHighlights__legacy23455] = useState<any[]>([]);
+  const [newThThread__legacy23456, setNewThThread__legacy23456] = useState('');
   const [newThText, setNewThText] = useState('');
-  const [newThColor, setNewThColor] = useState('#ffeb3b');
+  const [newThColor__legacy23458, setNewThColor__legacy23458] = useState('#ffeb3b');
   const [userJournal, setUserJournal] = useState<any[]>([]);
   const [newJnTitle, setNewJnTitle] = useState('');
   const [newJnBody, setNewJnBody] = useState('');
@@ -23496,8 +23509,8 @@ export default function ForgeApp() {
   const [tokenBreakdowns, setTokenBreakdowns] = useState<any[]>([]);
   const [tbSummary, setTbSummary] = useState<any>(null);
   const [aiPromptChains, setAiPromptChains] = useState<any[]>([]);
-  const [newPcName, setNewPcName] = useState('');
-  const [newPcSteps, setNewPcSteps] = useState('');
+  const [newPcName__legacy23499, setNewPcName__legacy23499] = useState('');
+  const [newPcSteps__legacy23500, setNewPcSteps__legacy23500] = useState('');
   const [aiOutputScores, setAiOutputScores] = useState<any[]>([]);
   const [newOsText, setNewOsText] = useState('');
   const [newOsScore, setNewOsScore] = useState(0.8);
@@ -23521,11 +23534,11 @@ export default function ForgeApp() {
   const [newSgName, setNewSgName] = useState('');
   const [newSgLang, setNewSgLang] = useState('');
   const [newSgRules, setNewSgRules] = useState('');
-  const [wsSprintsV2, setWsSprintsV2] = useState<any[]>([]);
-  const [newSp2Name, setNewSp2Name] = useState('');
-  const [newSp2Goal, setNewSp2Goal] = useState('');
-  const [newSp2Start, setNewSp2Start] = useState('');
-  const [newSp2End, setNewSp2End] = useState('');
+  const [wsSprintsV2__legacy23524, setWsSprintsV2__legacy23524] = useState<any[]>([]);
+  const [newSp2Name__legacy23525, setNewSp2Name__legacy23525] = useState('');
+  const [newSp2Goal__legacy23526, setNewSp2Goal__legacy23526] = useState('');
+  const [newSp2Start__legacy23527, setNewSp2Start__legacy23527] = useState('');
+  const [newSp2End__legacy23528, setNewSp2End__legacy23528] = useState('');
   const [threadReactsV3, setThreadReactsV3] = useState<any[]>([]);
   const [newTr3Thread, setNewTr3Thread] = useState('');
   const [newTr3Emoji, setNewTr3Emoji] = useState('👍');
@@ -23536,7 +23549,7 @@ export default function ForgeApp() {
   const [aiTestPrompts, setAiTestPrompts] = useState<any[]>([]);
   const [newTpPrompt, setNewTpPrompt] = useState('');
   const [newTpExpected, setNewTpExpected] = useState('');
-  const [aiFeedbackLoops, setAiFeedbackLoops] = useState<any[]>([]);
+  const [aiFeedbackLoops__legacy23539, setAiFeedbackLoops__legacy23539] = useState<any[]>([]);
   const [newFlName, setNewFlName] = useState('');
   const [newFlTrigger, setNewFlTrigger] = useState('');
   const [newFlAction, setNewFlAction] = useState('');
@@ -23554,10 +23567,10 @@ export default function ForgeApp() {
   const [wsDirs, setWsDirs] = useState<any[]>([]);
   const [newDirName, setNewDirName] = useState('');
   const [newDirIcon, setNewDirIcon] = useState('📁');
-  const [readProgress, setReadProgress] = useState<any[]>([]);
-  const [newRpTitle, setNewRpTitle] = useState('');
+  const [readProgress__legacy23557, setReadProgress__legacy23557] = useState<any[]>([]);
+  const [newRpTitle__legacy23558, setNewRpTitle__legacy23558] = useState('');
   const [newRpType, setNewRpType] = useState('article');
-  const [newRpUrl, setNewRpUrl] = useState('');
+  const [newRpUrl__legacy23560, setNewRpUrl__legacy23560] = useState('');
   const [wsSops, setWsSops] = useState<any[]>([]);
   const [newSopTitle, setNewSopTitle] = useState('');
   const [newSopCat, setNewSopCat] = useState('general');
@@ -23566,7 +23579,7 @@ export default function ForgeApp() {
   const [newCitTitle, setNewCitTitle] = useState('');
   const [newCitUrl, setNewCitUrl] = useState('');
   const [newCitExcerpt, setNewCitExcerpt] = useState('');
-  const [wsBudget, setWsBudget] = useState<any[]>([]);
+  const [wsBudget__legacy23569, setWsBudget__legacy23569] = useState<any[]>([]);
   const [newBuCat, setNewBuCat] = useState('');
   const [newBuAmount, setNewBuAmount] = useState(1000);
   const [newBuPeriod, setNewBuPeriod] = useState('monthly');
@@ -23575,10 +23588,10 @@ export default function ForgeApp() {
   const [newFgArea, setNewFgArea] = useState('work');
   const [newFgPriority, setNewFgPriority] = useState(2);
   const [wsDataSources, setWsDataSources] = useState<any[]>([]);
-  const [newDsName, setNewDsName] = useState('');
+  const [newDsName__legacy23578, setNewDsName__legacy23578] = useState('');
   const [newDsType, setNewDsType] = useState('database');
   const [newDsUrl, setNewDsUrl] = useState('');
-  const [dailyIntentions, setDailyIntentions] = useState<any[]>([]);
+  const [dailyIntentions__legacy23581, setDailyIntentions__legacy23581] = useState<any[]>([]);
   const [newDiText, setNewDiText] = useState('');
   const [wsDesignTok, setWsDesignTok] = useState<any[]>([]);
   const [newDtName, setNewDtName] = useState('');
@@ -23591,11 +23604,11 @@ export default function ForgeApp() {
   const [teamHealth, setTeamHealth] = useState<any[]>([]);
   const [newThCat, setNewThCat] = useState('morale');
   const [newThScore, setNewThScore] = useState(7);
-  const [newThNote, setNewThNote] = useState('');
+  const [newThNote__legacy23594, setNewThNote__legacy23594] = useState('');
   const [wsFlags, setWsFlags] = useState<any[]>([]);
   const [newFfName, setNewFfName] = useState('');
   const [newFfDesc, setNewFfDesc] = useState('');
-  const [moodJournal, setMoodJournal] = useState<any[]>([]);
+  const [moodJournal__legacy23598, setMoodJournal__legacy23598] = useState<any[]>([]);
   const [newMjScore, setNewMjScore] = useState(7);
   const [newMjNote, setNewMjNote] = useState('');
   const [newMjEnergy, setNewMjEnergy] = useState('medium');
@@ -23609,7 +23622,7 @@ export default function ForgeApp() {
   const [newStName, setNewStName] = useState('');
   const [newStTarget, setNewStTarget] = useState(4);
   const [newStUnit, setNewStUnit] = useState('hours');
-  const [pomodoroSessions, setPomodoroSessions] = useState<any[]>([]);
+  const [pomodoroSessions__legacy23612, setPomodoroSessions__legacy23612] = useState<any[]>([]);
   const [newPoTask, setNewPoTask] = useState('');
   const [newPoDuration, setNewPoDuration] = useState(25);
   const [pomodoroRunning, setPomodoroRunning] = useState(false);
@@ -23623,17 +23636,17 @@ export default function ForgeApp() {
   const [newOgTitle, setNewOgTitle] = useState('');
   const [newOgType, setNewOgType] = useState('text');
   const [newOgContent, setNewOgContent] = useState('');
-  const [wsChangelog, setWsChangelog] = useState<any[]>([]);
-  const [newClVersion, setNewClVersion] = useState('');
-  const [newClSummary, setNewClSummary] = useState('');
+  const [wsChangelog__legacy23626, setWsChangelog__legacy23626] = useState<any[]>([]);
+  const [newClVersion__legacy23627, setNewClVersion__legacy23627] = useState('');
+  const [newClSummary__legacy23628, setNewClSummary__legacy23628] = useState('');
   const [newClType, setNewClType] = useState('feature');
   const [writingGoals, setWritingGoals] = useState<any[]>([]);
-  const [newWgTitle, setNewWgTitle] = useState('');
+  const [newWgTitle__legacy23631, setNewWgTitle__legacy23631] = useState('');
   const [newWgTarget, setNewWgTarget] = useState(1000);
   const [wsDecLog, setWsDecLog] = useState<any[]>([]);
   const [newDlTitle, setNewDlTitle] = useState('');
-  const [newDlDecision, setNewDlDecision] = useState('');
-  const [newDlContext, setNewDlContext] = useState('');
+  const [newDlDecision__legacy23635, setNewDlDecision__legacy23635] = useState('');
+  const [newDlContext__legacy23636, setNewDlContext__legacy23636] = useState('');
   const [aiPersonas, setAiPersonas] = useState<any[]>([]);
   const [newApName, setNewApName] = useState('');
   const [newApPrompt, setNewApPrompt] = useState('');
@@ -23642,20 +23655,20 @@ export default function ForgeApp() {
   const [newOkKeyResult, setNewOkKeyResult] = useState('');
   const [newOkQuarter, setNewOkQuarter] = useState('');
   const [aiExpRuns, setAiExpRuns] = useState<any[]>([]);
-  const [newErName, setNewErName] = useState('');
+  const [newErName__legacy23645, setNewErName__legacy23645] = useState('');
   const [newErPromptA, setNewErPromptA] = useState('');
   const [newErPromptB, setNewErPromptB] = useState('');
   const [wsMtgNotes, setWsMtgNotes] = useState<any[]>([]);
-  const [newMnTitle, setNewMnTitle] = useState('');
-  const [newMnNotes, setNewMnNotes] = useState('');
+  const [newMnTitle__legacy23649, setNewMnTitle__legacy23649] = useState('');
+  const [newMnNotes__legacy23650, setNewMnNotes__legacy23650] = useState('');
   const [newMnActions, setNewMnActions] = useState('');
   const [savedSearches, setSavedSearches] = useState<any[]>([]);
   const [newSsQuery, setNewSsQuery] = useState('');
   const [newSsLabel, setNewSsLabel] = useState('');
   const [wsCodeSnips, setWsCodeSnips] = useState<any[]>([]);
-  const [newCsTitle, setNewCsTitle] = useState('');
-  const [newCsLang, setNewCsLang] = useState('javascript');
-  const [newCsCode, setNewCsCode] = useState('');
+  const [newCsTitle__legacy23656, setNewCsTitle__legacy23656] = useState('');
+  const [newCsLang__legacy23657, setNewCsLang__legacy23657] = useState('javascript');
+  const [newCsCode__legacy23658, setNewCsCode__legacy23658] = useState('');
   const [halluReports, setHalluReports] = useState<any[]>([]);
   const [newHrExcerpt, setNewHrExcerpt] = useState('');
   const [newHrCorrection, setNewHrCorrection] = useState('');
@@ -23665,20 +23678,20 @@ export default function ForgeApp() {
   const [newRiCat, setNewRiCat] = useState('went_well');
   const [newRiSprint, setNewRiSprint] = useState('');
   const [ctxNotes, setCtxNotes] = useState<any[]>([]);
-  const [newCnTitle, setNewCnTitle] = useState('');
-  const [newCnContent, setNewCnContent] = useState('');
+  const [newCnTitle__legacy23668, setNewCnTitle__legacy23668] = useState('');
+  const [newCnContent__legacy23669, setNewCnContent__legacy23669] = useState('');
   const [wsIntV2, setWsIntV2] = useState<any[]>([]);
   const [newWiName, setNewWiName] = useState('');
   const [newWiUrl, setNewWiUrl] = useState('');
   const [aiCostAlerts, setAiCostAlerts] = useState<any[]>([]);
   const [newCaThreshold, setNewCaThreshold] = useState(10);
-  const [sprintGoals, setSprintGoals] = useState<any[]>([]);
+  const [sprintGoals__legacy23675, setSprintGoals__legacy23675] = useState<any[]>([]);
   const [newSgSprint, setNewSgSprint] = useState('');
   const [newSgGoal, setNewSgGoal] = useState('');
   const [aChainResults, setAChainResults] = useState<any[]>([]);
   const [wsAnnV2, setWsAnnV2] = useState<any[]>([]);
-  const [newAnTitle, setNewAnTitle] = useState('');
-  const [newAnBody, setNewAnBody] = useState('');
+  const [newAnTitle__legacy23680, setNewAnTitle__legacy23680] = useState('');
+  const [newAnBody__legacy23681, setNewAnBody__legacy23681] = useState('');
   const [aiModelLogs, setAiModelLogs] = useState<any[]>([]);
   const [aiModelStats, setAiModelStats] = useState<any[]>([]);
   const [wsGoalsV3, setWsGoalsV3] = useState<any[]>([]);
@@ -23686,7 +23699,7 @@ export default function ForgeApp() {
   const [newGv3Date, setNewGv3Date] = useState('');
   const [threadNotesV3, setThreadNotesV3] = useState<any[]>([]);
   const [newTnv3Text, setNewTnv3Text] = useState('');
-  const [habitStreaks, setHabitStreaks] = useState<any[]>([]);
+  const [habitStreaks__legacy23689, setHabitStreaks__legacy23689] = useState<any[]>([]);
   const [newHsName, setNewHsName] = useState('');
   const [aiPersonaMsgs, setAiPersonaMsgs] = useState<any[]>([]);
   const [newPmPersona, setNewPmPersona] = useState('');
@@ -23712,9 +23725,9 @@ export default function ForgeApp() {
   const [newKanCard, setNewKanCard] = useState('');
   const [newKanCol, setNewKanCol] = useState('todo');
   const [readingList, setReadingList] = useState<any[]>([]);
-  const [newRlTitle, setNewRlTitle] = useState('');
-  const [newRlUrl, setNewRlUrl] = useState('');
-  const [aiDebugLogs, setAiDebugLogs] = useState<any[]>([]);
+  const [newRlTitle__legacy23715, setNewRlTitle__legacy23715] = useState('');
+  const [newRlUrl__legacy23716, setNewRlUrl__legacy23716] = useState('');
+  const [aiDebugLogs__legacy23717, setAiDebugLogs__legacy23717] = useState<any[]>([]);
   const [newDbMsg, setNewDbMsg] = useState('');
   const [newDbLevel, setNewDbLevel] = useState('info');
   const [threadSumsV3, setThreadSumsV3] = useState<any[]>([]);
@@ -23744,9 +23757,6 @@ export default function ForgeApp() {
   const [newPrRating, setNewPrRating] = useState(3);
   const [sessionSnapshots, setSessionSnapshots] = useState<any[]>([]);
   const [newSsName, setNewSsName] = useState('');
-  const [agentRuns, setAgentRuns] = useState<any[]>([]);
-  const [newArName, setNewArName] = useState('');
-  const [newArPrompt, setNewArPrompt] = useState('');
   const [wsPolicies, setWsPolicies] = useState<any[]>([]);
   const [newWpName, setNewWpName] = useState('');
   const [newWpRule, setNewWpRule] = useState('');
@@ -23774,13 +23784,13 @@ export default function ForgeApp() {
   const [userChecklists, setUserChecklists] = useState<any[]>([]);
   const [newUclTitle, setNewUclTitle] = useState('');
   const [newUclItems, setNewUclItems] = useState('');
-  const [wsMilestones, setWsMilestones] = useState<any[]>([]);
+  const [wsMilestones__legacy23777, setWsMilestones__legacy23777] = useState<any[]>([]);
   const [newWmTitle, setNewWmTitle] = useState('');
   const [newWmDesc, setNewWmDesc] = useState('');
   const [newWmDue, setNewWmDue] = useState('');
-  const [savedSearches, setSavedSearches] = useState<any[]>([]);
-  const [newSsQuery, setNewSsQuery] = useState('');
-  const [newSsLabel, setNewSsLabel] = useState('');
+  const [savedSearches__legacy23781, setSavedSearches__legacy23781] = useState<any[]>([]);
+  const [newSsQuery__legacy23782, setNewSsQuery__legacy23782] = useState('');
+  const [newSsLabel__legacy23783, setNewSsLabel__legacy23783] = useState('');
   const [wsAnnouncementsB47, setWsAnnouncementsB47] = useState<any[]>([]);
   const [newWanTitle, setNewWanTitle] = useState('');
   const [newWanBody, setNewWanBody] = useState('');
@@ -23798,7 +23808,7 @@ export default function ForgeApp() {
   const [newPnTitle, setNewPnTitle] = useState('');
   const [newPnContent, setNewPnContent] = useState('');
   const [aiCostEstimates, setAiCostEstimates] = useState<any[]>([]);
-  const [costTotal, setCostTotal] = useState<any>(null);
+  const [costTotal__legacy23801, setCostTotal__legacy23801] = useState<any>(null);
   const [newAceModel, setNewAceModel] = useState('claude');
   const [newAceCost, setNewAceCost] = useState(0.001);
   const [wsLinks, setWsLinks] = useState<any[]>([]);
@@ -23808,25 +23818,25 @@ export default function ForgeApp() {
   const [messageDrafts, setMessageDrafts] = useState<any[]>([]);
   const [newMdContent, setNewMdContent] = useState('');
   const [newMdThreadId, setNewMdThreadId] = useState('');
-  const [aiModelStats, setAiModelStats] = useState<any[]>([]);
+  const [aiModelStats__legacy23811, setAiModelStats__legacy23811] = useState<any[]>([]);
   const [aiChains, setAiChains] = useState<any[]>([]);
   const [newAcName, setNewAcName] = useState('');
   const [newAcSteps, setNewAcSteps] = useState('');
   const [wsReports, setWsReports] = useState<any[]>([]);
   const [newWrTitle, setNewWrTitle] = useState('');
   const [newWrContent, setNewWrContent] = useState('');
-  const [newWrType, setNewWrType] = useState('weekly');
+  const [newWrType__legacy23818, setNewWrType__legacy23818] = useState('weekly');
   const [aiTestCases, setAiTestCases] = useState<any[]>([]);
   const [newAtcName, setNewAtcName] = useState('');
   const [newAtcInput, setNewAtcInput] = useState('');
   const [newAtcExpected, setNewAtcExpected] = useState('');
   const [contextWindows, setContextWindows] = useState<any[]>([]);
-  const [newCwName, setNewCwName] = useState('');
-  const [newCwContent, setNewCwContent] = useState('');
+  const [newCwName__legacy23824, setNewCwName__legacy23824] = useState('');
+  const [newCwContent__legacy23825, setNewCwContent__legacy23825] = useState('');
   const [userGoals, setUserGoals] = useState<any[]>([]);
   const [aiPersonasB51, setAiPersonasB51] = useState<any[]>([]);
-  const [newApName, setNewApName] = useState('');
-  const [newApPrompt, setNewApPrompt] = useState('');
+  const [newApName__legacy23828, setNewApName__legacy23828] = useState('');
+  const [newApPrompt__legacy23829, setNewApPrompt__legacy23829] = useState('');
   const [newApModel, setNewApModel] = useState('claude');
   const [newApAvatar, setNewApAvatar] = useState('🤖');
   const [wsEventsB51, setWsEventsB51] = useState<any[]>([]);
@@ -23841,7 +23851,7 @@ export default function ForgeApp() {
   const [tpThreadId, setTpThreadId] = useState('');
   const [tpGrantTo, setTpGrantTo] = useState('');
   const [userBadgesB51, setUserBadgesB51] = useState<any[]>([]);
-  const [aiFeedbackLoops, setAiFeedbackLoops] = useState<any[]>([]);
+  const [aiFeedbackLoops__legacy23844, setAiFeedbackLoops__legacy23844] = useState<any[]>([]);
   const [newFlPrompt, setNewFlPrompt] = useState('');
   const [newFlOriginal, setNewFlOriginal] = useState('');
   const [newFlImproved, setNewFlImproved] = useState('');
@@ -23855,7 +23865,7 @@ export default function ForgeApp() {
   const [embeddingsMeta, setEmbeddingsMeta] = useState<any[]>([]);
   const [newEmSrcType, setNewEmSrcType] = useState('thread');
   const [newEmSrcId, setNewEmSrcId] = useState('');
-  const [wsShortcuts, setWsShortcuts] = useState<any[]>([]);
+  const [wsShortcuts__legacy23858, setWsShortcuts__legacy23858] = useState<any[]>([]);
   const [aiEvaluationsB53, setAiEvaluationsB53] = useState<any[]>([]);
   const [newEvName, setNewEvName] = useState('');
   const [newEvPromptB53, setNewEvPromptB53] = useState('');
@@ -23870,7 +23880,7 @@ export default function ForgeApp() {
   const [newTaThreadId, setNewTaThreadId] = useState('');
   const [newTaReason, setNewTaReason] = useState('manual');
   const [contextInjections, setContextInjections] = useState<any[]>([]);
-  const [newCiName, setNewCiName] = useState('');
+  const [newCiName__legacy23873, setNewCiName__legacy23873] = useState('');
   const [newCiContent, setNewCiContent] = useState('');
   const [newCiKeyword, setNewCiKeyword] = useState('');
   const [wsWatchers, setWsWatchers] = useState<any[]>([]);
@@ -23889,13 +23899,13 @@ export default function ForgeApp() {
   const [threadReactSum, setThreadReactSum] = useState<any[]>([]);
   const [trThreadId, setTrThreadId] = useState('');
   const [trEmoji, setTrEmoji] = useState('❤️');
-  const [wsIntegrations, setWsIntegrations] = useState<any[]>([]);
+  const [wsIntegrations__legacy23892, setWsIntegrations__legacy23892] = useState<any[]>([]);
   const [aiPlaybooks, setAiPlaybooks] = useState<any[]>([]);
   const [newPbName, setNewPbName] = useState('');
   const [newPbDesc, setNewPbDesc] = useState('');
   const [newPbSteps, setNewPbSteps] = useState('');
   const [wsChannels, setWsChannels] = useState<any[]>([]);
-  const [newChName, setNewChName] = useState('');
+  const [newChName__legacy23898, setNewChName__legacy23898] = useState('');
   const [newChDesc, setNewChDesc] = useState('');
   const [newChPrivate, setNewChPrivate] = useState(false);
   const [aiBenchmarks, setAiBenchmarks] = useState<any[]>([]);
@@ -23915,9 +23925,9 @@ export default function ForgeApp() {
   const [newSnContent, setNewSnContent] = useState('');
   const [newSnLang, setNewSnLang] = useState('text');
   const [wsAnnouncementsB56, setWsAnnouncementsB56] = useState<any[]>([]);
-  const [newAnTitle, setNewAnTitle] = useState('');
-  const [newAnBody, setNewAnBody] = useState('');
-  const [newAnAudience, setNewAnAudience] = useState('all');
+  const [newAnTitle__legacy23918, setNewAnTitle__legacy23918] = useState('');
+  const [newAnBody__legacy23919, setNewAnBody__legacy23919] = useState('');
+  const [newAnAudience__legacy23920, setNewAnAudience__legacy23920] = useState('all');
   const [aiMemoryNodes, setAiMemoryNodes] = useState<any[]>([]);
   const [newMnLabel, setNewMnLabel] = useState('');
   const [newMnContent, setNewMnContent] = useState('');
@@ -23941,8 +23951,8 @@ export default function ForgeApp() {
   const [newCbInputTok, setNewCbInputTok] = useState(0);
   const [newCbOutputTok, setNewCbOutputTok] = useState(0);
   const [newCbCost, setNewCbCost] = useState(0);
-  const [threadMentions, setThreadMentions] = useState<any[]>([]);
-  const [newTmThread, setNewTmThread] = useState('');
+  const [threadMentions__legacy23944, setThreadMentions__legacy23944] = useState<any[]>([]);
+  const [newTmThread__legacy23945, setNewTmThread__legacy23945] = useState('');
   const [newTmMentioned, setNewTmMentioned] = useState('');
   const [newTmContext, setNewTmContext] = useState('');
   const [userPrefsV2B57, setUserPrefsV2B57] = useState<any[]>([]);
@@ -23956,9 +23966,9 @@ export default function ForgeApp() {
   const [newRvHelpfulness, setNewRvHelpfulness] = useState(3);
   const [newRvClarity, setNewRvClarity] = useState(3);
   const [newRvNote, setNewRvNote] = useState('');
-  const [wsMilestones, setWsMilestones] = useState<any[]>([]);
-  const [newMsTitle, setNewMsTitle] = useState('');
-  const [newMsDesc, setNewMsDesc] = useState('');
+  const [wsMilestones__legacy23959, setWsMilestones__legacy23959] = useState<any[]>([]);
+  const [newMsTitle__legacy23960, setNewMsTitle__legacy23960] = useState('');
+  const [newMsDesc__legacy23961, setNewMsDesc__legacy23961] = useState('');
   const [newMsDate, setNewMsDate] = useState('');
   const [aiCtxSnapshots, setAiCtxSnapshots] = useState<any[]>([]);
   const [newCsLabel, setNewCsLabel] = useState('');
@@ -23966,13 +23976,13 @@ export default function ForgeApp() {
   const [newCsTokens, setNewCsTokens] = useState(0);
   const [newCsContent, setNewCsContent] = useState('');
   const [threadCollabs, setThreadCollabs] = useState<any[]>([]);
-  const [newTcThread, setNewTcThread] = useState('');
+  const [newTcThread__legacy23969, setNewTcThread__legacy23969] = useState('');
   const [newTcCollab, setNewTcCollab] = useState('');
-  const [newTcRole, setNewTcRole] = useState('viewer');
-  const [focusSessions, setFocusSessions] = useState<any[]>([]);
-  const [newFsLabel, setNewFsLabel] = useState('');
-  const [newFsDuration, setNewFsDuration] = useState(25);
-  const [aiDebugLogs, setAiDebugLogs] = useState<any[]>([]);
+  const [newTcRole__legacy23971, setNewTcRole__legacy23971] = useState('viewer');
+  const [focusSessions__legacy23972, setFocusSessions__legacy23972] = useState<any[]>([]);
+  const [newFsLabel__legacy23973, setNewFsLabel__legacy23973] = useState('');
+  const [newFsDuration__legacy23974, setNewFsDuration__legacy23974] = useState(25);
+  const [aiDebugLogs__legacy23975, setAiDebugLogs__legacy23975] = useState<any[]>([]);
   const [newDlModel, setNewDlModel] = useState('claude');
   const [newDlHash, setNewDlHash] = useState('');
   const [newDlLatency, setNewDlLatency] = useState(0);
@@ -23980,7 +23990,7 @@ export default function ForgeApp() {
   const [wsPolls2, setWsPolls2] = useState<any[]>([]);
   const [newPl2Question, setNewPl2Question] = useState('');
   const [newPl2Options, setNewPl2Options] = useState('Option A,Option B');
-  const [threadReactionsV2, setThreadReactionsV2] = useState<any[]>([]);
+  const [threadReactionsV2__legacy23983, setThreadReactionsV2__legacy23983] = useState<any[]>([]);
   const [newTrThread2, setNewTrThread2] = useState('');
   const [newTrEmoji2, setNewTrEmoji2] = useState('👍');
   const [userAchievementsV2, setUserAchievementsV2] = useState<any[]>([]);
@@ -24018,24 +24028,24 @@ export default function ForgeApp() {
   const [newWtCondition, setNewWtCondition] = useState('');
   const [newWtAction, setNewWtAction] = useState('');
   const [wsNotices, setWsNotices] = useState<any[]>([]);
-  const [newWnTitle, setNewWnTitle] = useState('');
-  const [newWnBody, setNewWnBody] = useState('');
+  const [newWnTitle__legacy24021, setNewWnTitle__legacy24021] = useState('');
+  const [newWnBody__legacy24022, setNewWnBody__legacy24022] = useState('');
   const [newWnLevel, setNewWnLevel] = useState('info');
   const [threadSummariesV2, setThreadSummariesV2] = useState<any[]>([]);
   const [newTs2Thread, setNewTs2Thread] = useState('');
   const [newTs2Summary, setNewTs2Summary] = useState('');
   const [newTs2Model, setNewTs2Model] = useState('claude');
-  const [userTimeBlocks, setUserTimeBlocks] = useState<any[]>([]);
+  const [userTimeBlocks__legacy24028, setUserTimeBlocks__legacy24028] = useState<any[]>([]);
   const [newTbTitle, setNewTbTitle] = useState('');
-  const [newTbStart, setNewTbStart] = useState('09:00');
-  const [newTbEnd, setNewTbEnd] = useState('10:00');
-  const [newTbDate, setNewTbDate] = useState('');
+  const [newTbStart__legacy24030, setNewTbStart__legacy24030] = useState('09:00');
+  const [newTbEnd__legacy24031, setNewTbEnd__legacy24031] = useState('10:00');
+  const [newTbDate__legacy24032, setNewTbDate__legacy24032] = useState('');
   const [newTbCat, setNewTbCat] = useState('focus');
   const [aiRespTemplates, setAiRespTemplates] = useState<any[]>([]);
-  const [newRtName, setNewRtName] = useState('');
-  const [newRtTemplate, setNewRtTemplate] = useState('');
-  const [newRtCat, setNewRtCat] = useState('general');
-  const [newWiName, setNewWiName] = useState('');
+  const [newRtName__legacy24035, setNewRtName__legacy24035] = useState('');
+  const [newRtTemplate__legacy24036, setNewRtTemplate__legacy24036] = useState('');
+  const [newRtCat__legacy24037, setNewRtCat__legacy24037] = useState('general');
+  const [newWiName__legacy24038, setNewWiName__legacy24038] = useState('');
   const [newWiType, setNewWiType] = useState('webhook');
   const [newWwResType, setNewWwResType] = useState('thread');
   const [newWwResId, setNewWwResId] = useState('');
@@ -24077,9 +24087,9 @@ export default function ForgeApp() {
   const [newWwType, setNewWwType] = useState('clock');
   const [newWwTitle, setNewWwTitle] = useState('');
   const [personasV2, setPersonasV2] = useState<any[]>([]);
-  const [newPv2Name, setNewPv2Name] = useState('');
-  const [newPv2Prompt, setNewPv2Prompt] = useState('');
-  const [newPv2Avatar, setNewPv2Avatar] = useState('🤖');
+  const [newPv2Name__legacy24080, setNewPv2Name__legacy24080] = useState('');
+  const [newPv2Prompt__legacy24081, setNewPv2Prompt__legacy24081] = useState('');
+  const [newPv2Avatar__legacy24082, setNewPv2Avatar__legacy24082] = useState('🤖');
   const [newPv2Model, setNewPv2Model] = useState('claude');
   const [threadMetrics, setThreadMetrics] = useState<any[]>([]);
   const [quickActions, setQuickActions] = useState<any[]>([]);
@@ -24099,11 +24109,11 @@ export default function ForgeApp() {
   const [newSprintStart, setNewSprintStart] = useState('');
   const [newSprintEnd, setNewSprintEnd] = useState('');
   const [newSprintGoal, setNewSprintGoal] = useState('');
-  const [contentCal, setContentCal] = useState<any[]>([]);
+  const [contentCal__legacy24102, setContentCal__legacy24102] = useState<any[]>([]);
   const [newCcTitle, setNewCcTitle] = useState('');
   const [newCcPlatform, setNewCcPlatform] = useState('general');
   const [newCcDate, setNewCcDate] = useState('');
-  const [learnPaths, setLearnPaths] = useState<any[]>([]);
+  const [learnPaths__legacy24106, setLearnPaths__legacy24106] = useState<any[]>([]);
   const [newLpName, setNewLpName] = useState('');
   const [newLpTopics, setNewLpTopics] = useState('');
   // Batch 25 state
@@ -24113,8 +24123,8 @@ export default function ForgeApp() {
   const [dlEnergy, setDlEnergy] = useState(3);
   const [dlStreak, setDlStreak] = useState(0);
   const [milestones25, setMilestones25] = useState<any[]>([]);
-  const [newMsTitle, setNewMsTitle] = useState('');
-  const [newMsDate, setNewMsDate] = useState('');
+  const [newMsTitle__legacy24116, setNewMsTitle__legacy24116] = useState('');
+  const [newMsDate__legacy24117, setNewMsDate__legacy24117] = useState('');
   const [newMsCategory, setNewMsCategory] = useState('general');
   const [archives25, setArchives25] = useState<any[]>([]);
   const [archiveAutodays, setArchiveAutodays] = useState(30);
@@ -24131,7 +24141,7 @@ export default function ForgeApp() {
   const [showThreadStats, setShowThreadStats] = useState(false);
   const [replayData, setReplayData] = useState<any>(null);
   const [showReplay, setShowReplay] = useState(false);
-  const [glossary, setGlossary] = useState<any[]>([]);
+  const [glossary__legacy24134, setGlossary__legacy24134] = useState<any[]>([]);
   const [showGlossary, setShowGlossary] = useState(false);
   const [dailyDigest, setDailyDigest] = useState<any>(null);
   const [similarThreads, setSimilarThreads] = useState<any[]>([]);
@@ -24179,7 +24189,7 @@ export default function ForgeApp() {
   const [diffExplainData, setDiffExplainData] = useState<any>(null);
   const [showDiffExplain, setShowDiffExplain] = useState(false);
   const [dailyTokens, setDailyTokens] = useState<any[]>([]);
-  const [personas, setPersonas] = useState<any[]>([]);
+  const [personas__legacy24182, setPersonas__legacy24182] = useState<any[]>([]);
   const [showPersonaForm, setShowPersonaForm] = useState(false);
   const [newPersona, setNewPersona] = useState({ name:'', description:'', system_prompt:'', avatar:'🤖' });
   const [activePersonaId, setActivePersonaId] = useState<number|null>(null);
@@ -24200,7 +24210,7 @@ export default function ForgeApp() {
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [captures, setCaptures] = useState<any[]>([]);
   const [newCapture, setNewCapture] = useState('');
-  const [knowledgeGraph, setKnowledgeGraph] = useState<any>(null);
+  const [knowledgeGraph__legacy24203, setKnowledgeGraph__legacy24203] = useState<any>(null);
   const [milestones, setMilestones] = useState<any[]>([]);
   const [newMilestone, setNewMilestone] = useState('');
   const [journalEntries, setJournalEntries] = useState<any[]>([]);
@@ -24209,14 +24219,14 @@ export default function ForgeApp() {
   const [habits, setHabits] = useState<any[]>([]);
   const [newHabit, setNewHabit] = useState({ name:'', icon:'✅' });
   const [changelog, setChangelog] = useState<any>(null);
-  const [flashcards, setFlashcards] = useState<any[]>([]);
+  const [flashcards__legacy24212, setFlashcards__legacy24212] = useState<any[]>([]);
   const [flashDecks, setFlashDecks] = useState<string[]>([]);
   const [activeDeck, setActiveDeck] = useState('default');
   const [newCard, setNewCard] = useState({ front:'', back:'', deck:'default' });
   const [showCardForm, setShowCardForm] = useState(false);
   const [reviewCard, setReviewCard] = useState<any>(null);
   const [showCardBack, setShowCardBack] = useState(false);
-  const [readingList, setReadingList] = useState<any[]>([]);
+  const [readingList__legacy24219, setReadingList__legacy24219] = useState<any[]>([]);
   const [newRead, setNewRead] = useState({ title:'', url:'' });
   const [readFilter, setReadFilter] = useState('all');
   const [kanban, setKanban] = useState<Record<string,any[]>>({});
@@ -24449,9 +24459,25 @@ export default function ForgeApp() {
   const [viewArtifact, setViewArtifact] = useState<Artifact | null>(null);
 
   // Settings / API keys
-  const [apiKeys, setApiKeys] = useState<Record<string,string>>({});
+  const [apiKeys__legacy24452, setApiKeys__legacy24452] = useState<Record<string,string>>({});
   const [keysSaved, setKeysSaved] = useState(false);
   const [savedProviders, setSavedProviders] = useState<Record<string,boolean>>({});
+
+  // Conditionally rendered tabs must keep their hooks at the component root.
+  const [byosConfigs, setByosConfigs] = useState<any[]>([]);
+  const [byosLoaded, setByosLoaded] = useState(false);
+  const [byosAdding, setByosAdding] = useState(false);
+  const [byosProvider, setByosProvider] = useState('supabase');
+  const [byosCreds, setByosCreds] = useState<Record<string,string>>({});
+  const [byosLabel, setByosLabel] = useState('');
+  const [byosTesting, setByosTesting] = useState<string|null>(null);
+  const [byosSyncing, setByosSyncing] = useState<string|null>(null);
+  const [dtSearch, setDtSearch] = useState('');
+  const [dtCat, setDtCat] = useState('All');
+  const [activeDreamTool, setActiveDreamTool] = useState<string|null>(null);
+  const [dreamInput, setDreamInput] = useState('');
+  const [dreamOutput, setDreamOutput] = useState('');
+  const [dreamLoading, setDreamLoading] = useState(false);
 
   // Admin panel state
   const [adminTab, setAdminTab] = useState<'stats'|'users'|'keys'|'models'>('stats');
@@ -24487,6 +24513,17 @@ export default function ForgeApp() {
   const [webCredForm, setWebCredForm] = useState({ site:'', url:'', username:'', password:'' });
   const [webCredShowPassIds, setWebCredShowPassIds] = useState<Set<string>>(new Set());
   const [webCredEditing, setWebCredEditing] = useState<string|null>(null);
+
+  const loadByos = React.useCallback(async () => {
+    if (!user) return;
+    const r = await fetch(`${API}/user/storage`, { headers: { Authorization: `Bearer ${user.token}` } });
+    const d = await r.json();
+    if (d.success) { setByosConfigs(d.data); setByosLoaded(true); }
+  }, [user?.token]);
+
+  useEffect(() => {
+    if (mainTab === 'settings') void loadByos();
+  }, [mainTab, loadByos]);
 
   // Key vault
   const [vaultKeys, setVaultKeys] = useState<VaultKey[]>([]);
@@ -25062,7 +25099,7 @@ export default function ForgeApp() {
   // -- Auth -------------------------------------------------------------------
   useEffect(() => {
     const stored = localStorage.getItem('forge_user');
-    if (stored) { try { const u = JSON.parse(stored); setUser(u); if (u.token && !localStorage.getItem('forge_token')) localStorage.setItem('forge_token', u.token); } catch {} }
+    if (stored) { try { const u = JSON.parse(stored); const fallbackToken = localStorage.getItem('forge_access_token') || localStorage.getItem('forge_token') || ''; const merged = u.token ? u : (fallbackToken ? { ...u, token: fallbackToken } : u); setUser(merged); if (merged.token && !localStorage.getItem('forge_token')) localStorage.setItem('forge_token', merged.token); } catch {} }
   }, []);
 
   const handleLogin = (u: User) => { setUser(u); localStorage.setItem('forge_user', JSON.stringify(u)); if (u.token) localStorage.setItem('forge_token', u.token); };
@@ -26923,6 +26960,12 @@ export default function ForgeApp() {
       return;
     }
 
+    const liveMessageId = 'tmp-stream-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+    let streamedText = '';
+    let streamFinished = false;
+    let streamUpdateTimer: ReturnType<typeof setTimeout> | undefined;
+    let streamThreadId = currentThread.id;
+    const clearStreamUpdate = () => { if (streamUpdateTimer !== undefined) { clearTimeout(streamUpdateTimer); streamUpdateTimer = undefined; } };
     try {
       const cleanModel = selectedModel.startsWith('openrouter/') ? selectedModel.slice('openrouter/'.length) : selectedModel;
       // Guard: no model selected — tell user clearly instead of silently failing
@@ -26978,9 +27021,50 @@ export default function ForgeApp() {
       if (activeConnectors.size > 0) addAgentStep('🔗', `Connectors: ${Array.from(activeConnectors).slice(0,3).join(', ')}`);
       if (hooks.filter(h => h.enabled).length > 0) addAgentStep('🪝', `${hooks.filter(h => h.enabled).length} hook(s) applied`);
       let threadId = currentThread.id;
+      // Keep only the current assistant turn as a draft; tool and child-agent output
+      // stays in the existing progress tracker until Forge returns its final result.
+      const handleStreamEvent = (evt: any) => {
+        if (streamFinished || abortCtrl.signal.aborted) return;
+        if ((evt.type === 'token' || evt.type === 'text_delta') && !evt.childId) {
+          const delta = evt.delta ?? evt.text ?? evt.content;
+          if (typeof delta !== 'string' || !delta) return;
+          streamedText += delta;
+          if (streamUpdateTimer === undefined) streamUpdateTimer = setTimeout(() => {
+            streamUpdateTimer = undefined;
+            if (streamFinished || abortCtrl.signal.aborted || !streamedText) return;
+            const draft: Message = { id: liveMessageId, thread_id: threadId, role: 'assistant', content: '_Response in progress — draft_\n\n' + streamedText, created_at: new Date().toISOString() };
+            setMessages(prev => { const exists = prev.some(m => m.id === liveMessageId); return exists ? prev.map(m => m.id === liveMessageId ? draft : m) : [...prev, draft]; });
+          }, 50);
+        } else if (evt.type === 'tool_call') {
+          clearStreamUpdate(); streamedText = '';
+          setMessages(prev => prev.filter(m => m.id !== liveMessageId));
+          const tool = evt.tool || evt.name || 'Tool';
+          const tc = { tool, args: evt.args, result: evt.result || '', ts: Date.now() };
+          setLiveToolCalls(prev => [...prev, tc]);
+          addAgentStep('🔧', tool + '(' + JSON.stringify(evt.args || {}).slice(0, 60) + ')');
+        } else if (evt.type === 'file_created') {
+          addAgentStep('📄', 'Saved ' + evt.filename + ' to this folder');
+          loadFolderFiles();
+        } else if (evt.type === 'skill_loaded') {
+          addAgentStep('🧩', 'Loaded skill: ' + String(evt.name || 'task skill').slice(0, 100));
+        } else if (evt.type === 'plan_updated') {
+          const steps = Array.isArray(evt.steps) ? evt.steps : [];
+          const completed = steps.filter((step: any) => step.status === 'completed' || step.status === 'done').length;
+          addAgentStep('📋', 'Plan updated: ' + completed + '/' + steps.length + ' steps marked complete');
+        } else if (evt.type === 'subagent_start') {
+          addAgentStep('🤝', 'Delegating: ' + String(evt.task || 'Research task').slice(0, 120));
+        } else if (evt.type === 'subagent_end') {
+          addAgentStep('🤝', 'Delegated task returned for review');
+        } else if (evt.type === 'compaction_start' || evt.type === 'auto_compaction_start') {
+          addAgentStep('🗜', 'Summarizing earlier context…');
+        } else if (evt.type === 'compaction_end' || evt.type === 'auto_compaction_end') {
+          addAgentStep('🗜', evt.errorMessage || evt.aborted ? 'Context summary interrupted' : 'Context summary ready');
+        }
+      };
 
       // Extract AI reply from response and append directly — avoids loadMessages race condition
       const applyResp = (resp: any) => {
+        clearStreamUpdate();
         if (resp && resp.success === false) {
           if (resp.error === 'NO_API_KEY') {
             const provName = resp.providerName || resp.provider || 'your LLM provider';
@@ -27007,7 +27091,9 @@ export default function ForgeApp() {
           }
           throw new Error(resp.message || resp.error || 'Unknown error from server');
         }
-        // Success — append AI reply directly from response, no re-fetch needed
+        // Success — replace the live draft with the authoritative stored response.
+        streamFinished = true;
+        setMessages(prev => prev.filter(m => m.id !== liveMessageId));
         const aiData = resp?.data;
         if (aiData?.content) {
           // Auto-router: show which model was selected and why
@@ -27019,7 +27105,7 @@ export default function ForgeApp() {
           if (autoRoute) addAgentStep('⚡', `Auto-Router: ${autoRoute.tier} task → ${autoRoute.model}`);
           const aiMsg: Message = { id: aiData.id || 'tmp-ai', thread_id: threadId, role: 'assistant', content: finalContent, created_at: new Date().toISOString() };
           setMessages(prev => {
-            const withoutTemp = prev.filter(m => m.id !== 'tmp-u');
+            const withoutTemp = prev.filter(m => m.id !== 'tmp-u' && m.id !== liveMessageId);
             // Replace temp user message with a clean copy, then add AI reply
             const userMsg: Message = { id: aiData.id + '-u', thread_id: threadId, role: 'user', content: userContent, created_at: new Date().toISOString() };
             const already = withoutTemp.find(m => m.role === 'user' && m.content === userContent);
@@ -27033,17 +27119,7 @@ export default function ForgeApp() {
         addAgentStep('⚙️', `Sending to ${modelLabel}…`);
         setLiveToolCalls([]);
         setExpandedTools({});
-        const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, (evt) => {
-          if (evt.type === 'tool_call') {
-            const tc = { tool: evt.tool, args: evt.args, result: evt.result || '', ts: Date.now() };
-            setLiveToolCalls(prev => [...prev, tc]);
-            addAgentStep('🔧', `${evt.tool}(${JSON.stringify(evt.args||{}).slice(0,60)})`);
-          } else if (evt.type === 'file_created') {
-            // Agent created a file — it\'s auto-filed into this folder; refresh the left panel
-            addAgentStep('📄', `Saved ${evt.filename} to this folder`);
-            loadFolderFiles();
-          }
-        });
+        const r = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, handleStreamEvent);
         addAgentStep('✓', 'Response received');
         // Cross off all pending auto-steps in tracker
         setTrackerItems(prev => {
@@ -27093,9 +27169,11 @@ export default function ForgeApp() {
         if (e.message?.includes('THREAD_NOT_FOUND') || e.message?.includes('404')) {
           const fresh = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: userContent.slice(0,60), model: cleanModel }) }, user.token);
           const newT = fresh?.data || fresh;
-          threadId = newT.id;
+          threadId = newT.id; streamThreadId = threadId;
+          clearStreamUpdate(); streamedText = '';
+          setMessages(prev => prev.filter(m => m.id !== liveMessageId));
           setActiveThread(newT);
-          const r2 = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body) }, user.token);
+          const r2 = await apiFetchSSE(`/threads/${threadId}/messages`, { method:'POST', body:JSON.stringify(body), signal: abortCtrl.signal }, user.token, handleStreamEvent);
           applyResp(r2);
           await loadThreads(activeProject?.id);
         } else { throw e; }
@@ -27138,8 +27216,9 @@ export default function ForgeApp() {
       }
     } catch (e: any) {
       // Use abort reason if available (set by safetyTimer or Stop button with reason)
-      const abortReason = e?.name === 'AbortError' && (e as any).cause?.message;
-      const raw: string = abortReason || e.message || 'Something went wrong';
+      clearStreamUpdate();
+      const abortReason = abortCtrl.signal.aborted ? abortCtrl.signal.reason : undefined;
+      const raw: string = abortReason ? (abortReason.name === 'TimeoutError' ? abortReason.message : 'Request cancelled.') : e.message || 'Something went wrong';
       // Strip raw provider prefixes like "Anthropic error: " for clean display
       const clean = raw
         .replace(/^(anthropic|openai|google|groq|mistral|openrouter) error[^:]*:\s*/i, '')
@@ -27152,9 +27231,11 @@ export default function ForgeApp() {
         .replace(/rate.limit.*upstream.*add your own key[^]*/i, 'Free model is rate-limited — switch to a paid model for unthrottled access.')
         .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, 'Model is rate-limited. Switch to a different model.')
         .trim();
-      const errMsg: Message = { id:'tmp-err', thread_id:currentThread.id, role:'assistant', content:`⚠️ ${clean}`, created_at:new Date().toISOString() };
-      setMessages(prev => [...prev, errMsg]);
+      const partial = !streamFinished && streamedText.trim();
+      const errMsg: Message = { id: partial ? liveMessageId : 'tmp-err', thread_id: streamThreadId, role: 'assistant', content: partial ? '_Response stopped before completion — partial draft_\n\n' + streamedText + '\n\n⚠️ ' + clean : '⚠️ ' + clean, created_at: new Date().toISOString() };
+      setMessages(prev => [...prev.filter(m => m.id !== liveMessageId), errMsg]);
     } finally {
+      clearStreamUpdate();
       clearTimeout(safetyTimer);
       if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
       if (agentStepsRef.current.length > 0) setLastThinkingSteps([...agentStepsRef.current]);
@@ -27424,7 +27505,7 @@ export default function ForgeApp() {
 
       {toast && <div style={{ position:'fixed', bottom:24, left:'50%', transform:'translateX(-50%)', zIndex:9999, padding:'12px 24px', borderRadius:12, background: toast.type==='err' ? '#ef4444' : toast.type==='info' ? 'var(--fg-bg3)' : '#16a34a', color:'#fff', fontSize:14, fontWeight:600, boxShadow:'0 4px 24px rgba(0,0,0,0.5)', maxWidth:440, textAlign:'center', pointerEvents:'none', animation:'forge-flash 0.2s ease' }}>{toast.msg}</div>}
 
-      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); if (user) setShowBizWizard(true); }} />}
+      {showOnboarding && <OnboardingFlow onComplete={() => { setShowOnboarding(false); localStorage.setItem('forge_onboarding_done', 'true'); }} />}
       {showBizWizard && user && <OnboardingWizard api={autonomyApi} onClose={() => setShowBizWizard(false)} onDone={() => { setShowBizWizard(false); setShowAutonomy(true); }} />}
       {showAutonomy && user && <ForgeAutonomyHub api={autonomyApi} username={user?.name || user?.email} onClose={() => setShowAutonomy(false)} onOpenOnboarding={() => { setShowAutonomy(false); setShowBizWizard(true); }} onModeChange={(m) => { setForgeMode(m); try { localStorage.setItem('forge_mode', m); } catch {} }} />}
 
@@ -27456,6 +27537,7 @@ export default function ForgeApp() {
         <div style={{ padding:'6px 6px', borderBottom:'1px solid var(--fg-border)', overflowY:'auto', flexShrink:0, maxHeight: sidebarExpanded ? 'calc(100vh - 340px)' : 'calc(100vh - 120px)' }}>
           {/* -- ZONE 1: Core -- */}
           {([
+            { id:'workspace',    icon:'💬', label:'Chat' },
             { id:'home',         icon:'🏠', label:'Home' },
             { id:'brief',        icon:'☀️', label:'Daily Brief' },
             { id:'brain',        icon:'🧠', label:'Memory' },
@@ -27485,6 +27567,7 @@ export default function ForgeApp() {
             { id:'router',           icon:'🔀',  label:'Smart Router' },
             { id:'files',            icon:'📁',  label:'Files' },
             { id:'runs',             icon:'🏃',  label:'Run History' },
+            { id:'agentruns',        icon:'🤖',  label:'Agent Runs' },
             { id:'hooks',            icon:'🪝',  label:'Automations' },
             ...(isDesktop ? [{ id:'desktop', icon:'🖥', label:'Desktop' }] : []),
           ] as Array<{id:string;icon:string;label:string}>).map(tab => (
@@ -31103,38 +31186,22 @@ export default function ForgeApp() {
 
               {/* ── BYOS: Bring Your Own Storage ────────────────────────────────── */}
               {(() => {
-                const [byosConfigs, setByosConfigs] = React.useState<any[]>([]);
-                const [byosLoaded, setByosLoaded] = React.useState(false);
-                const [byosAdding, setByosAdding] = React.useState(false);
-                const [byosProvider, setByosProvider] = React.useState('supabase');
-                const [byosCreds, setByosCreds] = React.useState<Record<string,string>>({});
-                const [byosLabel, setByosLabel] = React.useState('');
-                const [byosTesting, setByosTesting] = React.useState<string|null>(null);
-                const [byosSyncing, setByosSyncing] = React.useState<string|null>(null);
                 const tok = user.token;
                 const h = { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' };
-
-                const loadByos = async () => {
-                  const r = await fetch(`${API}/api/user/storage`, { headers: h });
-                  const d = await r.json();
-                  if (d.success) { setByosConfigs(d.data); setByosLoaded(true); }
-                };
-
-                React.useEffect(() => { loadByos(); }, []);
 
                 const byosProviders: Record<string,{ icon:string; label:string; fields: {key:string;label:string;placeholder:string;type?:string}[] }> = {
                   supabase:    { icon:'⚡', label:'Supabase', fields: [{ key:'url', label:'Project URL', placeholder:'https://xxx.supabase.co' }, { key:'serviceKey', label:'Service Role Key', placeholder:'eyJ...', type:'password' }] },
                   s3:          { icon:'☁️', label:'AWS S3',   fields: [{ key:'endpoint', label:'Endpoint', placeholder:'https://s3.amazonaws.com' }, { key:'bucket', label:'Bucket Name', placeholder:'my-forge-backup' }, { key:'accessKey', label:'Access Key ID', placeholder:'AKIA...' }, { key:'secretKey', label:'Secret Key', placeholder:'...', type:'password' }, { key:'region', label:'Region', placeholder:'us-east-1' }] },
                   r2:          { icon:'🟠', label:'Cloudflare R2', fields: [{ key:'endpoint', label:'R2 Endpoint', placeholder:'https://xxx.r2.cloudflarestorage.com' }, { key:'bucket', label:'Bucket', placeholder:'forge-data' }, { key:'accessKey', label:'Access Key', placeholder:'...' }, { key:'secretKey', label:'Secret Key', placeholder:'...', type:'password' }] },
-                  gdrive:      { icon:'📗', label:'Google Drive', fields: [{ key:'accessToken', label:'OAuth Access Token', placeholder:'ya29...', type:'password' }] },
                   vercel_blob: { icon:'▲', label:'Vercel Blob', fields: [{ key:'token', label:'Blob Read-Write Token', placeholder:'vercel_blob_rw_...', type:'password' }] },
                   github:      { icon:'🐙', label:'GitHub Gist', fields: [{ key:'token', label:'Personal Access Token', placeholder:'ghp_...', type:'password' }, { key:'gistId', label:'Gist ID (optional)', placeholder:'Leave blank to auto-create' }] },
                 };
 
                 const activeProv = byosProviders[byosProvider];
+                const genericByosConfigs = byosConfigs.filter(cfg => cfg.provider !== 'gdrive');
 
                 const saveByos = async () => {
-                  const r = await fetch(`${API}/api/user/storage`, { method:'POST', headers: h, body: JSON.stringify({ provider: byosProvider, label: byosLabel || activeProv.label, credentials: byosCreds }) });
+                  const r = await fetch(`${API}/user/storage`, { method:'POST', headers: h, body: JSON.stringify({ provider: byosProvider, label: byosLabel || activeProv.label, credentials: byosCreds }) });
                   const d = await r.json();
                   if (d.success) { showToast('✅ Storage backend saved'); setByosAdding(false); setByosCreds({}); setByosLabel(''); loadByos(); }
                   else showToast('❌ Save failed');
@@ -31142,7 +31209,7 @@ export default function ForgeApp() {
 
                 const testByos = async (id: string) => {
                   setByosTesting(id);
-                  const r = await fetch(`${API}/api/user/storage/${id}/test`, { method:'POST', headers: h });
+                  const r = await fetch(`${API}/user/storage/${id}/test`, { method:'POST', headers: h });
                   const d = await r.json();
                   showToast(d.success ? `✅ ${d.message}` : `❌ ${d.message}`);
                   setByosTesting(null);
@@ -31150,7 +31217,7 @@ export default function ForgeApp() {
 
                 const syncByos = async (id: string) => {
                   setByosSyncing(id);
-                  const r = await fetch(`${API}/api/user/storage/${id}/sync`, { method:'POST', headers: h });
+                  const r = await fetch(`${API}/user/storage/${id}/sync`, { method:'POST', headers: h });
                   const d = await r.json();
                   showToast(d.success ? `✅ Synced ${d.records} records (${(d.bytes/1024).toFixed(1)} KB)` : `❌ ${d.error}`);
                   setByosSyncing(null);
@@ -31159,11 +31226,12 @@ export default function ForgeApp() {
 
                 const deleteByos = async (id: string) => {
                   if (!confirm('Remove this storage backend?')) return;
-                  await fetch(`${API}/api/user/storage/${id}`, { method:'DELETE', headers: h });
+                  await fetch(`${API}/user/storage/${id}`, { method:'DELETE', headers: h });
                   loadByos();
                 };
 
-                return (
+                return (<>
+                  <GoogleDriveConnectionCard apiBase={API} token={user.token} onToast={showToast} />
                   <div style={{ background:'var(--fg-bg3)', border:'1px solid var(--fg-border)', borderRadius:16, padding:24, marginBottom:24 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
                       <h3 style={{ color:'var(--fg-text2)', fontSize:14, margin:0, textTransform:'uppercase', letterSpacing:'0.05em' }}>🗄 Your Storage (BYOS)</h3>
@@ -31172,7 +31240,7 @@ export default function ForgeApp() {
                     <p style={{ margin:'0 0 16px', fontSize:12, color:'var(--fg-text3)' }}>Sync your threads, memories, and notes to storage you own. Forge keeps AI intelligence server-side; only your content is exported.</p>
 
                     {/* Existing backends */}
-                    {byosConfigs.length > 0 && byosConfigs.map(cfg => (
+                    {genericByosConfigs.length > 0 && genericByosConfigs.map(cfg => (
                       <div key={cfg.id} style={{ background:'var(--fg-bg)', border:'1px solid var(--fg-border)', borderRadius:10, padding:'12px 14px', marginBottom:8, display:'flex', alignItems:'center', gap:10 }}>
                         <span style={{ fontSize:20 }}>{byosProviders[cfg.provider]?.icon || '🗄'}</span>
                         <div style={{ flex:1 }}>
@@ -31187,7 +31255,7 @@ export default function ForgeApp() {
                         <button onClick={() => deleteByos(cfg.id)} style={{ padding:'5px 10px', background:'transparent', border:'1px solid var(--fg-red)', borderRadius:6, color:'var(--fg-red)', fontSize:11, cursor:'pointer' }}>Remove</button>
                       </div>
                     ))}
-                    {byosLoaded && byosConfigs.length === 0 && !byosAdding && (
+                    {byosLoaded && genericByosConfigs.length === 0 && !byosAdding && (
                       <p style={{ color:'var(--fg-text3)', fontSize:13, margin:'0 0 12px' }}>No storage backends connected yet.</p>
                     )}
 
@@ -31213,10 +31281,10 @@ export default function ForgeApp() {
                         </div>
                       </div>
                     ) : (
-                      <button onClick={() => setByosAdding(true)} style={{ padding:'8px 16px', background:'var(--fg-bg)', border:'1px dashed var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer', marginTop:byosConfigs.length?8:0 }}>+ Add Storage Backend</button>
+                      <button onClick={() => setByosAdding(true)} style={{ padding:'8px 16px', background:'var(--fg-bg)', border:'1px dashed var(--fg-border)', borderRadius:8, color:'var(--fg-text2)', fontSize:13, cursor:'pointer', marginTop:genericByosConfigs.length?8:0 }}>+ Add Storage Backend</button>
                     )}
                   </div>
-                );
+                </>);
               })()}
 
               {/* Account */}
@@ -33054,12 +33122,6 @@ export default function ForgeApp() {
             { id:'secretadmirer', icon:'💘', label:'Secret Admirer Letter', cat:'Fun' },
           ];
           const cats = ['All','Career','Writing','Finance','Health','Learning','Creative','Legal','Relationships','Productivity','Business','Fun'];
-          const [dtSearch, setDtSearch] = React.useState('');
-          const [dtCat, setDtCat] = React.useState('All');
-          const [activeDreamTool, setActiveDreamTool] = React.useState<string|null>(null);
-          const [dreamInput, setDreamInput] = React.useState('');
-          const [dreamOutput, setDreamOutput] = React.useState('');
-          const [dreamLoading, setDreamLoading] = React.useState(false);
           const filtered = DREAM_TOOLS.filter(t =>
             (dtCat === 'All' || t.cat === dtCat) &&
             (dtSearch === '' || t.label.toLowerCase().includes(dtSearch.toLowerCase()) || t.cat.toLowerCase().includes(dtSearch.toLowerCase()))
@@ -49017,28 +49079,13 @@ export default function ForgeApp() {
   </div>
 )}
 {mainTab==='agentruns' && (
-  <div style={{padding:24}}>
-    <h2 style={{color:'#f1f5f9',marginBottom:16}}>🤖 Agent Runs</h2>
-    <div style={{display:'flex',gap:8,marginBottom:16,flexWrap:'wrap'}}>
-      <input value={newArName} onChange={e=>setNewArName(e.target.value)} placeholder="Agent name" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:1}}/>
-      <input value={newArPrompt} onChange={e=>setNewArPrompt(e.target.value)} placeholder="Prompt/task" style={{background:'#1e293b',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',color:'#f1f5f9',fontSize:13,flex:2}}/>
-      <button onClick={async()=>{if(!newArName||!newArPrompt)return;await fetch('/api/agent-runs',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+localStorage.getItem('forge_token')},body:JSON.stringify({name:newArName,prompt:newArPrompt})});setNewArName('');setNewArPrompt('');const r=await fetch('/api/agent-runs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await r.json());}} style={{background:'#6366f1',color:'#fff',border:'none',borderRadius:6,padding:'6px 14px',cursor:'pointer',fontSize:13}}>Run</button>
-      <button onClick={async()=>{const r=await fetch('/api/agent-runs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await r.json());}} style={{background:'#0f172a',color:'#94a3b8',border:'1px solid #334155',borderRadius:6,padding:'6px 10px',cursor:'pointer',fontSize:13}}>Load</button>
-    </div>
-    {agentRuns.map((r:any)=>(
-      <div key={r.id} style={{background:'#1e293b',borderRadius:8,padding:12,marginBottom:8,display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-        <div>
-          <div style={{color:'#f1f5f9',fontWeight:600}}>{r.name} <span style={{color:r.status==='done'?'#22c55e':r.status==='cancelled'?'#ef4444':'#f59e0b',fontSize:11,marginLeft:6}}>{r.status}</span></div>
-          <div style={{color:'#64748b',fontSize:12,marginTop:2}}>{r.prompt}</div>
-          {r.result && <div style={{color:'#94a3b8',fontSize:12,marginTop:4}}>↳ {r.result}</div>}
-        </div>
-        <div style={{display:'flex',gap:6}}>
-          <button onClick={async()=>{await fetch(`/api/agent-runs/${r.id}/cancel`,{method:'PUT',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});const res=await fetch('/api/agent-runs',{headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(await res.json());}} style={{background:'#78350f',color:'#fde68a',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Cancel</button>
-          <button onClick={async()=>{await fetch(`/api/agent-runs/${r.id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+localStorage.getItem('forge_token')}});setAgentRuns(agentRuns.filter((x:any)=>x.id!==r.id));}} style={{background:'#450a0a',color:'#fca5a5',border:'none',borderRadius:4,padding:'3px 8px',cursor:'pointer',fontSize:11}}>Del</button>
-        </div>
-      </div>
-    ))}
-  </div>
+  <SandboxAgentConsole
+    apiBase={API}
+    token={user.token}
+    initialModel={selectedModel}
+    onModelChange={setSelectedModel}
+    onToast={showToast}
+  />
 )}
 {mainTab==='wspolicies' && (
   <div style={{padding:24}}>
@@ -50987,7 +51034,16 @@ export default function ForgeApp() {
                       </div>
                       <div style={{ display:'flex', gap:4 }}>
                         <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}/dismiss`,{method:'PUT',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 8px', background:'var(--bg-input)', border:'1px solid var(--border)', borderRadius:5, color:'var(--fg-text)', cursor:'pointer', fontSize:11 }}>Dismiss</button>
-                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id
+                        <button onClick={async()=>{ await fetch(`/api/workspace-announcements/${a.id}`,{method:'DELETE',headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}}); setWsAnnouncementsB47(wsAnnouncementsB47.filter((x:any)=>x.id!==a.id)); }} style={{ padding:'3px 7px', background:'#ef4444', color:'#fff', border:'none', borderRadius:5, cursor:'pointer', fontSize:11 }}>Del</button>
+                      </div>
+                    </div>
+                    <div style={{ color:'var(--fg-text2)', fontSize:13, whiteSpace:'pre-wrap' }}>{a.body}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {/* ── WAVE 19: Health & Wellness AI ─────────────────────── */}
         {(mainTab as string) === 'symptomcheck' && <ForgeTab_symptomcheck />}
 
@@ -51569,4 +51625,8 @@ export default function ForgeApp() {
 
 {(mainTab as string) === 'productupdate98' && <ForgeTab_productupdate98 />}
 
-{(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}G
+{(mainTab as string) === 'therapyjournal98' && <ForgeTab_therapyjournal98 />}
+      </div>
+    </div>
+  );
+}

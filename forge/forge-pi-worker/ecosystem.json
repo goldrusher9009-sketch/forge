@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "name": "forge-pi-ecosystem",
+  "piVersion": "0.85.1",
+  "skills": [
+    {
+      "name": "forge-research",
+      "description": "Research public sources and deliver an evidence-backed brief with traceable URLs and a committed artifact.",
+      "requiresTools": ["sandbox_browser", "sandbox_file", "sandbox_artifact"],
+      "promptName": "forge-research"
+    },
+    {
+      "name": "forge-documents",
+      "description": "Create and verify Markdown, PDF, or spreadsheet deliverables in the Forge workspace.",
+      "requiresTools": ["sandbox_file", "sandbox_document", "sandbox_artifact"],
+      "promptName": "forge-documents"
+    },
+    {
+      "name": "forge-planning",
+      "description": "Track a bounded multi-step task with explicit deliverables, dependencies, and completion evidence.",
+      "requiresTools": [],
+      "promptName": "forge-plan"
+    },
+    {
+      "name": "forge-code-diagnosis",
+      "description": "Diagnose code supplied in the isolated workspace using concrete call paths and focused reproduction.",
+      "requiresTools": ["sandbox_file", "sandbox_shell", "sandbox_artifact"],
+      "promptName": "forge-diagnose"
+    }
+  ],
+  "extensions": [
+    {
+      "name": "forge-skill-loader",
+      "origin": "Forge implementation using the Pi Extension API and Agent Skills format",
+      "tools": ["forge_skill"],
+      "defaultEnabled": true,
+      "reference": "https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/dynamic-resources"
+    },
+    {
+      "name": "forge-plan-tracker",
+      "origin": "Forge headless adaptation of the official plan-mode extension pattern; no upstream source copied",
+      "tools": ["forge_plan"],
+      "defaultEnabled": true,
+      "reference": "https://github.com/earendil-works/pi/tree/main/packages/coding-agent/examples/extensions/plan-mode"
+    },
+    {
+      "name": "pi-mcp-adapter",
+      "version": "2.32.1",
+      "origin": "Community package by Nico Bailon, MIT",
+      "defaultEnabled": false,
+      "configuration": "Explicit operator-owned HTTPS servers and exact tool allowlists, with a Forge approval callback",
+      "reference": "https://github.com/nicobailon/pi-mcp-adapter"
+    }
+  ],
+  "resourcePolicy": {
+    "ambientDiscovery": false,
+    "tenantCodeInstallation": false,
+    "mcpDefaultEnabled": false,
+    "skillsOrigin": "Original Forge instructions, not verbatim community package content"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules
+.env
+.env.*
+.pi
+test
+npm-debug.log*
+*.tmp
