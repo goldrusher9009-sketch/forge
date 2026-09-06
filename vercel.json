@@ -1,5 +1,4 @@
 {
-  "rootDirectory": "forge-web-studio",
   "framework": "nextjs",
   "buildCommand": "NODE_OPTIONS='--max-old-space-size=4096' npm run build",
   "outputDirectory": ".next",
