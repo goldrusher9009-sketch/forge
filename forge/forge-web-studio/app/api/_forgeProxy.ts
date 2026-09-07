@@ -62,7 +62,8 @@ function forwardedRequestHeaders(request: NextRequest, gatewaySecret: string): H
   for (const name of HOP_BY_HOP_HEADERS) headers.delete(name);
   headers.delete('host');
   headers.delete('content-length');
-  headers.delete('accept-encoding');
+  // Ask the gateway for identity encoding so bodies pass through byte-for-byte.
+  headers.set('accept-encoding', 'identity');
   headers.delete('x-forge-gateway-secret');
   headers.set('x-forwarded-host', request.nextUrl.host);
   headers.set('x-forwarded-proto', request.nextUrl.protocol.replace(':', ''));
@@ -79,6 +80,9 @@ function forwardedResponseHeaders(
   const headers = new Headers(upstream.headers);
   for (const name of HOP_BY_HOP_HEADERS) headers.delete(name);
   headers.delete('content-length');
+  // fetch() has already decoded any upstream Content-Encoding; forwarding the
+  // original header would make the browser try to decompress plain bytes.
+  headers.delete('content-encoding');
   headers.set('Cache-Control', 'no-store');
 
   const location = headers.get('location');
