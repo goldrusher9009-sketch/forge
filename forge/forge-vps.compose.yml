@@ -38,8 +38,8 @@ services:
       GOOGLE_DRIVE_REDIRECT_URI: ${GOOGLE_DRIVE_REDIRECT_URI:-}
       GOOGLE_DRIVE_DEVELOPER_KEY: ${GOOGLE_DRIVE_DEVELOPER_KEY:-}
       GOOGLE_DRIVE_APP_ID: ${GOOGLE_DRIVE_APP_ID:-}
-    ports:
-      - "127.0.0.1:${FORGE_VPS_BACKEND_PORT:-3400}:3000"
+    # Not published. The only ingress is the secret-gated gateway below; the host
+    # nginx TLS terminator forwards Vercel's server-side proxy traffic to it.
     volumes:
       - forge_vps_platform_data:/data
     networks:
@@ -67,6 +67,37 @@ services:
     logging:
       driver: json-file
       options: { max-size: "20m", max-file: "5" }
+
+  forge-control-plane-gateway:
+    # Same-origin gateway from the production line: only requests carrying the
+    # Vercel gateway secret on /api/* reach the platform; everything else is 404.
+    image: docker.m.daocloud.io/library/caddy:2.10.2-alpine
+    environment:
+      FORGE_CONTROL_PLANE_GATEWAY_SECRET: ${FORGE_CONTROL_PLANE_GATEWAY_SECRET:?set the Vercel-to-control-plane gateway secret}
+    command: [caddy, run, --config, /etc/caddy/Caddyfile, --adapter, caddyfile]
+    ports:
+      - "127.0.0.1:${FORGE_VPS_GATEWAY_PORT:-3400}:8080"
+    volumes:
+      - ./forge-control-plane-tunnel.Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - control
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=32m
+      - /data:rw,nosuid,nodev,size=16m
+      - /config:rw,nosuid,nodev,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    depends_on:
+      forge-platform:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, --server-response, "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   forge-pi-worker:
     image: forge-pi-worker:vps

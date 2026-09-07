@@ -17,6 +17,9 @@
 		max_size 16MB
 	}
 
+	# Unauthenticated liveness for the container healthcheck and host nginx.
+	respond /healthz 200
+
 	@vercel_gateway {
 		path /api/*
 		header X-Forge-Gateway-Secret {$FORGE_CONTROL_PLANE_GATEWAY_SECRET}
