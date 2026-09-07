@@ -4,7 +4,7 @@
 }
 
 :8080 {
-	encode zstd gzip
+	# No compression here: the Vercel proxy forwards bodies verbatim and Vercel's edge compresses.
 
 	header {
 		-Server
