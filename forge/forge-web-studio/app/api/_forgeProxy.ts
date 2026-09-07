@@ -133,11 +133,17 @@ export async function proxyForgeApi(
 
   try {
     const upstream = await fetch(targetUrl, init);
-    return new Response(upstream.body, {
-      status: upstream.status,
-      statusText: upstream.statusText,
-      headers: forwardedResponseHeaders(upstream, targetUrl, request.nextUrl.origin),
-    });
+    const headers = forwardedResponseHeaders(upstream, targetUrl, request.nextUrl.origin);
+    const contentType = upstream.headers.get('content-type') || '';
+    // Only SSE is passed through as a live stream. Ordinary JSON/text responses are
+    // buffered: re-emitting the upstream ReadableStream with a stripped Content-Length
+    // intermittently produced empty bodies for chunked responses on the Vercel runtime.
+    if (/^text\/event-stream/i.test(contentType) || upstream.status === 204 || upstream.status === 304) {
+      return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers });
+    }
+    const buffered = Buffer.from(await upstream.arrayBuffer());
+    headers.set('content-length', String(buffered.byteLength));
+    return new Response(buffered, { status: upstream.status, statusText: upstream.statusText, headers });
   } catch {
     return unavailable('The Forge control plane could not be reached from Vercel.');
   }
