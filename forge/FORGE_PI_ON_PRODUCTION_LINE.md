@@ -51,14 +51,16 @@
 - 前端：Vercel `forge-sand-two.vercel.app`。
 - 旧栈 `forge-private-isolated`（端口 3401）仍在同机运行，未动；两套栈用各自的数据库卷。
 
-## 7. 仍未迁移 / 需要决策
+## 7. 2026-09-07 决策与落地
 
-1. **数据库**：本栈是新库。旧栈的用户、Key、Drive 授权、历史在 `forge-private-candidate-platform-data` 卷里；迁移需要把 `forge.db` 复制过来并复用旧栈的 `CREDENTIAL_ENCRYPTION_KEY`（否则已存的模型 Key 与 Drive token 解不开）。
-2. **前端入口方式**：旧线设计是 Vercel 同源 `/api` 经 Cloudflare 隧道到内网 Caddy，但隧道令牌从未落盘，等于从没通过这条路走过。本栈用 nginx 直接暴露后端 + `NEXT_PUBLIC_API_BASE_URL`。两条路只能选一条；同源代理的 `FORGE_CONTROL_PLANE_*` 变量在 Vercel 上未配置。
-3. **`BILLING_REQUIRED`**：本栈未开启（`billing: disabled`），Stripe 变量未配。开启前需要 Stripe 密钥与价格 ID。
-4. **旧线遗留的宿主 exec 接口** `/api/sandbox/run`、`/api/sandbox/ask`（`index.ts:5622/5652`）是无隔离的 RCE 面，两条线都有；建议下线，需产品确认。
-5. **Drive 面板与 run 控制台仍在同一个文件**，前端状态集合仍是手抄字面量而非 import 自 `sandbox-contract.ts`（旧线遗留，本次未动）。
-6. 各集成面板内约 1580 处 `fetch('/api/...')` 在旧线上因同源代理而工作，在本栈的直连模式下会 404，除非 Vercel 配置同源代理。
+| 事项 | 决定 | 落地 |
+|---|---|---|
+| 数据库 | 迁移旧栈数据，复用旧栈 `CREDENTIAL_ENCRYPTION_KEY` | 通过 better-sqlite3 backup API 做 WAL 一致快照，装入 `forge-pi-platform-data` 卷；新栈原库和旧库快照都留在 `/opt/forge-pi/migration/`（`forge-new-*.db`、`forge-old-*.db`）。新栈当时没有任何加密行，换密钥零损失。 |
+| 前端入口 | 采用旧线设计的 Vercel 同源 `/api` 代理 + 网关密钥 | `forge-vps.compose.yml` 新增 `forge-control-plane-gateway`（Caddy，`forge-control-plane-tunnel.Caddyfile`），平台端口不再发布；nginx 把 `forge-api.135-148-52-149.sslip.io` 转到网关；无密钥请求 404。Vercel 生产环境改为 `FORGE_CONTROL_PLANE_API_URL` + `FORGE_CONTROL_PLANE_GATEWAY_SECRET`（Sensitive），删除了 `NEXT_PUBLIC_API_*`。前端 1580 处相对路径 fetch 自然生效。 |
+| `BILLING_REQUIRED` | 保持关闭 | 需要真实 Stripe 密钥与三个价格 ID；代码 fail-closed，配齐后在 `.env.forge-vps` 打开即可。当前 BYOK 可用。 |
+| 宿主 exec 接口 | 下线 | `/api/sandbox/run`、`/api/sandbox/ask` 返回 410 `HOST_EXEC_RETIRED`，指向沙箱 Agent Run。 |
+
+仍待做（非阻塞）：Drive 面板与 run 控制台仍在同一文件；前端状态集合仍是手抄字面量。
 
 ## 8. 重部署
 
