@@ -20,6 +20,20 @@
 	# Unauthenticated liveness for the container healthcheck and host nginx.
 	respond /healthz 200
 
+	# Stripe calls this directly; it is authenticated by the Stripe-Signature header
+	# (verified with STRIPE_WEBHOOK_SECRET inside the platform), not by the gateway secret.
+	@stripe_webhook {
+		method POST
+		path /api/billing/webhook
+		header Stripe-Signature *
+	}
+	handle @stripe_webhook {
+		reverse_proxy forge-platform:3000 {
+			flush_interval -1
+			header_up -X-Forge-Gateway-Secret
+		}
+	}
+
 	@vercel_gateway {
 		path /api/*
 		header X-Forge-Gateway-Secret {$FORGE_CONTROL_PLANE_GATEWAY_SECRET}
