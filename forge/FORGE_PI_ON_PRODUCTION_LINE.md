@@ -81,7 +81,7 @@ ssh ubuntu@135.148.52.149 'cd /opt/forge-pi && tar xzf forge-sync.tgz && rm forg
 ## 9. 待办（2026-09-08）
 
 1. **OpenRouter 余额**：平台 Key 余额约 $5（$150 总额已用 $144.8）。今天的验收花了 $0.73。需要在 openrouter.ai 充值，否则平台模型会在几天内不可用；BYOK 用户不受影响。
-2. **Google Drive 真实授权**：OAuth start 已经过代理返回 Google 同意页 URL（`drive.file` 范围，回调 `forge-sand-two.vercel.app/api/google-drive/oauth/callback`），但需要一个真人用 Google 账号在浏览器里点一次同意，才能验证导入与写回。
+2. **Google Drive 真实授权**：2026-09-09 已由 goldrusher9009@gmail.com 在浏览器完成同意，`/api/google-drive/config` 返回 `connected:true`。浏览器拦截弹窗时授权在同一标签页完成，回调跳回 `/?googleDrive=connected|error`；此前前端忽略该参数、静默落到 Chat 页（用户报告“没有任何提示”）。已修：应用挂载时读取参数、弹 10 秒 toast、切到 Agent Runs 并滚动到 Drive 面板、清理 URL（提交 2d44bd23、875a3c44，Playwright 在生产验证）。仍待做：用 Picker 选一个文件导入 workspace、跑一次 Run 读取它，以及审批一次写回，需要真人浏览器操作。
 3. **旧栈退役**：`forge-private-isolated`（3401）和它的隧道网关仍在跑，观察一周无问题后停掉（保留卷 `forge-private-candidate-platform-data` 作冷备）。
 4. **分支合回 `main`**：`sasaky/forge-pi-on-gdl` 尚未合并；合并时只提交 `forge/` 子目录。
 5. **正式域名**：`forge-api.135-148-52-149.sslip.io` 可用但非产品域名；换域名只需改 nginx vhost、证书、Vercel 的 `FORGE_CONTROL_PLANE_API_URL`，以及 Stripe webhook 端点 URL。
