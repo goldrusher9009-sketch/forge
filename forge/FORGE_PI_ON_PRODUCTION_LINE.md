@@ -57,10 +57,17 @@
 |---|---|---|
 | 数据库 | 迁移旧栈数据，复用旧栈 `CREDENTIAL_ENCRYPTION_KEY` | 通过 better-sqlite3 backup API 做 WAL 一致快照，装入 `forge-pi-platform-data` 卷；新栈原库和旧库快照都留在 `/opt/forge-pi/migration/`（`forge-new-*.db`、`forge-old-*.db`）。新栈当时没有任何加密行，换密钥零损失。 |
 | 前端入口 | 采用旧线设计的 Vercel 同源 `/api` 代理 + 网关密钥 | `forge-vps.compose.yml` 新增 `forge-control-plane-gateway`（Caddy，`forge-control-plane-tunnel.Caddyfile`），平台端口不再发布；nginx 把 `forge-api.135-148-52-149.sslip.io` 转到网关；无密钥请求 404。Vercel 生产环境改为 `FORGE_CONTROL_PLANE_API_URL` + `FORGE_CONTROL_PLANE_GATEWAY_SECRET`（Sensitive），删除了 `NEXT_PUBLIC_API_*`。前端 1580 处相对路径 fetch 自然生效。 |
-| `BILLING_REQUIRED` | 保持关闭 | 需要真实 Stripe 密钥与三个价格 ID；代码 fail-closed，配齐后在 `.env.forge-vps` 打开即可。当前 BYOK 可用。 |
+| `BILLING_REQUIRED` | **已开启（2026-09-08）** | Stripe live 账号 `acct_1TGr8N…`（与 Apptopia/NEXUS 同一账号）。新建三个订阅价格 `forge_starter` $29、`forge_pro` $99、`forge_agency` $299/月（lookup_key 幂等）；webhook 端点 `we_1UDMKL…` 指向 `/api/billing/webhook`，Caddy 按 `Stripe-Signature` 头放行，平台用 endpoint secret 验签。已实测：真实 Checkout 会话创建、签名事件激活 starter（500k tokens + $20 credits）、错误签名 400。平台模型 Key：OpenRouter（来自 nexus-platform，余额约 $5.5，需充值）。 |
 | 宿主 exec 接口 | 下线 | `/api/sandbox/run`、`/api/sandbox/ask` 返回 410 `HOST_EXEC_RETIRED`，指向沙箱 Agent Run。 |
 
 仍待做（非阻塞）：Drive 面板与 run 控制台仍在同一文件；前端状态集合仍是手抄字面量。
+
+## 7.1 2026-09-08 生产验收与运维
+
+- 生产 benchmark（经 Vercel 代理，模型 `anthropic/claude-sonnet-4.6` 走平台 OpenRouter Key）：16/16 通过，C6 需人工。首 token 1.7s，沙箱单任务 $0.04-0.06。
+- 首轮 S7-S9 因编排器默认"每租户 1 个活动沙箱"在连续任务间拒绝准入而失败；Pi 栈现在默认 4 全局 / 3 每租户 / 2 并发工具（compose 可覆盖）。
+- 运维：`deploy/vps/ops/` 的备份（每日 03:15 UTC，含隔离恢复演练与 5 表计数比对）和监控（5 分钟，容器 state/health/RestartCount、网关存活、未授权 404、备份年龄 ≤36h、磁盘 ≥10GiB）已作为 systemd timer 安装在 VPS，两者均 PASS。安装：`sudo bash deploy/vps/ops/install-forge-pi-operations.sh`。
+- `/api/models/available` 改为与执行路径相同的 Key 解析，`platform_models` 种子改为增量。
 
 ## 8. 重部署
 
