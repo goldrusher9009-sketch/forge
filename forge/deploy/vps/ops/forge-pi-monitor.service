@@ -1,0 +1,26 @@
+[Unit]
+Description=Forge Pi local readiness monitor
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/forge-pi/deploy/vps/ops/forge-pi-monitor.sh
+TimeoutStartSec=2min
+RuntimeDirectory=forge-pi-monitor
+RuntimeDirectoryMode=0700
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+LockPersonality=yes
+RestrictSUIDSGID=yes
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target

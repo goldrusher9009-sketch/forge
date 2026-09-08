@@ -1,0 +1,12 @@
+[Unit]
+Description=Schedule Forge Pi local readiness checks
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Persistent=true
+Unit=forge-pi-monitor.service
+
+[Install]
+WantedBy=timers.target

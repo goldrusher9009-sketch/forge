@@ -153,6 +153,11 @@ services:
       FORGE_SANDBOX_CPU_NANOS: "1000000000"
       FORGE_SANDBOX_PIDS_LIMIT: "128"
       FORGE_SANDBOX_BROWSER_PIDS_LIMIT: "256"
+      # Admission: this host serves one tenant today; allow back-to-back Runs while the
+      # previous sandbox is still being torn down. Raise with care on shared hosts.
+      FORGE_SANDBOX_MAX_ACTIVE: ${FORGE_SANDBOX_MAX_ACTIVE:-4}
+      FORGE_SANDBOX_MAX_ACTIVE_PER_TENANT: ${FORGE_SANDBOX_MAX_ACTIVE_PER_TENANT:-3}
+      FORGE_SANDBOX_MAX_CONCURRENT_TOOLS: ${FORGE_SANDBOX_MAX_CONCURRENT_TOOLS:-2}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - forge_vps_sandbox_data:/var/lib/forge-sandbox

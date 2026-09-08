@@ -1,0 +1,27 @@
+[Unit]
+Description=Forge Pi verified SQLite backup
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/forge-pi/deploy/vps/ops/forge-pi-backup.sh
+TimeoutStartSec=15min
+UMask=0077
+RuntimeDirectory=forge-pi-backup
+RuntimeDirectoryMode=0700
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+LockPersonality=yes
+RestrictSUIDSGID=yes
+CapabilityBoundingSet=
+ReadWritePaths=/opt/forge-pi/backups /run/lock
+
+[Install]
+WantedBy=multi-user.target
