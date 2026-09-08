@@ -1,85 +1,51 @@
-# Forge deployment map — current release path
+# Forge Deploy Map — READ THIS FIRST
 
-Verified for the Vercel release branch on 2026-08-28. Provider state can drift;
-re-inspect Vercel and Git before each release claim.
+Updated 2026-09-08. Single source of truth for how Forge deploys. Railway is retired.
 
-## Current state
+## TL;DR
+- **Branch:** `sasaky/forge-pi-on-gdl` (old Google-Drive production line + Pi engine). Not merged to `main` yet.
+- **Backend:** VPS `ubuntu@135.148.52.149` (OVH, Ubuntu 24.04, Docker 29). Stack `/opt/forge-pi/forge-vps.compose.yml`, project `forge-pi`.
+  Public hostname `https://forge-api.135-148-52-149.sslip.io` → nginx → Caddy gateway (loopback 3400) → platform.
+  The gateway only forwards `/api/*` requests carrying `X-Forge-Gateway-Secret` (Vercel) or `Stripe-Signature` (webhook). Everything else is 404 by design. `/healthz` is open.
+- **Frontend:** Vercel project `forge` (root `forge/forge-web-studio`), alias `forge-sand-two.vercel.app`.
+  Browsers call same-origin `/api/*`; `app/api/[...path]/route.ts` proxies to the gateway using `FORGE_CONTROL_PLANE_API_URL` + `FORGE_CONTROL_PLANE_GATEWAY_SECRET` (Vercel prod env). There is no `NEXT_PUBLIC_API_*`.
+- **Secrets:** `/opt/forge-pi/.env.forge-vps` (root, 0600). Contains admin, JWT, `CREDENTIAL_ENCRYPTION_KEY`, Pi worker token, sandbox HMAC, gateway secret, Stripe (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_STARTER/PRO/AGENCY`), `BILLING_REQUIRED=true`, `OPENROUTER_API_KEY` (platform model key), Google Drive OAuth.
 
-- Git repository: `git@github.com:goldrusher9009-sketch/forge.git`.
-- Release branch: `sasaky/forge-google-drive-launch`.
-- Release SHA: resolve with `git rev-parse HEAD` and verify the same SHA exists on
-  `origin/sasaky/forge-google-drive-launch` before making any deployment claim.
-- Vercel project: `forge`.
-- Last verified pre-hardening build candidate at this snapshot: protected
-  Preview `dpl_6Tdg9fQnMFFU8NRyeeJquAJrs61z` (`Ready`, not Production). Re-inspect
-  the branch's newest deployment after every pushed commit.
-- Public production origin: `https://forge-sand-two.vercel.app`.
-- Production still points to older `main` commit `219395f1`; it is not the
-  current sandbox-agent candidate.
-- The private VPS control plane is deployed. Its final public DNS hostname and
-  isolated Cloudflare Tunnel are not provisioned yet.
+## The repo is a MONOREPO
+`goldrusher9009-sketch/forge` has other apps (`viva/`, `Flash`, `LocalZilla`, `VentBuddy`) sharing `main`. Real Forge is `forge/`. Never `git add -A` at the root.
 
-## Architecture
+## Deploy the backend
+```bash
+cd forge
+tar --exclude=node_modules --exclude=.next --exclude=dist --exclude=.omc --exclude=.git \
+    -czf /tmp/forge-sync.tgz forge-platform forge-pi-worker forge-sandbox-orchestrator forge-sandbox-runtime forge-vps.compose.yml forge-control-plane-tunnel.Caddyfile deploy
+scp /tmp/forge-sync.tgz ubuntu@135.148.52.149:/opt/forge-pi/
+ssh ubuntu@135.148.52.149 'cd /opt/forge-pi && tar xzf forge-sync.tgz && rm forge-sync.tgz && sudo bash deploy/vps/deploy.sh'
+```
+`deploy.sh` rewrites the China mirrors in the Dockerfiles to official sources (they hang from this host), builds the four images, and restarts with health waits.
 
-```text
-Vercel website and same-origin /api gateway
-  -> Cloudflare HTTPS + named Tunnel
-  -> internal secret-gated Caddy gateway
-  -> Forge control plane with durable SQLite volume
-  -> private Docker-socket Orchestrator
-  -> isolated per-run sandbox containers
+## Deploy the frontend
+From the monorepo root (`D:\zjh\self\Hash\forge`, must be the main checkout, not a worktree): `npx vercel deploy --prod --yes`. Builds take ~15 min (TypeScript over a 56k-line component).
+
+## Verify
+```bash
+curl https://forge-api.135-148-52-149.sslip.io/healthz          # 200
+curl https://forge-sand-two.vercel.app/api/health               # 200 via proxy
+# full acceptance through the real path:
+FORGE_BENCH_BASE=https://forge-sand-two.vercel.app FORGE_BENCH_EMAIL=... FORGE_BENCH_PASSWORD=... \
+FORGE_BENCH_MODEL=anthropic/claude-sonnet-4.6 node forge-platform/scripts/forge-user-benchmark.cjs
 ```
 
-Vercel hosts the website and server-side gateway only. It does not host the
-Docker Socket, persistent SQLite database, long-running Agent loop, Socket.IO
-process, or user sandboxes.
+## Ops on the VPS
+- Backup: `forge-pi-backup.timer` daily 03:15 UTC → `/opt/forge-pi/backups/forge-auto-*.db.gz` (+sha256), each verified by an isolated restore drill.
+- Monitor: `forge-pi-monitor.timer` every 5 min → `journalctl -t forge-pi-monitor`.
+- Install/refresh: `sudo bash /opt/forge-pi/deploy/vps/ops/install-forge-pi-operations.sh`.
+- Old stack `forge-private-isolated` (port 3401) and Apptopia (`api.apptopia.ai`, 80/443) also run on this host. Do not touch them.
 
-## Files that define this release
+## Stripe
+Live account `acct_1TGr8NCJZMFTCOYk` (shared with Apptopia/NEXUS). Prices: `forge_starter` $29, `forge_pro` $99, `forge_agency` $299 monthly (lookup keys; see `1-STRIPE_PRODUCTION_SETUP.md` for the plan semantics). Webhook `we_1UDMKLCJZMFTCOYksmb42YlZ` → `/api/billing/webhook`, event `checkout.session.completed`.
 
-- `forge-web-studio/app/api/[...path]/route.ts`: Vercel catch-all API route.
-- `forge-web-studio/app/api/_forgeProxy.ts`: upstream validation, secret
-  injection, SSE/body forwarding, and fail-closed behavior.
-- `forge-sandbox.compose.yml`: runtime image, Orchestrator, egress proxy, and
-  private networks.
-- `forge-private-candidate.compose.yml`: Forge control plane and durable data.
-- `forge-vps-caddy.compose.yml`: direct public HTTPS edge for a dedicated host
-  whose ports 80/443 are available.
-- `forge-vps-cloudflare-tunnel.compose.yml`: isolated edge for the current
-  shared VPS, where Apptopia Nginx already owns ports 80/443.
-- `forge-control-plane.Caddyfile`: direct-host TLS gateway.
-- `forge-control-plane-tunnel.Caddyfile`: internal HTTP gateway reached only by
-  the named Tunnel and protected by the same `/api/*` gateway secret.
-- `FORGE_CLOUDFLARE_TUNNEL_RUNBOOK.md`: domain, token, secret, acceptance, and
-  rollback procedure that does not modify Apptopia Nginx.
-- `scripts/cloudflare-tunnel-gateway-regression.cjs`: repeatable Docker test for
-  correct/missing/wrong secret behavior, path denial, upstream secret removal,
-  capabilities, read-only root, and zero published ports.
-- `scripts/forge-edge-readiness.sh`: read-only internal/public launch audit for
-  Tunnel credentials, network isolation, Google configuration, service health,
-  loopback bindings, Nginx continuity, and ProjectHash continuity.
-- `FORGE_SANDBOX_GOOGLE_DRIVE_PRIVATE_CANDIDATE_RUNBOOK.md`: required gates and
-  acceptance evidence.
-
-## Mandatory release sequence
-
-1. Commit and push only `sasaky/forge-google-drive-launch`.
-2. Register the final domain, create the remotely managed named Tunnel, and map
-   its public hostname to `http://forge-control-plane-tunnel-gateway:8080`.
-3. Store the Tunnel token and gateway secret outside Git, then deploy
-   `forge-vps-cloudflare-tunnel.compose.yml` beside the existing private Forge
-   stack. Do not start the direct Caddy edge on this shared VPS.
-4. Verify the Tunnel gateway rejects missing/wrong secrets and non-API paths,
-   publishes no host ports, and leaves Apptopia Nginx unchanged.
-5. Add `FORGE_CONTROL_PLANE_API_URL` and
-   `FORGE_CONTROL_PLANE_GATEWAY_SECRET` to Vercel server environments.
-6. Redeploy the protected Vercel Preview.
-7. Complete sandbox, Google Drive, security, recovery, and human-approval E2E.
-8. Promote the exact accepted Preview only after explicit authorization.
-9. Verify Production status, public HTTP behavior, aliases, and deployed Git SHA.
-
-## Safety boundary
-
-Do not push `main`: a legacy provider is still connected to it. Do not run old
-`PUSH_*.bat`, `push*.ps1`, archived deployment scripts, or historical runbooks as
-release automation. `deploy.sh` is the only root release helper for this branch;
-it creates Vercel Preview deployments only and refuses `main`.
+## History
+- 2026-06 → 2026-08: Railway backend `forge-production-2692.up.railway.app` (project `hearty-contentment`). Retired; do not deploy there.
+- 2026-08-31: old line went to this VPS as `forge-private-isolated` (Cloudflare tunnel edge never received a token).
+- 2026-09-07: Pi engine merged onto the old line, DB migrated, same-origin gateway live.
