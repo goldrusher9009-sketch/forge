@@ -77,3 +77,12 @@ cd forge && tar --exclude=node_modules --exclude=.next --exclude=dist --exclude=
 scp /tmp/forge-sync.tgz ubuntu@135.148.52.149:/opt/forge-pi/
 ssh ubuntu@135.148.52.149 'cd /opt/forge-pi && tar xzf forge-sync.tgz && rm forge-sync.tgz && sudo bash deploy/vps/deploy.sh'
 ```
+
+## 9. 待办（2026-09-08）
+
+1. **OpenRouter 余额**：平台 Key 余额约 $5（$150 总额已用 $144.8）。今天的验收花了 $0.73。需要在 openrouter.ai 充值，否则平台模型会在几天内不可用；BYOK 用户不受影响。
+2. **Google Drive 真实授权**：OAuth start 已经过代理返回 Google 同意页 URL（`drive.file` 范围，回调 `forge-sand-two.vercel.app/api/google-drive/oauth/callback`），但需要一个真人用 Google 账号在浏览器里点一次同意，才能验证导入与写回。
+3. **旧栈退役**：`forge-private-isolated`（3401）和它的隧道网关仍在跑，观察一周无问题后停掉（保留卷 `forge-private-candidate-platform-data` 作冷备）。
+4. **分支合回 `main`**：`sasaky/forge-pi-on-gdl` 尚未合并；合并时只提交 `forge/` 子目录。
+5. **正式域名**：`forge-api.135-148-52-149.sslip.io` 可用但非产品域名；换域名只需改 nginx vhost、证书、Vercel 的 `FORGE_CONTROL_PLANE_API_URL`，以及 Stripe webhook 端点 URL。
+6. 技术债：Drive 面板拆出 `SandboxAgentConsole.tsx`；前端状态集合改为 import 自 `sandbox-contract.ts`；两套自治系统合并；`/api/forge-tools/catalog` 补路由。
