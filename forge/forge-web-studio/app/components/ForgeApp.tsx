@@ -25172,8 +25172,10 @@ function ForgeApp() {
       window.history.replaceState(null, '', clean);
       try { sessionStorage.setItem('forge_drive_focus', '1'); } catch {}
       setMainTab('agentruns');
-      if (drive === 'connected') showToast('Google Drive connected. Scroll down in Agent Runs to pick files or an output folder.', 'ok');
-      else showToast(`Google Drive connection failed${code ? ': ' + code : ''}`, 'err');
+      // Hold this toast longer than the default 3.5s: it is the only confirmation of the OAuth round-trip.
+      if (drive === 'connected') setToast({ msg: 'Google Drive connected. The Google Drive panel is at the bottom of Agent Runs.', type: 'ok' });
+      else setToast({ msg: `Google Drive connection failed${code ? ': ' + code : ''}`, type: 'err' });
+      setTimeout(() => setToast(null), 10000);
     } catch {}
   }, []);
 

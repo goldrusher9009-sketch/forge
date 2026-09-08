@@ -369,8 +369,9 @@ function GoogleDriveRunPanel({
   useEffect(() => {
     if (typeof window === 'undefined' || !sessionStorage.getItem('forge_drive_focus')) return;
     sessionStorage.removeItem('forge_drive_focus');
-    const t = window.setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
-    return () => window.clearTimeout(t);
+    // The run list above loads asynchronously and pushes this panel down; re-scroll a few times.
+    const timers = [400, 1500, 3500, 6000].map(ms => window.setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), ms));
+    return () => timers.forEach(t => window.clearTimeout(t));
   }, []);
 
   const connect = async () => {
