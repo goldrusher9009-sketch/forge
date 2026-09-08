@@ -25160,6 +25160,23 @@ function ForgeApp() {
   }, []);
 
   // -- Auth -------------------------------------------------------------------
+  // Google Drive OAuth returns to the app in the same tab when the popup is blocked.
+  // Surface the outcome and land on the Agent Runs console instead of a silent Home.
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const drive = params.get('googleDrive');
+      if (!drive) return;
+      params.delete('googleDrive'); const code = params.get('code'); params.delete('code');
+      const clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+      window.history.replaceState(null, '', clean);
+      try { sessionStorage.setItem('forge_drive_focus', '1'); } catch {}
+      setMainTab('agentruns');
+      if (drive === 'connected') showToast('Google Drive connected. Scroll down in Agent Runs to pick files or an output folder.', 'ok');
+      else showToast(`Google Drive connection failed${code ? ': ' + code : ''}`, 'err');
+    } catch {}
+  }, []);
+
   useEffect(() => {
     const stored = localStorage.getItem('forge_user');
     if (stored) { try { const u = JSON.parse(stored); const fallbackToken = localStorage.getItem('forge_access_token') || localStorage.getItem('forge_token') || ''; const merged = u.token ? u : (fallbackToken ? { ...u, token: fallbackToken } : u); setUser(merged); if (merged.token && !localStorage.getItem('forge_token')) localStorage.setItem('forge_token', merged.token); } catch {} }

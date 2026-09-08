@@ -225,6 +225,8 @@ async function startGoogleOAuth(apiBase: string, tokenRef: TokenRef): Promise<Wi
   const authorizationUrl = String(response?.authorizationUrl || '');
   if (!authorizationUrl) throw new Error('GOOGLE_DRIVE_AUTHORIZATION_URL_MISSING');
   const popup = window.open(authorizationUrl, 'forge-google-drive-oauth', 'popup=yes,width=560,height=760');
+  // Popup blocked: continue in this tab. The OAuth callback returns to returnPath with
+  // ?googleDrive=connected|error, which the app turns into a toast on the Agent Runs tab.
   if (!popup) window.location.assign(authorizationUrl);
   return popup;
 }
@@ -362,6 +364,14 @@ function GoogleDriveRunPanel({
   }, [apiBase, tokenRef, workspaceId, selectedRun?.id]);
 
   useEffect(() => { void loadDrive(); }, [loadDrive]);
+  // After the same-tab OAuth return the app lands on this tab; bring the Drive panel into view.
+  const panelRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (typeof window === 'undefined' || !sessionStorage.getItem('forge_drive_focus')) return;
+    sessionStorage.removeItem('forge_drive_focus');
+    const t = window.setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300);
+    return () => window.clearTimeout(t);
+  }, []);
 
   const connect = async () => {
     setBusy('connect'); setError('');
@@ -517,7 +527,7 @@ function GoogleDriveRunPanel({
   const writebackFor = (artifactId: string) => writebacks.find(writeback => String(writeback.artifact_id) === String(artifactId));
 
   return (
-    <section className="sac-panel sac-drive-panel">
+    <section ref={panelRef} className="sac-panel sac-drive-panel">
       <div className="sac-panel-heading">
         <div>
           <span className="sac-eyebrow">USER-OWNED STORAGE</span>
