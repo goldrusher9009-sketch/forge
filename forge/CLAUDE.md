@@ -4,45 +4,49 @@
 Before any deploy/debug work, read `DEPLOY_MAP.md`. Key facts: the GitHub repo
 `goldrusher9009-sketch/forge` is a MONOREPO — real Forge is in the `forge/` subfolder;
 `viva/`, `Flash`, etc. are OTHER apps sharing `main`, so deploy commit messages lie.
-Railway project = **hearty-contentment** (service `forge`). Deploys take minutes —
-ALWAYS re-check the live endpoint before concluding a deploy failed.
+**Production (since 2026-09-07) is the VPS `ubuntu@135.148.52.149` + Vercel, branch
+`sasaky/forge-pi-on-gdl`. Railway is retired.** Details: `FORGE_PI_ON_PRODUCTION_LINE.md`.
 
 ## What This Is
-Client-portal SaaS where users bring their own LLM API keys (Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter). No server-side env vars for user keys. Admin can set platform-wide keys via DB.
+Client-portal SaaS where users bring their own LLM API keys (Anthropic, OpenAI, Gemini, Groq, Mistral, OpenRouter). Platform-wide keys come from env (`OPENROUTER_API_KEY` today) or the admin DB table, gated by the commercial BYOK policy in `getUserKey()`.
 
 ## Live URLs
-- Frontend: https://forge-sand-two.vercel.app (Vercel, auto-deploys from main)
-- Backend: https://forge-production-2692.up.railway.app (Railway, auto-deploys from main)
-- Repo: C:\Users\teste\OneDrive\Documents\Claude\Projects\forge
+- Frontend: https://forge-sand-two.vercel.app (Vercel; `npx vercel deploy --prod --yes` from the monorepo root, main checkout only)
+- Backend: VPS 135.148.52.149, `/opt/forge-pi`, `forge-vps.compose.yml`. Public only via the secret-gated gateway
+  `https://forge-api.135-148-52-149.sslip.io`; direct calls without `X-Forge-Gateway-Secret` get 404 by design.
+  Browsers reach it through Vercel's same-origin `/api` proxy (`forge-web-studio/app/api/_forgeProxy.ts`).
+- Local repo: `D:\zjh\self\Hash\forge` (branch `sasaky/forge-pi-on-gdl`)
 
 ## Folder Structure
 ```
 forge/
-├── forge-platform/          # Backend (Node/TypeScript, Express, SQLite)
-│   └── src/index.ts         # Main server file — ALL routes, agent logic, DB setup
-├── forge-web-studio/        # Frontend (Next.js)
-│   └── app/components/ForgeApp.tsx  # Main UI component (BOM-encoded, use bash grep)
-└── VERSION.md               # Changelog
+├── forge-platform/            # Backend (Node/TypeScript, Express, SQLite); src/index.ts has all routes
+├── forge-pi-worker/           # Isolated Pi SDK worker (Node 24)
+├── forge-sandbox-orchestrator/# Docker-socket boundary for per-Run sandboxes; egress proxy
+├── forge-sandbox-runtime/     # Sandbox container image (shell/browser tools)
+├── forge-web-studio/          # Frontend (Next.js); app/components/ForgeApp.tsx is BOM-encoded, use bash grep
+├── forge-vps.compose.yml      # Production stack
+└── deploy/vps/                # deploy.sh, nginx vhost, ops/ (backup + monitor timers)
 ```
 
-## Currently Building
-- SaaS billing: Stripe subscriptions + usage-based overage charging
-- Admin revenue dashboard, billing routes module
-- Backend on Railway with SQLite at /data/forge.db (volume: forge-volume)
+## Current State
+- Agent engine: Pi (`forge-platform/src/pi-runtime.ts` gateway + `forge-pi-worker`); sandbox Runs with Class A/B/C approvals
+- Billing live: Stripe subscriptions (`forge_starter/pro/agency`) + prepaid overage; `BILLING_REQUIRED=true`
+- Google Drive import/write-back (drive.file scope, approval-gated)
+- SQLite at `/data/forge.db` in volume `forge-pi-platform-data`; daily verified backups in `/opt/forge-pi/backups`
 
 ## Architecture
-- `getUserKey()` checks: per-user DB key → `platform_api_keys` table → `PROVIDER_ENV_KEYS` env vars
-- `/api/keys` endpoint returns `has_anthropic`, `has_openai` etc. — drives model dropdown
+- `getUserKey(userId, provider, allowPlatform)`: per-user DB key → `platform_api_keys` → `PROVIDER_ENV_KEYS`; with billing on, non-admins need an active paid plan for BYOK and only metered paths may use platform keys
+- `/api/models` and `/api/models/available` resolve keys exactly like execution
 - Model auto-select order: Anthropic → OpenAI → Gemini → Groq → Mistral → OpenRouter
 
 ## Common Mistakes to Avoid
 - **ForgeApp.tsx has BOM encoding** — use `bash grep` not the Grep tool
-- **PowerShell git** needs: `& 'C:\Program Files\Git\cmd\git.exe'` syntax
-- **Never truncate index.ts** — it's 2350 lines; always use Edit not full Write for changes
-- **Read before edit** — always Read the target section before editing large files
-- **Don't re-read after edit** — Edit errors if it fails; no need to verify by re-reading
-- **Railway deploys on push to main** — broken TypeScript = broken backend for all users
-- **SQLite DB is persistent** on Railway volume; don't drop tables without migration plan
-- After session: summarize what changed, never re-read whole chat
-- **Use task list** for all multi-step work — create tasks upfront, mark done when complete, no narration
-- **Minimize messages** — keep token count low, don't explain what you're doing, just do it
+- **Never truncate index.ts** — it's ~250k lines; narrow exact-match edits only
+- **Read before edit** — always read the target section before editing large files
+- **Deploying**: sync + `deploy/vps/deploy.sh` on the VPS (see `DEPLOY_MAP.md`); the Dockerfiles' China mirrors hang on the overseas VPS and the script rewrites them
+- **dist/ is tracked** for forge-platform: rebuild with esbuild (index, sandbox-contract, sqlite-backup, pi-runtime; `--format=cjs`) before committing src changes
+- **SQLite DB is persistent** in the VPS volume; don't drop tables without a migration plan
+- **Line endings**: shell scripts and systemd units under `deploy/vps` must be LF (`.gitattributes` enforces it)
+- **Local dev needs Node 20** for the platform (better-sqlite3 ABI) and Node 24 for the Pi worker
+- Use a task list for multi-step work; keep messages short
