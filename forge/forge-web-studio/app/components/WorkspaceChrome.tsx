@@ -80,41 +80,51 @@ export function WorkspaceHeader({ title, zh, controls, children, onLibrary, onPa
 }
 
 type ManagedModel = { id: string; name: string; tier: string; available: boolean; isDefault?: boolean; pricing: { input: number; output: number } };
-export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilling }: {
+type PersonalModel = { id: string; name: string; provider: string };
+export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilling, personalOptions }: {
   api: (path: string) => Promise<any>; value: string; onChange: (id: string) => void;
-  locked: boolean; zh: boolean; onBilling: () => void;
+  locked: boolean; zh: boolean; onBilling: () => void; personalOptions: PersonalModel[];
 }) {
   const apiRef = useRef(api); apiRef.current = api;
-  const [models, setModels] = useState<ManagedModel[]>([]), [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [models, setModels] = useState<ManagedModel[]>([]), [personal, setPersonal] = useState<PersonalModel[]>([]), [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let current = true; setStatus('loading');
-    apiRef.current('/desktop/models').then(result => {
-      if (result?.success === false || !Array.isArray(result?.data)) throw new Error('CATALOG_UNAVAILABLE');
-      if (current) { setModels(result.data); setStatus('ready'); }
+    Promise.all([apiRef.current('/desktop/models').catch(() => null), apiRef.current('/keys').catch(() => null)]).then(([catalogue, keys]) => {
+      const managed = catalogue?.success !== false && Array.isArray(catalogue?.data) ? catalogue.data : null;
+      const saved = keys?.success !== false && keys?.data && typeof keys.data === 'object' ? keys.data : null;
+      if (!managed && !saved) throw new Error('CATALOG_UNAVAILABLE');
+      if (current) {
+        setModels(managed || []);
+        setPersonal(personalOptions.filter(model => saved?.[`has_${model.provider}`] && !['platform', 'env'].includes(saved[`${model.provider}_key`])));
+        setStatus('ready');
+      }
     }).catch(() => { if (current) setStatus('error'); });
     return () => { current = false; };
-  }, [revision]);
+  }, [revision, personalOptions]);
   const valueRef = useRef(value); valueRef.current = value;
   const onChangeRef = useRef(onChange); onChangeRef.current = onChange;
   useEffect(() => {
-    // First task on a fresh account: pick the catalogue default so a message never leaves without a model.
+    // First task on a fresh account: choose a model the account can run.
     if (locked || status !== 'ready' || valueRef.current) return;
-    const fallback = models.find(model => model.isDefault && model.available) || models.find(model => model.available);
+    const fallback = models.find(model => model.isDefault && model.available) || models.find(model => model.available) || personal.find(model => model.id === 'gpt-4o-mini') || personal[0];
     if (fallback) onChangeRef.current(fallback.id);
-  }, [status, models, locked]);
+  }, [status, models, personal, locked]);
   const selected = models.find(model => model.id === value);
+  const personalSelected = personal.find(model => model.id === value);
   return <div className={styles.modelPicker}>
     <label><span>{zh ? '模型' : 'Model'}</span><select aria-label={zh ? '任务模型' : 'Task model'} value={value} disabled={locked || status !== 'ready'} onChange={event => onChange(event.target.value)}>
-      {!selected && <option value={value}>{value || (zh ? '选择模型' : 'Choose a model')}</option>}
+      {!selected && !personalSelected && <option value={value}>{value || (zh ? '选择模型' : 'Choose a model')}</option>}
       {[['flagship', 'Flagship', '旗舰'], ['balanced', 'Balanced', '均衡'], ['lightweight', 'Lightweight', '轻量']].map(([tier, en, cn]) => <optgroup key={tier} label={zh ? cn : en}>
         {models.filter(model => model.tier === tier).map(model => <option key={model.id} value={model.id} disabled={!model.available}>{model.name}{!model.available ? (zh ? ' · 需付费额度' : ' · paid credit required') : ''}</option>)}
       </optgroup>)}
+      {personal.length > 0 && <optgroup label={zh ? '自备密钥' : 'Your API key'}>{personal.map(model => <option key={`${model.provider}:${model.id}`} value={model.id}>{model.name}</option>)}</optgroup>}
     </select></label>
     {status === 'loading' && <span className={styles.rate}>{zh ? '读取模型…' : 'Loading models…'}</span>}
     {status === 'error' && <button onClick={() => setRevision(value => value + 1)}>{zh ? '模型读取失败 · 重试' : 'Models unavailable · retry'}</button>}
-    {status === 'ready' && !models.length && <span className={styles.rate}>{zh ? '模型服务暂不可用' : 'Model service unavailable'}</span>}
+    {status === 'ready' && !models.length && !personal.length && <span className={styles.rate}>{zh ? '模型服务暂不可用' : 'Model service unavailable'}</span>}
     {selected && <span className={styles.rate}>{locked ? (zh ? '版本已固定 · ' : 'Version locked · ') : ''}{zh ? '输入' : 'In'} ${selected.pricing.input} / {zh ? '输出' : 'out'} ${selected.pricing.output} <span title={zh ? '每百万 tokens 的基础展示价，按实际用量核对结算。' : 'Base price per million tokens. Charges settle against actual usage.'}>/ 1M</span></span>}
+    {personalSelected && <span className={styles.rate}>{zh ? '由模型服务商计费' : 'Billed by your provider'}</span>}
     <button className={styles.billingLink} onClick={onBilling}>{zh ? '用量与套餐' : 'Usage & plan'} ↗</button>
   </div>;
 }

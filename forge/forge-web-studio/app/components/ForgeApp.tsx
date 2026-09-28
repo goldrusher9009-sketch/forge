@@ -579,6 +579,12 @@ const DIRECT_MODELS = [
 ];
 
 // --- Login Screen -------------------------------------------------------------
+const WORKSPACE_PERSONAL_MODELS = DIRECT_MODELS.flatMap(group => {
+  const provider = group.group === 'Google' ? 'gemini' :
+    ['Anthropic', 'OpenAI', 'Groq', 'Mistral'].includes(group.group) ? group.group.toLowerCase() : '';
+  return provider ? group.models.map(model => ({ id: model.id, name: model.label, provider })) : [];
+});
+
 function LoginScreen({ onLogin, notice = '' }: { onLogin: (u: User) => void; notice?: string }) {
   return <AccountEntry request={apiFetch} onLogin={onLogin} notice={notice} />;
 }
@@ -7058,6 +7064,8 @@ function ForgeApp() {
         if (r?.success === true && r.data?.id) addAgentStep('✓', workspaceZh ? '回复已完成' : 'Reply completed');
         // TTS: read AI response aloud if enabled
         const aiContent: string = r?.data?.content || '';
+        // The reply is already authoritative; memory recording must not keep the composer busy.
+        if (aiContent) void apiFetch(`/threads/${threadId}/memory`, { method:'POST', body: JSON.stringify({ topic: userContent.slice(0, 80), insight: aiContent.slice(0, 200).replace(/\n/g, ' ') }) }, user.token).catch(() => {});
         if (ttsEnabled && aiContent) speakText(aiContent);
         // Track session cost
         if (r?.data?.cost_usd != null) setSessionCost(prev => prev + (r.data.cost_usd || 0) + (r.data.markup_usd || 0));
@@ -7089,23 +7097,12 @@ function ForgeApp() {
       }
       // Reload messages in background to sync with DB (don\'t await — already have the reply)
       if(viewing())loadMessages(threadId);
-      if(viewing())await loadArtifacts();
-      await loadThreads(activeProject?.id);
+      if(viewing())void loadArtifacts();
+      void loadThreads(activeProject?.id);
       loadThreadTokenStats(threadId);
       loadTotalTokens();
       // Auto-run ForgeOptimizer if enabled (fire-and-forget, auto-apply if big savings)
       if (optimizerEnabled && !currentThread.agent_release_id) runForgeOptimizer(threadId, true).catch(()=>{});
-      // Auto-extract memory from this exchange (fire-and-forget)
-      try {
-        const memTopic = userContent.slice(0, 80);
-        const freshForMem = await apiFetch(`/threads/${threadId}/messages`, {}, user.token);
-        const memArr = Array.isArray(freshForMem) ? freshForMem : Array.isArray(freshForMem?.data) ? freshForMem.data : [];
-        const lastAIMsg = memArr.filter((m: any) => m.role === 'assistant').pop();
-        if (lastAIMsg?.content) {
-          const insight = lastAIMsg.content.slice(0, 200).replace(/\n/g, ' ');
-          await apiFetch(`/threads/${threadId}/memory`, { method:'POST', body: JSON.stringify({ topic: memTopic, insight }) }, user.token);
-        }
-      } catch {}
       // Reply text is display content. Execution belongs to the authenticated
       // tool broker and its approval flow, never a marker parsed by the browser.
     } catch (e: any) {
@@ -7786,7 +7783,7 @@ function ForgeApp() {
               panelOpen={rightExpanded} onPanel={() => setRightExpanded(value => !value)}
               controls={<>
                 <PublishedAgentPicker key={'published:'+user.email} api={path=>apiFetch(path,{},user.token)} onUse={usePublishedAgent} active={activeThread?.publishedAgent} zh={workspaceZh} disabled={sending}/>
-                <WorkspaceModelPicker key={'model:'+user.email} api={path => apiFetch(path, {}, user.token)} value={activeThread?.publishedAgent?.model || selectedModel} onChange={setSelectedModel} locked={!!activeThread?.agent_release_id} zh={workspaceZh} onBilling={() => setMainTab('billing')} />
+                <WorkspaceModelPicker key={'model:'+user.email} api={path => apiFetch(path, {}, user.token)} value={activeThread?.publishedAgent?.model || selectedModel} onChange={setSelectedModel} locked={!!activeThread?.agent_release_id} zh={workspaceZh} onBilling={() => setMainTab('billing')} personalOptions={WORKSPACE_PERSONAL_MODELS} />
                 {activeThread && !activeThread.agent_release_id && <ThreadSkills key={`skills:${user.id || user.email}:${activeThread.id}`} api={(path, options) => apiFetch(path, options || {}, user.token)} threadId={String(activeThread.id)} zh={workspaceZh} sending={sending} onLibrary={() => setMainTab('proceduralskills')} />}
               </>}>
               <div>
