@@ -27,6 +27,21 @@ export async function writeChatDraft(scope:string,value:any,expectedVersion:numb
   tx.oncomplete=()=>resolve(version);tx.onerror=()=>reject(Error(error));tx.onabort=()=>reject(Error(error));
  });
 }
+/** Move a new-task draft and clear its old scope in one IndexedDB transaction. */
+export async function moveChatDraft(previous:string,next:string,value:any,previousVersion:number,nextVersion:number,expectedEpoch:number):Promise<number>{
+ const db=await database();return new Promise((resolve,reject)=>{
+  const tx=db.transaction('drafts','readwrite'),store=tx.objectStore('drafts');let error='CHAT_DRAFT_STORAGE_UNAVAILABLE';
+  const source=store.get(previous),destination=store.get(next);let remaining=2,sourceVersion=0,destinationVersion=0;
+  const check=()=>{if(--remaining)return;
+   if(chatDraftEpoch(previous.split('\n')[0])!==expectedEpoch){error='ACCOUNT_SESSION_CHANGED';tx.abort();return;}
+   if(sourceVersion!==previousVersion||destinationVersion!==nextVersion){error='CHAT_DRAFT_CONFLICT';tx.abort();return;}
+   store.put({scope:next,version:nextVersion+1,value,updatedAt:Date.now()});store.delete(previous);
+  };
+  source.onsuccess=()=>{sourceVersion=source.result?.version||0;check();};
+  destination.onsuccess=()=>{destinationVersion=destination.result?.version||0;check();};
+  tx.oncomplete=()=>resolve(nextVersion+1);tx.onerror=()=>reject(Error(error));tx.onabort=()=>reject(Error(error));
+ });
+}
 export async function clearAccountChatDrafts(account:string):Promise<void>{
  if(!account||typeof indexedDB==='undefined')return;
  epochs.set(account,chatDraftEpoch(account)+1);

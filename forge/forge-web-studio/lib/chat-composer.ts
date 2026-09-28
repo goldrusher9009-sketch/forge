@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import { readChatDraft, writeChatDraft, clearAccountChatDrafts, chatDraftEpoch } from './chat-draft-store';
+import { readChatDraft, writeChatDraft, moveChatDraft, clearAccountChatDrafts, chatDraftEpoch } from './chat-draft-store';
 
 type Api = (path:string, options?:RequestInit)=>Promise<any>;
 export type ComposerFile = {id:string;name:string;bytes:number;status:'reading'|'ready'|'error';error?:string;content?:string;sha256?:string;notice?:string;image?:{name:string;data:string;mediaType:string;preview:string}};
@@ -102,8 +102,9 @@ export function useChatComposer(account:string,task:string,api:Api) {
  const owner=state.current,scope=account+'\n'+task;
  const current=useRef(scope);current.current=scope;
  const get=(key=scope)=>{let draft=owner.drafts.get(key);if(!draft){draft={text:'',files:[],revision:0};owner.drafts.set(key,draft);}return draft;};
+ const storable=(draft:Draft)=>({...draft,files:draft.files.map(file=>({...file,...(file.image?{image:{name:file.image.name,data:file.image.data,mediaType:file.image.mediaType}}:{})}))});
  const persist=(key:string,draft:Draft)=>{
-  const value={...draft,files:draft.files.map(file=>({...file,...(file.image?{image:{name:file.image.name,data:file.image.data,mediaType:file.image.mediaType}}:{})}))};
+  const value=storable(draft);
   owner.pending=owner.pending.catch(()=>{}).then(async()=>{
    if(state.current!==owner||!owner.active||!account)return;
    try{const version=await writeChatDraft(key,value,owner.versions.get(key)||0,owner.epoch);owner.versions.set(key,version);owner.errors.delete(key);}
@@ -180,7 +181,17 @@ export function useChatComposer(account:string,task:string,api:Api) {
  return {input:draft.text,setInput,files:draft.files,add,drop,currentScope:()=>current.current,ready:owner.loaded.has(scope),storageError:owner.errors.get(scope),flush,
   remove:(id:string)=>update(scope,d=>{d.files=d.files.filter(f=>f.id!==id);}),
   snapshot:():ComposerSnapshot=>({scope,text:draft.text,files:draft.files.map(f=>({...f})),revision:draft.revision}),
-  move:async(snapshot:ComposerSnapshot,nextTask:string)=>{const previous=snapshot.scope,next=account+'\n'+nextTask;owner.drafts.set(next,get(previous));owner.drafts.delete(previous);owner.loaded.add(next);snapshot.scope=next;current.current=next;void persist(next,get(next));void persist(previous,{text:'',files:[],revision:0});redraw(n=>n+1);await flush(next);},
+  move:async(snapshot:ComposerSnapshot,nextTask:string)=>{
+   const previous=snapshot.scope,next=account+'\n'+nextTask;
+   owner.pending=owner.pending.catch(()=>{}).then(async()=>{
+    if(state.current!==owner||!owner.active)throw Error('ACCOUNT_SESSION_CHANGED');
+    const version=await moveChatDraft(previous,next,storable(get(previous)),owner.versions.get(previous)||0,owner.versions.get(next)||0,owner.epoch);
+    owner.versions.set(next,version);owner.versions.delete(previous);
+    owner.drafts.set(next,get(previous));owner.drafts.delete(previous);owner.loaded.add(next);
+    snapshot.scope=next;current.current=next;redraw(n=>n+1);
+   });
+   await owner.pending;
+  },
   acknowledge:async(snapshot:ComposerSnapshot)=>{update(snapshot.scope,d=>{if(d.text===snapshot.text)d.text='';const sent=new Set(snapshot.files.map(f=>f.id));d.files=d.files.filter(f=>!sent.has(f.id));});await flush(snapshot.scope);},
  };
 }

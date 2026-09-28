@@ -5989,12 +5989,7 @@ function ForgeApp() {
     } catch (e: any) { 
       console.error('newThread error:', e.message);
       if (published) throw e;
-      // Fallback: create thread with minimal data
-      try {
-        const fallback = await apiFetch('/threads', { method:'POST', body:JSON.stringify({ title: title || 'New conversation' }) }, user.token);
-        const t2: Thread = fallback?.data || fallback;
-        if (t2?.id) { await loadThreads(activeProject?.id); if(canSelect())activateThread(t2); return t2; }
-      } catch {}
+      showToast(workspaceZh ? '暂时无法创建任务，草稿已保留。请稍后重试。' : 'Could not create the task. Your draft is saved; try again later.', 'err');
       return null; 
     }
   };
@@ -6895,7 +6890,7 @@ function ForgeApp() {
       }
       // Guard: still no model — tell user clearly instead of silently failing
       if (!cleanModel) {
-        const errMsg: Message = { id:'tmp-err-'+crypto.randomUUID(), thread_id:currentThread.id, role:'assistant', content: workspaceZh ? '⚠️ 模型列表暂时不可用，请稍后重试，或在上方的“模型”下拉框中选择一个模型。' : '⚠️ The model list is temporarily unavailable. Try again in a moment, or pick a model from the Model dropdown above.', created_at:new Date().toISOString() };
+        const errMsg: Message = { id:'tmp-err-'+crypto.randomUUID(), thread_id:currentThread.id, role:'assistant', content: workspaceZh ? '⚠️ 当前没有可用模型。草稿已保留，请稍后重试，或在设置中连接模型服务。' : '⚠️ No model is available right now. Your draft is saved. Try again later or connect a model provider in Settings.', created_at:new Date().toISOString() };
         setMessages(prev => [...prev, errMsg]);
         clearTimeout(safetyTimer);
         if (aiTimerRef.current) { clearInterval(aiTimerRef.current); aiTimerRef.current = null; }
