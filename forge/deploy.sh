@@ -5,7 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WEB_DIR="$SCRIPT_DIR/forge-web-studio"
-EXPECTED_BRANCH="sasaky/forge-google-drive-launch"
+EXPECTED_BRANCH="sasaky/forge-commercial-launch-candidate"
 NPM_REGISTRY="https://registry.npmmirror.com"
 
 fail() {

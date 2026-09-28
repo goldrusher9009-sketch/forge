@@ -18,7 +18,7 @@ The complete operational procedure and acceptance gates are in
 
 ## Release rules
 
-- Release branch: `sasaky/forge-google-drive-launch`.
+- Release branch: `sasaky/forge-commercial-launch-candidate`.
 - Do not push `main`; it is still connected to a legacy deployment.
 - Build a protected Vercel Preview from the release branch first.
 - Do not promote a Preview until the external control plane and end-to-end
