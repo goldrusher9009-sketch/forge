@@ -64,6 +64,7 @@ container_check "$PLATFORM_CONTAINER"
 container_check "$ORCHESTRATOR_CONTAINER"
 container_check "$GATEWAY_CONTAINER"
 container_check "$WORKER_CONTAINER"
+python3 "$BASE_DIR/deploy/vps/ops/forge-pi-commercial.py" --status || record_failure 'commercial checks failed, stale or unavailable; inspect forge-pi-commercial.service and /var/lib/forge-pi-commercial/latest.json'
 http_check 'Gateway liveness' 'http://127.0.0.1:3400/healthz' '200'
 http_check 'Gateway denies unauthenticated API' 'http://127.0.0.1:3400/api/health' '404'
 # orchestrator and platform are not published on the host; their container healthchecks cover them

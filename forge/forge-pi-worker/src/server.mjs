@@ -21,11 +21,29 @@ export function createWorkerServer({ token, maxConcurrent = 4, operatorMcpConfig
     if (!authorized) return json(401, { error: 'PI_WORKER_AUTH_REQUIRED' });
     const url = new URL(req.url, 'http://worker');
     if (req.method === 'GET' && url.pathname === '/health') return json(200, { ready: true, engine: 'pi', version: '0.85.1', active: active.size });
-    const control = /^\/v1\/runs\/([^/]+)\/(abort|tools\/([^/]+))$/.exec(url.pathname);
+    const control = /^\/v1\/runs\/([^/]+)\/(abort|control|tools\/([^/]+))$/.exec(url.pathname);
     if (req.method === 'POST' && control) {
       const run = active.get(control[1]);
       if (!run) return json(404, { error: 'PI_RUN_NOT_FOUND' });
       if (control[2] === 'abort') { run.controller.abort(); return json(200, { aborted: true }); }
+      if (control[2] === 'control') {
+        let body;
+        try { body = await readJson(req); } catch { return json(400, { error: 'PI_CONTROL_INVALID' }); }
+        if (!body || !['steer', 'follow_up'].includes(body.mode) || typeof body.message !== 'string' || !body.message.trim() || body.message.length > 16000 ||
+            typeof body.clientMessageId !== 'string' || !/^[A-Za-z0-9_.:-]{1,128}$/.test(body.clientMessageId)) return json(400, { error: 'PI_CONTROL_INVALID' });
+        const fingerprint = JSON.stringify([body.mode, body.message]);
+        const previous = run.controls.get(body.clientMessageId);
+        if (previous && previous.fingerprint !== fingerprint) return json(409, { error: 'PI_CONTROL_ID_REUSED' });
+        if (!previous && !run.control) return json(409, { error: 'PI_RUN_NOT_ACCEPTING_CONTROL' });
+        if (!previous && run.controls.size >= 16) return json(429, { error: 'PI_CONTROL_LIMIT_REACHED' });
+        const entry = previous || { fingerprint, promise: run.control(body) };
+        run.controls.set(body.clientMessageId, entry);
+        try { await entry.promise; return json(200, { accepted: true, mode: body.mode, clientMessageId: body.clientMessageId, duplicate: Boolean(previous) }); }
+        catch (error) {
+          if (run.controls.get(body.clientMessageId) === entry) run.controls.delete(body.clientMessageId);
+          return json(409, { error: String(error?.message || 'PI_CONTROL_FAILED').slice(0, 200) });
+        }
+      }
       let requestId;
       try { requestId = decodeURIComponent(control[3]); } catch { return json(400, { error: 'PI_TOOL_REQUEST_ID_INVALID' }); }
       const pending = run.pending.get(requestId);
@@ -43,8 +61,13 @@ export function createWorkerServer({ token, maxConcurrent = 4, operatorMcpConfig
     try { request = await readJson(req); } catch { return json(400, { error: 'PI_REQUEST_INVALID' }); }
     if (!request || typeof request !== 'object' || Array.isArray(request) || typeof request.userId !== 'string' || !request.userId || typeof request.runId !== 'string' || !request.runId) return json(400, { error: 'PI_RUN_IDENTITY_REQUIRED' });
     if (active.size >= maxConcurrent) return json(429, { error: 'PI_WORKER_CAPACITY' });
+    const isolatedMcp = request.enableMcp === true && Boolean(operatorMcpConfig);
+    // MCP runs own a native process. Bound its additional memory inside the
+    // same 768 MiB worker container without reducing ordinary chat capacity.
+    if (isolatedMcp && [...active.values()].filter(run => run.isolatedMcp).length >= 2) return json(429, { error: 'PI_WORKER_MCP_CAPACITY' });
     const workerRunId = randomUUID(); const controller = new AbortController(); const pending = new Map();
-    active.set(workerRunId, { controller, pending });
+    const runState = { controller, pending, controls: new Map(), control: undefined, isolatedMcp };
+    active.set(workerRunId, runState);
     res.writeHead(200, { 'content-type': 'application/x-ndjson', 'cache-control': 'no-store', 'x-accel-buffering': 'no' });
     const emit = event => { if (!res.destroyed) { if (res.writableLength > 16 * 1024 * 1024) controller.abort(); else res.write(JSON.stringify(event) + '\n'); } };
     emit({ type: 'started', workerRunId });
@@ -55,6 +78,7 @@ export function createWorkerServer({ token, maxConcurrent = 4, operatorMcpConfig
     try {
       const result = await runAgent(request, {
         signal: controller.signal, emit, operatorMcpConfig: request.enableMcp === true ? operatorMcpConfig : undefined,
+        onControlReady: control => { runState.control = control; },
         executeTool: (name, args, toolCallId) => new Promise((resolve, reject) => {
           if (controller.signal.aborted) return reject(new Error('PI_RUN_CANCELLED'));
           const requestId = randomUUID(); pending.set(requestId, { resolve, reject });
@@ -62,7 +86,7 @@ export function createWorkerServer({ token, maxConcurrent = 4, operatorMcpConfig
         }),
       });
       emit({ type: 'result', result });
-    } catch (error) { emit({ type: 'error', error: String(error?.message || 'PI_RUN_FAILED').replace(/(?:Bearer\s+)[^\s]+/ig, 'Bearer [REDACTED]').slice(0, 2000) }); }
+    } catch (error) { emit({ type: 'error', error: String(error?.message || 'PI_RUN_FAILED').replace(/(?:Bearer\s+)[^\s]+/ig, 'Bearer [REDACTED]').slice(0, 2000), ...(error.checkpoint || {}) }); }
     finally { clearInterval(heartbeat); clearTimeout(timeout); active.delete(workerRunId); res.removeListener('close', abort); controller.signal.removeEventListener('abort', abort); abort(); res.end(); }
   });
   server.requestTimeout = 120000;

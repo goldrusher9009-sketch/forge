@@ -1,168 +1,43 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useUiLanguage } from '../../lib/ui-language';
+import styles from './OnboardingFlow.module.css';
 
 interface OnboardingFlowProps {
   onComplete: (data: { orgName: string; teamSize: string; providers: string[] }) => void;
 }
 
 export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) => {
-  const [step, setStep] = useState(1);
-  const [orgName, setOrgName] = useState('');
-  const [teamSize, setTeamSize] = useState('1-5');
-  const [providers, setProviders] = useState<string[]>(['anthropic']);
-
-  const toggleProvider = (p: string) => {
-    setProviders(prev =>
-      prev.includes(p) ? prev.filter(x => x !== p) : [...prev, p]
-    );
-  };
-
-  const handleSkip = () => {
-    onComplete({ orgName: orgName || 'My Workspace', teamSize, providers });
-  };
-
-  const handleNext = () => {
-    if (step === 1 && !orgName.trim()) return;
-    if (step < 3) setStep(step + 1);
-    else onComplete({ orgName, teamSize, providers });
-  };
-
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(8,8,9,0.95)', backdropFilter: 'blur(8px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 10000
-    }}>
-      <div style={{
-        background: 'var(--fg-bg3)', border: '1px solid var(--fg-border2)',
-        borderRadius: '16px', padding: '40px', width: '90%', maxWidth: '500px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.4)'
-      }}>
-        {/* Progress dots */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '32px', justifyContent: 'center' }}>
-          {[1, 2, 3].map(s => (
-            <div key={s} style={{
-              width: '8px', height: '8px', borderRadius: '50%',
-              background: s === step ? 'var(--fg-orange)' : s < step ? 'var(--fg-green)' : 'var(--fg-border2)',
-              transition: 'all 0.3s ease'
-            }} />
-          ))}
-        </div>
-
-        {/* Step 1: Org Setup */}
-        {step === 1 && (
-          <div style={{ animation: 'fg-slide-in 0.3s ease' }}>
-            <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>Welcome to Forge</h2>
-            <p style={{ color: 'var(--fg-text2)', marginBottom: '24px' }}>Let's set up your workspace</p>
-            <label style={{ display: 'block', marginBottom: '12px', fontSize: '13px', fontWeight: '500' }}>
-              Organization Name
-            </label>
-            <input
-              type="text"
-              value={orgName}
-              onChange={e => setOrgName(e.target.value)}
-              placeholder="My Company"
-              style={{
-                width: '100%', padding: '10px 12px', borderRadius: '8px',
-                border: '1px solid var(--fg-border2)', background: 'var(--fg-bg)',
-                color: 'var(--fg-text)', fontSize: '14px', marginBottom: '24px',
-                outline: 'none'
-              }}
-            />
-            <label style={{ display: 'block', marginBottom: '12px', fontSize: '13px', fontWeight: '500' }}>
-              Team Size
-            </label>
-            <select
-              value={teamSize}
-              onChange={e => setTeamSize(e.target.value)}
-              style={{
-                width: '100%', padding: '10px 12px', borderRadius: '8px',
-                border: '1px solid var(--fg-border2)', background: 'var(--fg-bg)',
-                color: 'var(--fg-text)', fontSize: '14px'
-              }}
-            >
-              <option>1-5</option>
-              <option>6-20</option>
-              <option>21-100</option>
-              <option>100+</option>
-            </select>
-          </div>
-        )}
-
-        {/* Step 2: Provider Selection */}
-        {step === 2 && (
-          <div>
-            <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>Choose AI Providers</h2>
-            <p style={{ color: 'var(--fg-text2)', marginBottom: '24px' }}>Select your LLM API keys</p>
-            {['anthropic', 'openai', 'gemini', 'groq'].map(p => (
-              <button
-                key={p}
-                onClick={() => toggleProvider(p)}
-                style={{
-                  display: 'block', width: '100%', padding: '12px 16px', marginBottom: '12px',
-                  borderRadius: '8px', border: '2px solid',
-                  borderColor: providers.includes(p) ? 'var(--fg-orange)' : 'var(--fg-border2)',
-                  background: providers.includes(p) ? 'rgba(255,31,53,0.1)' : 'var(--fg-bg)',
-                  color: 'var(--fg-text)', cursor: 'pointer', fontWeight: '500'
-                }}
-              >
-                {p.toUpperCase()} {providers.includes(p) ? '✓' : ''}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Step 3: First Thread */}
-        {step === 3 && (
-          <div>
-            <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>Create Your First Thread</h2>
-            <p style={{ color: 'var(--fg-text2)', marginBottom: '24px' }}>Ready to start building?</p>
-            <div style={{
-              background: 'var(--fg-bg2)', border: '1px dashed var(--fg-border2)',
-              borderRadius: '12px', padding: '24px', textAlign: 'center'
-            }}>
-              <div style={{ fontSize: '32px', marginBottom: '12px' }}>💬</div>
-              <p style={{ marginBottom: '4px' }}>Create your first AI-powered thread</p>
-              <p style={{ color: 'var(--fg-text2)', fontSize: '13px' }}>Start a conversation to build your first app</p>
-            </div>
-          </div>
-        )}
-
-        {/* Navigation */}
-        <div style={{ display: 'flex', gap: '12px', marginTop: '32px' }}>
-          {step > 1 && (
-            <button
-              onClick={() => setStep(step - 1)}
-              className="fg-btn-secondary"
-              style={{ flex: 1 }}
-            >
-              Back
-            </button>
-          )}
-          <button
-            onClick={handleNext}
-            className="fg-btn-primary"
-            style={{ flex: 1 }}
-          >
-            {step === 3 ? 'Start Building' : 'Next'}
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '14px' }}>
-          <button
-            type="button"
-            onClick={handleSkip}
-            style={{
-              background: 'none', border: 'none', padding: '4px 8px',
-              color: 'var(--fg-text2)', fontSize: '13px', cursor: 'pointer',
-              textDecoration: 'underline', textUnderlineOffset: '3px',
-            }}
-          >
-            Skip for now
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  const [uiLanguage] = useUiLanguage();
+  const zh = uiLanguage === 'zh';
+  const enter = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    enter.current?.focus();
+    return () => { previous?.focus(); };
+  }, []);
+  // Keep the callback contract while avoiding setup fields the parent does not save.
+  const complete = () => onComplete({ orgName: '', teamSize: '', providers: [] });
+  const steps = zh ? [
+    ['01', '让资料有序', '把文件放进个人资料库，用文件夹整理，并为 Agent 选择参考资料。'],
+    ['02', '把方法做成 Agent', '描述它的工作，编辑指令与模型，运行测评，再发布可复用的版本。'],
+    ['03', '从任务走向交付', '选择已发布版本，提出目标，在对话中跟进结果和模型用量。'],
+  ] : [
+    ['01', 'Give your knowledge a home', 'Organize files in your personal library and choose the sources your Agent can use.'],
+    ['02', 'Turn your method into an Agent', 'Describe the job, refine its instructions and model, then evaluate and publish a version.'],
+    ['03', 'Start with an outcome', 'Use a published version for a task. Follow the results and review your model usage.'],
+  ];
+  return <div className={styles.backdrop} onKeyDown={event => {
+    if (event.key === 'Tab') { event.preventDefault(); enter.current?.focus(); }
+    if (event.key === 'Escape') complete();
+  }}>
+    <section role="dialog" aria-modal="true" aria-labelledby="forge-welcome-title" aria-describedby="forge-welcome-description" className={styles.dialog}>
+      <div className={styles.brand}><span aria-hidden="true">F↗</span><span>FORGE</span></div>
+      <p className={styles.eyebrow}>{zh ? '你的第一个工作区' : 'YOUR FIRST WORKSPACE'}</p>
+      <h2 id="forge-welcome-title">{zh ? '欢迎，让工作向前一步。' : 'Welcome. Put your ideas to work.'}</h2>
+      <p id="forge-welcome-description" className={styles.intro}>{zh ? '从一个任务开始，逐步建立属于你的 Agent 和资料库。' : 'Start with one task. Build a library of knowledge and Agents that work your way.'}</p>
+      <ol className={styles.steps}>{steps.map(([number,title,description]) => <li key={number}><span className={styles.number}>{number}</span><div><h3>{title}</h3><p>{description}</p></div></li>)}</ol>
+      <div className={styles.footer}><p>{zh ? '运行模型会消耗 Forge 额度。开始前可以查看模型价格，用量和套餐统一在账号中管理。' : 'Model runs use Forge credit. Review model prices before you begin, and manage usage and plans in your account.'}</p><button ref={enter} onClick={complete}>{zh ? '进入我的工作区' : 'Open my workspace'} <span aria-hidden="true">↗</span></button></div>
+    </section>
+  </div>;
 };

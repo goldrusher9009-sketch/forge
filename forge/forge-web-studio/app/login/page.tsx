@@ -1,8 +1,4 @@
-'use client';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-export default function LoginPage() {
-  const router = useRouter();
-  useEffect(() => { router.replace('/'); }, [router]);
-  return null;
-}
+﻿import type { Metadata } from 'next';
+import { AccountEntryRoute } from '../components/AccountEntryRoute';
+export const metadata: Metadata = { title: 'Sign in · Forge', robots: { index: true, follow: true } };
+export default function Page() { return <AccountEntryRoute mode="login" />; }

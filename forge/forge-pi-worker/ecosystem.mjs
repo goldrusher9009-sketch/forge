@@ -98,7 +98,7 @@ export function createForgeBuiltinExtension({ skills, onEvent = () => {} }) {
       }
     });
     pi.on('before_agent_start', event => ({
-      systemPrompt: `${event.systemPrompt}\n\nForge bundled skills are loaded with forge_skill, not by opening worker-local paths with workspace tools. Available skills: ${[...availableSkills.keys()].join(', ')}. Load a relevant skill before using its workflow. forge_plan records declared progress; only Forge tool receipts establish that an external action or artifact exists.`,
+      systemPrompt: `${event.systemPrompt}\n\nForge bundled skills are loaded with forge_skill, not by opening worker-local paths with workspace tools. Available skills: ${[...availableSkills.keys()].join(', ')}. Load a relevant skill when its workflow is useful and permitted by the user. User restrictions on tools apply to forge_skill and forge_plan too: if the user asks to use only named tools, do not load skills or create/update a plan unless those tools are named. Avoid planning overhead for small, explicit deliverables; prioritize the requested output within the run budget. forge_plan records declared progress; only Forge tool receipts establish that an external action or artifact exists.`,
     }));
     pi.registerTool({
       name: 'forge_skill', label: 'Load Forge skill',

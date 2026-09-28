@@ -1,0 +1,87 @@
+.navigation { padding: 14px 6px 2px; }
+.eyebrow { font: 600 10px/1.5 var(--fg-font-mono, monospace); letter-spacing: .12em; color: var(--fg-text3); }
+.navigation > .eyebrow { padding: 0 10px 12px; }
+.navLink { width: 100%; display: flex; align-items: center; gap: 12px; border: 1px solid transparent; border-radius: 9px; padding: 11px 10px; background: transparent; color: var(--fg-text2); text-align: left; font-size: 12px; cursor: pointer; margin-bottom: 4px; }
+.navMark { color: var(--fg-text3); font: 11px var(--fg-font-mono, monospace); min-width: 20px; }
+.navLink[aria-current] { color: var(--fg-text); background: var(--fg-bg4); border-color: var(--fg-border2); }
+.navLink[aria-current] .navMark { color: var(--fg-orange); }
+.navLink:hover { background: var(--fg-bg3); }
+.moreTools { margin-top: 12px; border-top: 1px solid var(--fg-border); padding-top: 10px; }
+.moreTools > summary { padding: 8px 10px; color: var(--fg-text3); font-size: 12px; cursor: pointer; }
+.header { flex-shrink: 0; position: relative; z-index: 30; min-width: 0; background: var(--fg-bg); border-bottom: 1px solid var(--fg-border); padding: 20px 28px 14px; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.titleBlock { min-width: 0; }
+.titleBlock h1 { color: var(--fg-text); font-size: 20px; line-height: 1.5; font-weight: 550; letter-spacing: -.035em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 3px 0 0; }
+.actions { display: flex; gap: 8px; flex-shrink: 0; }
+.header button { cursor: pointer; }
+.actions button, .modelPicker > button { border: 1px solid var(--fg-border2); border-radius: 8px; background: transparent; color: var(--fg-text2); padding: 8px 11px; font-size: 12px; white-space: nowrap; }
+.actions button:hover, .actions button[aria-expanded=true], .actions button[aria-pressed=true] { color: var(--fg-text); background: var(--fg-bg4); }
+.controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 18px; min-width: 0; }
+.modelPicker { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; min-width: 0; flex: 1; }
+.modelPicker label { display: flex; align-items: center; gap: 8px; color: var(--fg-text3); font-size: 11px; max-width: 100%; }
+.modelPicker select { background: var(--fg-bg3); color: var(--fg-text); border: 1px solid var(--fg-border2); border-radius: 8px; padding: 8px 10px; font-size: 12px; max-width: 235px; min-width: 0; }
+.modelPicker select:disabled { opacity: .8; }
+.rate { font-size: 10px; line-height: 1.6; color: var(--fg-text3); }
+.modelPicker > .billingLink { border: 0; margin-left: auto; padding: 5px 0; font-size: 11px; }
+.advanced { margin-top: 16px; border-top: 1px solid var(--fg-border); padding-top: 14px; max-height: 40vh; overflow: auto; }
+.advanced > div { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 12px 0; }
+.advanced > div > * { max-width: 100%; }
+.advanced > div > div { flex-wrap: wrap; min-width: 0; }
+.welcome { width: 100%; max-width: 900px; margin: auto; padding: 34px 12px 24px; }
+.welcomeMark { font-family: var(--fg-font-display, sans-serif); font-size: 30px; font-weight: 800; letter-spacing: -.07em; width: 64px; height: 64px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--fg-border2); border-radius: 18px; background: var(--fg-bg3); margin-bottom: 28px; }
+.welcomeMark span { font-size: 17px; color: var(--fg-orange); margin-left: 3px; }
+.welcome h2 { max-width: 730px; font-family: var(--fg-font-display, sans-serif); font-size: clamp(30px, 3.8vw, 52px); line-height: 1.12; font-weight: 550; letter-spacing: -.045em; margin: 16px 0 20px; text-wrap: balance; overflow-wrap: anywhere; }
+.intro { max-width: 590px; font-size: 15px; color: var(--fg-text2); line-height: 1.8; }
+.studioButton { margin-top: 24px; padding: 12px 18px; display: inline-flex; align-items: center; gap: 28px; background: var(--fg-text); color: var(--fg-bg); border: 0; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.examples { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 40px; border-top: 1px solid var(--fg-border2); border-bottom: 1px solid var(--fg-border2); }
+.examples button { display: flex; flex-direction: column; align-items: flex-start; position: relative; padding: 20px 18px; gap: 18px; border: 0; border-right: 1px solid var(--fg-border2); background: transparent; color: var(--fg-text); text-align: left; cursor: pointer; transition: background .18s ease; }
+.examples button:last-child { border-right: 0; }
+.examples button:hover { background: var(--fg-bg4); }
+.exampleNumber { font: 10px var(--fg-font-mono, monospace); color: var(--fg-text3); }
+.examples strong { font-size: 13px; line-height: 1.6; font-weight: 500; padding-right: 12px; }
+.exampleArrow { position: absolute; top: 18px; right: 15px; color: var(--fg-text3); }
+.footnote { font-size: 10px; line-height: 1.6; color: var(--fg-text3); margin-top: 14px; }
+.header :focus-visible, .navigation :focus-visible, .welcome :focus-visible { outline: 2px solid var(--fg-orange); outline-offset: 3px; }
+.sheet { padding: 0; border: 1px solid var(--fg-border2); border-radius: 18px 18px 0 0; background: var(--fg-bg); color: var(--fg-text); width: 100%; max-width: 600px; max-height: calc(100dvh - 64px); margin: auto auto 0; overflow: hidden; box-shadow: 0 -20px 80px #0005; }
+.sheet[open] { display: flex; flex-direction: column; }
+.sheet::backdrop { background: #0009; }
+.sheetHeading { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 20px 20px 16px; border-bottom: 1px solid var(--fg-border2); flex-shrink: 0; }
+.sheetHeading > div { min-width: 0; }
+.sheetHeading h2 { font-size: 22px; font-weight: 550; letter-spacing: -.04em; margin: 5px 0 8px; }
+.sheetHeading p { color: var(--fg-text3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; }
+.sheetHeading > button { width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--fg-border2); border-radius: 50%; background: var(--fg-bg3); color: var(--fg-text); cursor: pointer; font-size: 24px; }
+.sheetBody { padding: 0 20px max(20px, env(safe-area-inset-bottom)); min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.sheet .controls { margin: 0; padding: 20px 0; gap: 16px; }
+.sheet .modelPicker { padding: 16px 0; border-top: 1px solid var(--fg-border); border-bottom: 1px solid var(--fg-border); }
+.sheet .modelPicker label { width: 100%; }
+.sheet .modelPicker select { flex: 1; max-width: none; min-height: 44px; font-size: 16px; }
+.sheet .modelPicker > .billingLink { min-height: 36px; }
+.sheetActions { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 18px; border-top: 1px solid var(--fg-border); }
+.sheetActions button { border: 1px solid var(--fg-border2); border-radius: 8px; background: transparent; color: var(--fg-text2); padding: 10px 12px; min-height: 44px; font-size: 12px; cursor: pointer; }
+.sheet .advanced { max-height: none; overflow: visible; }
+.sheet :focus-visible { outline: 2px solid var(--fg-orange); outline-offset: 3px; }
+.taskTools > section > button { padding-left: 0; padding-right: 0; min-height: 44px; }
+.taskTools > section > div { max-height: none; overflow: visible; padding-left: 0; padding-right: 0; }
+.taskTools input, .taskTools select, .taskTools textarea { font-size: 16px; }
+@media (max-width: 1100px) { .header { padding: 16px; } .rate { flex-basis: 100%; } .actions { gap: 5px; } }
+@media (max-width: 767px) { .header { padding: 14px 12px 12px; } .titleRow { align-items: flex-start; gap: 10px; } .titleBlock h1 { font-size: 16px; max-width: 160px; } .actions { gap: 5px; } .actions button { padding: 7px; font-size: 11px; } .panelToggle { display: none; } .controls { margin-top: 12px; gap: 10px; } .modelPicker { flex-basis: 100%; } .modelPicker select { max-width: 250px; } .rate { flex-basis: auto; } .welcome { padding: 22px 2px; } .welcomeMark { width: 44px; height: 44px; font-size: 24px; border-radius: 12px; margin-bottom: 20px; } .welcome h2 { font-size: 32px; } .intro { font-size: 13px; } .examples { margin-top: 26px; grid-template-columns: 1fr; } .examples button { padding: 14px 10px; flex-direction: row; align-items: center; border-right: 0; border-bottom: 1px solid var(--fg-border); gap: 14px; } .examples button:last-child { border-bottom: 0; } }
+@media (prefers-reduced-motion: reduce) { .examples button { transition: none; } }
+/* The existing composer positions its action row over the textarea. On a narrow
+   screen the wrapped row obscures the input; give it its own flow and scroll. */
+@media (max-width: 767px) {
+  .header { padding: 10px 12px; }
+  .titleRow { align-items: center; }
+  .titleBlock { flex: 1; }
+  .titleBlock h1 { max-width: none; }
+  .actions > button { min-height: 44px; padding: 10px 12px; }
+  .header ~ div :global(div:has(> textarea)) > textarea { padding: 12px !important; min-height: 62px !important; }
+  .header ~ div :global(div:has(> textarea)) > div:last-child { position: static !important; gap: 8px; }
+  .header ~ div :global(div:has(> textarea)) > div:last-child > div:first-child { flex-wrap: nowrap !important; min-width: 0; flex: 1; overflow: visible; padding-bottom: 4px; }
+  .header ~ div :global(div:has(> textarea)) > div:last-child button { flex-shrink: 0; white-space: nowrap; }
+}
+@media (max-width: 767px) and (max-height: 650px) {
+  .header { padding-block: 6px; }
+  .header ~ div :global([data-testid="task-composer"] textarea) { min-height: 48px !important; max-height: 72px !important; }
+  .header ~ div :global([data-testid="task-composer"] .fg-composer-agents) { margin-bottom: 4px; }
+  .header ~ div :global([data-testid="task-composer"] section > ul) { max-height: 72px; }
+}

@@ -2,8 +2,11 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Forge — AI Agent Platform",
-  description: "Manage, deploy and monitor AI agents at scale",
+  metadataBase: new URL("https://forge-sand-two.vercel.app"),
+  title: "Forge — Your expertise. An Agent that delivers.",
+  description: "Create personal AI Agents with your sources, evaluate them, publish versions and review real deliverables. Plans from $29 per month with shared model credit.",
+  openGraph: { siteName: "Forge", type: "website", url: "/landing", title: "Forge — Your expertise. An Agent that delivers.", description: "Create personal AI Agents with your sources, evaluate them, publish versions and review real deliverables." },
+  robots: { index: true, follow: true },
   icons: { icon: "/icon.png", apple: "/apple-icon.png", shortcut: "/favicon.ico" },
   appleWebApp: { capable: true, statusBarStyle: "black-translucent" },
 };
