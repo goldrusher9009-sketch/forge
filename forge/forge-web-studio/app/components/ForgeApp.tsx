@@ -7783,7 +7783,7 @@ function ForgeApp() {
               panelOpen={rightExpanded} onPanel={() => setRightExpanded(value => !value)}
               controls={<>
                 <PublishedAgentPicker key={'published:'+user.email} api={path=>apiFetch(path,{},user.token)} onUse={usePublishedAgent} active={activeThread?.publishedAgent} zh={workspaceZh} disabled={sending}/>
-                <WorkspaceModelPicker key={'model:'+user.email} api={path => apiFetch(path, {}, user.token)} value={activeThread?.publishedAgent?.model || selectedModel} onChange={setSelectedModel} locked={!!activeThread?.agent_release_id} zh={workspaceZh} onBilling={() => setMainTab('billing')} personalOptions={WORKSPACE_PERSONAL_MODELS} />
+                <WorkspaceModelPicker key={'model:'+user.email} api={path => apiFetch(path, {}, user.token)} value={activeThread?.publishedAgent?.model || selectedModel} onChange={setSelectedModel} locked={!!activeThread?.agent_release_id} zh={workspaceZh} onBilling={() => setMainTab('billing')} onSettings={() => setMainTab('settings')} personalOptions={WORKSPACE_PERSONAL_MODELS} />
                 {activeThread && !activeThread.agent_release_id && <ThreadSkills key={`skills:${user.id || user.email}:${activeThread.id}`} api={(path, options) => apiFetch(path, options || {}, user.token)} threadId={String(activeThread.id)} zh={workspaceZh} sending={sending} onLibrary={() => setMainTab('proceduralskills')} />}
               </>}>
               <div>

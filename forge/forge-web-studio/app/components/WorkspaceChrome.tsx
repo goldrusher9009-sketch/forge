@@ -81,9 +81,9 @@ export function WorkspaceHeader({ title, zh, controls, children, onLibrary, onPa
 
 type ManagedModel = { id: string; name: string; tier: string; available: boolean; isDefault?: boolean; pricing: { input: number; output: number } };
 type PersonalModel = { id: string; name: string; provider: string };
-export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilling, personalOptions }: {
+export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilling, onSettings, personalOptions }: {
   api: (path: string) => Promise<any>; value: string; onChange: (id: string) => void;
-  locked: boolean; zh: boolean; onBilling: () => void; personalOptions: PersonalModel[];
+  locked: boolean; zh: boolean; onBilling: () => void; onSettings: () => void; personalOptions: PersonalModel[];
 }) {
   const apiRef = useRef(api); apiRef.current = api;
   const [models, setModels] = useState<ManagedModel[]>([]), [personal, setPersonal] = useState<PersonalModel[]>([]), [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -122,7 +122,7 @@ export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilli
     </select></label>
     {status === 'loading' && <span className={styles.rate}>{zh ? '读取模型…' : 'Loading models…'}</span>}
     {status === 'error' && <button onClick={() => setRevision(value => value + 1)}>{zh ? '模型读取失败 · 重试' : 'Models unavailable · retry'}</button>}
-    {status === 'ready' && !models.length && !personal.length && <span className={styles.rate}>{zh ? '模型服务暂不可用' : 'Model service unavailable'}</span>}
+    {status === 'ready' && !models.length && !personal.length && <button className={styles.billingLink} onClick={onSettings}>{zh ? '连接模型服务' : 'Connect a model provider'} ↗</button>}
     {selected && <span className={styles.rate}>{locked ? (zh ? '版本已固定 · ' : 'Version locked · ') : ''}{zh ? '输入' : 'In'} ${selected.pricing.input} / {zh ? '输出' : 'out'} ${selected.pricing.output} <span title={zh ? '每百万 tokens 的基础展示价，按实际用量核对结算。' : 'Base price per million tokens. Charges settle against actual usage.'}>/ 1M</span></span>}
     {personalSelected && <span className={styles.rate}>{zh ? '由模型服务商计费' : 'Billed by your provider'}</span>}
     <button className={styles.billingLink} onClick={onBilling}>{zh ? '用量与套餐' : 'Usage & plan'} ↗</button>
