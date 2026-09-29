@@ -37,8 +37,8 @@ export function setUiLanguage(language: UiLanguage) {
 }
 
 /** Interface language is independent of the model's response-language setting. */
-export function useUiLanguage() {
-  const [language, update] = useState<UiLanguage>('en');
+export function useUiLanguage(initialLanguage: UiLanguage = 'en') {
+  const [language, update] = useState<UiLanguage>(initialLanguage);
   useEffect(() => {
     const sync = () => {
       const next = readUiLanguage();
