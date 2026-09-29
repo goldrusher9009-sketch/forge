@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { AuthenticatedEventSource } from '../../../lib/authenticated-event-source';
 import { API, BACKEND, API_BASE, getToken, saveToolHistory, INTEGRATION_CATALOG, INTEGRATION_CATS, CHAINABLE_TOOLS } from './shared';
 
 export function ForgeTab_eulogywriter() {
@@ -227,7 +228,7 @@ export function ForgeTab_forgeoperator() {
           const [sessions, setSessions] = React.useState<any[]>([]);
           const [activeSession, setActiveSession] = React.useState<any>(null);
           const [loadingSession, setLoadingSession] = React.useState(false);
-          const esRef = React.useRef<EventSource|null>(null);
+          const esRef = React.useRef<AuthenticatedEventSource|null>(null);
           const logRef = React.useRef<HTMLDivElement>(null);
 
           const ACTION_ICONS: Record<string,string> = {
@@ -248,7 +249,7 @@ export function ForgeTab_forgeoperator() {
 
           const connectSSE = (sid: string) => {
             if (esRef.current) esRef.current.close();
-            const es = new EventSource(`${API}/api/operator/stream/${sid}?token=${tok}`);
+            const es = new AuthenticatedEventSource(`${API}/api/operator/stream/${sid}`, tok || '');
             esRef.current = es;
 
             es.addEventListener('thinking', (e:any) => {

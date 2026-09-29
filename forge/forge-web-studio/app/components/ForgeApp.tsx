@@ -2,6 +2,7 @@
 'use client';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createTaskView } from '../../lib/task-view';
+import { AuthenticatedEventSource } from '../../lib/authenticated-event-source';
 import { dreamCategoryLabel, dreamSearchText, localizeDreamTool } from '../../lib/dream-tool-zh';
 import { createAccountLocalState, retireLegacyLocalCredentials, hasUnownedLocalWorkspaceData } from '../../lib/account-local-state';
 import { AdminBillingOps } from './AdminBillingOps';
@@ -4911,7 +4912,7 @@ function ForgeApp() {
 
   // Live activity feed
   const [liveEvents, setLiveEvents] = useState<{type:string;message:string;model?:string;elapsed?:number;ts:number}[]>([]);
-  const liveSSERef = useRef<EventSource|null>(null);
+  const liveSSERef = useRef<AuthenticatedEventSource|null>(null);
   // AbortController for current sendMessage request -- allows Stop button to cancel in-flight LLM call
   const sendAbortRef = useRef<AbortController|null>(null);
   // Pending message queue -- if user types while AI is thinking, queue it for immediate send after current response
@@ -5033,7 +5034,7 @@ function ForgeApp() {
     ta.style.height = 'auto';
     ta.style.height = Math.min(ta.scrollHeight, 200) + 'px';
   }, [input]);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const eventSourceRef = useRef<AuthenticatedEventSource | null>(null);
 
   // -- Inject global animation styles once -----------------------------------
   useEffect(() => {
@@ -5194,7 +5195,7 @@ function ForgeApp() {
   useEffect(() => {
     if (!user) { liveSSERef.current?.close(); liveSSERef.current = null; return; }
     const token = user.token;
-    const es = new EventSource(`${API}/live/activity?token=${token}`);
+    const es = new AuthenticatedEventSource(`${API}/live/activity`, token);
     es.onmessage = (ev) => {
       try {
         const data = JSON.parse(ev.data);
@@ -7285,7 +7286,7 @@ function ForgeApp() {
       setActiveDispatchRunId(runId);
 
       if (eventSourceRef.current) eventSourceRef.current.close();
-      const es = new EventSource(`${API}/dispatch/stream/${runId}?token=${user.token}`);
+      const es = new AuthenticatedEventSource(`${API}/dispatch/stream/${runId}`, user.token);
       eventSourceRef.current = es;
       let output = '';
 

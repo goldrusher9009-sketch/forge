@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { AuthenticatedEventSource } from '../../../lib/authenticated-event-source';
 import { API, BACKEND, API_BASE, getToken, saveToolHistory, INTEGRATION_CATALOG, INTEGRATION_CATS, CHAINABLE_TOOLS } from './shared';
 import { utcStamp } from '../../../lib/platform-time';
 
@@ -117,7 +118,7 @@ export function ForgeTab_forgeauto2() {
           const [sessions, setSessions] = React.useState<any[]>([]);
           const [activeArtifact, setActiveArtifact] = React.useState<any>(null);
           const logRef = React.useRef<HTMLDivElement>(null);
-          const esRef = React.useRef<EventSource|null>(null);
+          const esRef = React.useRef<AuthenticatedEventSource|null>(null);
           React.useEffect(()=>{if(logRef.current) logRef.current.scrollTop=logRef.current.scrollHeight;},[steps,phase]);
           React.useEffect(()=>{fetch(`${API}/api/autonomy/sessions`,{headers:{'Authorization':`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setSessions(d.sessions||[])).catch(()=>{});},[]);
           const TYPE_ICONS:Record<string,string>={research:'🔍',browse:'🌐',code:'💻',write:'✍️',analyze:'📊',create:'🎨',synthesize:'🔮',default:'⚙️'};
@@ -127,7 +128,7 @@ export function ForgeTab_forgeauto2() {
             if(esRef.current) esRef.current.close();
             const r = await fetch(`${API}/api/autonomy/run`, {method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({goal})});
             const {sessionId} = await r.json();
-            const es = new EventSource(`${API}/api/autonomy/stream/${sessionId}?token=${tok}`);
+            const es = new AuthenticatedEventSource(`${API}/api/autonomy/stream/${sessionId}`, tok || '');
             esRef.current = es;
             es.addEventListener('thinking', ((e:MessageEvent)=>{setPhase(JSON.parse(e.data).message);}) as EventListener);
             es.addEventListener('plan', ((e:MessageEvent)=>{

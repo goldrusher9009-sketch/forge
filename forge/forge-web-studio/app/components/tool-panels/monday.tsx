@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { AuthenticatedEventSource } from '../../../lib/authenticated-event-source';
 import { API, BACKEND, API_BASE, getToken, saveToolHistory, INTEGRATION_CATALOG, INTEGRATION_CATS, CHAINABLE_TOOLS } from './shared';
 import { utcStamp } from '../../../lib/platform-time';
 
@@ -574,7 +575,7 @@ export function ForgeTab_hermes() {
           const [thinking, setThinking] = React.useState('');
           const [viewRun, setViewRun] = React.useState<any>(null);
           const stepsRef = React.useRef<HTMLDivElement>(null);
-          const esRef = React.useRef<EventSource|null>(null);
+          const esRef = React.useRef<AuthenticatedEventSource|null>(null);
 
           React.useEffect(() => {
             fetch(`${API}/api/hermes/runs`, { headers: { Authorization: `Bearer ${tok}` } })
@@ -599,7 +600,7 @@ export function ForgeTab_hermes() {
             setRunId(d.id);
             // Open SSE stream
             if (esRef.current) esRef.current.close();
-            const es = new EventSource(`${API}/api/hermes/stream/${d.id}`);
+            const es = new AuthenticatedEventSource(`${API}/api/hermes/stream/${d.id}`, tok || '');
             esRef.current = es;
             es.addEventListener('step', (e: any) => {
               const s = JSON.parse(e.data);
@@ -822,7 +823,7 @@ export function ForgeTab_forgedeepresearch() {
           const [report, setReport] = React.useState('');
           const [sessions, setSessions] = React.useState<any[]>([]);
           const [activeSession, setActiveSession] = React.useState<string|null>(null);
-          const esRef = React.useRef<EventSource|null>(null);
+          const esRef = React.useRef<AuthenticatedEventSource|null>(null);
           React.useEffect(()=>{fetch(`${API}/api/deep-research/sessions`,{headers:{'Authorization':`Bearer ${tok}`}}).then(r=>r.json()).then(d=>setSessions(d.sessions||[])).catch(()=>{});},[]);
           const startResearch = async()=>{
             if(!topic.trim()) return;
@@ -830,7 +831,7 @@ export function ForgeTab_forgedeepresearch() {
             const r=await fetch(`${API}/api/deep-research/run`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${tok}`},body:JSON.stringify({topic,depth})});
             const {sessionId}=await r.json();
             setActiveSession(sessionId);
-            const es=new EventSource(`${API}/api/deep-research/stream/${sessionId}?token=${tok}`);
+            const es=new AuthenticatedEventSource(`${API}/api/deep-research/stream/${sessionId}`, tok || '');
             esRef.current=es;
             es.addEventListener('thinking',((e:MessageEvent)=>{setPhase(JSON.parse(e.data).message);}) as EventListener);
             es.addEventListener('questions',((e:MessageEvent)=>{setQuestions(JSON.parse(e.data).questions);setTotal(JSON.parse(e.data).questions.length);}) as EventListener);
