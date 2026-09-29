@@ -9,7 +9,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const description = zh
     ? '用你的资料和标准创建专属 Agent，测评并发布版本，交付可以检查的成果。'
     : 'Create personal AI Agents with your sources, evaluate them, publish versions and review real deliverables. Plans from $29 per month with shared model credit.';
-  return { title, description, openGraph: { title, description, locale: zh ? 'zh_CN' : 'en_US' } };
+  return { title, description, openGraph: { siteName: 'Forge', type: 'website', url: zh ? '/landing?lang=zh' : '/landing', title, description, locale: zh ? 'zh_CN' : 'en_US' } };
 }
 
 export default async function LandingPage({ searchParams }: Props) {
