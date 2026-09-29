@@ -2,6 +2,7 @@
 export class AuthenticatedEventSource extends EventTarget {
   onmessage: ((event: MessageEvent) => void) | null = null;
   onerror: ((event: Event) => void) | null = null;
+  readyState = 0;
   private controller: AbortController | null = null;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
   private closed = false;
@@ -15,6 +16,7 @@ export class AuthenticatedEventSource extends EventTarget {
 
   close() {
     this.closed = true;
+    this.readyState = 2;
     this.controller?.abort();
     if (this.retryTimer) clearTimeout(this.retryTimer);
   }
@@ -36,6 +38,9 @@ export class AuthenticatedEventSource extends EventTarget {
       const response = await fetch(this.url, { headers, credentials: 'same-origin', cache: 'no-store', signal: controller.signal });
       if (response.status === 401 || response.status === 403) retry = false;
       if (!response.ok || !response.body) throw new Error(`SSE_HTTP_${response.status}`);
+      if (this.closed) return;
+      this.readyState = 1;
+      this.dispatchEvent(new Event('open'));
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
@@ -71,6 +76,8 @@ export class AuthenticatedEventSource extends EventTarget {
       if (this.closed || controller.signal.aborted) return;
     }
     if (this.closed) return;
+    this.readyState = retry ? 0 : 2;
+    if (!retry) this.closed = true;
     const error = new Event('error');
     this.dispatchEvent(error);
     this.onerror?.(error);
