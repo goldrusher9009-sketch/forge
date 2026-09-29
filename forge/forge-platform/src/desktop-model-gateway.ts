@@ -85,7 +85,7 @@ export function createDesktopModelGateway(deps: Dependencies) {
     if (!deps.getManagedKey()) return [];
     const enabled = new Set(db.prepare("SELECT id FROM platform_models WHERE enabled=1 AND provider='openrouter'").all().map((row: any) => row.id));
     const visible = OPENROUTER_CATALOG.filter(model => enabled.has(model.id));
-    const preferred = state.billing.trialOnly ? 'openai/gpt-5.6-luna' : DEFAULT_OPENROUTER_MODEL;
+    const preferred = DEFAULT_OPENROUTER_MODEL;
     const fallback = visible.find(model => model.id === preferred)?.id
       ?? visible.find(model => model.tier === (state.billing.trialOnly ? 'lightweight' : 'balanced'))?.id
       ?? visible.find(model => !state.billing.trialOnly || model.tier === 'lightweight')?.id;

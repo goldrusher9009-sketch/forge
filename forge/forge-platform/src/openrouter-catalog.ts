@@ -5,7 +5,7 @@
 export const OPENROUTER_CATALOG_VERIFIED_AT = '2026-09-14T09:31:56.781107Z';
 export const OPENROUTER_CATALOG_SOURCE = 'https://openrouter.ai/api/v1/models';
 export const OPENROUTER_RETAIL_MULTIPLIER = 1.25;
-export const DEFAULT_OPENROUTER_MODEL = 'openai/gpt-5.6-sol';
+export const DEFAULT_OPENROUTER_MODEL = 'stealth/space-bunny-alpha';
 
 /** Token prices in USD per million; request is USD per request. Cache-write
  * prices are complete input costs, including Gemini's additional storage cost. */
@@ -41,6 +41,49 @@ export interface OpenRouterCatalogModel {
 }
 
 export const OPENROUTER_CATALOG: readonly OpenRouterCatalogModel[] = [
+  // Free endpoint prices and routing tags checked against the public API on 2026-09-30.
+  {
+    id: 'stealth/space-bunny-alpha',
+    name: 'Space Bunny Alpha',
+    tier: 'lightweight',
+    contextLength: 1000000,
+    maxOutputTokens: 524288,
+    supportedParameters: ['include_reasoning', 'max_tokens', 'reasoning', 'reasoning_effort', 'response_format', 'temperature', 'tool_choice', 'tools', 'top_p'],
+    reasoning: { mandatory: true, supported_efforts: ['max', 'xhigh', 'high', 'medium', 'low'], default_effort: 'max' },
+    pricing: { prompt: 0, completion: 0, cacheWrite: 0, request: 0 },
+    longContextOverrides: [],
+    upstreamPricing: { prompt: '0', completion: '0' },
+    standardProviders: ['stealth'],
+    sourceEndpoints: 'https://openrouter.ai/api/v1/models/stealth/space-bunny-alpha/endpoints',
+  },
+  {
+    id: 'qwen/qwen3.8-27b:free',
+    name: 'Qwen3.8 27B (free)',
+    tier: 'lightweight',
+    contextLength: 262144,
+    maxOutputTokens: 235929,
+    supportedParameters: ['reasoning', 'include_reasoning', 'max_tokens', 'temperature', 'presence_penalty', 'repetition_penalty', 'frequency_penalty', 'stop', 'top_p', 'structured_outputs', 'tools', 'tool_choice', 'reasoning_effort'],
+    reasoning: { mandatory: false, default_enabled: true, supported_efforts: ['xhigh', 'medium', 'low'], default_effort: 'xhigh' },
+    pricing: { prompt: 0, completion: 0, cacheWrite: 0, request: 0 },
+    longContextOverrides: [],
+    upstreamPricing: { prompt: '0', completion: '0' },
+    standardProviders: ['modelrun/fp4'],
+    sourceEndpoints: 'https://openrouter.ai/api/v1/models/qwen/qwen3.8-27b:free/endpoints',
+  },
+  {
+    id: 'nvidia/nemotron-3-ultra-550b-a55b:free',
+    name: 'Nemotron 3 Ultra (free)',
+    tier: 'lightweight',
+    contextLength: 1000000,
+    maxOutputTokens: 65536,
+    supportedParameters: ['reasoning', 'include_reasoning', 'temperature', 'max_tokens', 'seed', 'top_p', 'tools', 'tool_choice', 'reasoning_effort'],
+    reasoning: { mandatory: false, default_enabled: true, supports_max_tokens: true, supported_efforts: ['high', 'medium'], default_effort: 'high' },
+    pricing: { prompt: 0, completion: 0, cacheWrite: 0, request: 0 },
+    longContextOverrides: [],
+    upstreamPricing: { prompt: '0', completion: '0' },
+    standardProviders: ['nvidia'],
+    sourceEndpoints: 'https://openrouter.ai/api/v1/models/nvidia/nemotron-3-ultra-550b-a55b:free/endpoints',
+  },
   {
     id: "openai/gpt-6-astra",
     name: "GPT-6 Astra",
@@ -189,6 +232,14 @@ function catalogError(code: string): never {
 
 export function getOpenRouterModel(id: string): OpenRouterCatalogModel | undefined {
   return OPENROUTER_CATALOG.find(model => model.id === id);
+}
+
+export function isFreeOpenRouterModel(id: string): boolean {
+  const model = getOpenRouterModel(id);
+  return Boolean(model && !model.longContextOverrides.length && model.pricing.prompt === 0
+    && model.pricing.completion === 0 && model.pricing.cacheWrite === 0
+    && (model.pricing.cacheRead ?? 0) === 0 && (model.pricing.cacheWrite1h ?? 0) === 0
+    && model.pricing.request === 0);
 }
 
 function requireModel(id: string): OpenRouterCatalogModel {

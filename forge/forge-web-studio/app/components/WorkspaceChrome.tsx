@@ -116,14 +116,14 @@ export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilli
     <label><span>{zh ? '模型' : 'Model'}</span><select aria-label={zh ? '任务模型' : 'Task model'} value={value} disabled={locked || status !== 'ready'} onChange={event => onChange(event.target.value)}>
       {!selected && !personalSelected && <option value={value}>{value || (zh ? '选择模型' : 'Choose a model')}</option>}
       {[['flagship', 'Flagship', '旗舰'], ['balanced', 'Balanced', '均衡'], ['lightweight', 'Lightweight', '轻量']].map(([tier, en, cn]) => <optgroup key={tier} label={zh ? cn : en}>
-        {models.filter(model => model.tier === tier).map(model => <option key={model.id} value={model.id} disabled={!model.available}>{model.name}{!model.available ? (zh ? ' · 需付费额度' : ' · paid credit required') : ''}</option>)}
+        {models.filter(model => model.tier === tier).map(model => <option key={model.id} value={model.id} disabled={!model.available}>{model.name}{model.pricing.input === 0 && model.pricing.output === 0 ? (zh ? ' · 当前免费' : ' · free now') : !model.available ? (zh ? ' · 需付费额度' : ' · paid credit required') : ''}</option>)}
       </optgroup>)}
       {personal.length > 0 && <optgroup label={zh ? '自备密钥' : 'Your API key'}>{personal.map(model => <option key={`${model.provider}:${model.id}`} value={model.id}>{model.name}</option>)}</optgroup>}
     </select></label>
     {status === 'loading' && <span className={styles.rate}>{zh ? '读取模型…' : 'Loading models…'}</span>}
     {status === 'error' && <button onClick={() => setRevision(value => value + 1)}>{zh ? '模型读取失败 · 重试' : 'Models unavailable · retry'}</button>}
     {status === 'ready' && !models.length && !personal.length && <button className={styles.billingLink} onClick={onSettings}>{zh ? '连接模型服务' : 'Connect a model provider'} ↗</button>}
-    {selected && <span className={styles.rate}>{locked ? (zh ? '版本已固定 · ' : 'Version locked · ') : ''}{zh ? '输入' : 'In'} ${selected.pricing.input} / {zh ? '输出' : 'out'} ${selected.pricing.output} <span title={zh ? '每百万 tokens 的基础展示价，按实际用量核对结算。' : 'Base price per million tokens. Charges settle against actual usage.'}>/ 1M</span></span>}
+    {selected && <span className={styles.rate}>{locked ? (zh ? '版本已固定 · ' : 'Version locked · ') : ''}{selected.pricing.input === 0 && selected.pricing.output === 0 ? (zh ? '当前免费 · 受 OpenRouter 限额约束' : 'Free now · OpenRouter limits apply') : <>{zh ? '输入' : 'In'} ${selected.pricing.input} / {zh ? '输出' : 'out'} ${selected.pricing.output} <span title={zh ? '每百万 tokens 的基础展示价，按实际用量核对结算。' : 'Base price per million tokens. Charges settle against actual usage.'}>/ 1M</span></>}</span>}
     {personalSelected && <span className={styles.rate}>{zh ? '由模型服务商计费' : 'Billed by your provider'}</span>}
     <button className={styles.billingLink} onClick={onBilling}>{zh ? '用量与套餐' : 'Usage & plan'} ↗</button>
   </div>;

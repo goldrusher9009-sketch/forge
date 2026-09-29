@@ -1,7 +1,7 @@
 import { estimateManagedInput } from './image-budget';
 import crypto from 'node:crypto';
 import type { Express } from 'express';
-import { getOpenRouterModel, matchesOpenRouterModel, getOpenRouterPriceBounds, normalizeOpenRouterRequest, OPENROUTER_RETAIL_MULTIPLIER } from './openrouter-catalog';
+import { getOpenRouterModel, isFreeOpenRouterModel, matchesOpenRouterModel, getOpenRouterPriceBounds, normalizeOpenRouterRequest, OPENROUTER_RETAIL_MULTIPLIER } from './openrouter-catalog';
 
 export type PiTool = { name: string; description: string; parameters: Record<string, any> };
 /** Pi SDK may wrap our gateway's structured budget rejection in an HTTP label. */
@@ -368,7 +368,7 @@ export function registerPiModelGateway(app: Express): void {
       // a second request after a transport failure with unknown provider usage.
       const inputUsd = inputCharge * inputRate / 1000000 + requestUsd;
       const afterInputUsd = grant.remainingUsd - inputUsd;
-      const affordableOutput = Math.floor(afterInputUsd * 1000000 / outputRate);
+      const affordableOutput = outputRate === 0 && afterInputUsd >= 0 ? outputLimit : Math.floor(afterInputUsd * 1000000 / outputRate);
       if (affordableOutput < 1) { res.status(402).json({ error: { message: 'PI_RUN_COST_BUDGET_EXHAUSTED' } }); return; }
       outputLimit = Math.min(outputLimit, affordableOutput);
       reservedUsd = inputUsd + outputLimit * outputRate / 1000000;
@@ -481,7 +481,9 @@ export async function runPiAgent(options: PiRunOptions): Promise<any> {
   const resolved = resolveModel(options.provider, options.model);
   if (options.managedBilling && (options.provider !== 'openrouter' || !getOpenRouterModel(resolved.model))) throw new Error('PI_MANAGED_MODEL_NOT_ALLOWED');
   const limits = options.modelLimits || operatorModelLimits(options.provider, resolved.model);
-  if (options.costBudget && (!Number.isFinite(options.costBudget.maxUsd) || options.costBudget.maxUsd <= 0 || !Number.isFinite(options.costBudget.inputPerMillion) || options.costBudget.inputPerMillion <= 0 || !Number.isFinite(options.costBudget.outputPerMillion) || options.costBudget.outputPerMillion <= 0)) throw new Error('PI_COST_BUDGET_INVALID');
+  const freeBudget = options.managedBilling && isFreeOpenRouterModel(resolved.model)
+    && options.costBudget?.maxUsd === 0 && options.costBudget.inputPerMillion === 0 && options.costBudget.outputPerMillion === 0;
+  if (options.costBudget && !freeBudget && (!Number.isFinite(options.costBudget.maxUsd) || options.costBudget.maxUsd <= 0 || !Number.isFinite(options.costBudget.inputPerMillion) || options.costBudget.inputPerMillion <= 0 || !Number.isFinite(options.costBudget.outputPerMillion) || options.costBudget.outputPerMillion <= 0)) throw new Error('PI_COST_BUDGET_INVALID');
   const controller = new AbortController();
   const abort = () => controller.abort(options.signal?.reason);
   if (options.signal?.aborted) abort(); else options.signal?.addEventListener('abort', abort, { once: true });

@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { getOpenRouterModel, OPENROUTER_RETAIL_MULTIPLIER } from './openrouter-catalog';
+import { getOpenRouterModel, isFreeOpenRouterModel, OPENROUTER_RETAIL_MULTIPLIER } from './openrouter-catalog';
 
 type Database = { exec(sql: string): unknown; prepare(sql: string): any; transaction<T extends (...args: any[]) => any>(fn: T): T };
 export const MANAGED_BILLING_VERSION = 'openrouter-cost-plus-2026-09-14';
@@ -152,7 +152,9 @@ export function createManagedBilling({ db, getCredits, adjustCredits, verifyPaym
   const reserve = atomic((userId: string, requestId: string, model: string, providerMaximumUsd: number, tariffVersion: string) => {
     const existing = db.prepare('SELECT * FROM managed_billing_requests WHERE id=?').get(requestId);
     const units = retailUnits(providerMaximumUsd);
-    if (!units || !requestId || !model || !tariffVersion) fail('BILLING_RESERVATION_INVALID', 400);
+    // A zero hold is valid only for a catalogued zero-price model. If its supplier
+    // later reports a cost, settlement trips the existing price-review circuit.
+    if ((!units && !isFreeOpenRouterModel(model)) || !requestId || !model || !tariffVersion) fail('BILLING_RESERVATION_INVALID', 400);
     if (existing) {
       if (existing.user_id !== userId || existing.model !== model || existing.reserved_units !== units || existing.tariff_version !== tariffVersion) fail('BILLING_REQUEST_CONFLICT');
       return existing;
