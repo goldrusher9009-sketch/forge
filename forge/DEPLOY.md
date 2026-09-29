@@ -88,6 +88,15 @@ checks include login, an authenticated `/api/health` path, SSE, one sandbox run,
 artifact retrieval, human approval, Google Drive import/write-back/revoke, and
 secret non-disclosure.
 
+Before enabling `FORGE_BILLING_PURCHASES_ENABLED`, confirm the live Stripe
+merchant is approved for Forge, its Checkout branding and statement descriptor
+identify the seller clearly, and its support contact receives mail. Verify the
+configured monthly prices and webhook, then complete an operator-approved live
+purchase, entitlement, invoice, cancellation, and refund check. Confirm the
+managed model provider has enough funded balance for the advertised credit.
+Keep new purchases paused until these checks pass; an enabled Stripe account or
+a successful test-mode payment alone is insufficient.
+
 ## Production promotion
 
 Promotion is a separate, explicit operation after Preview acceptance. Confirm
