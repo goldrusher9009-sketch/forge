@@ -244,15 +244,15 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
     BILLING_ACCOUNT_MISMATCH: ['The signed-in account changed. Switch to the Forge account used on your desktop.', '登录账号已变化，请切换到桌面端使用的 Forge 账号。'],
     BILLING_NOT_CONFIGURED: ['Purchases are not available yet. Your existing credits remain available.', '购买功能暂未开放，已有额度仍保留。'],
     BILLING_PURCHASES_PAUSED: ['New purchases are paused while we verify the Forge payment account. Existing credit and subscription management remain available.', '核实 Forge 收款账户期间，暂时无法新购。已有额度和订阅管理仍可使用。'],
-    CHECKOUT_ALREADY_PENDING: ['You have a pending checkout. Resume or cancel it in Pending purchases before choosing another option.', '已有待付款订单，请在“待付款订单”中继续付款或取消后重新选择。'],
+    CHECKOUT_ALREADY_PENDING: ['You have a pending checkout. Review or cancel it in Pending purchases before starting another purchase.', '已有待付款订单，请在“待付款订单”中核对或取消，再发起新的购买。'],
     CHECKOUT_NOT_CANCELLABLE: ['This order can no longer be cancelled. Check its current payment status before purchasing again.', '此订单已无法取消，请核对当前付款状态后再购买。'],
     CHECKOUT_CANCELLATION_UNCONFIRMED: ['Cancellation could not be confirmed. The order is preserved; refresh and try again.', '暂未确认取消成功，订单仍保留，请刷新后重试。'],
     CHECKOUT_RECONCILIATION_REQUIRED: ['This order needs reconciliation. Contact support before starting another purchase.', '此订单需要对账，请联系支持团队，避免重复购买。'],
-    CHECKOUT_EXPIRED: ['This checkout has expired. You can choose a new purchase.', '此付款订单已过期，可以重新选择购买。'],
+    CHECKOUT_EXPIRED: ['This checkout has expired. Refresh your account to see the available options.', '此付款订单已过期，请刷新账户查看当前可用操作。'],
     CHECKOUT_PAYMENT_CONFIRMING: ['Your previous payment is being confirmed. Refresh its status before starting another purchase.', '上一笔付款正在确认，请先刷新状态，避免重复购买。'],
     BILLING_POLICY_UNAVAILABLE: ['Billing details are unavailable. Refresh before purchasing.', '暂时无法取得账单详情，请刷新后再购买。'],
     BILLING_LEGACY_USAGE_REVIEW_REQUIRED: ['An earlier model request needs billing review. Purchased credits are preserved. Please contact support.', '较早的模型请求需要对账，已购额度仍保留，请联系支持团队。'],
-    BILLING_CHECKOUT_NOT_READY: ['No payment has been confirmed. Refresh the account or try opening checkout again.', '尚未确认付款，请刷新账户，或重新打开付款页面。'],
+    BILLING_CHECKOUT_NOT_READY: ['No payment has been confirmed. Refresh your account to check its status.', '尚未确认付款，请刷新账户核对状态。'],
     BILLING_ACCOUNT_REVIEW_REQUIRED: ['Your account needs a payment review. Existing credits are preserved. Please contact support before making another payment.', '账户需要付款核对，已有额度仍保留。请联系支持团队处理，避免重复付款。'],
     PLAN_CHANGE_WITHDRAW_BEFORE_MANAGING: ['Withdraw your pending plan change below before managing renewal.', '请先在下方撤回待生效套餐变更，再管理续费。'],
     PLAN_CHANGE_EXTERNAL_SCHEDULE: ['This subscription has a separate billing schedule. Contact support to manage renewal.', '此订阅有其他计费安排，请联系支持团队管理续费。'],
@@ -291,12 +291,12 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
       {wallet?.spendingRestricted && <div className="billing-notice" data-tone="warning" style={{ marginTop: 18 }} role="alert"><h3>{tr('Payment review in progress', '正在核对付款')}</h3><p>{tr('Your existing credits are preserved. New model requests and purchases are paused while a payment is reviewed. Please contact support; another payment will not resolve this review.', '已有额度仍保留。付款核对期间，新的模型请求与购买暂时停用。请联系支持团队处理，再次付款不会解除此状态。')}</p></div>}
       {wallet?.legacyPlanReviewRequired && <div className="billing-notice" data-tone="warning" style={{ marginTop: 18 }}><h3>{tr('Your existing plan needs a billing review', '现有套餐需要核对')}</h3><p>{tr('Your purchased credit balance is preserved. Monthly allowances will appear after the paid subscription period is verified; please contact support if a paid allowance is missing.', '您的充值余额仍保留。核实已付费的订阅周期后，月度额度会显示在这里；如已付款但未出现额度，请联系支持团队。')}</p></div>}
 
-      {orderNotice && <div className="billing-notice" data-tone="success" role="status" style={{ marginTop: 18 }}><h3>{tr('Unpaid order cancelled', '未付款订单已取消')}</h3><p>{tr('You can now choose another plan or credit amount.', '现在可以重新选择套餐或充值金额。')}</p></div>}
+      {orderNotice && <div className="billing-notice" data-tone="success" role="status" style={{ marginTop: 18 }}><h3>{tr('Unpaid order cancelled', '未付款订单已取消')}</h3><p>{purchasesEnabled ? tr('You can now choose another plan or credit amount.', '现在可以重新选择套餐或充值金额。') : tr('New purchases are paused. Your existing balance and subscription management remain available.', '新购暂时关闭。已有余额和订阅管理仍可使用。')}</p></div>}
       {!mismatch && orders.length > 0 && <section className="billing-section" aria-label={tr('Pending purchases', '待付款订单')}>
         <div className="billing-section-head"><h3>{tr('Pending purchases', '待付款订单')}</h3><span className="billing-caption">{tr('Saved to your Forge account', '已保存到你的 Forge 账户')}</span></div>
         {orders.map(order => <article className="billing-notice" key={order.id}>
           <h3>{order.kind === 'subscription' ? `Forge ${order.plan ? order.plan[0].toUpperCase() + order.plan.slice(1) : tr('subscription', '订阅')}` : tr('Prepaid credit', '额度充值')} · {money(order.amountUsd)}</h3>
-          <p>{order.status === 'confirming' ? tr('Payment is being confirmed. Please wait before purchasing again.', '正在确认付款，请等待核对完成后再购买。') : order.status === 'creating' ? tr('Checkout needs to be recovered. Continue or cancel to recover the original order safely.', '付款页面需要恢复。继续付款或取消时会先核对原订单。') : tr('Payment is incomplete. Resume this order or cancel it to choose another option.', '此订单尚未付款，可以继续付款，或取消后重新选择。')}</p>
+          <p>{order.status === 'confirming' ? tr('Payment is being confirmed. Please wait before purchasing again.', '正在确认付款，请等待核对完成后再购买。') : !purchasesEnabled ? tr('Payment is incomplete. New payments are paused; you can cancel this unpaid order after its status is checked.', '此订单尚未付款。新付款暂时关闭；核对订单状态后仍可取消未付款订单。') : order.status === 'creating' ? tr('Checkout needs to be recovered. Continue or cancel to recover the original order safely.', '付款页面需要恢复。继续付款或取消时会先核对原订单。') : tr('Payment is incomplete. Resume this order or cancel it to choose another option.', '此订单尚未付款，可以继续付款，或取消后重新选择。')}</p>
           {order.refreshRequired && <p role="status">{tr('The latest payment status could not be retrieved. Actions will recheck it first.', '暂未取得最新付款状态，操作前会再次核对。')}</p>}
           {order.status !== 'confirming' && <div className="forge-billing-actions" style={{ marginTop: 12 }}>
             {cancelIntent === order.id ? <>
@@ -304,7 +304,7 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
               <button disabled={!matching || !!busy || loading} onClick={() => void handleOrder(order, 'cancel')}>{busy === `cancel:${order.id}` ? tr('Cancelling…', '取消中…') : tr('Confirm cancellation', '确认取消')}</button>
               <button disabled={!!busy} onClick={() => setCancelIntent(null)}>{tr('Keep order', '保留订单')}</button>
             </> : <>
-              <button className="billing-primary" disabled={!canBuy} onClick={() => void handleOrder(order, 'resume')}>{busy === `resume:${order.id}` ? tr('Opening…', '打开中…') : tr('Continue payment', '继续付款')}</button>
+              {purchasesEnabled && <button className="billing-primary" disabled={!canBuy} onClick={() => void handleOrder(order, 'resume')}>{busy === `resume:${order.id}` ? tr('Opening…', '打开中…') : tr('Continue payment', '继续付款')}</button>}
               <button disabled={!matching || !!busy || loading} onClick={() => setCancelIntent(order.id)}>{tr('Cancel unpaid order', '取消未付款订单')}</button>
             </>}
           </div>}
