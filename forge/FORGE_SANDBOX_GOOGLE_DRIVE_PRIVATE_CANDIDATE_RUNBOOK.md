@@ -89,7 +89,7 @@ Ordinary Docker isolation is accepted only for this invitation-only candidate. A
 
 ### Gate C — configure secrets outside Git
 
-Generate separate high-entropy values for JWT signing, credential encryption, and Forge-to-Orchestrator HMAC. Do not reuse them. Supply all values through the approved secret store or the deployment environment.
+Generate separate high-entropy values for JWT signing, credential encryption, Forge-to-Orchestrator HMAC, and Pi worker authentication. Do not reuse them. Supply all values through the approved secret store or the deployment environment.
 
 Required control-plane variables:
 
@@ -102,6 +102,7 @@ Required control-plane variables:
 | `FRONTEND_URL` | Exact HTTPS frontend origin; used for CORS and callbacks |
 | `CREDENTIAL_ENCRYPTION_KEY` | Separate high-entropy key material for encrypted provider/OAuth credentials |
 | `DB_PATH` | `/data/forge.db` in the candidate Compose topology |
+| `FORGE_PI_WORKER_TOKEN` | Shared only by Forge and its private Pi worker; at least 32 random characters |
 | `FORGE_SANDBOX_ORCHESTRATOR_URL` | Internal-only `http://forge-sandbox-orchestrator:3001` |
 | `FORGE_SANDBOX_HMAC_SECRET` | Shared only by Forge and the Orchestrator; never exposed to a Run container |
 | `FORGE_SANDBOX_MAX_ACTIVE` | Global admission ceiling; candidate default is `3` active per-Run sandbox pairs |
@@ -160,8 +161,8 @@ Use one controlled Google Cloud project for the candidate:
 Approved sources in the current candidate:
 
 - npm: `https://registry.npmmirror.com`;
-- Node images: `docker.m.daocloud.io/library/node:20-*`;
-- Debian packages: Aliyun Debian mirrors.
+- Node images: `docker.m.daocloud.io/library/node:20-*` and `docker.m.daocloud.io/library/node:24-*`;
+- Debian packages: USTC Debian mirrors.
 
 From the repository root:
 
@@ -177,7 +178,7 @@ docker compose `
 docker compose `
   -f forge-sandbox.compose.yml `
   -f forge-private-candidate.compose.yml `
-  build sandbox-runtime forge-sandbox-orchestrator forge-platform
+  build sandbox-runtime forge-sandbox-orchestrator forge-pi-worker forge-platform
 ```
 
 The Compose overlay intentionally requires every production and Google variable. A missing value must fail configuration rather than silently disable the target capability.
@@ -207,7 +208,7 @@ docker compose `
   -f forge-sandbox.compose.yml `
   -f forge-private-candidate.compose.yml `
   -f forge-vps-caddy.compose.yml `
-  up -d forge-sandbox-egress forge-sandbox-orchestrator forge-platform forge-control-plane-proxy
+  up -d forge-sandbox-egress forge-sandbox-orchestrator forge-pi-worker forge-platform forge-control-plane-proxy
 
 docker compose `
   -f forge-sandbox.compose.yml `
@@ -221,6 +222,7 @@ The Compose files bind Forge to `127.0.0.1:${FORGE_PRIVATE_BACKEND_PORT:-3401}` 
 Verify separately:
 
 - Forge `/health` returns 200;
+- the private Pi worker is healthy and Forge `/ready` returns 200 with it connected;
 - Vercel `/api/health` reaches Forge `/api/health` through Caddy and returns 200;
 - a direct control-plane request without the gateway secret returns 404;
 - production startup did not fall back to the development database path or development credentials;
