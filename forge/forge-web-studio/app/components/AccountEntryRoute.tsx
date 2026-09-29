@@ -1,10 +1,9 @@
 ﻿'use client';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { AccountEntry } from './AccountEntry';
 import { advanceSession, sessionRevision, waitForSignOut, assertAccountToken, refreshAccountToken } from '../../lib/session-state';
 
-import { readUiLanguage } from '../../lib/ui-language';
-import { WorkspaceStatus } from './WorkspaceStatus';
+import { readUiLanguage, type UiLanguage } from '../../lib/ui-language';
 
 const API = '/api';
 
@@ -29,8 +28,7 @@ async function request(path: string, opts: RequestInit = {}, token?: string, ret
 }
 
 /** Standalone sign-in / sign-up route. Renders instantly and hands a signed-in account to the workspace at "/". */
-export function AccountEntryRoute({ mode }: { mode: 'login' | 'register' }) {
-  const [ready, setReady] = useState(false);
+export function AccountEntryRoute({ mode, initialLanguage }: { mode: 'login' | 'register'; initialLanguage: UiLanguage }) {
   useEffect(() => {
     // Keep `?auth=` and `?lang=` in the address so AccountEntry reads mode and language the same way as before.
     const url = new URL(window.location.href);
@@ -40,7 +38,6 @@ export function AccountEntryRoute({ mode }: { mode: 'login' | 'register' }) {
     if (changed) window.history.replaceState(null, '', url.pathname + url.search);
     // Already signed in on this device: go straight to the workspace.
     try { const stored = JSON.parse(localStorage.getItem('forge_user') || 'null'); if (stored?.id && (stored.token || localStorage.getItem('forge_token'))) { window.location.replace('/?lang=' + readUiLanguage()); return; } } catch {}
-    setReady(true);
   }, [mode]);
   const onLogin = useCallback((u: any) => {
     advanceSession();
@@ -48,6 +45,5 @@ export function AccountEntryRoute({ mode }: { mode: 'login' | 'register' }) {
     if (u.token) { localStorage.setItem('forge_token', u.token); localStorage.setItem('forge_access_token', u.token); }
     window.location.replace('/?lang=' + readUiLanguage());
   }, []);
-  if (!ready) return <WorkspaceStatus />;
-  return <AccountEntry request={(path, options) => request(path, options)} onLogin={onLogin} />;
+  return <AccountEntry request={(path, options) => request(path, options)} onLogin={onLogin} initialMode={mode} initialLanguage={initialLanguage} />;
 }

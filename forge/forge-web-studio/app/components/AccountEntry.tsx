@@ -1,13 +1,13 @@
 'use client';
 import React, { useEffect, useRef, useState } from 'react';
-import { useUiLanguage } from '../../lib/ui-language';
+import { useUiLanguage, type UiLanguage } from '../../lib/ui-language';
 import styles from './AccountEntry.module.css';
 
-export function AccountEntry({request,onLogin,notice=''}:{request:(path:string,options:RequestInit)=>Promise<any>;onLogin:(user:any)=>void;notice?:string}){
+export function AccountEntry({request,onLogin,notice='',initialMode,initialLanguage}:{request:(path:string,options:RequestInit)=>Promise<any>;onLogin:(user:any)=>void;notice?:string;initialMode?:'login'|'register';initialLanguage?:UiLanguage}){
   const query=typeof window==='undefined'?new URLSearchParams():new URLSearchParams(window.location.search);
-  const [uiLanguage,setUiLanguage]=useUiLanguage();
+  const [uiLanguage,setUiLanguage]=useUiLanguage(initialLanguage);
   const zh=uiLanguage==='zh';
-  const [mode,setMode]=useState<'login'|'register'|'forgot'>(()=>query.get('auth')==='register'?'register':'login');
+  const [mode,setMode]=useState<'login'|'register'|'forgot'>(()=>initialMode??(query.get('auth')==='register'?'register':'login'));
   const [sent,setSent]=useState(false);
   const [recovery,setRecovery]=useState(false);
   useEffect(()=>{let live=true;request('/auth/recovery/status',{method:'GET'}).then(d=>{if(live)setRecovery(d?.data?.emailRecovery===true);}).catch(()=>{});return()=>{live=false;};},[request]);
@@ -58,7 +58,7 @@ export function AccountEntry({request,onLogin,notice=''}:{request:(path:string,o
           {mode==='login'&&recovery&&<button type="button" className={styles.link} disabled={loading} onClick={()=>{setMode('forgot');setError('');}}>{t('Forgot your password?','忘记密码？')}</button>}
           {mode==='forgot'&&<button type="button" className={styles.link} disabled={loading} onClick={()=>{setMode('login');setError('');}}>{t('Back to Sign In','返回登录')}</button>}
         </form>}
-        {mode==='register'&&<p className={styles.legal}>{t('By creating an account, you agree to the ','创建账号即表示你同意')}<a href="/terms" target="_blank" rel="noreferrer">{t('Terms of Service','服务条款')}</a>{t(' and acknowledge the ','，并已阅读')}<a href="/privacy" target="_blank" rel="noreferrer">{t('Privacy Policy','隐私政策')}</a>。</p>}
+        {mode==='register'&&<p className={styles.legal}>{t('By creating an account, you agree to the ','创建账号即表示你同意')}<a href="/terms" target="_blank" rel="noreferrer">{t('Terms of Service','英文版服务条款')}</a>{t(' and acknowledge the ','，并已阅读')}<a href="/privacy" target="_blank" rel="noreferrer">{t('Privacy Policy','英文版隐私政策')}</a>。</p>}
         <div className={styles.foot}>{t('FORGE / PERSONAL WORKSPACE','FORGE / 个人工作区')}</div>
       </section>
     </div>
