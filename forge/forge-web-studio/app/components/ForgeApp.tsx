@@ -2229,6 +2229,7 @@ function ForgeApp() {
   const [toast, setToast] = useState<{msg:string;type:'ok'|'err'|'info'}|null>(null);
   const showToast = (msg: string, type: 'ok'|'err'|'info'|'success' = 'ok') => { setToast({msg, type: type === 'success' ? 'ok' : type}); setTimeout(()=>setToast(null), 3500); };
   const [openRouterModels, setOpenRouterModels] = useState<{id:string;name:string;context_length?:number;pricing?:{prompt:string;completion:string}}[]>([]);
+  const [managedModelNames, setManagedModelNames] = useState<Record<string,string>>({});
 
   // Selection
   const [activeProject, setActiveProject] = useState<Project | null>(null);
@@ -4949,6 +4950,11 @@ function ForgeApp() {
 
   // Dynamic provider models (all providers)
   const [providerModels, setProviderModels] = useState<Record<string, {id:string;name:string;context_length?:number;pricing?:{prompt:string;completion:string}}[]>>({});
+  const workspaceLiveModels = React.useMemo(() => [
+    ...Object.entries(providerModels).filter(([provider]) => provider !== 'openrouter' && provider !== 'morph').flatMap(([provider, models]) =>
+      models.map(model => ({ id: model.id, name: model.name || model.id, provider }))),
+    ...(providerModels.openrouter || openRouterModels).map(model => ({ id: model.id, name: model.name || model.id, provider: 'openrouter' })),
+  ], [providerModels, openRouterModels]);
 
   // Attached folders/files (bottom bar)
   const [attachedFolders, setAttachedFolders] = useState<string[]>([]);
@@ -5298,6 +5304,7 @@ function ForgeApp() {
       ]);
       const models = Array.isArray(d?.data?.models) ? d.data.models : [];
       setOpenRouterModels(models);
+      if (Array.isArray(managed?.data)) setManagedModelNames(Object.fromEntries(managed.data.map((model: any) => [model.id, model.name])));
       const eligible = Array.isArray(managed?.data) ? managed.data.filter((model: any) => model.available) : [];
       const managedDefault = eligible.find((model: any) => model.isDefault) || eligible[0];
       // Preserve explicit choices. Never substitute a public model that the
@@ -7429,7 +7436,7 @@ function ForgeApp() {
           <button aria-label={workspaceZh ? '打开工作区导航' : 'Open workspace navigation'} aria-expanded={mobileDrawerOpen} onClick={e => { e.stopPropagation(); setSidebarExpanded(true); setMobileDrawerOpen(o=>!o); }} style={{ background:'none', border:'none', color:'var(--fg-text2)', fontSize:20, cursor:'pointer', padding:4 }}>🌀</button>
           <div style={{ width:28, height:28, background:'transparent', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, animation:'neon-cycle 3s linear infinite' }}>⚡</div>
           <span className="forge-neon" style={{ fontSize:16 }}>Forge</span>
-          <div style={{ marginLeft:'auto', fontSize:12, color:'var(--fg-text3)', fontFamily:'var(--fg-font-mono)' }}>{selectedModel || 'forge-fast'}</div>
+          <div style={{ marginLeft:'auto', maxWidth:'45vw', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:12, color:'var(--fg-text3)' }}>{managedModelNames[selectedModel] || (selectedModel.includes('/') ? (workspaceZh ? '模型' : 'Model') : selectedModel || (workspaceZh ? '选择模型' : 'Choose model'))}</div>
         </div>
       )}
 
@@ -7784,7 +7791,7 @@ function ForgeApp() {
               panelOpen={rightExpanded} onPanel={() => setRightExpanded(value => !value)}
               controls={<>
                 <PublishedAgentPicker key={'published:'+user.email} api={path=>apiFetch(path,{},user.token)} onUse={usePublishedAgent} active={activeThread?.publishedAgent} zh={workspaceZh} disabled={sending}/>
-                <WorkspaceModelPicker key={'model:'+user.email} api={path => apiFetch(path, {}, user.token)} value={activeThread?.publishedAgent?.model || selectedModel} onChange={setSelectedModel} locked={!!activeThread?.agent_release_id} zh={workspaceZh} onBilling={() => setMainTab('billing')} onSettings={() => setMainTab('settings')} personalOptions={WORKSPACE_PERSONAL_MODELS} />
+                <WorkspaceModelPicker key={'model:'+user.email} api={path => apiFetch(path, {}, user.token)} value={activeThread?.publishedAgent?.model || selectedModel} onChange={setSelectedModel} locked={!!activeThread?.agent_release_id} zh={workspaceZh} onBilling={() => setMainTab('billing')} onSettings={() => setMainTab('settings')} personalOptions={WORKSPACE_PERSONAL_MODELS} liveOptions={workspaceLiveModels} />
                 {activeThread && !activeThread.agent_release_id && <ThreadSkills key={`skills:${user.id || user.email}:${activeThread.id}`} api={(path, options) => apiFetch(path, options || {}, user.token)} threadId={String(activeThread.id)} zh={workspaceZh} sending={sending} onLibrary={() => setMainTab('proceduralskills')} />}
               </>}>
               <div>
@@ -8299,66 +8306,6 @@ function ForgeApp() {
               {/* Multi-response toggle */}
               {!isMobile && <button onClick={() => setMultiResponse(!multiResponse)} title="Multiple responses" style={{ padding:'5px 10px', background:multiResponse ? 'var(--fg-border)' : 'transparent', border:`1px solid ${multiResponse ? 'var(--fg-orange)' : 'var(--fg-border2)'}`, borderRadius:6, color:multiResponse ? 'var(--fg-orange)' : 'var(--fg-text2)', cursor:'pointer', fontSize:12, flexShrink:0 }}>⚡ Multi</button>}
 
-              {/* Model selector -- shows models from all providers with saved keys */}
-              {!activeThread?.agent_release_id && <>
-              {(() => {
-                const providerForId = (id: string) => {
-                  if (['forge-ultra','forge-pro','forge-flash','forge-code'].includes(id) || id.startsWith('claude')) return 'anthropic';
-                  if (['forge-gpt'].includes(id) || id.startsWith('gpt') || id.startsWith('o3') || id.startsWith('o4')) return 'openai';
-                  if (['forge-gemini'].includes(id) || id.startsWith('gemini')) return 'gemini';
-                  if (id.startsWith('llama') || id.startsWith('mixtral') || id === 'forge-fast') return 'groq';
-                  if (id.startsWith('mistral')) return 'mistral';
-                  return null;
-                };
-                const hasKey = (id: string) => { const p = providerForId(id); return !p || !!savedProviders[p]; };
-                const availableForge = FORGE_MODELS.filter(m => hasKey(m.id));
-                const availableDirect = DIRECT_MODELS.map(g => ({ ...g, models: g.models.filter(m => hasKey(m.id)) })).filter(g => g.models.length > 0);
-                // Dynamic models from other providers (anthropic, openai, gemini, groq, mistral, etc.)
-                const dynamicGroups = Object.entries(providerModels)
-                  .filter(([p]) => p !== 'openrouter' && p !== 'morph' && savedProviders[p] && providerModels[p]?.length > 0)
-                  .map(([p, models]) => ({
-                    provider: p,
-                    label: p.charAt(0).toUpperCase() + p.slice(1),
-                    models: models.slice(0, 30),
-                  }));
-                const orModels = providerModels['openrouter'] || openRouterModels;
-                const noKeys = availableForge.length === 0 && availableDirect.length === 0 && dynamicGroups.length === 0;
-                return (
-                  <select disabled={!!activeThread?.agent_release_id} value={activeThread?.publishedAgent?.model || selectedModel} onChange={e => setSelectedModel(e.target.value)} style={{ background:'var(--fg-bg4)', border:'1px solid var(--fg-border2)', borderRadius:8, color: noKeys && orModels.length === 0 ? 'var(--fg-text2)' : 'var(--fg-orange2)', padding:'6px 10px', fontSize:12, cursor:'pointer', maxWidth: isMobile ? 140 : 240 }}>
-                    {activeThread?.publishedAgent && <option value={activeThread.publishedAgent.model}>{activeThread.publishedAgent.model} · v{activeThread.publishedAgent.version}</option>}
-                    {noKeys && orModels.length === 0 && <option value="">⚠️ Add an API key in Settings</option>}
-                    {availableForge.length > 0 && <optgroup label="⚡ Forge Models">{availableForge.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}</optgroup>}
-                    {availableDirect.map(grp => (
-                      <optgroup key={grp.group} label={grp.group}>
-                        {grp.models.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
-                      </optgroup>
-                    ))}
-                    {dynamicGroups.map(grp => (
-                      <optgroup key={grp.provider} label={`🔥 ${grp.label} (live)`}>
-                        {grp.models.map(m => <option key={m.id} value={m.id}>{m.name || m.id}</option>)}
-                      </optgroup>
-                    ))}
-                    {orModels.length > 0 && (() => {
-                      // Group OR models by provider prefix for the dropdown
-                      const orGrouped: Record<string, typeof orModels> = {};
-                      orModels.forEach(m => {
-                        const grpKey = m.id.includes('/') ? m.id.split('/')[0] : 'other';
-                        if (!orGrouped[grpKey]) orGrouped[grpKey] = [];
-                        orGrouped[grpKey].push(m);
-                      });
-                      return Object.entries(orGrouped).sort(([a],[b]) => a.localeCompare(b)).map(([grp, ms]) => (
-                        <optgroup key={`or-${grp}`} label={`🔀 OR · ${grp}`}>
-                          {ms.sort((a,b) => (a.name||a.id).localeCompare(b.name||b.id)).map(m => {
-                            const isFree = m.id.includes(':free') || m.pricing?.prompt === '0';
-                            return <option key={m.id} value={m.id}>{isFree ? '🆓 ' : ''}{m.name || m.id}</option>;
-                          })}
-                        </optgroup>
-                      ));
-                    })()}
-                  </select>
-                );
-              })()}
-              </>}
               {/* Cost-mode pills — only show when forge-auto is selected */}
               {selectedModel === 'forge-auto' && (
                 <div style={{ display:'flex', gap:3, flexShrink:0 }}>
@@ -8602,7 +8549,7 @@ function ForgeApp() {
                             )}
                           </div>
                         )}
-                        {m.model && <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{m.model}</p>}
+                        {m.model && <p style={{ margin:'6px 0 0', fontSize:11, color:'var(--fg-text3)' }}>{managedModelNames[m.model] || m.model}</p>}
                         <div style={{ display:'flex', gap:4, marginTop:6, opacity:0.5, transition:'opacity 0.15s' }}
                           onMouseEnter={e => (e.currentTarget.style.opacity='1')}
                           onMouseLeave={e => (e.currentTarget.style.opacity='0.5')}>

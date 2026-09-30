@@ -81,9 +81,9 @@ export function WorkspaceHeader({ title, zh, controls, children, onLibrary, onPa
 
 type ManagedModel = { id: string; name: string; tier: string; available: boolean; isDefault?: boolean; pricing: { input: number; output: number } };
 type PersonalModel = { id: string; name: string; provider: string };
-export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilling, onSettings, personalOptions }: {
+export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilling, onSettings, personalOptions, liveOptions = [] }: {
   api: (path: string) => Promise<any>; value: string; onChange: (id: string) => void;
-  locked: boolean; zh: boolean; onBilling: () => void; onSettings: () => void; personalOptions: PersonalModel[];
+  locked: boolean; zh: boolean; onBilling: () => void; onSettings: () => void; personalOptions: PersonalModel[]; liveOptions?: PersonalModel[];
 }) {
   const apiRef = useRef(api); apiRef.current = api;
   const [models, setModels] = useState<ManagedModel[]>([]), [personal, setPersonal] = useState<PersonalModel[]>([]), [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
@@ -96,12 +96,14 @@ export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilli
       if (!managed && !saved) throw new Error('CATALOG_UNAVAILABLE');
       if (current) {
         setModels(managed || []);
-        setPersonal(personalOptions.filter(model => saved?.[`has_${model.provider}`] && !['platform', 'env'].includes(saved[`${model.provider}_key`])));
+        setPersonal([...personalOptions, ...liveOptions].filter((model, index, all) =>
+          saved?.[`has_${model.provider}`] && !['platform', 'env'].includes(saved[`${model.provider}_key`]) &&
+          all.findIndex(candidate => candidate.id === model.id) === index));
         setStatus('ready');
       }
     }).catch(() => { if (current) setStatus('error'); });
     return () => { current = false; };
-  }, [revision, personalOptions]);
+  }, [revision, personalOptions, liveOptions]);
   const valueRef = useRef(value); valueRef.current = value;
   const onChangeRef = useRef(onChange); onChangeRef.current = onChange;
   useEffect(() => {
@@ -114,7 +116,7 @@ export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilli
   const personalSelected = personal.find(model => model.id === value);
   return <div className={styles.modelPicker}>
     <label><span>{zh ? '模型' : 'Model'}</span><select aria-label={zh ? '任务模型' : 'Task model'} value={value} disabled={locked || status !== 'ready'} onChange={event => onChange(event.target.value)}>
-      {!selected && !personalSelected && <option value={value}>{value || (zh ? '选择模型' : 'Choose a model')}</option>}
+      {!selected && !personalSelected && <option value={value}>{personalOptions.concat(liveOptions).find(model => model.id === value)?.name || value || (zh ? '选择模型' : 'Choose a model')}</option>}
       {[['flagship', 'Flagship', '旗舰'], ['balanced', 'Balanced', '均衡'], ['lightweight', 'Lightweight', '轻量']].map(([tier, en, cn]) => <optgroup key={tier} label={zh ? cn : en}>
         {models.filter(model => model.tier === tier).map(model => <option key={model.id} value={model.id} disabled={!model.available}>{model.name}{model.pricing.input === 0 && model.pricing.output === 0 ? (zh ? ' · 当前免费' : ' · free now') : !model.available ? (zh ? ' · 需付费额度' : ' · paid credit required') : ''}</option>)}
       </optgroup>)}
@@ -148,6 +150,6 @@ export function WorkspaceWelcome({ zh, name, published, onStudio, onPrompt }: {
     <p className={styles.intro}>{published ? (zh ? '此任务使用你发布的指令、模型和资料版本。描述目标与期望产物，从这里开始。' : 'This task uses your published instructions, model and source version. Start with the outcome you need.') : (zh ? '描述目标开始任务，或把你的方法和资料做成可测评、可复用的 Agent。' : 'Start with an outcome. Or turn your expertise and sources into an Agent you can evaluate and use again.')}</p>
     {!published && <button className={styles.studioButton} onClick={onStudio}>{zh ? '创建我的 Agent' : 'Create my Agent'} <span aria-hidden="true">↗</span></button>}
     <div className={styles.examples}>{examples.map(([number, title, prompt]) => <button key={number} onClick={() => onPrompt(prompt)}><span className={styles.exampleNumber}>{number}</span><strong>{title}</strong><span className={styles.exampleArrow} aria-hidden="true">↗</span></button>)}</div>
-    <p className={styles.footnote}>{zh ? '示例会填入输入框，由你确认后发送。模型运行消耗 Forge 额度。' : 'Examples fill the composer for you to review. Model runs use Forge credit.'}</p>
+    <p className={styles.footnote}>{zh ? '示例会填入输入框，由你确认后发送。免费模型当前不扣额度；付费模型按用量扣减。' : 'Examples fill the composer for you to review. Free models currently use no credit; paid models charge by usage.'}</p>
   </section>;
 }

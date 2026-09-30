@@ -37,7 +37,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onComplete }) =>
       <h2 id="forge-welcome-title">{zh ? '欢迎，让工作向前一步。' : 'Welcome. Put your ideas to work.'}</h2>
       <p id="forge-welcome-description" className={styles.intro}>{zh ? '从一个任务开始，逐步建立属于你的 Agent 和资料库。' : 'Start with one task. Build a library of knowledge and Agents that work your way.'}</p>
       <ol className={styles.steps}>{steps.map(([number,title,description]) => <li key={number}><span className={styles.number}>{number}</span><div><h3>{title}</h3><p>{description}</p></div></li>)}</ol>
-      <div className={styles.footer}><p>{zh ? '运行模型会消耗 Forge 额度。开始前可以查看模型价格，用量和套餐统一在账号中管理。' : 'Model runs use Forge credit. Review model prices before you begin, and manage usage and plans in your account.'}</p><button ref={enter} onClick={complete}>{zh ? '进入我的工作区' : 'Open my workspace'} <span aria-hidden="true">↗</span></button></div>
+      <div className={styles.footer}><p>{zh ? '部分模型当前免费，受 OpenRouter 限额约束；付费模型按实际用量扣减 Forge 额度。可在账号中查看价格与用量。' : 'Some models are currently free, subject to OpenRouter limits. Paid models use Forge credit based on actual usage. Review prices and usage in your account.'}</p><button ref={enter} onClick={complete}>{zh ? '进入我的工作区' : 'Open my workspace'} <span aria-hidden="true">↗</span></button></div>
     </section>
   </div>;
 };
