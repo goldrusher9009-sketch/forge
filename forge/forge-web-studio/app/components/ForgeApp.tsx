@@ -7137,7 +7137,11 @@ function ForgeApp() {
       const errorCode = typeof e?.code === 'string' ? e.code : '';
       const billingHit = Object.keys(billingCopy).find(code => errorCode === code || raw.includes(code));
       setBillingPrompt(billingHit ? { code: billingHit, text: billingCopy[billingHit][zhUi ? 1 : 0], action: billingCopy[billingHit][2] } : null);
-      const clean = billingHit ? billingCopy[billingHit][zhUi ? 1 : 0] : raw
+      const limitCopy = errorCode === 'FREE_MODEL_RATE_LIMITED'
+        ? (zhUi ? '当前免费模型使用人数较多，请选择其他免费模型或稍后重试。任务中已有的内容已保留。' : 'This free model is busy. Choose another free model or try again later. Your work in this task is saved.')
+        : errorCode === 'MODEL_RATE_LIMITED'
+          ? (zhUi ? '当前模型使用人数较多，请选择其他模型或稍后重试。任务中已有的内容已保留。' : 'This model is busy. Choose another model or try again later. Your work in this task is saved.') : null;
+      const clean = billingHit ? billingCopy[billingHit][zhUi ? 1 : 0] : limitCopy || raw
         .replace(/^(CHAT_MODEL_IMAGES_UNSUPPORTED|CHAT_IMAGES_REQUIRE_PI|CHAT_IMAGES_INVALID|CHAT_IMAGES_TOO_LARGE|CHAT_IMAGE_ANIMATION_UNSUPPORTED|CHAT_IMAGE_DIMENSIONS_UNSUPPORTED|PI_IMAGE_HISTORY_LIMIT|CHAT_IMAGE_STORAGE_LIMIT)$/, code=>attachmentError(code,workspaceZh))
         .replace(/^(CHAT_DRAFT_STORAGE_UNAVAILABLE|CHAT_DRAFT_CONFLICT|CHAT_DRAFT_RESTORING)$/,code=>attachmentError(code,workspaceZh))
         .replace(/^RATE_LIMIT_EXCEEDED$/,workspaceZh?`发送过于频繁，请${retrySeconds?`${retrySeconds} 秒后`:'稍后'}重试。草稿已保留。`:`Too many messages. Try again ${retrySeconds?`in ${retrySeconds} seconds`:'shortly'}. Your draft is preserved.`)
@@ -7154,8 +7158,8 @@ function ForgeApp() {
         .replace(/^NetworkError.*$/i, 'Network error — check your connection or try a different model.')
         .replace(/BodyStreamBuffer.*aborted/i, 'Stream interrupted — the response was cut off. Try sending again or switch to a faster model.')
         .replace(/AbortError/i, 'Request cancelled.')
-        .replace(/rate.limit.*upstream.*add your own key[^]*/i, 'Free model is rate-limited — switch to a paid model for unthrottled access.')
-        .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, 'Model is rate-limited. Switch to a different model.')
+        .replace(/rate.limit.*upstream.*add your own key[^]*/i, workspaceZh?'免费模型使用人数较多，请选择其他免费模型或稍后重试。':'Free model is busy. Choose another free model or try again later.')
+        .replace(/"?Provider returned error"?,?\s*"?code"?:?\s*429[^]*/i, workspaceZh?'模型使用人数较多，请选择其他模型或稍后重试。':'Model is rate-limited. Choose another model or try again later.')
         .trim();
       addAgentStep('⚠', clean);
       const partial = !streamFinished && streamedText.trim();
