@@ -16,7 +16,7 @@ type Wallet = {
 type Charge = { requestId: string; model: string; state: string; providerCostUsd: number | null; chargeUsd: number | null; reservedUsd: number; createdAt: string };
 type PendingCheckout = { id: string; sessionId: string | null; kind: string; plan: string | null; amountUsd: number | null; status: string; expiresAt: string; refreshRequired: boolean };
 type Api = (path: string, opts?: RequestInit, token?: string) => Promise<any>;
-type Props = { user: { id: string; email: string; token: string }; api: Api; onAccountSwitch: () => void };
+type Props = { user: { id: string; email: string; token: string }; api: Api; onAccountSwitch: () => void; onOpenTasks: () => void };
 type PaymentView = CheckoutState | 'checking' | 'unverified' | 'cancel' | 'portal_return' | 'unavailable' | null;
 const REMEMBERED_CHECKOUT = 'forge_billing_checkout';
 const styles = `
@@ -50,7 +50,7 @@ const styles = `
 @media(max-width:520px){.forge-billing{padding:22px 14px}.forge-billing-head{flex-direction:column}.forge-billing h2{font-size:27px}.billing-plans{grid-template-columns:1fr}.billing-metric{padding:18px 14px}.billing-metric-value{font-size:22px}.billing-section-head{align-items:flex-start;flex-direction:column}}
 `;
 
-export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
+export function ManagedBillingPanel({ user, api, onAccountSwitch, onOpenTasks }: Props) {
   const [language, setLanguage] = useUiLanguage();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [purchasesEnabled, setPurchasesEnabled] = useState(false);
@@ -282,7 +282,7 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
         {payment !== 'confirmed' && <button style={{ marginTop: 12 }} onClick={refreshAll} disabled={loading}>{tr('Check again', '重新核对')}</button>}
       </div>}
       {error && <div className="billing-notice" data-tone="warning" role="alert"><p>{errorCopy[error]?.[en ? 0 : 1] ?? tr('Billing is temporarily unavailable. Please refresh or try again shortly; no new payment is confirmed here.', '账单服务暂时不可用，请刷新或稍后重试；此处尚未确认新的付款。')}</p></div>}
-      {wallet && !purchasesEnabled && <div className="billing-notice" data-tone="warning" role="status"><h3>{tr('New purchases are paused', '新购暂时关闭')}</h3><p>{tr('We are verifying the Forge payment account. Eligible accounts can still use currently free models without Forge credit, subject to provider limits. You can also view your balance, cancel an unpaid order, and manage an existing subscription.', '我们正在核实 Forge 收款账户。符合条件的账号仍可使用当前免费模型，不扣 Forge 额度，但受供应商限额约束。你也可以查看余额、取消未付款订单，以及管理已有订阅。')}</p></div>}
+      {wallet && !purchasesEnabled && <div className="billing-notice" data-tone="warning" role="status"><h3>{tr('New purchases are paused', '新购暂时关闭')}</h3><p>{tr('We are verifying the Forge payment account. Eligible accounts can still use currently free models without Forge credit, subject to provider limits. You can also view your balance, cancel an unpaid order, and manage an existing subscription.', '我们正在核实 Forge 收款账户。符合条件的账号仍可使用当前免费模型，不扣 Forge 额度，但受供应商限额约束。你也可以查看余额、取消未付款订单，以及管理已有订阅。')}</p>{!mismatch && !wallet.spendingRestricted && <button className="billing-primary" style={{ marginTop: 12 }} onClick={onOpenTasks}>{tr('Go to tasks', '前往任务')} ↗</button>}</div>}
 
       <div className="billing-metrics" aria-busy={loading}>
         {[[tr('Available to use', '当前可用'), wallet?.availableUsd], [tr('Included credit remaining', '套餐额度剩余'), wallet?.includedRemainingUsd], [tr('Purchased credit balance', '已购充值余额'), wallet?.prepaidBalanceUsd], [tr('Reserved for active requests', '请求预占额度'), wallet?.pendingUsd]].map(([label, value]) => <div className="billing-metric" key={String(label)}><p className="billing-metric-label">{label}</p><p className="billing-metric-value">{money(typeof value === 'number' ? value : null)}</p></div>)}

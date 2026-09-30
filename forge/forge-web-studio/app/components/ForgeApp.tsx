@@ -10048,7 +10048,7 @@ function ForgeApp() {
         {/* -- BILLING TAB ----------------------------------------------------- */}
         {mainTab === 'piworkflows' && user && <WorkflowWorkspace key={user.id || user.email} api={(path, options) => apiFetch(path, options || {}, user.token)} apiBase={API} token={user.token} zh={workspaceZh} onBilling={() => setMainTab('billing')} />}
         {mainTab === 'proceduralskills' && user && <ProceduralSkills key={user.id || user.email} api={(path, options) => apiFetch(path, options || {}, user.token)} zh={workspaceZh} initialSource={skillSource?.ownerId === String(user.id || user.email) ? skillSource : null} onSourceConsumed={() => setSkillSource(null)} onTasks={() => setMainTab('workspace')} onBilling={() => setMainTab('billing')} />}
-        {mainTab === 'billing' && user && <ManagedBillingPanel user={user} api={apiFetch} onAccountSwitch={handleLogout} />}
+        {mainTab === 'billing' && user && <ManagedBillingPanel user={user} api={apiFetch} onAccountSwitch={handleLogout} onOpenTasks={() => setMainTab('workspace')} />}
 
         {/* -- PLATFORMS TAB --------------------------------------------------- */}
         {/* ── API Key Health Monitor ── */}
