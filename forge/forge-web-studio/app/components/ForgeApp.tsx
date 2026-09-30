@@ -7123,9 +7123,9 @@ function ForgeApp() {
       const zhUi = workspaceZh;
       const retrySeconds = Number.isFinite(Number(e.retryAfter)) ? Math.min(3600,Math.max(1,Math.ceil(Number(e.retryAfter)))) : null;
       const billingCopy: Record<string, [string, string, 'plan'|'support'|'retry']> = {
-        BILLING_INSUFFICIENT_FUNDS: ['Your Forge credit is used up. Add credit or choose a plan to keep going.', 'Forge 额度已用完。充值或选择套餐后即可继续。', 'plan'],
-        BILLING_PAID_CREDITS_REQUIRED: ['This model requires paid credit. Choose a lightweight model for the trial, or add credit to continue.', '此模型需要付费额度。试用可选择轻量模型，或充值后继续。', 'plan'],
-        BILLING_TRIAL_MODEL_RESTRICTED: ['The free trial only covers lightweight models. Choose a plan to use this model.', '免费试用只包含轻量模型。选择套餐后即可使用此模型。', 'plan'],
+        BILLING_INSUFFICIENT_FUNDS: ['Your Forge credit is used up. Choose a currently free model to keep going, or review plan availability in Billing.', 'Forge 额度已用完。可切换当前免费模型继续使用，或前往账单页查看套餐开放状态。', 'plan'],
+        BILLING_PAID_CREDITS_REQUIRED: ['This model requires paid credit. Choose a currently free model, or review plan availability in Billing.', '此模型需要付费额度。可切换当前免费模型，或前往账单页查看套餐开放状态。', 'plan'],
+        BILLING_TRIAL_MODEL_RESTRICTED: ['This model is outside your free trial. Choose a currently free model or review plan availability in Billing.', '此模型不在免费试用范围内。可切换当前免费模型，或前往账单页查看套餐开放状态。', 'plan'],
         BILLING_ACCOUNT_REVIEW_REQUIRED: ['Your account is under payment review. Existing credit is safe; contact support to continue.', '账户正在进行付款核对，已有额度不受影响，请联系支持团队继续。', 'support'],
         BILLING_MODEL_PRICE_REVIEW_REQUIRED: ['This model is paused while its price is verified. Choose another model for now.', '该模型价格核对中，暂时停用，请先选择其他模型。', 'retry'],
         BILLING_USAGE_REVIEW_REQUIRED: ['This reply finished but its cost needs a review, so you were not charged. You can continue.', '本次回复已完成，但费用需要核对，未向你扣费，可以继续使用。', 'retry'],
