@@ -45,5 +45,5 @@ export function AccountEntryRoute({ mode, initialLanguage }: { mode: 'login' | '
     if (u.token) { localStorage.setItem('forge_token', u.token); localStorage.setItem('forge_access_token', u.token); }
     window.location.replace('/?lang=' + readUiLanguage());
   }, []);
-  return <AccountEntry request={(path, options) => request(path, options)} onLogin={onLogin} initialMode={mode} initialLanguage={initialLanguage} />;
+  return <AccountEntry request={request} onLogin={onLogin} initialMode={mode} initialLanguage={initialLanguage} />;
 }
