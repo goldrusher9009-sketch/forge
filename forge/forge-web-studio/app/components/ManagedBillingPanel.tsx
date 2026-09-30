@@ -282,7 +282,7 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
         {payment !== 'confirmed' && <button style={{ marginTop: 12 }} onClick={refreshAll} disabled={loading}>{tr('Check again', '重新核对')}</button>}
       </div>}
       {error && <div className="billing-notice" data-tone="warning" role="alert"><p>{errorCopy[error]?.[en ? 0 : 1] ?? tr('Billing is temporarily unavailable. Please refresh or try again shortly; no new payment is confirmed here.', '账单服务暂时不可用，请刷新或稍后重试；此处尚未确认新的付款。')}</p></div>}
-      {wallet && !purchasesEnabled && <div className="billing-notice" data-tone="warning" role="status"><h3>{tr('New purchases are paused', '新购暂时关闭')}</h3><p>{tr('We are verifying the Forge payment account. You can still view your balance, cancel an unpaid order, and manage an existing subscription.', '我们正在核实 Forge 收款账户。你仍可查看余额、取消未付款订单，以及管理已有订阅。')}</p></div>}
+      {wallet && !purchasesEnabled && <div className="billing-notice" data-tone="warning" role="status"><h3>{tr('New purchases are paused', '新购暂时关闭')}</h3><p>{tr('We are verifying the Forge payment account. Eligible accounts can still use currently free models without Forge credit, subject to provider limits. You can also view your balance, cancel an unpaid order, and manage an existing subscription.', '我们正在核实 Forge 收款账户。符合条件的账号仍可使用当前免费模型，不扣 Forge 额度，但受供应商限额约束。你也可以查看余额、取消未付款订单，以及管理已有订阅。')}</p></div>}
 
       <div className="billing-metrics" aria-busy={loading}>
         {[[tr('Available to use', '当前可用'), wallet?.availableUsd], [tr('Included credit remaining', '套餐额度剩余'), wallet?.includedRemainingUsd], [tr('Purchased credit balance', '已购充值余额'), wallet?.prepaidBalanceUsd], [tr('Reserved for active requests', '请求预占额度'), wallet?.pendingUsd]].map(([label, value]) => <div className="billing-metric" key={String(label)}><p className="billing-metric-label">{label}</p><p className="billing-metric-value">{money(typeof value === 'number' ? value : null)}</p></div>)}
@@ -312,15 +312,15 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
       </section>}
 
       <section className="billing-section">
-        <div className="billing-section-head"><h3>{tr('A plan for the way you work', '为你的工作方式选择套餐')}</h3><span className="billing-caption">{tr('USD · billed monthly', '美元计价 · 按月付费')}</span></div>
+        <div className="billing-section-head"><h3>{tr('A plan for the way you work', '为你的工作方式选择套餐')}</h3><span className="billing-caption">{tr('Free workspace · paid plans billed monthly', '免费工作区 · 付费套餐按月计费')}</span></div>
         <div className="billing-plans">
           {['free', 'starter', 'pro', 'agency'].filter(key => plans[key]).map(key => {
             const policy = plans[key], current = key === plan;
             return <article className="billing-plan" key={key} data-current={current}>
               <div className="billing-plan-top"><span>{key === 'free' ? tr('Free', '免费体验') : key[0].toUpperCase() + key.slice(1)}</span>{current && <span className="billing-plan-tag">{tr('Current plan', '当前套餐')}</span>}</div>
               <p className="billing-plan-price">${policy.monthlyUsd}<small> / {tr('month', '月')}</small></p>
-              <p className="billing-plan-credit">{key === 'free' ? tr(`Up to ${money(policy.trialUsd)} one-time trial, subject to availability`, `一次性最高 ${money(policy.trialUsd)} 体验额度，按实际发放为准`) : tr(`${money(policy.includedUsd)} included each paid month`, `每个付费月包含 ${money(policy.includedUsd)} 额度`)}</p>
-              <ul><li>{key === 'free' ? tr('Lightweight model choices', '轻量模型可选') : tr('Flagship, balanced and lightweight models', '旗舰、均衡、轻量模型可选')}</li><li>{tr('Local projects and agent tools', '本地项目与 Agent 工具')}</li><li>{tr('Request-level spending history', '逐笔请求费用记录')}</li></ul>
+              <p className="billing-plan-credit">{key === 'free' ? tr(`Currently free models use no credit · up to ${money(policy.trialUsd)} one-time trial if eligible`, `当前免费模型不扣额度 · 符合条件可获一次性最高 ${money(policy.trialUsd)} 体验额度`) : tr(`${money(policy.includedUsd)} included each paid month`, `每个付费月包含 ${money(policy.includedUsd)} 额度`)}</p>
+              <ul><li>{key === 'free' ? tr('Currently free models, subject to provider limits', '当前免费模型可用，受供应商限额约束') : tr('Flagship, balanced and lightweight models', '旗舰、均衡、轻量模型可选')}</li><li>{tr('Local projects and agent tools', '本地项目与 Agent 工具')}</li><li>{tr('Request-level spending history', '逐笔请求费用记录')}</li></ul>
               {!hasSubscription && <button className={key === 'pro' ? 'billing-primary' : ''} disabled={!canBuy || key === 'free' || orders.some(order => order.kind === 'subscription')} onClick={() => void startCheckout('subscription', key)}>{busy === key ? tr('Opening…', '打开中…') : key === 'free' ? tr('Free plan', '免费套餐') : tr('Choose plan', '选择套餐')}</button>}
             </article>;
           })}
