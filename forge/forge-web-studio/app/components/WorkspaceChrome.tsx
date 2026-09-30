@@ -87,6 +87,7 @@ export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilli
 }) {
   const apiRef = useRef(api); apiRef.current = api;
   const [models, setModels] = useState<ManagedModel[]>([]), [personal, setPersonal] = useState<PersonalModel[]>([]), [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [personalProviders, setPersonalProviders] = useState<string[] | null>(null);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
     let current = true; setStatus('loading');
@@ -96,6 +97,7 @@ export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilli
       if (!managed && !saved) throw new Error('CATALOG_UNAVAILABLE');
       if (current) {
         setModels(managed || []);
+        setPersonalProviders(saved ? Object.keys(saved).filter(key => key.startsWith('has_') && saved[key] && !['platform', 'env'].includes(saved[`${key.slice(4)}_key`])).map(key => key.slice(4)) : null);
         setPersonal([...personalOptions, ...liveOptions].filter((model, index, all) =>
           saved?.[`has_${model.provider}`] && !['platform', 'env'].includes(saved[`${model.provider}_key`]) &&
           all.findIndex(candidate => candidate.id === model.id) === index));
@@ -107,11 +109,16 @@ export function WorkspaceModelPicker({ api, value, onChange, locked, zh, onBilli
   const valueRef = useRef(value); valueRef.current = value;
   const onChangeRef = useRef(onChange); onChangeRef.current = onChange;
   useEffect(() => {
-    // First task on a fresh account: choose a model the account can run.
-    if (locked || status !== 'ready' || valueRef.current) return;
+    // An old personal selection must not survive removal of its key.
+    if (locked || status !== 'ready') return;
+    const current = valueRef.current;
+    if (current && (models.some(model => model.id === current) || personal.some(model => model.id === current))) return;
+    const provider = [...personalOptions, ...liveOptions].find(model => model.id === current)?.provider || (current.includes('/') ? 'openrouter' : undefined);
+    if (current && (personalProviders === null || (provider ? personalProviders.includes(provider) : personalProviders.length > 0))) return;
     const fallback = models.find(model => model.isDefault && model.available) || models.find(model => model.available) || personal.find(model => model.id === 'gpt-4o-mini') || personal[0];
     if (fallback) onChangeRef.current(fallback.id);
-  }, [status, models, personal, locked]);
+    else if (current) onChangeRef.current('');
+  }, [status, models, personal, personalProviders, personalOptions, liveOptions, locked]);
   const selected = models.find(model => model.id === value);
   const personalSelected = personal.find(model => model.id === value);
   return <div className={styles.modelPicker}>

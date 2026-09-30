@@ -5146,7 +5146,7 @@ function ForgeApp() {
   // Pre-select active model in ForgeAuto when selectedModel changes
   useEffect(() => { if (selectedModel) setAutoSelectedModels(prev => prev.includes(selectedModel) ? prev : [selectedModel, ...prev]); }, [selectedModel]);
   // Persist selected model to localStorage so it survives page reloads and race conditions
-  useEffect(() => { if (selectedModel) { try { localStorage.setItem('forge_selected_model', selectedModel); } catch {} } }, [selectedModel]);
+  useEffect(() => { try { if (selectedModel) localStorage.setItem('forge_selected_model', selectedModel); else localStorage.removeItem('forge_selected_model'); } catch {} }, [selectedModel]);
 
   // Build flat list of active models for ForgeASI/Multi/Auto selectors
   const getActiveModels = (): {id:string; label:string}[] => {
