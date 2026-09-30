@@ -321,7 +321,7 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
               <p className="billing-plan-price">${policy.monthlyUsd}<small> / {tr('month', '月')}</small></p>
               <p className="billing-plan-credit">{key === 'free' ? tr(`Currently free models use no credit · up to ${money(policy.trialUsd)} one-time trial if eligible`, `当前免费模型不扣额度 · 符合条件可获一次性最高 ${money(policy.trialUsd)} 体验额度`) : tr(`${money(policy.includedUsd)} included each paid month`, `每个付费月包含 ${money(policy.includedUsd)} 额度`)}</p>
               <ul><li>{key === 'free' ? tr('Currently free models, subject to provider limits', '当前免费模型可用，受供应商限额约束') : tr('Flagship, balanced and lightweight models', '旗舰、均衡、轻量模型可选')}</li><li>{tr('Local projects and agent tools', '本地项目与 Agent 工具')}</li><li>{tr('Request-level spending history', '逐笔请求费用记录')}</li></ul>
-              {!hasSubscription && <button className={key === 'pro' ? 'billing-primary' : ''} disabled={!canBuy || key === 'free' || orders.some(order => order.kind === 'subscription')} onClick={() => void startCheckout('subscription', key)}>{busy === key ? tr('Opening…', '打开中…') : key === 'free' ? tr('Free plan', '免费套餐') : tr('Choose plan', '选择套餐')}</button>}
+              {!hasSubscription && purchasesEnabled && <button className={key === 'pro' ? 'billing-primary' : ''} disabled={!canBuy || key === 'free' || orders.some(order => order.kind === 'subscription')} onClick={() => void startCheckout('subscription', key)}>{busy === key ? tr('Opening…', '打开中…') : key === 'free' ? tr('Free plan', '免费套餐') : tr('Choose plan', '选择套餐')}</button>}
             </article>;
           })}
         </div>
@@ -329,10 +329,10 @@ export function ManagedBillingPanel({ user, api, onAccountSwitch }: Props) {
         {hasSubscription && <SubscriptionPlanChangePanel user={user} api={api} language={language} accountMatches={matching} spendingRestricted={wallet?.spendingRestricted === true} onRefresh={() => { void refresh(); }} />}
       </section>
 
-      <section className="billing-section billing-topup">
+      {purchasesEnabled && <section className="billing-section billing-topup">
         <div><h3>{tr('Keep your next task moving.', '为下一个任务补充额度。')}</h3><p className="billing-caption">{tr('Add prepaid credit from $20. No automatic refill.', '充值最低 20 美元，不会自动续充。')}</p></div>
         <div className="billing-topup-controls"><label htmlFor="forge-topup-amount" className="billing-caption">USD</label><input id="forge-topup-amount" aria-label={tr('Credit purchase amount in USD', '充值金额（美元）')} inputMode="decimal" value={amount} onChange={event => setAmount(event.target.value)} /><button className="billing-primary" disabled={!canBuy || validTopup(amount) === null || orders.some(order => order.kind === 'topup')} onClick={() => void startCheckout('topup')}>{busy === 'topup' ? tr('Opening…', '打开中…') : tr('Add credit', '充值')}</button></div>
-      </section>
+      </section>}
 
       <section className="billing-section">
         <div className="billing-section-head"><h3>{tr('Every request, accounted for.', '每一次请求，都有记录。')}</h3><span className="billing-caption">{tr('Most recent 100 requests', '最近 100 次请求')}</span></div>

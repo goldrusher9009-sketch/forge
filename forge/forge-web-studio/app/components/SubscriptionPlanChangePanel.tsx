@@ -85,7 +85,7 @@ export function SubscriptionPlanChangePanel({ user, api, language, accountMatche
   };
   return <div className="billing-notice" style={{ marginTop: 16 }} aria-label={tr('Next-cycle plan change', '下账期套餐变更')}>
     <h3>{tr('Change your next billing cycle', '调整下一个账期')}</h3>
-    <p>{tr('Your current paid allowance keeps its original expiry. New monthly credit is added only after the next invoice is paid. For more credit today, use a top-up.', '当前已付费额度保留原到期时间。下一期账单付清后才发放新套餐额度；本月需要更多额度时，可以单独充值。')}</p>
+    <p>{tr('Your current paid allowance keeps its original expiry. New monthly credit is added only after the next invoice is paid.', '当前已付费额度保留原到期时间。下一期账单付清后才发放新套餐额度。')}</p>
     {error && <p role="alert" style={{ marginTop: 10 }}>{copy[error]?.[en ? 0 : 1] ?? tr('Plan changes are temporarily unavailable. Refresh or contact support; no change is confirmed.', '套餐变更暂时不可用，请刷新或联系支持团队；尚未确认变更成功。')}</p>}
     {notice && <p role="status" style={{ marginTop: 10 }}>{notice === 'withdrawn' ? tr('Change withdrawn. Your current subscription continues; renewal has not been cancelled.', '变更已撤回，当前订阅继续生效；这不会取消续费。') : notice === 'applied' ? tr('The new cycle had already started. The current plan is preserved; subscription management is available.', '新账期已开始，当前套餐保留，现在可以管理订阅。') : tr('Next-cycle change confirmed. No payment was taken today.', '下账期变更已确认，今天不会扣款。')}</p>}
     {active ? <>
