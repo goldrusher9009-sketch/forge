@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, NativeModules, Platform, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import * as FileSystem from 'expo-file-system';
 import { ForgeAgentLoop } from './src/ForgeAgent';
-import { AgentStep, NativeExecutionResult, PhoneAction } from './src/config';
+import { AgentStep, FORGE_API, NativeExecutionResult, normalizeForgeApiUrl, PhoneAction } from './src/config';
 import { ForgeIdentity, ForgeSessionClient } from './src/session';
 import BusinessTasks from './src/BusinessTasks';
 import type { DraftClient } from './src/business-tasks';
@@ -45,6 +46,9 @@ function errorText(value: unknown): string {
     DESKTOP_PROVIDER_FUNDING_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     DESKTOP_FREE_MODEL_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     PHONE_SESSION_ACTIVE: '已有任务在运行，请先结束当前任务。', APP_UNAVAILABLE: '无法打开所选应用，请重新选择。',
+    SERVICE_URL_REQUIRED: '请先设置 Forge 服务地址。',
+    SERVICE_URL_INVALID: '请输入完整的服务网址，不要附带路径、参数或账号密码。',
+    SERVICE_HTTPS_REQUIRED: '请使用 HTTPS 服务地址。开发版仅支持本机或局域网的 HTTP 地址。',
   };
   return messages[code] || '本次操作未完成。请检查网络、登录状态或所选应用后重试。';
 }
@@ -64,9 +68,12 @@ function describeAction(step: AgentStep): string {
 }
 
 export default function App() {
-  const sessionRef = useRef<ForgeSessionClient | null>(null);
-  if (!sessionRef.current) sessionRef.current = new ForgeSessionClient();
-  const session = sessionRef.current;
+  const [apiUrl, setApiUrl] = useState(FORGE_API);
+  const [serviceInput, setServiceInput] = useState(FORGE_API);
+  const [editingService, setEditingService] = useState(!FORGE_API);
+  const [loadingService, setLoadingService] = useState(true);
+  const [savingService, setSavingService] = useState(false);
+  const session = useMemo(() => new ForgeSessionClient(apiUrl), [apiUrl]);
   const [identity, setIdentity] = useState<ForgeIdentity | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -110,6 +117,40 @@ export default function App() {
     };
   }, [session, identity?.user.id]);
 
+  useEffect(() => {
+    let active = true;
+    const restore = async () => {
+      try {
+        if (!FileSystem.documentDirectory) return;
+        const file = `${FileSystem.documentDirectory}forge-service.json`;
+        const info = await FileSystem.getInfoAsync(file);
+        if (!info.exists || info.isDirectory || info.size > 4096) return;
+        const saved = JSON.parse(await FileSystem.readAsStringAsync(file));
+        const restored = normalizeForgeApiUrl(saved.apiUrl);
+        if (active) { setApiUrl(restored); setServiceInput(restored); setEditingService(false); }
+      } catch { /* Invalid or unavailable local settings leave the visible default unchanged. */ }
+      finally { if (active) setLoadingService(false); }
+    };
+    void restore();
+    return () => { active = false; };
+  }, []);
+
+  const saveService = async () => {
+    if (authBusyRef.current || loadingService || savingService || identity) return;
+    let selected: string;
+    try { selected = normalizeForgeApiUrl(serviceInput); }
+    catch (e) { setError(errorText(e)); return; }
+    setSavingService(true); setPassword(''); setError(''); setNotice('');
+    try {
+      if (FileSystem.documentDirectory) {
+        await FileSystem.writeAsStringAsync(`${FileSystem.documentDirectory}forge-service.json`, JSON.stringify({ apiUrl: selected }));
+      }
+    } catch { setNotice('本次已使用此服务；地址未能保存，下次打开时请重新设置。'); }
+    finally {
+      setApiUrl(selected); setServiceInput(selected); setEditingService(false); setSavingService(false);
+    }
+  };
+
   useEffect(() => () => {
     runRef.current += 1;
     approvalRef.current?.(false);
@@ -118,7 +159,7 @@ export default function App() {
   }, [session]);
 
   const signIn = async () => {
-    if (authBusyRef.current || !email.trim() || !password) return;
+    if (authBusyRef.current || loadingService || savingService || editingService || !apiUrl || !email.trim() || !password) return;
     const attempt = ++authRef.current;
     authBusyRef.current = true; setSigningIn(true); setError(''); setNotice('');
     const enteredPassword = password; setPassword('');
@@ -269,9 +310,17 @@ export default function App() {
 
   if (!identity) return <SafeAreaView style={s.root}><StatusBar style="dark" /><KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.loginContent}>
     {mark}<Text style={s.eyebrow}>你的随身工作助手</Text><Text style={s.hero}>少一点琐事。{'\n'}多一点时间。</Text><Text style={s.intro}>把重复操作交给 Forge。{'\n'}每一步，都由你掌握。</Text>
-    <View style={s.loginForm}><Text style={s.label}>邮箱</Text><TextInput accessibilityLabel="邮箱" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="username" autoComplete="email" placeholder="you@company.com" placeholderTextColor={C.muted} style={s.input} editable={!signingIn} />
-      <Text style={s.label}>密码</Text><TextInput accessibilityLabel="密码" value={password} onChangeText={setPassword} secureTextEntry textContentType="password" autoComplete="current-password" placeholder="输入 Forge 密码" placeholderTextColor={C.muted} style={s.input} editable={!signingIn} onSubmitEditing={() => { void signIn(); }} />
-      {message(error, true)}{message(notice)}{button(signingIn ? '正在登录…' : '登录 Forge →', () => { void signIn(); }, signingIn || !email.trim() || !password)}
+    <View style={s.service}><Text style={s.label}>连接到你的 Forge</Text>
+      {loadingService ? <ActivityIndicator accessibilityLabel="正在读取服务设置" color={C.green} /> : editingService ? <>
+        <TextInput accessibilityLabel="Forge 服务地址" value={serviceInput} onChangeText={setServiceInput} autoCapitalize="none" autoCorrect={false} keyboardType="url" maxLength={2048} placeholder="https://你的服务网址" placeholderTextColor={C.muted} style={s.input} editable={!savingService && !signingIn} />
+        <Text style={s.footnote}>使用团队提供或你自己部署的 Forge 地址。请确认网址后再输入账号密码。</Text>
+        {button(savingService ? '正在保存…' : '使用此服务', () => { void saveService(); }, savingService || signingIn || !serviceInput.trim())}
+        {!!apiUrl && button('取消修改', () => { setServiceInput(apiUrl); setEditingService(false); setError(''); }, savingService || signingIn, true)}
+      </> : <><Text selectable style={s.body}>{apiUrl}</Text>{button('更换服务', () => { setPassword(''); setEditingService(true); setError(''); setNotice(''); }, signingIn || savingService, true)}</>}
+    </View>
+    <View style={s.loginForm}><Text style={s.label}>邮箱</Text><TextInput accessibilityLabel="邮箱" value={email} onChangeText={setEmail} autoCapitalize="none" autoCorrect={false} keyboardType="email-address" textContentType="username" autoComplete="email" placeholder="you@company.com" placeholderTextColor={C.muted} style={s.input} editable={!loadingService && !savingService && !editingService && !signingIn} />
+      <Text style={s.label}>密码</Text><TextInput accessibilityLabel="密码" value={password} onChangeText={setPassword} secureTextEntry textContentType="password" autoComplete="current-password" placeholder="输入 Forge 密码" placeholderTextColor={C.muted} style={s.input} editable={!loadingService && !savingService && !editingService && !signingIn} onSubmitEditing={() => { void signIn(); }} />
+      {message(error, true)}{message(notice)}{button(signingIn ? '正在登录…' : '登录 Forge →', () => { void signIn(); }, loadingService || savingService || editingService || !apiUrl || signingIn || !email.trim() || !password)}
       {signingIn && button('取消登录', () => { void signOut(); }, false, true)}<Text style={s.footnote}>使用已有 Forge 账号。登录凭据只保留在本次应用会话中，关闭后需重新登录。</Text>
     </View><View style={s.footer}><Text style={s.small}>逐项确认 · 随时停止</Text><Text style={s.small}>01 / ANDROID</Text></View>
   </ScrollView></KeyboardAvoidingView></SafeAreaView>;
@@ -307,7 +356,7 @@ const s = StyleSheet.create({
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 }, brandMark: { width: 30, height: 30, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }, brandLetter: { color: C.accent, fontSize: 21, fontWeight: '800' },
   wordmark: { color: C.ink, fontSize: 14, fontWeight: '800', letterSpacing: 1 }, wordmarkLight: { fontWeight: '400', color: C.muted }, topbar: { minHeight: 68, paddingHorizontal: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: C.line, gap: 14 }, account: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   eyebrow: { color: C.green, fontSize: 12, fontWeight: '600', letterSpacing: 1.2, marginTop: 24, marginBottom: 14 }, hero: { color: C.ink, fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 36, lineHeight: 48, marginTop: 8 }, intro: { color: C.muted, fontSize: 15, lineHeight: 24, marginTop: 18 },
-  loginForm: { marginTop: 34 }, label: { color: C.muted, fontSize: 12, fontWeight: '600', marginTop: 16, marginBottom: 10 }, input: { minHeight: 52, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 15, color: C.ink, fontSize: 16 }, goalInput: { minHeight: 120, textAlignVertical: 'top', lineHeight: 24 },
+  service: { marginTop: 22, paddingBottom: 16, borderBottomWidth: 1, borderColor: C.line }, loginForm: { marginTop: 8 }, label: { color: C.muted, fontSize: 12, fontWeight: '600', marginTop: 16, marginBottom: 10 }, input: { minHeight: 52, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 15, color: C.ink, fontSize: 16 }, goalInput: { minHeight: 120, textAlignVertical: 'top', lineHeight: 24 },
   button: { minHeight: 50, backgroundColor: C.ink, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', marginTop: 12 }, buttonText: { color: C.accent, fontWeight: '700', fontSize: 15 }, secondary: { backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }, disabled: { opacity: 0.45 },
   small: { color: C.muted, fontSize: 12, lineHeight: 19 }, footnote: { color: C.muted, fontSize: 12, lineHeight: 20, marginTop: 14 }, body: { color: C.ink, fontSize: 15, lineHeight: 24 }, title: { color: C.ink, fontSize: 23, lineHeight: 32, fontWeight: '600', flexShrink: 1 }, footer: { borderTopWidth: 1, borderColor: C.line, paddingTop: 18, marginTop: 32, flexDirection: 'row', justifyContent: 'space-between' },
   taskShelf: { marginTop: 28, marginBottom: 18 }, task: { flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderColor: C.line, minHeight: 64, gap: 12 }, taskNumber: { color: C.green, fontSize: 12, fontFamily: 'monospace' }, taskName: { color: C.ink, fontSize: 16, fontWeight: '600' }, mode: { flexDirection: 'row', alignItems: 'center', paddingVertical: 18, gap: 16 }, appSection: { paddingBottom: 12 },

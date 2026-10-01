@@ -101,7 +101,11 @@ The native pilot uses an Android Accessibility Service to observe foreground-win
 
 ## Configuration
 
-`EXPO_PUBLIC_FORGE_API_URL` is required at bundle time. No Railway, Vercel, production, or local fallback endpoint is compiled automatically.
+The login screen shows **连接到你的 Forge**. Enter the Forge service's HTTPS origin (without `/api`, account information, query or fragment), confirm it, then sign in. **更换服务** is available before login or after signing out. Changing the service clears the entered password and creates a separate session client; old logout/revocation requests stay on the original service.
+
+Only the confirmed non-sensitive service address is saved in the app's private `forge-service.json` file using the existing Expo FileSystem. Tokens and passwords remain in memory. The app starts without a configured service and blocks login until an address is selected. Invalid saved configuration is ignored. There is no production or local fallback endpoint.
+
+`EXPO_PUBLIC_FORGE_API_URL` is an optional initial address at bundle time; a valid saved selection takes precedence. React Native 0.74 has an incomplete global URL implementation, so origin validation uses the already installed `whatwg-url-without-unicode` parser, now pinned as a direct dependency.
 
 ```dotenv
 # Android emulator development
@@ -111,12 +115,14 @@ EXPO_PUBLIC_FORGE_API_URL=http://10.0.2.2:3000
 EXPO_PUBLIC_FORGE_API_URL=https://forge-staging.example.com
 ```
 
-Release candidates must use HTTPS. The main Android manifest disables cleartext traffic. The app requires a valid Forge account, an Owner-owned Agent Passport, and an available managed free model before a real session can be created. A zero prepaid balance or exhausted legacy token quota does not block the candidate's zero-price model route.
+Release candidates must use HTTPS. The main Android manifest disables cleartext traffic. Development builds additionally allow HTTP to localhost, loopback and private IPv4 addresses; public HTTP addresses are rejected. On a phone, localhost refers to that phone. For a USB/ADB-connected local development service, use `adb reverse tcp:13307 tcp:13307` and select `http://127.0.0.1:13307` in the development app. This requires a running local test service; it is not an online service address.
+
+The app requires a valid Forge account, an Owner-owned Agent Passport, and an available managed free model before a real session can be created. A zero prepaid balance or exhausted legacy token quota does not block the candidate's zero-price model route.
 
 ## Owner acceptance flow
 
 1. Build and install the Android native application; Expo Go cannot load the Accessibility Service.
-2. Set the Forge API URL for the selected environment before bundling.
+2. Confirm the selected environment's Forge address on the login screen; optionally prefill it when bundling.
 3. Sign in with the Forge account's email and password. The app verifies the profile and Passport before continuing.
 4. For planning-only validation, keep **先预览步骤** enabled. No native action can be authorized or executed.
 5. For controlled execution, disable the preview switch, choose the application's label, enable Forge Phone Agent in **Settings -> Accessibility**, and prepare the target page. Tap **打开应用并开始**.
@@ -133,6 +139,8 @@ The native Release task is:
 cd android
 ./gradlew assembleRelease
 ```
+
+Local Android Debug builds use the standard user-level `~/.android/debug.keystore`, outside this repository. With the Android SDK/JDK configured, run `assembleDebug -PreactNativeArchitectures=x86_64` for an existing x86_64 emulator, start Metro from `forge-phone`, and reverse the selected local API and Metro ports with ADB. This is an installable development build with developer signing, not production signing or a standalone online release.
 
 Without external signing variables, this intentionally produces an unsigned validation APK. Production signing material must stay outside the repository and is read only from:
 
@@ -160,3 +168,15 @@ No device was attached at the earlier `adb devices` checkpoint. No device or emu
 The later 2026-10-01 business-draft candidate passed **70 independent local full-HTTP/Pi checks** using the actual compiled `business-tasks.ts` helper, current backend/SQLite, and the real Node 24 Pi SDK worker. Both seller and buyer accounts completed `reply-draft.json` and `marketing-pack.json` through actual `create_artifact` calls, saved tool receipts, byte-identical downloads, fixed JSON schema checks, current delivery reports, and settled zero model charges. The original helper body survived server restart and replay without redispatch. Zero cash balance and exhausted legacy token quota did not block the free route. Invalid cost budgets, paid/BYOK zero budgets, SuperAgent paid zero budgets, and a rejected paid override were refused before upstream dispatch; the rejected override preserved the thread's free model and saved no user message. A priced $10 portable ZIP was prepared, exported through the authenticated service route, imported and evaluated by a separate buyer, and used for that buyer's own checked drafts. Only upstream model responses were deterministic local fixtures; no direct artifact POST, automation fixture, external inference, payment, public sale, or production operation established these results.
 
 The final complete ARM64 unsigned business APK build succeeded in **1m1s** with the same SDK 34 / Kotlin 1.9.23 / NDK 26.1.10909125 toolchain. All **11** tracked client, business-helper, native, manifest, and build files remained identical before and after the build. Actual binary inspection passed **53 checks**, including the new business input marker, both fixed JSON filenames, zero-budget field and notice in the Hermes bundle, the original native checks, and preservation of the original phone-operation APK. The final APK is **40,892,776 bytes**, SHA256 `7CFD3E48727EC5DC96D8E576F9BFB708E31B334D7E0DD5721666E9D6E7918C57`. Its frozen `BusinessTasks.tsx` hash is `C3F33F6206EA77043814E090EF522ABFDE4BB5BB0128759DE15102059F8E3304`; this revision uses compact draft/history headings, shows Stop only for eligible active run states, and prevents a stale Stop callback from cancelling a newer job. The prior business APK and its complete build/binary evidence are retained separately; that historical APK is 40,892,564 bytes, SHA256 `5E39471F2C42E260790537D7845A4C92CA0E68E02CA898211B0EC4557922AFBB`. The final APK's explicit `https://localhost:3000` API is still a compile-validation address, so this unsigned artifact cannot directly connect to an online Forge environment. Device installation, physical-device operation, signing, deployment, and production remain unverified.
+
+## Local native and real free-model acceptance — 2026-10-02
+
+The current service-selection candidate passes full App strict TypeScript and six independent actual-source checks for address validation, settings failures and service/account isolation. Those component checks substitute native and HTTP dependencies. A complete x86_64 Debug APK also builds and installs on the existing Android 36 emulator. It uses the user-level debug signing key and a running local Metro server; it is not a standalone release or a physical-device check.
+
+Actual emulator UI checks confirm service selection, rejection of public HTTP, local-service login, the business workspace, complete incoming source and unread-attachment/identity notices, and restoration of a saved draft with current original-file and zero-model-charge checks. The same native UI completes frozen email preview, explicit Owner approval, provider acceptance and a separate delivered-status query; the local provider fixture records exactly one new dispatch. This is simulated sending/delivery, not a real third-party email. The cream, ink and green interface is retained. This evidence applies to the isolated local service, not a public backend or production deployment.
+
+With an authorized local OpenRouter key, `stealth/space-bunny-alpha` on provider `stealth` completed an actual function-tool call and tool-result continuation. The two successful calls used 847 and 706 tokens and each reported `usage.cost=0`. A forced named `tool_choice` failed with HTTP 404; its cost remains unknown. The compatible `auto` choice passed. Independent generation-receipt retrieval was unavailable, so that receipt cost remains unknown.
+
+A separate current Forge/platform/Pi task completed in 23.330 seconds, with three real reported provider receipts totaling 7,924 tokens and $0 model/provider inference cost. The real `create_artifact` receipt matches the saved `reply-draft.json`; schema, original file/download, current delivery checks and completed accounting passed. All requests pin the zero-price provider, set price limits to zero and disable paid fallback. No real email provider call was made. The body contains no invented date or price, but a pre-existing Agent annual-price statement appears in `missingInformation` for Owner review; technical verification is not full factual acceptance.
+
+Free-model reliability, physical-device operation, standalone signed distribution, real receiving/sending/delivery, protected Preview backend acceptance, live purchases/payouts and customer ROI remain separate gates. Production remains unchanged.

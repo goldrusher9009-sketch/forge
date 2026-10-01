@@ -1,4 +1,4 @@
-import { FORGE_API } from './config';
+import { FORGE_API, normalizeForgeApiUrl } from './config';
 
 export type ForgeUser = {
   id: string;
@@ -77,6 +77,7 @@ export class ForgeSessionClient {
   }
 
   private async send(path: string, init: RequestInit = {}, accessToken?: string, mode: 'json' | 'text' = 'json'): Promise<Reply> {
+    const apiUrl = normalizeForgeApiUrl(this.apiUrl);
     if (!path.startsWith('/api/') || path.includes('\\')) throw new ForgeSessionError('INVALID_API_PATH');
     if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
     const headers = new Headers(init.headers);
@@ -86,7 +87,7 @@ export class ForgeSessionClient {
     else headers.delete('Authorization');
     let response: Response;
     try {
-      response = await fetch(`${this.apiUrl}${path}`, { ...init, credentials: 'omit', headers });
+      response = await fetch(`${apiUrl}${path}`, { ...init, credentials: 'omit', headers });
     } catch {
       throw new ForgeSessionError(init.signal?.aborted ? 'REQUEST_CANCELLED' : 'NETWORK_UNAVAILABLE');
     }

@@ -9,6 +9,7 @@
 import {
   AgentStep,
   FORGE_API,
+  normalizeForgeApiUrl,
   NativeExecutionResult,
   PHONE_ACTION_NAMES,
   PhoneAction,
@@ -85,7 +86,7 @@ export class ForgeAgentLoop {
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (this.authenticatedRequest) return this.authenticatedRequest<T>(path, init);
-    const response = await fetch(`${FORGE_API}${path}`, {
+    const response = await fetch(`${normalizeForgeApiUrl(FORGE_API)}${path}`, {
       ...init,
       headers: {
         'Content-Type': 'application/json',

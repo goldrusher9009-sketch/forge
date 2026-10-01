@@ -1,11 +1,35 @@
 // Forge Phone Agent — controlled runtime configuration and shared contracts.
 declare const process: { env: { EXPO_PUBLIC_FORGE_API_URL?: string } };
+declare const __DEV__: boolean;
+// React Native 0.74's global URL does not implement origin or hostname.
+const ForgeURL = require('whatwg-url-without-unicode').URL as typeof URL;
 
 const configuredApi = process.env.EXPO_PUBLIC_FORGE_API_URL;
-if (typeof configuredApi !== 'string' || !configuredApi.trim()) {
-  throw new Error('EXPO_PUBLIC_FORGE_API_URL is required');
+export const FORGE_API = (() => {
+  try { return normalizeForgeApiUrl(configuredApi || ''); }
+  catch { return ''; }
+})();
+
+export function normalizeForgeApiUrl(value: string, allowLocalHttp = typeof __DEV__ !== 'undefined' && __DEV__): string {
+  const trimmed = value.trim();
+  if (!trimmed) throw new Error('SERVICE_URL_REQUIRED');
+  if (trimmed.length > 2048 || /[\\\s\u0000-\u001f\u007f]/.test(trimmed)) throw new Error('SERVICE_URL_INVALID');
+  let url: URL;
+  try { url = new ForgeURL(trimmed); } catch { throw new Error('SERVICE_URL_INVALID'); }
+  if (url.username || url.password || url.search || url.hash || (url.pathname && url.pathname !== '/')) {
+    throw new Error('SERVICE_URL_INVALID');
+  }
+  const host = url.hostname.toLowerCase();
+  url.hostname = host;
+  const octets = host.split('.').map(Number);
+  const ipv4 = /^\d+\.\d+\.\d+\.\d+$/.test(host) && octets.every(octet => octet >= 0 && octet <= 255);
+  const local = host === 'localhost' || host === '[::1]' || (ipv4 && (octets[0] === 127 || octets[0] === 10 ||
+    (octets[0] === 192 && octets[1] === 168) || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31)));
+  if (url.protocol !== 'https:' && !(allowLocalHttp && url.protocol === 'http:' && local)) {
+    throw new Error('SERVICE_HTTPS_REQUIRED');
+  }
+  return url.origin;
 }
-export const FORGE_API = configuredApi.trim().replace(/\/$/, '');
 
 export const PHONE_ACTION_NAMES = [
   'tap', 'long_press', 'swipe', 'scroll', 'type', 'back', 'home', 'wait', 'done',
