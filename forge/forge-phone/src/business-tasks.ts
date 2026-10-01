@@ -9,7 +9,7 @@ export type DraftReport = {
   accountingComplete: boolean; chargeUsd: number | null; checkedAt?: string;
   files: Array<{ id: string; filename: string; version: number; original: boolean }>;
 };
-export type DraftJob = { input: DraftInput; requestId: string; threadId: string; release: DraftRelease; body: string; runId?: string };
+export type DraftJob = { input: DraftInput; requestId: string; threadId: string; release: DraftRelease; body: string; runId?: string; origin?: 'resend-received' };
 export type SavedThread = { id: string; title: string; model: string; publishedAgent?: { agentId: string; releaseId: string; name: string; version: number } | null };
 export type DraftRequestState = { requestId: string; runId: string; status: string; result?: { success?: boolean; error?: string } | null; error?: string };
 export type DraftClient = { request: ForgeRequest; requestText(path: string, init?: RequestInit): Promise<{ text: string; contentType: string }> };
@@ -25,7 +25,7 @@ export const draftFilename = (kind: DraftKind) => kind === 'reply' ? 'reply-draf
 export const draftLabel = (kind: DraftKind) => kind === 'reply' ? '邮件回复草稿' : '营销资料草稿';
 export const knownCharge = (report?: DraftReport | null): number | null => report?.current === true && report.accountingComplete === true && typeof report.chargeUsd === 'number' && Number.isFinite(report.chargeUsd) && report.chargeUsd >= 0 ? report.chargeUsd : null;
 
-export async function availableDraftReleases(client: DraftClient): Promise<DraftRelease[]> {
+export async function availableDraftReleases(client: DraftClient, draftOnly = false): Promise<DraftRelease[]> {
   const [published, catalog] = await Promise.all([
     client.request<{ data: DraftRelease[] }>('/api/published-agents'),
     client.request<{ data: Array<{ id: string; provider: string; available: boolean; isFree: boolean; pricing: { input: number; output: number; cacheRead?: number; cacheWrite: number } }> }>('/api/desktop/models'),
@@ -40,7 +40,7 @@ export async function availableDraftReleases(client: DraftClient): Promise<Draft
     try {
       const pack = await client.request<{ data: { configuration: { model: string; tools: string[] } } }>(`/api/workspace-agents/${segment(release.agentId)}/releases/${segment(release.releaseId)}/package`);
       const config = pack.data?.configuration;
-      if (config?.model === release.model && Array.isArray(config.tools) && config.tools.includes('create_artifact') && config.tools.every(tool => tools.has(tool))) result.push(release);
+      if (config?.model === release.model && Array.isArray(config.tools) && config.tools.includes('create_artifact') && config.tools.every(tool => draftOnly ? tool === 'create_artifact' : tools.has(tool))) result.push(release);
     } catch (error) {
       // A changed account or stopped component must end all further requests.
       if (['SESSION_CHANGED', 'SESSION_EXPIRED', 'AUTH_REQUIRED', 'DRAFT_STOPPED'].includes(error instanceof Error ? error.message.split(':')[0] : '')) throw error;
@@ -148,15 +148,21 @@ export async function verifyDraft(client: DraftClient, job: DraftJob): Promise<{
 
 export async function restoreDraftJob(client: DraftClient, thread: SavedThread): Promise<DraftJob | null> {
   const reply = await client.request<{ data: Array<{ role: string; content: string }> }>(`/api/threads/${segment(thread.id)}/messages`);
-  const message = reply.data?.find(item => item.role === 'user' && typeof item.content === 'string' && item.content.split('\n')[1]?.startsWith(MARKER));
-  if (!message || !thread.publishedAgent) return null;
-  let metadata: any;
-  try { metadata = JSON.parse(message.content.split('\n')[1].slice(MARKER.length)); } catch { return null; }
-  if (!object(metadata.input) || !['reply', 'marketing'].includes(metadata.input.kind) || typeof metadata.input.name !== 'string' || !metadata.input.name.trim() || metadata.input.name.length > 100
-    || typeof metadata.input.source !== 'string' || !metadata.input.source.trim() || metadata.input.source.length > 6000
-    || typeof metadata.requestId !== 'string' || !/^[A-Za-z0-9_.:-]{1,128}$/.test(metadata.requestId) || metadata.tokenBudget !== BUSINESS_TOKEN_BUDGET) return null;
-  return { input: metadata.input as DraftInput, requestId: metadata.requestId, threadId: thread.id,
-    release: { ...thread.publishedAgent, model: thread.model }, body: JSON.stringify({ content: message.content, client_message_id: metadata.requestId, token_budget: metadata.tokenBudget, cost_budget_usd: 0 }) };
+  if (!Array.isArray(reply.data) || !thread.publishedAgent) return null;
+  // Retries retain the thread but create a new request. Restore the latest valid prompt.
+  for (const message of [...reply.data].reverse()) {
+    const marker = typeof message.content === 'string' ? message.content.split('\n')[1] : '';
+    if (message.role !== 'user' || !marker?.startsWith(MARKER)) continue;
+    let metadata: any;
+    try { metadata = JSON.parse(marker.slice(MARKER.length)); } catch { continue; }
+    if (!object(metadata) || !object(metadata.input) || !['reply', 'marketing'].includes(metadata.input.kind) || typeof metadata.input.name !== 'string' || !metadata.input.name.trim() || metadata.input.name.length > 100
+      || typeof metadata.input.source !== 'string' || !metadata.input.source.trim() || metadata.input.source.length > (metadata.origin === 'resend-received' ? 64000 : 6000)
+      || typeof metadata.requestId !== 'string' || !/^[A-Za-z0-9_.:-]{1,128}$/.test(metadata.requestId) || metadata.tokenBudget !== BUSINESS_TOKEN_BUDGET) continue;
+    return { input: metadata.input as DraftInput, requestId: metadata.requestId, threadId: thread.id,
+      ...(metadata.origin === 'resend-received' ? { origin: 'resend-received' as const } : {}),
+      release: { ...thread.publishedAgent, model: thread.model }, body: JSON.stringify({ content: message.content, client_message_id: metadata.requestId, token_budget: metadata.tokenBudget, cost_budget_usd: 0 }) };
+  }
+  return null;
 }
 
 export type MailEnvelope = { from: string; to: string; subject: string; text: string };

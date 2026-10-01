@@ -44,6 +44,18 @@ After sign-in, **业务草稿** opens the file-delivery workflow; **手机操作
 
 The reply includes a follow-up draft and missing information. The marketing pack includes an email draft, social drafts, unverified claims and missing information. Neither workflow sends mail, publishes content or proves customer revenue, leads or time savings. Runtime and file delivery can be verified with a controlled provider fixture; real model quality and real-device acceptance require separate verification.
 
+## Incoming email drafts (local candidate)
+
+**收件草稿 · 设置与记录** binds an Owner's receiving address to a frozen published Agent release. The screen reuses the existing encrypted Resend credential routes; an Owner must save their own key before enabling a binding. Eligible releases use an available managed free model and list only `create_artifact` in their configured tools. Platform-provided knowledge and receipt access remain implicit. The page shows credential and webhook-secret storage as saved, unverified; it does not claim that the receiving domain, webhook, sender identity or provider permissions have been verified.
+
+The Owner configures a receiving domain in their own Resend account, selects **准备收件回调地址**, and first receives a pending relative `/api/incoming-mail/webhooks/:bindingId` path. Preparing this path does not enable automatic work. They combine the path with the actual HTTPS address of the configured Forge service, create an `email.received` webhook in Resend, and enter its `whsec_` signing secret. **启用后台收件草稿 · 不自动发送** then explicitly grants background draft generation even with the Phone app closed. No production URL is invented. The secret input clears after activation is confirmed saved. An uncertain preparation or activation reads existing bindings before offering another submission. Pending, enabled and disabled configurations are shown separately; a disabled grant cannot be reactivated.
+
+Signed notifications are queued on the server. The service retrieves the original plain-text email, checks its sender, recipients and subject against the signed notification, and creates a reply draft through the existing published-Agent task path. Serialized source is bounded to 60 KB; HTML and attachment contents are not read or executed. The Phone history prominently shows unread attachments, original source, processing state, and the saved draft workspace. Retry is an explicit action on a record that needs attention, capped at 3 attempts per event; the daily limit is 20 processed events per Owner. Restoring an incoming task selects the latest valid prompt and preserves its retry request identity; the generic manual-draft resubmit button cannot bypass the incoming-event retry route.
+
+Model spending is capped at $0 with no paid fallback. Missing usage or charge evidence stays unknown; ready drafts require the existing file, delivery-rule and accounting checks. Resend provider fees remain unknown unless separately verified. **停用此地址的后台草稿** stops subsequent automatic processing, preserves saved work, and does not promise to undo a running draft. Sending stays in the existing separate per-email preview and approval flow; enabling incoming drafts never authorizes sending.
+
+This candidate requires the corresponding incoming-mail routes and a running server queue worker. Local component and controlled-provider checks do not establish public deployment, a configured Resend receiving domain, real incoming delivery, physical-device operation or commercial outcomes.
+
 ## Execution lifecycle
 
 ```text

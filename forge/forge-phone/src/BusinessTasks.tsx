@@ -6,6 +6,7 @@ import {
   canRecoverMail, freezeMail, listMailReceipts, MailEnvelope, MailPreparation, MailReceipt, mailReceiptAction, mailStatusText,
   newMailPreparation, readMailReceipt, resendConfiguration, saveResendCredential, singleMailAddress,
 } from './business-tasks';
+import IncomingMail from './IncomingMail';
 
 type Props = { client: DraftClient; onBusyChange?: (busy: boolean) => void };
 const C = { bg: '#f3f0e8', paper: '#fffdf7', ink: '#20251f', muted: '#686f63', line: '#dcded2', green: '#3d6229', accent: '#b5db57', red: '#a33d30' };
@@ -69,7 +70,8 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const [phase, setPhase] = useState('');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
-  const [view, setView] = useState<'compose' | 'result' | 'history'>('compose');
+  const [view, setView] = useState<'compose' | 'result' | 'history' | 'incoming'>('compose');
+  const [incomingBusy, setIncomingBusy] = useState(false);
   const [history, setHistory] = useState<SavedThread[]>([]);
   const [files, setFiles] = useState<DraftArtifact[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -167,9 +169,9 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   };
   const inspect = async (api: DraftClient, job: DraftJob) => {
     const state = await readDraftRequest(api, job);
-    setRetryAllowed(!state);
+    setRetryAllowed(!state && job.origin !== 'resend-received');
     setCanStop(state?.status === 'running');
-    if (!state) { setPhase('等待确认'); setNotice('服务端尚未找到这项请求。可以用同一个任务编号重新提交，内容保持不变。'); return; }
+    if (!state) { setPhase('等待确认'); setNotice(job.origin === 'resend-received' ? '来信草稿请求尚未确认。请返回收件草稿查看原处理记录，需要检查时从原记录明确重试。' : '服务端尚未找到这项请求。可以用同一个任务编号重新提交，内容保持不变。'); return; }
     if (state.status === 'running') { setPhase('草稿仍在准备'); setNotice('任务已被服务端接收。请稍后查看结果，或明确停止。'); return; }
     setRetryAllowed(false);
     if (state.status !== 'completed' || state.result?.success !== true) {
@@ -191,7 +193,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     resetMail(); setResendState('unread'); jobRef.current = null;
     setName(''); setSource(''); setChosen(''); setReleases([]); setHistory([]); setFiles([]); setPreview(null); setCharge(null);
     setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
-    busyRef.current = false; setBusy(false);
+    busyRef.current = false; setBusy(false); setIncomingBusy(false);
     const accountBusyCallback = busyCallback.current;
     void refreshAssistants();
     return () => {
@@ -200,7 +202,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
       accountBusyCallback?.(false);
     };
   }, [client]);
-  useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
+  useEffect(() => { onBusyChange?.(busy || incomingBusy); }, [busy, incomingBusy, onBusyChange]);
 
   const start = async () => {
     const release = releases.find(item => item.releaseId === chosen);
@@ -223,6 +225,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   };
   const checkResult = async (retry = false) => {
     const job = jobRef.current; if (!job?.threadId) return;
+    if (retry && job.origin === 'resend-received') return;
     const op = begin('draft'); if (!op) return;
     try {
       const state = await readDraftRequest(op.client, job);
@@ -259,17 +262,21 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setError(friendly(e)); }
     finally { op.finish(); }
   };
-  const openSaved = async (thread: SavedThread) => {
+  const openSaved = async (saved: SavedThread | string) => {
     const op = begin(); if (!op) return;
+    const threadId = typeof saved === 'string' ? saved : saved.id;
+    jobRef.current = null;
     setView('result'); setPreview(null); setFiles([]); setCharge(null); setRetryAllowed(false); setCanStop(false); setRaw(false); setNotice(''); setPhase('正在读取已保存的工作');
-    resetMail(thread.id);
+    resetMail(threadId);
     try {
+      const thread = typeof saved === 'string' ? (await op.client.request<{ data: SavedThread }>(`/api/threads/${encodeURIComponent(threadId)}`)).data : saved;
+      if (thread?.id !== threadId) throw new Error('DRAFT_THREAD_INVALID');
       const job = await restoreDraftJob(op.client, thread); op.ensure(); jobRef.current = job;
       if (job) { await inspect(op.client, job); op.ensure(); }
       else { await loadFiles(op.client, thread.id); op.ensure(); setPhase('已保存的工作'); setNotice('这是已有工作区文件，可阅读和复制。没有完整的本次草稿核对记录时，不会标记为已交付。'); }
-    } catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) { setError(friendly(e)); try { await loadFiles(op.client, thread.id); } catch {} } }
+    } catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) { setError(friendly(e)); try { await loadFiles(op.client, threadId); } catch {} } }
     finally {
-      try { op.ensure(); await loadMailRecords(op.client, thread.id); op.ensure(); }
+      try { op.ensure(); await loadMailRecords(op.client, threadId); op.ensure(); }
       catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setMailError('邮件记录尚未确认。可以重新读取；不会自动再次发送。'); }
       op.finish();
     }
@@ -400,10 +407,12 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const mailSourceVerified = preview?.verified === true && !!preview.value && knownCharge(preview.report) === 0;
 
   return <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
-    {view === 'compose' ? <View style={s.heading}><Text style={s.eyebrow}>工作先有草稿</Text><Text style={s.hero}>把想法，{'\n'}变成可用的文字。</Text><Text style={s.intro}>给一份真实资料，收一份保存好的草稿。{'\n'}由你检查，再决定怎样使用。</Text></View> : <View style={s.heading}><Text style={s.eyebrow}>{view === 'history' ? '工作记录' : '本次草稿'}</Text><Text style={s.title}>{view === 'history' ? '已保存的工作' : draftLabel(jobRef.current?.input.kind || kind)}</Text>{view === 'result' && jobRef.current && <Text style={s.small}>{jobRef.current.input.name}</Text>}</View>}
-    <View style={s.tabs}>{button('新建草稿', () => { setView('compose'); setError(''); }, busy, view !== 'compose')}{button('已保存的工作', () => { void showHistory(); }, busy, view !== 'history')}</View>
+    {view === 'compose' ? <View style={s.heading}><Text style={s.eyebrow}>工作先有草稿</Text><Text style={s.hero}>把想法，{'\n'}变成可用的文字。</Text><Text style={s.intro}>给一份真实资料，收一份保存好的草稿。{'\n'}由你检查，再决定怎样使用。</Text></View> : <View style={s.heading}><Text style={s.eyebrow}>{view === 'history' ? '工作记录' : view === 'incoming' ? 'FORGE / INBOX' : '本次草稿'}</Text><Text style={s.title}>{view === 'history' ? '已保存的工作' : view === 'incoming' ? '来信先有草稿。' : draftLabel(jobRef.current?.input.kind || kind)}</Text>{view === 'result' && jobRef.current && <Text style={s.small}>{jobRef.current.input.name}</Text>}</View>}
+    <View style={s.tabs}>{button('新建草稿', () => { setView('compose'); setError(''); }, busy || incomingBusy, view !== 'compose')}{button('已保存的工作', () => { void showHistory(); }, busy || incomingBusy, view !== 'history')}</View>
+    {button('收件草稿 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming'); setError(''); setNotice(''); } }, busy || incomingBusy, view !== 'incoming')}
     {error ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{error}</Text></View> : null}
     {notice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{notice}</Text></View> : null}
+    {view === 'incoming' && <IncomingMail client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
     {view === 'compose' && <>
       <View style={s.templates}>{(['reply', 'marketing'] as DraftKind[]).map((value, index) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: kind === value, disabled: busy }} disabled={busy} key={value} onPress={() => setKind(value)} style={[s.template, kind === value && s.selected]}><Text style={s.number}>0{index + 1}</Text><Text style={s.templateTitle}>{draftLabel(value)}</Text><Text style={s.small}>{value === 'reply' ? '回复正文 + 后续跟进草稿' : '邮件文案 + 社交媒体文案'}</Text></TouchableOpacity>)}</View>
       <Text style={s.label}>{kind === 'reply' ? '收件对象' : '品牌或产品名称'}</Text><TextInput accessibilityLabel="草稿对象名称" value={name} onChangeText={setName} editable={!busy} maxLength={100} placeholder={kind === 'reply' ? '例如：王经理' : '例如：Northstar Studio'} placeholderTextColor={C.muted} style={s.input} />
