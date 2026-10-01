@@ -5,6 +5,7 @@ import type { createPiProviderLedger } from './pi-provider-ledger';
 import type { createManagedBilling } from './managed-billing';
 import { MANAGED_BILLING_VERSION } from './managed-billing';
 import { OPENROUTER_CATALOG, OPENROUTER_CATALOG_VERIFIED_AT, OPENROUTER_RETAIL_MULTIPLIER, DEFAULT_OPENROUTER_MODEL, getOpenRouterPriceBounds, normalizeOpenRouterRequest } from './openrouter-catalog';
+import { estimateManagedInput } from './image-budget';
 
 type Database = { prepare(sql: string): any; transaction<T extends (...args: any[]) => any>(fn: T): T };
 type Dependencies = {
@@ -105,36 +106,43 @@ export function createDesktopModelGateway(deps: Dependencies) {
     });
   };
 
-  const execute = async (userId: string, rawBody: any, idempotencyKey: unknown, options: {
-    signal?: AbortSignal; onStarted?(requestId: string): void; onChunk?(chunk: Uint8Array): Promise<void>; endpoint?: 'chat' | 'desktop'; maximumUsd?: number;
-  } = {}) => {
+  const prepare = (userId: string, rawBody: any) => {
     validateRequest(rawBody);
     const model = models(userId).find(value => value.id === rawBody.model);
     if (!model) fail('DESKTOP_MODEL_UNAVAILABLE', 403);
     if (!model.available) fail('BILLING_PAID_CREDITS_REQUIRED', 402);
+    const outputLimit = rawBody.max_tokens ?? rawBody.max_completion_tokens ?? Math.min(8192, model.maxTokens);
+    if (outputLimit > model.maxTokens) fail('DESKTOP_MODEL_OUTPUT_LIMIT_INVALID');
+    let body = normalizeOpenRouterRequest(model.id, { ...rawBody, n: 1 }, { maxOutputTokens: outputLimit });
+    delete body.store; delete body.stream_options;
+    const input = estimateManagedInput(model.id, body, { contextWindow: model.contextWindow, outputTokens: outputLimit });
+    const inputTokens = input.inputTokens;
+    if (inputTokens + outputLimit > model.contextWindow) fail('DESKTOP_MODEL_CONTEXT_LIMIT_EXCEEDED');
+    body = normalizeOpenRouterRequest(model.id, body, { promptTokens: inputTokens, maxOutputTokens: outputLimit });
+    const prices = getOpenRouterPriceBounds(model.id, inputTokens);
+    const maximumCost = inputTokens * Math.max(prices.prompt, prices.cacheWrite, prices.cacheWrite1h ?? 0) / 1e6 + outputLimit * prices.completion / 1e6 + prices.request;
+    return { model, body, inputTokens, outputLimit, maximumCost, policy: input.policy };
+  };
+  const estimate = (userId: string, body: any) => {
+    const value = prepare(userId, { ...body, stream: true });
+    return { inputTokens: value.inputTokens, outputTokens: value.outputLimit, totalTokens: value.inputTokens + value.outputLimit,
+      maximumUsd: value.maximumCost * OPENROUTER_RETAIL_MULTIPLIER, policy: value.policy };
+  };
+  const execute = async (userId: string, rawBody: any, idempotencyKey: unknown, options: {
+    signal?: AbortSignal; onStarted?(requestId: string): void; onChunk?(chunk: Uint8Array): Promise<void>; endpoint?: 'chat' | 'desktop' | 'phone'; maximumUsd?: number;
+  } = {}) => {
+    const { model, body, inputTokens, outputLimit, maximumCost, policy } = prepare(userId, rawBody);
     const apiKey = deps.getManagedKey();
     if (!apiKey) fail('DESKTOP_PROVIDER_NOT_CONFIGURED', 503);
     const resolved = resolveModel('openrouter', model.id);
-    const outputLimit = rawBody.max_tokens ?? rawBody.max_completion_tokens ?? Math.min(8192, model.maxTokens);
-    if (outputLimit > model.maxTokens) fail('DESKTOP_MODEL_OUTPUT_LIMIT_INVALID');
-    // UTF-8 bytes upper-bound text tokens. A separate image allowance prevents
-    // highly compressed images from being admitted as a few cheap text tokens.
-    const imageCount = rawBody.messages.reduce((sum: number, message: any) => sum + (Array.isArray(message.content) ? message.content.filter((part: any) => part.type === 'image_url').length : 0), 0);
-    if (imageCount && model.tier === 'lightweight') fail('DESKTOP_MODEL_CONTENT_INVALID');
-    let body = normalizeOpenRouterRequest(model.id, { ...rawBody, n: 1 }, { maxOutputTokens: outputLimit });
-    delete body.store; delete body.stream_options;
-    const inputTokens = Buffer.byteLength(JSON.stringify(body), 'utf8') + imageCount * 32768 + 1024;
-    if (inputTokens + outputLimit > model.contextWindow) fail('DESKTOP_MODEL_CONTEXT_LIMIT_EXCEEDED');
-    body = normalizeOpenRouterRequest(model.id, body, { promptTokens: inputTokens, maxOutputTokens: outputLimit });
     if (idempotencyKey !== undefined && (typeof idempotencyKey !== 'string' || !/^[A-Za-z0-9_.:-]{8,128}$/.test(idempotencyKey))) fail('DESKTOP_IDEMPOTENCY_KEY_INVALID');
     const requestId = idempotencyKey ? `managed-${crypto.createHash('sha256').update(`${userId}\0${idempotencyKey}`).digest('hex')}` : `managed-${crypto.randomUUID()}`;
-    const prices = getOpenRouterPriceBounds(model.id, inputTokens);
-    const maximumCost = inputTokens * Math.max(prices.prompt, prices.cacheWrite, prices.cacheWrite1h ?? 0) / 1e6 + outputLimit * prices.completion / 1e6 + prices.request;
     if (options.maximumUsd !== undefined && (!Number.isFinite(options.maximumUsd) || options.maximumUsd < 0
       || maximumCost * OPENROUTER_RETAIL_MULTIPLIER > options.maximumUsd)) fail('AGENT_EVALUATION_BUDGET_EXCEEDED', 402);
     const receipt: PiProviderReceipt = { version: 1, requestId, userId, runId: `${options.endpoint ?? 'desktop'}:${requestId}`,
       provider: 'openrouter', model: model.id, state: 'started', usageStatus: 'pending', startedAt: new Date().toISOString(),
-      reservation: { inputTokens, outputTokens: outputLimit, totalTokens: inputTokens + outputLimit, costUsd: maximumCost * OPENROUTER_RETAIL_MULTIPLIER, basis: 'utf8_bytes_plus_output_limit' } };
+      reservation: { inputTokens, outputTokens: outputLimit, totalTokens: inputTokens + outputLimit, costUsd: maximumCost * OPENROUTER_RETAIL_MULTIPLIER,
+        basis: policy === 'free_context_ceiling' ? 'free_context_ceiling' : 'utf8_bytes_plus_output_limit' } };
     db.transaction(() => {
       if (ledger.get(userId, requestId)) fail('DESKTOP_REQUEST_ALREADY_ACCEPTED', 409);
       const pending = Number(db.prepare("SELECT COUNT(*) n FROM managed_billing_requests WHERE user_id=? AND state='pending'").get(userId).n);
@@ -219,7 +227,7 @@ export function createDesktopModelGateway(deps: Dependencies) {
         },
       });
     } catch (error: any) {
-      const code = typeof error.code === 'string' && /^(DESKTOP_|BILLING_|AUTHENTICATION_|OPENROUTER_)/.test(error.code) ? error.code : 'DESKTOP_PROVIDER_TRANSPORT_FAILED';
+      const code = typeof error.code === 'string' && /^(DESKTOP_|BILLING_|AUTHENTICATION_|OPENROUTER_|CHAT_|PI_MANAGED_)/.test(error.code) ? error.code : 'DESKTOP_PROVIDER_TRANSPORT_FAILED';
       if (!res.destroyed && !res.headersSent) errorResponse(res, code, Number(error.statusCode) || 502);
       else if (!res.destroyed) res.write(`data: ${JSON.stringify({ error: { message: code, code } })}\n\n`);
     } finally {
@@ -227,7 +235,7 @@ export function createDesktopModelGateway(deps: Dependencies) {
       if (!res.destroyed && !res.writableEnded) res.end();
     }
   };
-  return { account, models, chat, complete: (userId: string, body: any, key?: string, signal?: AbortSignal, maximumUsd?: number) => execute(userId, { ...body, stream: true }, key, { signal, endpoint: 'chat', maximumUsd }),
+  return { account, models, chat, estimate, complete: (userId: string, body: any, key?: string, signal?: AbortSignal, maximumUsd?: number, endpoint: 'chat' | 'phone' = 'chat') => execute(userId, { ...body, stream: true }, key, { signal, endpoint, maximumUsd }),
     isActive: (requestId: string) => active.has(requestId) };
 }
 

@@ -28,6 +28,14 @@ Owner starts a bounded session
 
 The client does not invent execution history or report success before Android returns a result. The authentication token remains in the current app process only. Screenshots are used for the current planning request and are not persisted by Forge; audit history contains hashes and execution results rather than screenshots or reusable action payloads.
 
+## Temporary managed free models (candidate)
+
+The current candidate uses only available, platform-managed OpenRouter models with zero input and output token prices for Phone planning. Real screenshot planning also requires a model with verified image support. There is no automatic switch to a paid model or personal paid key. Free-model capacity, model availability, and provider rate limits can change; a missing eligible model or exhausted free quota can prevent the session from planning an action.
+
+The client defaults to a session token budget of **1,200,000** and a cost budget of **$0**. These hosted free vision endpoints do not publish a verified image-token formula, so screenshot admission reserves the model's entire effective context, including output, instead of using a guessed image estimate. Only authoritative provider usage is accumulated after settlement; the context reservation is not a usage charge or a promise of free quota. Unresolved usage is shown as pending, with unknown totals left null. Real sessions require an explicit package allowlist, and every action other than wait or done requires individual approval.
+
+Each planning step sends `Idempotency-Key: phone:<sessionId>:<stepIndex>` and the same `request_id` in its body. A retry of that step must retain this identifier. Stop aborts the active planning HTTP request and requests server-session cancellation. The client checks whether the run is still active after asynchronous planning, approval, and authorization work before invoking Android. If an action was already handed to Android when Stop was pressed, its real completion or failure receipt is still sent; cancellation cannot undo an action already performed.
+
 ## Accessibility disclosure
 
 The native pilot uses an Android Accessibility Service to observe foreground-window changes, capture the current screen after the Owner starts a session, and perform an individually approved gesture or text action. The service can read visible screen content while enabled. Owners must enable it manually in Android Settings and can disable it at any time. The implementation is intended for controlled internal acceptance only; public distribution requires final policy, consent, privacy, data-retention, and store-review approval.
@@ -44,7 +52,7 @@ EXPO_PUBLIC_FORGE_API_URL=http://10.0.2.2:3000
 EXPO_PUBLIC_FORGE_API_URL=https://forge-staging.example.com
 ```
 
-Release candidates must use HTTPS. The main Android manifest disables cleartext traffic. The app requires a valid Forge access token, an active subscription with remaining usage, and an Owner-owned Agent Passport before a real session can be created.
+Release candidates must use HTTPS. The main Android manifest disables cleartext traffic. The app requires a valid Forge access token, an Owner-owned Agent Passport, and an available managed free model before a real session can be created. A zero prepaid balance or exhausted legacy token quota does not block the candidate's zero-price model route.
 
 ## Owner acceptance flow
 
@@ -81,3 +89,7 @@ Never commit a keystore, signing password, `.env`, generated APK, `node_modules`
 ## Current release boundary
 
 The Android Release build, manifest, Accessibility Service registration, native compilation, and backend Phone Agent regression have been validated locally. Physical-device acceptance, production signing, public-store policy approval, production configuration, and live rollout remain separate release gates.
+
+The historical validation above predates the 2026-10-01 candidate changes. For this candidate, the corrected screenshot service was compiled in isolation using the existing local JDK 21.0.2, Kotlin 2.0.21 compiler, and real Android SDK 36 APIs. Only the external React Native event bridge used a temporary signature declaration. Android 11 and Android 14 platform sources confirm that hardware bitmap compression performs its own pixel readback, so no redundant software-bitmap copy was added.
+
+The isolated service check does not establish a full build with this application's configured Kotlin 1.9.23 and Android SDK 34. No device was attached when `adb devices` was checked. These candidate changes have not been verified on a physical device, installed as an APK, signed for production, or deployed. Client cancellation and request-identity behavior are checked with local mocked HTTP/native dependencies; that check is not physical-device acceptance.

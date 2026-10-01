@@ -1,4 +1,5 @@
 import { imageSize } from 'image-size';
+import { isFreeOpenRouterModel } from './openrouter-catalog';
 
 /** Verified 2026-09-21 against OpenAI's images-vision sizing/token rules.
  * This authorizes a conservative reservation, never a final usage charge.
@@ -6,6 +7,10 @@ import { imageSize } from 'image-size';
 export const IMAGE_BUDGET_POLICY = 'openai_patch_32_multiplier_1_2_20260921';
 const verifiedModels = new Set(['openai/gpt-6-astra','openai/gpt-5.6-sol','openai/gpt-5.6-terra','openai/gpt-5.6-luna']);
 export const supportsManagedImages = (model:string) => verifiedModels.has(model);
+// Public endpoints support images, but their hosted image tokenizer is private.
+// These zero-price models can reserve the whole remaining context instead.
+const freeVisionModels = new Set(['stealth/space-bunny-alpha','qwen/qwen3.8-27b:free']);
+export const supportsFreeManagedImages = (model:string) => freeVisionModels.has(model)&&isFreeOpenRouterModel(model);
 const fail=(code:string):never=>{throw Object.assign(new Error(code),{code,statusCode:400});};
 
 function assertStillImage(bytes:Buffer,type:string) {
@@ -68,8 +73,9 @@ export function imageTokenUpperBound(model:string,width:number,height:number,det
 /** Count every image in the provider request, including native conversation
  * history. Base64 is a transport encoding and must not be charged as text.
  * Other input fields remain in the conservative UTF-8 byte estimate. */
-export function estimateManagedInput(model:string,body:any) {
+export function estimateManagedInput(model:string,body:any,options?:{contextWindow:number;outputTokens:number}) {
   let imageTokens=0,imageCount=0,imageBytes=0;
+  const freeContext=!!options&&supportsFreeManagedImages(model);
   const messages=body.messages?.map((message:any)=>{
     if(!Array.isArray(message.content))return message;
     return {...message,content:message.content.map((part:any)=>{
@@ -77,10 +83,20 @@ export function estimateManagedInput(model:string,body:any) {
       if(part?.type!=='image_url'||!part.image_url||typeof part.image_url!=='object')fail('PI_MANAGED_MULTIMODAL_BUDGET_UNSUPPORTED');
       const image=inspectInlineImage(part.image_url.url);
       if(++imageCount>32||(imageBytes+=image.bytes)>6*1024*1024)fail('CHAT_IMAGES_TOO_LARGE');
-      imageTokens+=imageTokenUpperBound(model,image.width,image.height,part.image_url.detail??'auto');
+      if(freeContext){
+        if(!['auto','original','high','low'].includes(String(part.image_url.detail??'auto')))fail('CHAT_IMAGE_DETAIL_UNSUPPORTED');
+      }else imageTokens+=imageTokenUpperBound(model,image.width,image.height,part.image_url.detail??'auto');
       return {...part,image_url:{...part.image_url,url:'[inline image bytes excluded from text estimate]'}};
     })};
   });
   const textBytes=Buffer.byteLength(JSON.stringify({...body,messages}),'utf8');
+  if(imageCount&&freeContext){
+    if(!Number.isSafeInteger(options!.contextWindow)||!Number.isSafeInteger(options!.outputTokens)
+      ||options!.outputTokens<1||options!.contextWindow<=options!.outputTokens)fail('PI_MANAGED_MULTIMODAL_BUDGET_UNSUPPORTED');
+    const inputTokens=options!.contextWindow-options!.outputTokens;
+    if(textBytes+1024>inputTokens)fail('CHAT_MODEL_CONTEXT_LIMIT_EXCEEDED');
+    // ponytail: full context headroom; tighten only after providers publish image token rules.
+    return {inputTokens,textBytes,imageTokens:inputTokens-textBytes-1024,imageCount,policy:'free_context_ceiling'};
+  }
   return {inputTokens:textBytes+imageTokens+1024,textBytes,imageTokens,imageCount,policy:IMAGE_BUDGET_POLICY};
 }

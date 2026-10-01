@@ -48,6 +48,8 @@ export class ForgeAgentLoop {
   private token: string;
   private steps: AgentStep[] = [];
   private running = false;
+  private startInFlight = false;
+  private planningController: AbortController | null = null;
   private sessionTerminal = false;
   private onStep?: (step: AgentStep) => void;
   private onDone?: (summary: string, steps: AgentStep[]) => void;
@@ -116,7 +118,8 @@ export class ForgeAgentLoop {
   }
 
   async start(goal: string, options: PhoneSessionOptions): Promise<void> {
-    if (this.running) throw new Error('PHONE_SESSION_ACTIVE');
+    if (this.startInFlight) throw new Error('PHONE_SESSION_ACTIVE');
+    this.startInFlight = true;
     this.steps = [];
     this.sessionId = null;
     this.sessionTerminal = false;
@@ -137,23 +140,41 @@ export class ForgeAgentLoop {
         }),
       });
       this.sessionId = session.session_id;
+      if (!this.running) {
+        await this.cancelSession();
+        return;
+      }
 
       for (let index = 0; index < options.maxSteps && this.running; index += 1) {
         const screenshot = options.planningOnly ? null : await this.captureScreenshot();
+        if (!this.running) break;
         if (!options.planningOnly && !screenshot) throw new Error('PHONE_SCREENSHOT_REQUIRED');
 
         const currentPackage = options.planningOnly ? '' : (await this.getCurrentPackage()).trim();
+        if (!this.running) break;
         if (!options.planningOnly && !currentPackage) throw new Error('PHONE_CURRENT_PACKAGE_REQUIRED');
 
-        const planned = await this.request<PlannedActionResponse>('/api/phone-agent/action', {
-          method: 'POST',
-          body: JSON.stringify({
-            session_id: this.sessionId,
-            screenshot_base64: screenshot,
-            current_package: currentPackage,
-            screen_context: `Step ${index + 1} of ${options.maxSteps}`,
-          }),
-        });
+        const requestId = `phone:${this.sessionId}:${index + 1}`;
+        const controller = new AbortController();
+        this.planningController = controller;
+        let planned: PlannedActionResponse;
+        try {
+          planned = await this.request<PlannedActionResponse>('/api/phone-agent/action', {
+            method: 'POST',
+            signal: controller.signal,
+            headers: { 'Idempotency-Key': requestId },
+            body: JSON.stringify({
+              request_id: requestId,
+              session_id: this.sessionId,
+              screenshot_base64: screenshot,
+              current_package: currentPackage,
+              screen_context: `Step ${index + 1} of ${options.maxSteps}`,
+            }),
+          });
+        } finally {
+          if (this.planningController === controller) this.planningController = null;
+        }
+        if (!this.running) break;
 
         const step: AgentStep = {
           id: planned.action_id,
@@ -173,6 +194,7 @@ export class ForgeAgentLoop {
         };
         this.steps.push(step);
         this.publishStep(step);
+        if (!this.running) break;
 
         if (planned.action === 'done') {
           this.sessionTerminal = true;
@@ -186,18 +208,22 @@ export class ForgeAgentLoop {
         if (planned.approval_required) {
           if (!planned.approval_id) throw new Error('PHONE_ACTION_APPROVAL_ORPHANED');
           const approved = await this.requestApproval({ ...step, args: { ...step.args } });
+          if (!this.running) break;
           if (!approved) {
             await this.request(`/api/approvals/${planned.approval_id}/reject`, { method: 'POST', body: '{}' });
+            if (!this.running) break;
             this.sessionTerminal = true;
             this.publishStep(step, { status: 'rejected', executed: false, success: false, error: 'Rejected by Owner' });
             throw new Error('PHONE_ACTION_REJECTED');
           }
           await this.request(`/api/approvals/${planned.approval_id}/approve`, { method: 'POST', body: '{}' });
+          if (!this.running) break;
           this.publishStep(step, { status: 'approved' });
         }
 
         if (!this.running) break;
         const packageBeforeExecution = (await this.getCurrentPackage()).trim();
+        if (!this.running) break;
         if (!packageBeforeExecution || packageBeforeExecution !== currentPackage) {
           throw new Error(`PHONE_PACKAGE_CHANGED: expected ${currentPackage || 'unknown'}`);
         }
@@ -206,10 +232,12 @@ export class ForgeAgentLoop {
           method: 'POST',
           body: JSON.stringify({ current_package: packageBeforeExecution }),
         });
+        if (!this.running) break;
         if (authorized.action_id !== planned.action_id || authorized.action !== planned.action) {
           throw new Error('PHONE_ACTION_AUTHORIZATION_MISMATCH');
         }
         this.publishStep(step, { status: 'executing' });
+        if (!this.running) break;
 
         let nativeResult: NativeExecutionResult;
         try {
@@ -226,6 +254,8 @@ export class ForgeAgentLoop {
           };
         }
 
+        // An action already handed to Android must report its actual result,
+        // even if the Owner stopped while native execution was in progress.
         const receipt = await this.request<{ status: AgentStep['status']; executed: boolean; success: boolean }>(
           `/api/phone-agent/actions/${planned.action_id}/result`,
           {
@@ -245,11 +275,13 @@ export class ForgeAgentLoop {
           success: receipt.success,
           error: nativeResult.error,
         });
+        if (!this.running) break;
         if (!receipt.executed || !receipt.success) {
           throw new Error(nativeResult.error || 'PHONE_NATIVE_ACTION_FAILED');
         }
 
         await new Promise(resolve => setTimeout(resolve, 500));
+        if (!this.running) break;
       }
 
       if (this.running && !this.sessionTerminal && this.steps.length >= options.maxSteps) {
@@ -257,14 +289,17 @@ export class ForgeAgentLoop {
       }
     } catch (error) {
       await this.cancelSession();
-      this.onError?.(asErrorMessage(error));
+      if (this.running) this.onError?.(asErrorMessage(error));
     } finally {
       this.running = false;
+      this.planningController = null;
+      this.startInFlight = false;
     }
   }
 
   async stop(): Promise<void> {
     this.running = false;
+    this.planningController?.abort();
     await this.cancelSession();
   }
 

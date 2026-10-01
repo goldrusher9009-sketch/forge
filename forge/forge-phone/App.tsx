@@ -80,6 +80,7 @@ export default function App() {
   const [error, setError] = useState('');
   const [screen, setScreen] = useState<'login' | 'main' | 'running'>('login');
   const agentRef = useRef<ForgeAgentLoop | null>(null);
+  const runRef = useRef(0);
   const scrollRef = useRef<ScrollView>(null);
 
   const connect = () => {
@@ -107,6 +108,8 @@ export default function App() {
       Alert.alert('Invalid package allowlist', 'Use Android package names such as com.android.settings, separated by commas.');
       return;
     }
+    const runId = ++runRef.current;
+    const isCurrentRun = () => runRef.current === runId;
     if (!planningOnly) {
       if (Platform.OS !== 'android' || !accessibility) {
         Alert.alert('Android native build required', 'Real execution is available only in the Android native build. Use planning mode on this device.');
@@ -116,7 +119,9 @@ export default function App() {
         Alert.alert('Package allowlist required', 'List every Android app package the session may control.');
         return;
       }
-      if (!(await accessibility.isAccessibilityEnabled())) {
+      const enabled = await accessibility.isAccessibilityEnabled();
+      if (!isCurrentRun()) return;
+      if (!enabled) {
         Alert.alert('Accessibility Service disabled', 'Enable Forge Phone Agent in Android Accessibility settings before starting.', [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Open Settings', onPress: () => { void showAccessibilitySettings(); } },
@@ -135,7 +140,9 @@ export default function App() {
     if (!planningOnly) {
       // Give the Owner time to foreground one of the explicitly allowed apps.
       await new Promise(resolve => setTimeout(resolve, 5000));
+      if (!isCurrentRun()) return;
       const currentPackage = (await accessibility!.getCurrentPackage()).trim();
+      if (!isCurrentRun()) return;
       if (!allowedPackages.includes(currentPackage)) {
         setRunning(false);
         setError(`Current app ${currentPackage || 'unknown'} is not in the package allowlist.`);
@@ -143,21 +150,30 @@ export default function App() {
       }
     }
 
-    agentRef.current = new ForgeAgentLoop({
+    const agent: ForgeAgentLoop = new ForgeAgentLoop({
       token,
       captureScreenshot: async () => planningOnly ? null : accessibility!.captureScreen(),
       getCurrentPackage: async () => planningOnly ? '' : accessibility!.getCurrentPackage(),
       executeAction: async (action: PhoneAction, expectedPackage: string) => {
+        const ensureRunning = () => {
+          if (!isCurrentRun() || !agent.isRunning()) throw new Error('PHONE_SESSION_STOPPED');
+        };
+        ensureRunning();
         if (planningOnly) throw new Error('PHONE_ACTION_PLANNING_ONLY');
-        if (!accessibility || !(await accessibility.isAccessibilityEnabled())) {
+        if (!accessibility) throw new Error('PHONE_ACCESSIBILITY_DISABLED');
+        const enabled = await accessibility.isAccessibilityEnabled();
+        ensureRunning();
+        if (!enabled) {
           throw new Error('PHONE_ACCESSIBILITY_DISABLED');
         }
         const currentPackage = (await accessibility.getCurrentPackage()).trim();
+        ensureRunning();
         if (currentPackage !== expectedPackage) throw new Error('PHONE_PACKAGE_CHANGED');
         return accessibility.performAction(JSON.stringify(action), expectedPackage);
       },
       requestApproval: approvalPrompt,
       onStep: step => {
+        if (agentRef.current !== agent) return;
         setSteps(previous => {
           const existing = previous.findIndex(item => item.id === step.id);
           if (existing < 0) return [...previous, step];
@@ -168,29 +184,34 @@ export default function App() {
         setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
       },
       onDone: (message) => {
+        if (!isCurrentRun()) return;
         setSummary(message);
         setDone(true);
         setRunning(false);
       },
       onError: message => {
+        if (!isCurrentRun()) return;
         setError(message);
         setRunning(false);
       },
     });
+    agentRef.current = agent;
 
-    await agentRef.current.start(trimmedGoal, {
+    await agent.start(trimmedGoal, {
       maxSteps,
       planningOnly,
       allowedPackages,
       confirmationMode: 'every_action',
-      tokenBudget: 8000,
-      costBudgetUsd: 0.5,
+      tokenBudget: 1_200_000,
+      costBudgetUsd: 0,
     });
+    if (isCurrentRun()) setRunning(false);
   };
 
   const stopAgent = async () => {
-    await agentRef.current?.stop();
+    runRef.current += 1;
     setRunning(false);
+    await agentRef.current?.stop();
   };
 
   if (screen === 'login') {

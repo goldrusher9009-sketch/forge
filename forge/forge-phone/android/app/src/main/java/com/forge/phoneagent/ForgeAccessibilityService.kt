@@ -7,6 +7,7 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.os.Build
 import android.util.Base64
+import android.view.Display
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import java.io.ByteArrayOutputStream
@@ -59,7 +60,7 @@ class ForgeAccessibilityService : AccessibilityService() {
             callback(null)
             return
         }
-        takeScreenshot(GLOBAL_ACTION_TAKE_SCREENSHOT, mainExecutor, object : TakeScreenshotCallback {
+        takeScreenshot(Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
             override fun onSuccess(screenshot: ScreenshotResult) {
                 val hardwareBuffer = screenshot.hardwareBuffer
                 try {

@@ -55,7 +55,7 @@ function normalize(receipt: PiProviderReceipt): PiProviderReceipt {
       || evidence?.policy !== 'openrouter_pre_admission_402_v1' || evidence?.httpStatus !== 402) return fail('PI_PROVIDER_ZERO_CHARGE_EVIDENCE_INVALID');
   } else if (receipt.zeroChargeEvidence !== undefined) return fail('PI_PROVIDER_ZERO_CHARGE_EVIDENCE_INVALID');
   const reservation = receipt.reservation;
-  if (!reservation || reservation.basis !== 'utf8_bytes_plus_output_limit') return fail('PI_PROVIDER_RESERVATION_INVALID');
+  if (!reservation || !['utf8_bytes_plus_output_limit','free_context_ceiling'].includes(reservation.basis)) return fail('PI_PROVIDER_RESERVATION_INVALID');
   const inputTokens = tokens(reservation.inputTokens), outputTokens = tokens(reservation.outputTokens), totalTokens = tokens(reservation.totalTokens);
   if (!totalTokens || totalTokens !== inputTokens + outputTokens || (reservation.costUsd !== undefined && (!Number.isFinite(reservation.costUsd) || reservation.costUsd < 0))) return fail('PI_PROVIDER_RESERVATION_INVALID');
   const startedAt = timestamp(receipt.startedAt);
@@ -71,7 +71,7 @@ function normalize(receipt: PiProviderReceipt): PiProviderReceipt {
     version: 1, requestId: identifier(receipt.requestId), userId: identifier(receipt.userId, 200), runId: identifier(receipt.runId),
     provider: identifier(receipt.provider, 100), model: identifier(receipt.model, 300), state: receipt.state, usageStatus: receipt.usageStatus,
     startedAt, ...(endedAt === undefined ? {} : { endedAt }), ...(receipt.httpStatus === undefined ? {} : { httpStatus: receipt.httpStatus }),
-    reservation: { inputTokens, outputTokens, totalTokens, ...(reservation.costUsd === undefined ? {} : { costUsd: reservation.costUsd }), basis: 'utf8_bytes_plus_output_limit' },
+    reservation: { inputTokens, outputTokens, totalTokens, ...(reservation.costUsd === undefined ? {} : { costUsd: reservation.costUsd }), basis: reservation.basis },
     ...(usage ? { usage } : {}),
     ...(receipt.generationId ? { generationId: receipt.generationId } : {}),
     ...(receipt.zeroChargeEvidence ? { zeroChargeEvidence: { source: 'openrouter_http_status' as const, policy: 'openrouter_pre_admission_402_v1' as const, httpStatus: 402 as const } } : {}),

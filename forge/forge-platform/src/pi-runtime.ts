@@ -27,7 +27,7 @@ export type PiProviderReceipt = {
   state: 'started' | 'completed' | 'failed' | 'cancelled' | 'not_sent' | 'rejected';
   usageStatus: 'pending' | 'reported' | 'unknown' | 'not_sent' | 'not_charged';
   startedAt: string; endedAt?: string; httpStatus?: number; generationId?: string; zeroChargeEvidence?: PiZeroChargeEvidence;
-  reservation: { inputTokens: number; outputTokens: number; totalTokens: number; costUsd?: number; basis: 'utf8_bytes_plus_output_limit' };
+  reservation: { inputTokens: number; outputTokens: number; totalTokens: number; costUsd?: number; basis: 'utf8_bytes_plus_output_limit' | 'free_context_ceiling' };
   usage?: PiProviderUsage;
 };
 const openRouterGenerationId = (value: any): string | undefined => typeof value === 'string' && /^gen-[a-zA-Z0-9_-]{1,240}$/.test(value) ? value : undefined;
