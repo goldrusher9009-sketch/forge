@@ -292,9 +292,6 @@ export class ForgeAgentLoop {
         if (!receipt.executed || !receipt.success) {
           throw new Error(nativeResult.error || 'PHONE_NATIVE_ACTION_FAILED');
         }
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-        if (!this.running) break;
       }
 
       if (this.running && !this.sessionTerminal && this.steps.length >= options.maxSteps) {

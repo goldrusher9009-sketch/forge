@@ -276,13 +276,15 @@ export function getOpenRouterPriceBounds(id: string, promptTokens?: number): Ope
 export function buildOpenRouterRouting(id: string, promptTokens?: number) {
   const model = requireModel(id);
   const prices = getOpenRouterPriceBounds(id, promptTokens);
+  const free = isFreeOpenRouterModel(id);
   return {
     only: [...model.standardProviders],
     ignore: ['openai/fast', 'openai/flex', 'anthropic/fast', 'google-ai-studio/priority',
       'google-ai-studio/flex', 'google-vertex/global/priority', 'google-vertex/global/flex'],
     require_parameters: true,
-    allow_fallbacks: true,
-    max_price: { prompt: prices.prompt, completion: prices.completion, request: prices.request },
+    allow_fallbacks: !free,
+    max_price: { prompt: prices.prompt, completion: prices.completion, request: prices.request,
+      ...(free ? { image: 0 } : {}) },
   };
 }
 

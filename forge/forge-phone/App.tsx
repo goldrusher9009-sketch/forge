@@ -39,7 +39,7 @@ function errorText(value: unknown): string {
     PHONE_SESSION_STOPPED: '任务已停止。', PHONE_ACTION_REJECTED: '你已拒绝这一步，任务已停止。',
     PHONE_MAX_STEPS_REACHED: '已达到本次步骤上限。请查看结果后再决定是否继续。',
     PHONE_PACKAGE_CHANGED: '目标应用发生变化，任务已停止。请重新打开目标应用后开始。',
-    PHONE_SCREEN_CHANGED: '审核后目标页面发生变化，本次动作未执行。请检查页面后重新开始。',
+    PHONE_SCREEN_CHANGED: '审核后屏幕发生变化，本次动作未执行。请检查目标页面后重新开始。',
     PHONE_SCREENSHOT_REQUIRED: '无法读取屏幕，请检查无障碍权限和目标应用。',
     PHONE_ACCESSIBILITY_DISABLED: '请在系统设置中开启 Forge 无障碍服务。',
     PHONE_NATIVE_ACTION_FAILED: '手机未能完成这一步，请查看目标应用后重试。',
@@ -234,13 +234,8 @@ export default function App() {
       ensureCurrent();
       if (!allowedPackages.includes(expectedPackage)) throw new Error('PHONE_PACKAGE_CHANGED');
       await accessibility!.openApp(expectedPackage); ensureCurrent();
-      const deadline = Date.now() + 10000;
-      while (Date.now() < deadline) {
-        ensureCurrent(); const current = (await accessibility!.getCurrentPackage()).trim(); ensureCurrent();
-        if (current === expectedPackage) return;
-        await new Promise(resolve => setTimeout(resolve, 200));
-      }
-      throw new Error('PHONE_PACKAGE_CHANGED');
+      const current = (await accessibility!.getCurrentPackage()).trim(); ensureCurrent();
+      if (current !== expectedPackage) throw new Error('PHONE_PACKAGE_CHANGED');
     };
     try {
       if (!planningOnly && !(await accessibility!.isAccessibilityEnabled())) {

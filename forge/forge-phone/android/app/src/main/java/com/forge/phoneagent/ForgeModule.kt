@@ -24,10 +24,10 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
     companion object {
         private var moduleInstance: ForgeModule? = null
 
-        fun sendEvent(name: String, data: Any?) {
+        fun sendEvent(name: String, data: Map<String, Any?>?) {
             moduleInstance?.reactContext
                 ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-                ?.emit(name, data)
+                ?.emit(name, data?.let { Arguments.makeNativeMap(it) })
         }
     }
 
@@ -99,7 +99,21 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
                 ?: throw IllegalArgumentException("Application has no launcher")
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
             (ForgeAccessibilityService.instance ?: reactContext).startActivity(intent)
-            promise.resolve(true)
+            if (ForgeAccessibilityService.instance == null) {
+                promise.resolve(true)
+                return
+            }
+            // JS timers pause while another application is foreground.
+            moduleScope.launch {
+                val ready = withTimeoutOrNull(10_000) {
+                    while (ForgeAccessibilityService.instance?.currentPackageName() != packageName) delay(200)
+                    // The foreground package can arrive before its final transition frame.
+                    delay(500)
+                    ForgeAccessibilityService.instance?.currentPackageName() == packageName
+                }
+                if (ready == true) promise.resolve(true)
+                else promise.reject("PACKAGE_CHANGED", "PHONE_PACKAGE_CHANGED")
+            }
         } catch (_: Exception) {
             promise.reject("APP_UNAVAILABLE", "Could not open the application")
         }
@@ -166,7 +180,18 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
                 when (action) {
                     "tap" -> awaitGesture(2_000) { callback -> service.tap(args.getInt("x"), args.getInt("y"), callback) }
                     "long_press" -> awaitGesture(3_000) { callback -> service.longPress(args.getInt("x"), args.getInt("y"), callback) }
-                    "swipe", "scroll" -> awaitGesture(2_000) { callback -> service.swipe(args.getString("direction"), callback) }
+                    "swipe" -> awaitGesture(2_000) { callback -> service.swipe(args.getString("direction"), callback) }
+                    "scroll" -> awaitGesture(2_000) { callback ->
+                        // Scroll names describe the content to reveal; gestures describe finger movement.
+                        val direction = when (args.getString("direction")) {
+                            "up" -> "down"
+                            "down" -> "up"
+                            "left" -> "right"
+                            "right" -> "left"
+                            else -> throw IllegalArgumentException("Unsupported scroll direction")
+                        }
+                        service.swipe(direction, callback)
+                    }
                     "type" -> {
                         val element = args.optString("element", "")
                         if (element.isNotBlank()) {
@@ -192,6 +217,8 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
                 false
             }
 
+            // Let the target settle without a paused background JS timer.
+            delay(500)
             val result = Arguments.createMap().apply {
                 putBoolean("executed", true)
                 putBoolean("success", success)
