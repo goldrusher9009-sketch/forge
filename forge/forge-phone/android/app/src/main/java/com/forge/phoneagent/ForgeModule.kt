@@ -1,5 +1,6 @@
 package com.forge.phoneagent
 
+import android.content.Intent
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
@@ -60,15 +61,65 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
     }
 
     @ReactMethod
-    fun captureScreen(promise: Promise) {
+    fun listLaunchableApps(promise: Promise) {
+        try {
+            val manager = reactContext.packageManager
+            val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            val apps = manager.queryIntentActivities(intent, 0)
+                .filter { it.activityInfo.packageName != reactContext.packageName }
+                .distinctBy { it.activityInfo.packageName }
+                .sortedBy { it.loadLabel(manager).toString().lowercase() }
+            val result = Arguments.createArray()
+            apps.forEach { app -> result.pushMap(Arguments.createMap().apply {
+                putString("packageName", app.activityInfo.packageName)
+                putString("label", app.loadLabel(manager).toString())
+            }) }
+            promise.resolve(result)
+        } catch (_: Exception) {
+            promise.reject("APP_LIST_UNAVAILABLE", "Could not list launchable apps")
+        }
+    }
+
+    // Owner navigation only: the model cannot request an application launch.
+    @ReactMethod
+    fun openApp(packageName: String, promise: Promise) {
+        if (!packageName.matches(Regex("^[A-Za-z0-9_.]{3,200}$"))) {
+            promise.reject("APP_UNAVAILABLE", "Invalid application")
+            return
+        }
+        openPackage(packageName, promise)
+    }
+
+    @ReactMethod
+    fun openReview(promise: Promise) = openPackage(reactContext.packageName, promise)
+
+    private fun openPackage(packageName: String, promise: Promise) {
+        try {
+            val intent = reactContext.packageManager.getLaunchIntentForPackage(packageName)
+                ?: throw IllegalArgumentException("Application has no launcher")
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            (ForgeAccessibilityService.instance ?: reactContext).startActivity(intent)
+            promise.resolve(true)
+        } catch (_: Exception) {
+            promise.reject("APP_UNAVAILABLE", "Could not open the application")
+        }
+    }
+
+    @ReactMethod
+    fun captureScreen(expectedPackage: String, promise: Promise) {
         val service = ForgeAccessibilityService.instance
         if (service == null) {
             promise.reject("NO_SERVICE", "Accessibility service not running")
             return
         }
+        if (expectedPackage.isBlank() || service.currentPackageName() != expectedPackage) {
+            promise.reject("PACKAGE_CHANGED", "PHONE_PACKAGE_CHANGED")
+            return
+        }
         service.captureScreenBase64 { screenshot ->
-            if (screenshot != null) promise.resolve(screenshot)
-            else promise.reject("CAPTURE_FAILED", "Screenshot capture failed")
+            if (service.currentPackageName() != expectedPackage) promise.reject("PACKAGE_CHANGED", "PHONE_PACKAGE_CHANGED")
+            else if (screenshot != null) promise.resolve(screenshot)
+            else promise.reject("CAPTURE_FAILED", "PHONE_SCREENSHOT_REQUIRED")
         }
     }
 
@@ -101,6 +152,16 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
         }
 
         moduleScope.launch {
+            if (service.currentPackageName() != expectedPackage) {
+                promise.resolve(Arguments.createMap().apply {
+                    putBoolean("executed", false)
+                    putBoolean("success", false)
+                    putString("currentPackage", expectedPackage)
+                    putString("observedPackageAfter", service.currentPackageName())
+                    putString("error", "PHONE_PACKAGE_CHANGED")
+                })
+                return@launch
+            }
             val success = try {
                 when (action) {
                     "tap" -> awaitGesture(2_000) { callback -> service.tap(args.getInt("x"), args.getInt("y"), callback) }
@@ -109,13 +170,13 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
                     "type" -> {
                         val element = args.optString("element", "")
                         if (element.isNotBlank()) {
-                            if (!service.tapByText(element)) false
+                            if (!service.tapByText(element, expectedPackage)) false
                             else {
                                 delay(300)
-                                service.typeText(args.getString("text"))
+                                service.typeText(args.getString("text"), expectedPackage)
                             }
                         } else {
-                            service.typeText(args.getString("text"))
+                            service.typeText(args.getString("text"), expectedPackage)
                         }
                     }
                     "back" -> service.goBack()
@@ -136,7 +197,7 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
                 putBoolean("success", success)
                 putString("currentPackage", packageBefore)
                 putString("observedPackageAfter", service.currentPackageName())
-                if (!success) putString("error", "Native action failed or timed out")
+                if (!success) putString("error", if (service.currentPackageName() != expectedPackage) "PHONE_PACKAGE_CHANGED" else "PHONE_NATIVE_ACTION_FAILED")
             }
             promise.resolve(result)
         }

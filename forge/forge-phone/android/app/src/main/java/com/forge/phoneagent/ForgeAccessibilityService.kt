@@ -21,9 +21,6 @@ class ForgeAccessibilityService : AccessibilityService() {
             private set
     }
 
-    @Volatile
-    private var lastPackageName = ""
-
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
@@ -33,7 +30,6 @@ class ForgeAccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
         val packageName = event.packageName?.toString().orEmpty()
-        if (packageName.isNotBlank()) lastPackageName = packageName
         if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED ||
             event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED
         ) {
@@ -51,8 +47,8 @@ class ForgeAccessibilityService : AccessibilityService() {
     }
 
     fun currentPackageName(): String {
-        val activePackage = rootInActiveWindow?.packageName?.toString().orEmpty()
-        return if (activePackage.isNotBlank()) activePackage else lastPackageName
+        // An event from an earlier window is not foreground authorization.
+        return rootInActiveWindow?.packageName?.toString().orEmpty()
     }
 
     fun captureScreenBase64(callback: (String?) -> Unit) {
@@ -146,19 +142,24 @@ class ForgeAccessibilityService : AccessibilityService() {
         )
     }
 
-    fun typeText(text: String): Boolean {
-        if (text.isEmpty() || text.length > 2_000) return false
-        val node = rootInActiveWindow?.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return false
+    fun typeText(text: String, expectedPackage: String): Boolean {
+        if (text.isEmpty() || text.length > 2_000 || expectedPackage.isBlank()) return false
+        val root = rootInActiveWindow ?: return false
+        if (root.packageName?.toString() != expectedPackage) return false
+        val node = root.findFocus(AccessibilityNodeInfo.FOCUS_INPUT) ?: return false
+        if (node.packageName?.toString() != expectedPackage || currentPackageName() != expectedPackage) return false
         val arguments = android.os.Bundle().apply {
             putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, text)
         }
         return node.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments)
     }
 
-    fun tapByText(text: String): Boolean {
+    fun tapByText(text: String, expectedPackage: String): Boolean {
         if (text.isBlank() || text.length > 200) return false
         val root = rootInActiveWindow ?: return false
+        if (expectedPackage.isBlank() || root.packageName?.toString() != expectedPackage) return false
         val node = findNodeByText(root, text) ?: return false
+        if (node.packageName?.toString() != expectedPackage || currentPackageName() != expectedPackage) return false
         val bounds = Rect()
         node.getBoundsInScreen(bounds)
         val path = Path().apply { moveTo(bounds.centerX().toFloat(), bounds.centerY().toFloat()) }

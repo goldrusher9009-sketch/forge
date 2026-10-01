@@ -121,6 +121,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
+        ndk {
+            abiFilters(*project.property('reactNativeArchitectures').split(','))
+        }
     }
     signingConfigs {
         debug {

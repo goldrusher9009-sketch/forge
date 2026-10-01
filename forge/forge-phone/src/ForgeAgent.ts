@@ -14,6 +14,7 @@ import {
   PhoneAction,
   PhoneSessionOptions,
 } from './config';
+import type { ForgeRequest } from './session';
 
 type PlannedActionResponse = {
   action_id: string;
@@ -58,9 +59,11 @@ export class ForgeAgentLoop {
   private getCurrentPackage: () => Promise<string>;
   private executeAction: (action: PhoneAction, expectedPackage: string) => Promise<NativeExecutionResult>;
   private requestApproval: (step: AgentStep) => Promise<boolean>;
+  private authenticatedRequest?: ForgeRequest;
 
   constructor(opts: {
-    token: string;
+    token?: string;
+    request?: ForgeRequest;
     captureScreenshot: () => Promise<string | null>;
     getCurrentPackage: () => Promise<string>;
     executeAction: (action: PhoneAction, expectedPackage: string) => Promise<NativeExecutionResult>;
@@ -69,7 +72,8 @@ export class ForgeAgentLoop {
     onDone?: (summary: string, steps: AgentStep[]) => void;
     onError?: (message: string) => void;
   }) {
-    this.token = opts.token;
+    this.token = opts.token || '';
+    this.authenticatedRequest = opts.request;
     this.captureScreenshot = opts.captureScreenshot;
     this.getCurrentPackage = opts.getCurrentPackage;
     this.executeAction = opts.executeAction;
@@ -80,6 +84,7 @@ export class ForgeAgentLoop {
   }
 
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
+    if (this.authenticatedRequest) return this.authenticatedRequest<T>(path, init);
     const response = await fetch(`${FORGE_API}${path}`, {
       ...init,
       headers: {
@@ -241,6 +246,13 @@ export class ForgeAgentLoop {
 
         let nativeResult: NativeExecutionResult;
         try {
+          if (planned.approval_required) {
+            const reviewedScreen = await this.captureScreenshot();
+            if (!this.running) break;
+            // ponytail: exact JPEG comparison rejects dynamic pages too; use a
+            // verified screen revision when dynamic-page support is required.
+            if (!reviewedScreen || reviewedScreen !== screenshot) throw new Error('PHONE_SCREEN_CHANGED');
+          }
           nativeResult = await this.executeAction(
             { action: authorized.action, args: authorized.args } as PhoneAction,
             authorized.expected_package,
