@@ -779,6 +779,8 @@ export function ForgeTab_sendgrid() {
   const [email, setEmail] = React.useState({ to: '', from: '', subject: '', html: '' });
   const [sending, setSending] = React.useState(false);
   const [sent, setSent] = React.useState(false);
+  const [sendUnconfirmed, setSendUnconfirmed] = React.useState(false);
+  const sendInFlight = React.useRef(false);
   const [loading, setLoading] = React.useState(false);
   const h = { Authorization: `Bearer ${localStorage.getItem('forge_token')}` };
 
@@ -805,10 +807,22 @@ export function ForgeTab_sendgrid() {
   };
 
   const sendEmail = async () => {
-    if (!email.to || !email.from || !email.subject) return;
-    setSending(true);
-    await fetch(`${BACKEND}/api/integrations/sendgrid/send`, { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(email) });
-    setSending(false); setSent(true); setTimeout(() => setSent(false), 3000);
+    if (sendInFlight.current || sendUnconfirmed || !email.to || !email.from || !email.subject) return;
+    sendInFlight.current = true;
+    setSending(true); setSent(false); setStatus('');
+    try {
+      const r = await fetch(`${BACKEND}/api/integrations/sendgrid/send`, { method: 'POST', headers: { ...h, 'Content-Type': 'application/json' }, body: JSON.stringify(email) });
+      const result = await r.json().catch(() => null);
+      if (!r.ok || result?.accepted !== true) {
+        const rejected = result?.code === 'SENDGRID_SEND_REJECTED' || result?.code === 'SENDGRID_INPUT_INVALID';
+        setSendUnconfirmed(!rejected);
+        setStatus(rejected ? result.error : 'Send result is unconfirmed. Check SendGrid before sending again.');
+        return;
+      }
+      setSent(true); setStatus('Email service accepted the message. Delivery is not yet confirmed.');
+    } catch {
+      setSendUnconfirmed(true); setStatus('Send result is unconfirmed. Check SendGrid before sending again.');
+    } finally { sendInFlight.current = false; setSending(false); }
   };
 
   // compute 30d totals
@@ -852,7 +866,8 @@ export function ForgeTab_sendgrid() {
       {tab === 'send' && <div style={{ maxWidth: 480 }}>
         {['to','from','subject'].map(k => <input key={k} value={(email as any)[k]} onChange={e => setEmail(p => ({ ...p, [k]: e.target.value }))} placeholder={k.charAt(0).toUpperCase() + k.slice(1)} style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 8, boxSizing: 'border-box', fontSize: 13 }} />)}
         <textarea value={email.html} onChange={e => setEmail(p => ({ ...p, html: e.target.value }))} placeholder="HTML body..." rows={6} style={{ width: '100%', padding: '9px 12px', borderRadius: 6, border: '1px solid #333', background: '#111', color: '#fff', marginBottom: 10, boxSizing: 'border-box', fontSize: 13, resize: 'vertical' }} />
-        <button onClick={sendEmail} disabled={sending} style={{ background: '#1a82e2', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 20px', cursor: 'pointer', fontWeight: 700 }}>{sent ? '✓ Sent!' : sending ? 'Sending...' : 'Send Email'}</button>
+        {status && <p role="status" style={{ color: sent ? '#7cbd87' : '#f8a68e' }}>{status}</p>}
+        <button onClick={sendEmail} disabled={sending || sendUnconfirmed} style={{ background: '#1a82e2', color: '#fff', border: 'none', borderRadius: 6, padding: '9px 20px', cursor: 'pointer', fontWeight: 700 }}>{sent ? '✓ Accepted' : sending ? 'Submitting...' : 'Send Email'}</button>
       </div>}
       {tab === 'templates' && <div>{templates.map(t => <div key={t.id} style={{ padding: '10px 14px', background: '#111', borderRadius: 6, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 10 }}>
         <span style={{ fontWeight: 600, color: '#ddd', fontSize: 13 }}>{t.name}</span>

@@ -158,3 +158,117 @@ export async function restoreDraftJob(client: DraftClient, thread: SavedThread):
   return { input: metadata.input as DraftInput, requestId: metadata.requestId, threadId: thread.id,
     release: { ...thread.publishedAgent, model: thread.model }, body: JSON.stringify({ content: message.content, client_message_id: metadata.requestId, token_budget: metadata.tokenBudget, cost_budget_usd: 0 }) };
 }
+
+export type MailEnvelope = { from: string; to: string; subject: string; text: string };
+export type MailReceipt = {
+  id: string; threadId: string; artifactId: string; artifactVersion: number; clientRequestId: string; contentHash: string;
+  status: 'awaiting_approval' | 'dispatching' | 'accepted' | 'unknown' | 'rejected' | 'cancelled';
+  deliveryStatus: 'unconfirmed' | 'delivered' | 'delayed' | 'bounced' | 'complained' | 'failed';
+  envelope: MailEnvelope; providerMessageId: string | null; providerLastEvent: string | null;
+  modelChargeUsd: 0; providerChargeUsd: number | null; errorCode: string | null; refreshError?: string | null;
+  firstDispatchAt: number | null; createdAt: number; updatedAt: number; approvedAt?: number | null; acceptedAt?: number | null;
+};
+export type MailPreparation = { threadId: string; clientRequestId: string; artifactId: string; artifactVersion: number; body: string };
+export type ResendConfiguration = { configured: boolean; credentialStatus: string };
+export function singleMailAddress(value: string): boolean {
+  if (typeof value !== 'string' || value.trim().length > 254) return false;
+  const parts = value.trim().split('@');
+  return parts.length === 2 && parts[0].length <= 64 && /^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+$/.test(parts[0])
+    && !parts[0].startsWith('.') && !parts[0].endsWith('.') && !parts[0].includes('..') && parts[1].includes('.')
+    && parts[1].split('.').every(label => /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/.test(label));
+}
+const utf8Size = (value: string): number => Array.from(value).reduce((sum, item) => { const point = item.codePointAt(0)!; return sum + (point < 128 ? 1 : point < 2048 ? 2 : point < 65536 ? 3 : 4); }, 0);
+
+export async function resendConfiguration(client: DraftClient): Promise<ResendConfiguration> {
+  const reply = await client.request<{ success: boolean; data: Array<{ id: string; configured: boolean; credential_status?: string }> }>('/api/connectors');
+  if (reply.success !== true || !Array.isArray(reply.data)) fail('MAIL_CONFIGURATION_UNCONFIRMED');
+  const saved = reply.data.find(row => row.id === 'resend');
+  return { configured: saved?.configured === true, credentialStatus: saved?.credential_status || 'unconfirmed' };
+}
+
+export async function saveResendCredential(client: DraftClient, key: string): Promise<void> {
+  if (!key.trim() || key.trim().length > 8192) fail('MAIL_CREDENTIAL_REQUIRED');
+  const reply = await client.request<{ success: boolean; data: { id: string; configured: boolean } }>('/api/connectors', {
+    method: 'POST', body: JSON.stringify({ id: 'resend', key: key.trim() }),
+  });
+  if (reply.success !== true || reply.data?.id !== 'resend' || reply.data.configured !== true) fail('MAIL_CONFIGURATION_UNCONFIRMED');
+}
+
+export function newMailPreparation(artifact: DraftArtifact, envelope: MailEnvelope): MailPreparation {
+  if (!artifact.id || !artifact.thread_id || !Number.isSafeInteger(artifact.version) || artifact.version < 1) fail('MAIL_SOURCE_CHANGED');
+  const clean = { from: envelope.from.trim(), to: envelope.to.trim(), subject: envelope.subject.trim(), text: envelope.text };
+  if (!singleMailAddress(clean.from) || !singleMailAddress(clean.to)) fail('MAIL_SINGLE_ADDRESS_REQUIRED');
+  if (!clean.subject || utf8Size(clean.subject) > 500 || /[\x00-\x1f\x7f]/.test(clean.subject) || !clean.text.trim() || utf8Size(clean.text) > 60 * 1024 || clean.text.includes('\0')) fail('MAIL_CONTENT_INVALID');
+  const clientRequestId = `phone-mail:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 12)}`;
+  const body = JSON.stringify({ clientRequestId, artifactId: artifact.id, artifactVersion: artifact.version, ...clean });
+  if (utf8Size(body) > 64 * 1024) fail('MAIL_CONTENT_INVALID');
+  return { threadId: artifact.thread_id, artifactId: artifact.id, artifactVersion: artifact.version, clientRequestId,
+    body };
+}
+
+function checkedMailReceipt(value: unknown, expected: { id?: string; threadId?: string; contentHash?: string } = {}): MailReceipt {
+  if (!object(value) || typeof value.id !== 'string' || !value.id || typeof value.threadId !== 'string' || !value.threadId
+    || typeof value.artifactId !== 'string' || !value.artifactId || !Number.isSafeInteger(value.artifactVersion) || value.artifactVersion < 1
+    || typeof value.clientRequestId !== 'string' || !value.clientRequestId || typeof value.contentHash !== 'string' || !value.contentHash
+    || !['awaiting_approval', 'dispatching', 'accepted', 'unknown', 'rejected', 'cancelled'].includes(value.status)
+    || !['unconfirmed', 'delivered', 'delayed', 'bounced', 'complained', 'failed'].includes(value.deliveryStatus)
+    || !object(value.envelope) || !['from', 'to', 'subject', 'text'].every(key => typeof value.envelope[key] === 'string')
+    || value.modelChargeUsd !== 0 || !(value.providerChargeUsd === null || typeof value.providerChargeUsd === 'number' && Number.isFinite(value.providerChargeUsd) && value.providerChargeUsd >= 0)
+    || !(value.providerMessageId === null || typeof value.providerMessageId === 'string')
+    || !(value.providerLastEvent === null || typeof value.providerLastEvent === 'string')
+    || !(value.errorCode === null || typeof value.errorCode === 'string')
+    || !(value.firstDispatchAt === null || typeof value.firstDispatchAt === 'number' && Number.isFinite(value.firstDispatchAt))
+    || typeof value.createdAt !== 'number' || !Number.isFinite(value.createdAt) || typeof value.updatedAt !== 'number' || !Number.isFinite(value.updatedAt)
+    || expected.id && value.id !== expected.id || expected.threadId && value.threadId !== expected.threadId
+    || expected.contentHash && value.contentHash !== expected.contentHash) fail('MAIL_RECEIPT_UNCONFIRMED');
+  return value as MailReceipt;
+}
+
+export async function listMailReceipts(client: DraftClient, threadId: string): Promise<MailReceipt[]> {
+  const reply = await client.request<{ success: boolean; data: unknown[] }>(`/api/threads/${segment(threadId)}/mail-deliveries`);
+  if (reply.success !== true || !Array.isArray(reply.data)) fail('MAIL_RECEIPT_UNCONFIRMED');
+  return reply.data.map(value => checkedMailReceipt(value, { threadId })).sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function freezeMail(client: DraftClient, preparation: MailPreparation): Promise<MailReceipt> {
+  const reply = await client.request<{ success: boolean; data: unknown }>(`/api/threads/${segment(preparation.threadId)}/mail-deliveries`, {
+    method: 'POST', body: preparation.body,
+  });
+  if (reply.success !== true) fail('MAIL_RECEIPT_UNCONFIRMED');
+  const receipt = checkedMailReceipt(reply.data, { threadId: preparation.threadId });
+  if (receipt.clientRequestId !== preparation.clientRequestId || receipt.artifactId !== preparation.artifactId || receipt.artifactVersion !== preparation.artifactVersion) fail('MAIL_RECEIPT_UNCONFIRMED');
+  return receipt;
+}
+
+export async function readMailReceipt(client: DraftClient, receipt: MailReceipt): Promise<MailReceipt> {
+  const reply = await client.request<{ success: boolean; data: unknown }>(`/api/mail-deliveries/${segment(receipt.id)}`);
+  if (reply.success !== true) fail('MAIL_RECEIPT_UNCONFIRMED');
+  return checkedMailReceipt(reply.data, receipt);
+}
+
+export async function mailReceiptAction(client: DraftClient, receipt: MailReceipt, action: 'approve' | 'cancel' | 'refresh' | 'recover'): Promise<MailReceipt> {
+  if ((action === 'approve' || action === 'cancel') && receipt.status !== 'awaiting_approval' || action === 'recover' && !canRecoverMail(receipt)) fail('MAIL_STATUS_CHANGED');
+  const reply = await client.request<{ success: boolean; data: unknown }>(`/api/mail-deliveries/${segment(receipt.id)}/${action}`, {
+    method: 'POST', body: JSON.stringify(action === 'cancel' || action === 'refresh' ? {} : { expectedContentHash: receipt.contentHash }),
+  });
+  if (reply.success !== true) fail('MAIL_RECEIPT_UNCONFIRMED');
+  return checkedMailReceipt(reply.data, receipt);
+}
+
+export const canRecoverMail = (receipt: MailReceipt, now = Date.now()): boolean => receipt.status === 'unknown'
+  && typeof receipt.firstDispatchAt === 'number' && receipt.firstDispatchAt > 0 && now >= receipt.firstDispatchAt && now - receipt.firstDispatchAt < 23 * 60 * 60 * 1000;
+
+export function mailStatusText(receipt: MailReceipt): string {
+  if (receipt.status === 'cancelled') return '已取消 · 尚未提交邮件服务';
+  if (receipt.status === 'awaiting_approval') return '等待你批准 · 尚未发送';
+  if (receipt.status === 'dispatching') return '正在向邮件服务提交';
+  if (receipt.status === 'unknown') return '发送结果待确认 · 请先查看原记录';
+  if (receipt.status === 'rejected') return '邮件服务已拒绝本次发送';
+  // Accepted is distinct from delivery. Delivery requires a linked provider event.
+  if (receipt.deliveryStatus === 'delivered' && receipt.providerMessageId && receipt.providerLastEvent === 'delivered') return '邮件服务已确认送达';
+  if (receipt.deliveryStatus === 'bounced') return '邮件服务已接收 · 后续退信';
+  if (receipt.deliveryStatus === 'failed') return '邮件服务已接收 · 后续送达失败';
+  if (receipt.deliveryStatus === 'complained') return '邮件服务已接收 · 收到投诉记录';
+  if (receipt.deliveryStatus === 'delayed') return '邮件服务已接收 · 送达延迟';
+  return '邮件服务已接收 · 送达尚未确认';
+}

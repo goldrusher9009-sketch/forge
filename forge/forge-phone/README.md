@@ -2,6 +2,22 @@
 
 Forge Phone Agent is a controlled internal Android candidate for executing bounded actions through Forge. Each real session is tied to the authenticated Owner's Agent Passport, permissions, selected application, and explicit execution budgets.
 
+## Owner-approved business email
+
+The business-draft screen can prepare one plain-text email for one recipient using the Owner's own Resend account. It never changes the original generated JSON into a sending receipt, and generating a draft does not send anything.
+
+1. Generate or restore a checked reply/marketing draft, then open **准备一封邮件**.
+2. Save your own Resend API key through Forge's existing encrypted connector store. A saved key is unverified. Use a sender address on your verified Resend domain; `resend.dev` is only suitable for sending test mail to the account owner. A sending-only key cannot retrieve delivery evidence; provider queries require the corresponding query permission.
+3. Enter one real sender and recipient address, edit the subject and complete body, then prepare the preview. The server freezes the source file, completed run, current delivery report, zero model charge, exact mail content and credential identity. Preparation makes no provider request.
+4. Review the complete frozen preview and explicitly approve it. Changing the content requires cancelling an unsubmitted preview and preparing a new one. Cancellation cannot withdraw a request already submitted to the provider.
+5. Read the durable record or query the provider. **Accepted** means the provider received the request; delivery requires matching provider evidence. Model charges and mail-service charges remain separate. Unknown mail-service costs stay `null`.
+
+After a timeout or process interruption, find the original record before acting. Forge never automatically sends again. Explicit recovery uses the original provider key and byte-identical body, is limited to the first 23 hours, and rechecks the source and credential identity. This is a conservative window inside Resend's documented 24-hour idempotency retention. A new request ID cannot bypass an awaiting, dispatching or unknown record for the same source and exact content. Outside the recovery window, an unknown result remains unknown. A rejected recovery does not prove that the original request was never accepted.
+
+The 2026-10-01 email candidate passed 77 complete local platform/Pi/SQLite/phone-helper checks, 25 independent HTTP/SQLite mail groups, 17 actual React mail-component checks, 20 existing draft-component checks, and 10 isolated React Native Web browser flows at 390px/1280px. The legacy SendGrid acknowledgement, encrypted-credential and false-success repairs passed 10 actual-source checks. All model and provider responses in these checks were controlled fixtures; no real mail was sent. Source deletion, explicit preview rejection, unrelated old records, account changes, concurrent approval, client disconnects and actual process termination were covered.
+
+The corresponding unsigned ARM64 validation APK passed 61 compiled-package checks and retains the explicit `https://localhost:3000` compile-validation API. It is 40,906,824 bytes, SHA256 `3D105E9BCF0728975C4EFFB940A21116E7B564F7D95DE6F53BF9695F169C1990`. All eleven source/build hashes were stable. Evidence is in `D:\codex-home\temp\forge-business-mail-20261001`. Earlier APKs and their historical evidence remain separate. The new package is not a signed online release or proof of installation, real-device operation, live model reliability, mail delivery, sales or customer revenue. Production is unchanged.
+
 ## Supported pilot boundary
 
 - Android 11 or newer (`minSdk 30`).
