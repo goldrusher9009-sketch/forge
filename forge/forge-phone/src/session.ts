@@ -25,7 +25,7 @@ export class ForgeSessionError extends Error {
   }
 }
 
-type Reply = { response: Response; payload: Record<string, any> };
+type Reply = { response: Response; payload: Record<string, any>; text: string; contentType: string };
 type Tokens = { accessToken: string; refreshToken: string };
 
 function tokens(payload: Reply['payload']): Tokens {
@@ -76,7 +76,7 @@ export class ForgeSessionClient {
     if (generation !== this.generation) throw new ForgeSessionError('SESSION_CHANGED');
   }
 
-  private async send(path: string, init: RequestInit = {}, accessToken?: string): Promise<Reply> {
+  private async send(path: string, init: RequestInit = {}, accessToken?: string, mode: 'json' | 'text' = 'json'): Promise<Reply> {
     if (!path.startsWith('/api/') || path.includes('\\')) throw new ForgeSessionError('INVALID_API_PATH');
     if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
     const headers = new Headers(init.headers);
@@ -90,8 +90,22 @@ export class ForgeSessionClient {
     } catch {
       throw new ForgeSessionError(init.signal?.aborted ? 'REQUEST_CANCELLED' : 'NETWORK_UNAVAILABLE');
     }
-    const payload = await response.json().catch(() => ({}));
-    return { response, payload: payload && typeof payload === 'object' ? payload : {} };
+    const contentType = response.headers.get('Content-Type') || '';
+    if (mode === 'json' && contentType.toLowerCase().includes('text/event-stream')) {
+      await response.body?.cancel().catch(() => {});
+      throw new ForgeSessionError('RESPONSE_FORMAT_UNSUPPORTED');
+    }
+    let text = '', payload: Record<string, any> = {};
+    try {
+      if (mode === 'text') {
+        text = await response.text();
+        if (!response.ok) { try { payload = JSON.parse(text); } catch {} }
+      } else { payload = await response.json().catch(() => ({})); }
+    } catch {
+      throw new ForgeSessionError(init.signal?.aborted ? 'REQUEST_CANCELLED' : 'NETWORK_UNAVAILABLE');
+    }
+    if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
+    return { response, payload: payload && typeof payload === 'object' ? payload : {}, text, contentType };
   }
 
   private async auth(path: string, body: Record<string, string>, accessToken?: string): Promise<Reply> {
@@ -173,22 +187,31 @@ export class ForgeSessionClient {
     return job;
   }
 
-  request: ForgeRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
+  private async authenticated(path: string, init: RequestInit, mode: 'json' | 'text'): Promise<Reply> {
     const generation = this.generation, accessToken = this.accessToken;
     if (!accessToken) throw new ForgeSessionError('AUTH_REQUIRED', 401);
-    let reply = await this.send(path, init, accessToken);
+    let reply = await this.send(path, init, accessToken, mode);
     this.current(generation);
     if (reply.response.status === 401) {
       if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
       if (this.accessToken === accessToken) await waitForRefresh(this.refresh(generation), init.signal);
       this.current(generation);
       if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
-      reply = await this.send(path, init, this.accessToken);
+      reply = await this.send(path, init, this.accessToken, mode);
       this.current(generation);
       if (reply.response.status === 401) { this.clear(); throw new ForgeSessionError('SESSION_EXPIRED', 401); }
     }
     if (!reply.response.ok) throw responseError(reply);
-    return reply.payload as T;
+    return reply;
+  }
+
+  request: ForgeRequest = async <T>(path: string, init: RequestInit = {}): Promise<T> => {
+    return (await this.authenticated(path, init, 'json')).payload as T;
+  };
+
+  requestText = async (path: string, init: RequestInit = {}): Promise<{ text: string; contentType: string }> => {
+    const reply = await this.authenticated(path, init, 'text');
+    return { text: reply.text, contentType: reply.contentType };
   };
 
   async signOut(): Promise<SignOutResult> {

@@ -4,7 +4,7 @@ import { operatorModelLimits, providerUsageObserver, resolveModel, classifyOpenR
 import type { createPiProviderLedger } from './pi-provider-ledger';
 import type { createManagedBilling } from './managed-billing';
 import { MANAGED_BILLING_VERSION } from './managed-billing';
-import { OPENROUTER_CATALOG, OPENROUTER_CATALOG_VERIFIED_AT, OPENROUTER_RETAIL_MULTIPLIER, DEFAULT_OPENROUTER_MODEL, getOpenRouterPriceBounds, normalizeOpenRouterRequest } from './openrouter-catalog';
+import { OPENROUTER_CATALOG, OPENROUTER_CATALOG_VERIFIED_AT, OPENROUTER_RETAIL_MULTIPLIER, DEFAULT_OPENROUTER_MODEL, getOpenRouterPriceBounds, isFreeOpenRouterModel, normalizeOpenRouterRequest } from './openrouter-catalog';
 import { estimateManagedInput } from './image-budget';
 
 type Database = { prepare(sql: string): any; transaction<T extends (...args: any[]) => any>(fn: T): T };
@@ -97,7 +97,7 @@ export function createDesktopModelGateway(deps: Dependencies) {
         contextWindow, maxTokens: Math.min(model.maxOutputTokens, configured?.maxTokens ?? model.maxOutputTokens, contextWindow - 1),
         tier: model.tier, reasoning: model.supportedParameters.includes('reasoning'), reasoningEfforts: model.reasoning.supported_efforts ?? [],
         defaultReasoningEffort: model.reasoning.default_effort, mandatoryReasoning: Boolean(model.reasoning.mandatory),
-        isDefault: model.id === fallback,
+        isDefault: model.id === fallback, isFree: isFreeOpenRouterModel(model.id),
         available: !state.billing.trialOnly || model.tier === 'lightweight', requiresPaidCredits: model.tier !== 'lightweight',
         pricingVerifiedAt: OPENROUTER_CATALOG_VERIFIED_AT,
         pricing: { currency: 'USD' as const, unit: 'million_tokens' as const, input: model.pricing.prompt * OPENROUTER_RETAIL_MULTIPLIER,

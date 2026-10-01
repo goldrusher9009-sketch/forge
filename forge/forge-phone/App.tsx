@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, KeyboardAvoidingView, NativeModules, Platform, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { ForgeAgentLoop } from './src/ForgeAgent';
 import { AgentStep, NativeExecutionResult, PhoneAction } from './src/config';
 import { ForgeIdentity, ForgeSessionClient } from './src/session';
+import BusinessTasks from './src/BusinessTasks';
+import type { DraftClient } from './src/business-tasks';
 
 type InstalledApp = { packageName: string; label: string };
 type ForgeAccessibilityBridge = {
@@ -89,6 +91,8 @@ export default function App() {
   const [existingTask, setExistingTask] = useState<{ id: number; goal: string; generation: number } | null>(null);
   const [closingTask, setClosingTask] = useState(false);
   const [screen, setScreen] = useState<'main' | 'running'>('main');
+  const [taskMode, setTaskMode] = useState<'business' | 'phone'>('business');
+  const [businessBusy, setBusinessBusy] = useState(false);
   const agentRef = useRef<ForgeAgentLoop | null>(null);
   const runRef = useRef(0);
   const authRef = useRef(0);
@@ -96,6 +100,15 @@ export default function App() {
   const startingRef = useRef(false);
   const approvalRef = useRef<((approved: boolean) => void) | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  const businessClient = useMemo<DraftClient & { onBusyChange(busy: boolean): void }>(() => {
+    const generation = authRef.current;
+    const current = () => { if (authRef.current !== generation) throw new Error('SESSION_CHANGED'); };
+    return {
+      request: async <T,>(path: string, init?: RequestInit) => { current(); const result = await session.request<T>(path, init); current(); return result; },
+      requestText: async (path, init) => { current(); const result = await session.requestText(path, init); current(); return result; },
+      onBusyChange: busy => { if (authRef.current === generation) setBusinessBusy(busy); },
+    };
+  }, [session, identity?.user.id]);
 
   useEffect(() => () => {
     runRef.current += 1;
@@ -130,6 +143,7 @@ export default function App() {
     setIdentity(null); setSigningIn(false); setPassword(''); setSteps([]); setSummary(''); setError(''); setTarget(null);
     setGoal(''); setApps([]); setChoosingApp(false); setLoadingApps(false); setNotice('');
     setExistingTask(null); setClosingTask(false);
+    setTaskMode('business'); setBusinessBusy(false);
     const result = await revoked;
     if (authRef.current === attempt) setNotice(result.serverRevoked ? '' : '本机已退出；服务端撤销尚未确认，请检查网络后重新登录。');
     await stopped;
@@ -274,7 +288,8 @@ export default function App() {
     </ScrollView></SafeAreaView>;
 
   return <SafeAreaView style={s.root}><StatusBar style="dark" /><View style={s.topbar}>{mark}<TouchableOpacity accessibilityRole="button" accessibilityLabel="退出登录" onPress={() => { void signOut(); }} style={s.account}><Text style={s.small}>退出</Text></TouchableOpacity></View>
-    <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}><Text style={s.eyebrow}>你好，{identity.user.firstName || identity.user.email.split('@')[0]}</Text><Text style={s.hero}>这次，{'\n'}交给 Forge。</Text><Text style={s.intro}>从一个小任务开始。你确认，助手执行。</Text>
+    <View style={s.taskModes}>{(['business', 'phone'] as const).map(mode => <TouchableOpacity key={mode} accessibilityRole="button" accessibilityState={{ selected: taskMode === mode, disabled: businessBusy && taskMode !== mode }} disabled={businessBusy && taskMode !== mode} onPress={() => setTaskMode(mode)} style={[s.taskMode, taskMode === mode && s.activeTaskMode, businessBusy && taskMode !== mode && s.disabled]}><Text style={[s.body, taskMode === mode && { color: C.paper }]}>{mode === 'business' ? '业务草稿' : '手机操作'}</Text></TouchableOpacity>)}</View>
+    {taskMode === 'business' ? <BusinessTasks key={identity.user.id} client={businessClient} onBusyChange={businessClient.onBusyChange} /> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}><Text style={s.eyebrow}>你好，{identity.user.firstName || identity.user.email.split('@')[0]}</Text><Text style={s.hero}>这次，{'\n'}交给 Forge。</Text><Text style={s.intro}>从一个小任务开始。你确认，助手执行。</Text>
       <View style={s.taskShelf}>{TASKS.map((task, i) => <TouchableOpacity accessibilityRole="button" key={task.name} onPress={() => setGoal(task.goal)} style={s.task}><Text style={s.taskNumber}>0{i + 1}</Text><Text style={s.taskName}>{task.name}</Text><Text style={s.small}>{task.hint}</Text></TouchableOpacity>)}</View>
       <Text style={s.label}>你想完成什么？</Text><TextInput accessibilityLabel="任务目标" value={goal} onChangeText={setGoal} multiline maxLength={2000} placeholder="例如：根据客户消息写好回复，先不发送…" placeholderTextColor={C.muted} style={[s.input, s.goalInput]} />
       <View style={s.mode}><View style={s.flex}><Text style={s.body}>先预览步骤</Text><Text style={s.small}>{planningOnly ? '只生成计划，不操作手机' : '逐项批准后，操作所选应用'}</Text></View><Switch accessibilityLabel="先预览步骤" value={planningOnly} onValueChange={setPlanningOnly} trackColor={{ true: C.green, false: C.line }} thumbColor={C.paper} /></View>
@@ -283,11 +298,12 @@ export default function App() {
       </View>}
       <View style={s.limit}><Text style={s.small}>本次最多</Text><View style={s.choices}>{[5, 8, 10, 12].map(value => <TouchableOpacity accessibilityRole="button" accessibilityLabel={`最多 ${value} 步`} accessibilityState={{ selected: maxSteps === value }} key={value} onPress={() => setMaxSteps(value)} style={[s.choice, maxSteps === value && s.chosen]}><Text style={[s.small, maxSteps === value && { color: C.paper }]}>{value} 步</Text></TouchableOpacity>)}</View></View>
       {message(error, true)}{message(notice)}{recovery}{button(draining ? '上一任务正在收尾…' : starting ? '正在准备…' : planningOnly ? '预览任务 →' : '打开应用并开始 →', () => { void startAgent(); }, !!existingTask || draining || starting || !goal.trim() || (!planningOnly && !target))}{button('查看未完成任务', () => { void findExistingTask(); }, false, true)}<Text style={s.footnote}>当前使用免费模型，繁忙时可能需要稍后再试。草稿需你核对，发送与发布也需逐项确认。</Text><View style={s.footer}><Text style={s.small}>时间留给更值得的事。</Text><Text style={s.small}>FORGE</Text></View>
-    </ScrollView></SafeAreaView>;
+    </ScrollView>}</SafeAreaView>;
 }
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: C.bg }, flex: { flex: 1 }, content: { paddingHorizontal: 24, paddingTop: 22, paddingBottom: 40 }, loginContent: { flexGrow: 1, padding: 28, paddingTop: 42 },
+  taskModes: { flexDirection: 'row', gap: 8, paddingHorizontal: 24, paddingVertical: 12, borderBottomWidth: 1, borderColor: C.line }, taskMode: { flex: 1, minHeight: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: C.paper, borderRadius: 10 }, activeTaskMode: { backgroundColor: C.green },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 10 }, brandMark: { width: 30, height: 30, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center', borderRadius: 8 }, brandLetter: { color: C.accent, fontSize: 21, fontWeight: '800' },
   wordmark: { color: C.ink, fontSize: 14, fontWeight: '800', letterSpacing: 1 }, wordmarkLight: { fontWeight: '400', color: C.muted }, topbar: { minHeight: 68, paddingHorizontal: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderColor: C.line, gap: 14 }, account: { minWidth: 48, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
   eyebrow: { color: C.green, fontSize: 12, fontWeight: '600', letterSpacing: 1.2, marginTop: 24, marginBottom: 14 }, hero: { color: C.ink, fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 36, lineHeight: 48, marginTop: 8 }, intro: { color: C.muted, fontSize: 15, lineHeight: 24, marginTop: 18 },
