@@ -7,7 +7,7 @@ export type DraftArtifact = { id: string; thread_id: string; filename: string; l
 export type DraftReport = {
   id: string; threadId: string; runId: string; inputHash: string; current: boolean; passed: boolean;
   accountingComplete: boolean; chargeUsd: number | null; checkedAt?: string;
-  files: Array<{ id: string; filename: string; version: number; original: boolean }>;
+  files: Array<{ id: string; filename: string; version: number; original: boolean; sha256?: string }>;
 };
 export type DraftJob = { input: DraftInput; requestId: string; threadId: string; release: DraftRelease; body: string; runId?: string; origin?: 'resend-received' | 'twilio-inbound' };
 export type SavedThread = { id: string; title: string; created_at?: string; model: string; publishedAgent?: { agentId: string; releaseId: string; name: string; version: number } | null };
@@ -494,7 +494,7 @@ function checkedMailFollowUp(value: unknown, id: string, version?: number): Mail
   if (value.version === 0 && followUpFieldKeys.some(key => value[key] !== null)) fail('MAIL_FOLLOWUP_UNCONFIRMED');
   return value as MailFollowUp;
 }
-export function mailFollowUpForm(saved?: MailFollowUp | null): MailFollowUpForm {
+export function mailFollowUpForm(saved?: Omit<MailFollowUp, 'mailDeliveryId'> | null): MailFollowUpForm {
   const digits = saved?.reportedRevenueMinor === null || saved?.reportedRevenueMinor === undefined ? '' : String(saved.reportedRevenueMinor).padStart(3, '0');
   return { nextStep: saved?.nextStep || '', followUpOn: saved?.followUpOn || '', result: saved?.result ?? null,
     notes: saved?.notes || '', evidenceReference: saved?.evidenceReference || '',
@@ -533,5 +533,56 @@ export async function saveMailFollowUp(client: DraftClient, receipt: MailReceipt
   if (reply.success !== true) fail('MAIL_FOLLOWUP_UNCONFIRMED');
   const updated = checkedMailFollowUp(reply.data, receipt.id, input.expectedVersion + 1);
   if (followUpFieldKeys.some(key => updated[key] !== input[key])) fail('MAIL_FOLLOWUP_UNCONFIRMED');
+  return updated;
+}
+
+export type TaskFollowUpSource = {
+  threadId: string; artifactId: string; artifactVersion: number; runId: string; requestId: string; releaseId: string;
+  artifactSha256: string; filename: string;
+};
+export type TaskFollowUp = Omit<MailFollowUp, 'mailDeliveryId'> & { threadId: string; source: TaskFollowUpSource; sourceHash: string };
+export type TaskFollowUpInput = MailFollowUpInput & { expectedSourceHash: string };
+export type TaskFollowUpTarget = { job: DraftJob; artifact: DraftArtifact; runId: string; artifactSha256: string };
+const taskSourceKeys = ['threadId', 'artifactId', 'artifactVersion', 'runId', 'requestId', 'releaseId', 'artifactSha256', 'filename'];
+function taskFollowUpAsMail(saved: TaskFollowUp): MailFollowUp {
+  const { threadId, source, sourceHash, ...fields } = saved;
+  return { mailDeliveryId: threadId, ...fields };
+}
+function checkedTaskFollowUp(value: unknown, target?: TaskFollowUpTarget, version?: number): TaskFollowUp {
+  const keys = [...followUpKeys.filter(key => key !== 'mailDeliveryId'), 'threadId', 'source', 'sourceHash'];
+  if (!object(value) || Object.keys(value).length !== keys.length || keys.some(key => !Object.prototype.hasOwnProperty.call(value, key))
+    || typeof value.threadId !== 'string' || !value.threadId || typeof value.sourceHash !== 'string' || !/^[a-f0-9]{64}$/.test(value.sourceHash)
+    || !object(value.source) || Object.keys(value.source).length !== taskSourceKeys.length || taskSourceKeys.some(key => !Object.prototype.hasOwnProperty.call(value.source, key))
+    || value.source.threadId !== value.threadId || !Number.isSafeInteger(value.source.artifactVersion) || value.source.artifactVersion < 1
+    || !['artifactId', 'runId', 'requestId', 'releaseId'].every(key => typeof value.source[key] === 'string' && !!value.source[key])
+    || typeof value.source.artifactSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.source.artifactSha256)
+    || !['reply-draft.json', 'marketing-pack.json'].includes(value.source.filename)) fail('TASK_FOLLOWUP_UNCONFIRMED');
+  try { checkedMailFollowUp(taskFollowUpAsMail(value as TaskFollowUp), value.threadId, version); }
+  catch { fail('TASK_FOLLOWUP_UNCONFIRMED'); }
+  if (target && (value.threadId !== target.job.threadId || value.source.artifactId !== target.artifact.id
+    || value.source.artifactVersion !== target.artifact.version || value.source.filename !== target.artifact.filename
+    || value.source.requestId !== target.job.requestId || value.source.releaseId !== target.job.release.releaseId
+    || value.source.runId !== target.runId || value.source.artifactSha256 !== target.artifactSha256
+    || target.artifact.thread_id !== target.job.threadId)) fail('TASK_FOLLOWUP_SOURCE_CHANGED');
+  return value as TaskFollowUp;
+}
+export function newTaskFollowUpInput(saved: TaskFollowUp, form: MailFollowUpForm): TaskFollowUpInput {
+  const current = checkedTaskFollowUp(saved);
+  return { ...newMailFollowUpInput(taskFollowUpAsMail(current), form), expectedSourceHash: current.sourceHash };
+}
+export async function readTaskFollowUp(client: DraftClient, target: TaskFollowUpTarget): Promise<TaskFollowUp> {
+  const reply = await client.request<{ success: boolean; data: unknown }>(`/api/threads/${segment(target.job.threadId)}/follow-up`);
+  if (reply.success !== true) fail('TASK_FOLLOWUP_UNCONFIRMED');
+  return checkedTaskFollowUp(reply.data, target);
+}
+export async function saveTaskFollowUp(client: DraftClient, target: TaskFollowUpTarget, saved: TaskFollowUp, input: TaskFollowUpInput): Promise<TaskFollowUp> {
+  const current = checkedTaskFollowUp(saved, target);
+  if (current.version !== input.expectedVersion) fail('TASK_FOLLOWUP_CHANGED');
+  if (current.sourceHash !== input.expectedSourceHash) fail('TASK_FOLLOWUP_SOURCE_CHANGED');
+  const reply = await client.request<{ success: boolean; data: unknown }>(`/api/threads/${segment(target.job.threadId)}/follow-up`, { method: 'PUT', body: JSON.stringify(input) });
+  if (reply.success !== true) fail('TASK_FOLLOWUP_UNCONFIRMED');
+  const updated = checkedTaskFollowUp(reply.data, target, input.expectedVersion + 1);
+  if (updated.sourceHash !== input.expectedSourceHash || taskSourceKeys.some(key => updated.source[key as keyof TaskFollowUpSource] !== current.source[key as keyof TaskFollowUpSource])
+    || followUpFieldKeys.some(key => updated[key] !== input[key])) fail('TASK_FOLLOWUP_UNCONFIRMED');
   return updated;
 }

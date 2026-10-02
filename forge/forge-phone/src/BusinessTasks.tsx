@@ -6,6 +6,7 @@ import {
   canRecoverMail, freezeMail, listMailReceipts, MailEnvelope, MailPreparation, MailReceipt, mailReceiptAction, mailStatusText,
   newMailPreparation, readMailReceipt, resendConfiguration, saveResendCredential, singleMailAddress,
   MailFollowUp, MailFollowUpForm, mailFollowUpForm, newMailFollowUpInput, readMailFollowUp, saveMailFollowUp,
+  TaskFollowUp, TaskFollowUpTarget, newTaskFollowUpInput, readTaskFollowUp, saveTaskFollowUp,
   DraftAssistantPreparation, newDraftAssistantPreparation, prepareDraftAssistant,
 } from './business-tasks';
 import IncomingMail from './IncomingMail';
@@ -78,8 +79,142 @@ function friendly(error: unknown): string {
     MAIL_FOLLOWUP_DATE_INVALID: '请填写真实的 YYYY-MM-DD 日期，并说明下一步。',
     MAIL_FOLLOWUP_AMOUNT_INVALID: '金额请填写非负数字，最多两位小数；留空表示未记录。',
     MAIL_FOLLOWUP_INVALID: '跟进内容未通过检查，请核对日期、金额和文字长度。',
+    TASK_FOLLOWUP_CHANGED: '跟进记录已被更新，请先读取最新记录，再决定怎样保存。',
+    TASK_FOLLOWUP_SOURCE_CHANGED: '原草稿发生了变化，请先查看任务结果重新核对，再读取跟进记录。',
+    TASK_FOLLOWUP_SOURCE_UNVERIFIED: '原草稿的交付或费用尚未通过核对，请先查看任务结果。',
+    TASK_FOLLOWUP_NOT_FOUND: '没有找到当前账号可使用的任务跟进记录。',
+    TASK_FOLLOWUP_UNCONFIRMED: '跟进保存结果尚未确认，请先读取保存的记录。',
+    TASK_FOLLOWUP_INVALID: '跟进内容未通过检查，请核对日期、金额和文字长度。',
   };
   return messages[code] || '本次操作没有完成。请查看任务结果或稍后重试。';
+}
+
+
+type FollowUpTarget = ({ kind: 'task' } & TaskFollowUpTarget) | { kind: 'mail'; receipt: MailReceipt };
+type FollowUpRecord = TaskFollowUp | MailFollowUp;
+type FollowUpOperation = { id: number; client: DraftClient; ensure(): void; finish(): void };
+type FollowUpSnapshot = {
+  identity: string; sourceId: string; open: boolean; record: FollowUpRecord | null; fields: MailFollowUpForm;
+  readRequired: boolean; keepInput: boolean; notice: string; error: string;
+};
+type FollowUpProps = {
+  target: FollowUpTarget; busy: boolean; operationId: number; sourceVerified?: boolean;
+  snapshot: React.MutableRefObject<FollowUpSnapshot | null>;
+  begin(purpose: 'mail' | 'other'): FollowUpOperation | null;
+  isCurrent(target: FollowUpTarget, operationId: number): boolean;
+};
+function FollowUpCard({ target, busy, operationId, sourceVerified = true, snapshot, begin, isCurrent }: FollowUpProps) {
+  const identity = target.kind === 'mail' ? target.receipt.id : target.job.threadId;
+  const sourceId = target.kind === 'mail' ? target.receipt.id
+    : [target.job.threadId, target.artifact.id, target.artifact.version, target.runId, target.job.requestId, target.job.release.releaseId, target.artifactSha256].join(':');
+  const initial = snapshot.current?.identity === identity ? snapshot.current : null;
+  const [followUpOpen, setFollowUpOpen] = useState(initial?.open || false);
+  const [followUpRecord, setFollowUpRecord] = useState<FollowUpRecord | null>(initial?.record || null);
+  const [followUpFields, setFollowUpFields] = useState<MailFollowUpForm>(() => initial?.fields || mailFollowUpForm());
+  const [followUpReadRequired, setFollowUpReadRequired] = useState(!initial || initial.readRequired || initial.sourceId !== sourceId);
+  const [followUpNotice, setFollowUpNotice] = useState(initial?.notice || '');
+  const [followUpError, setFollowUpError] = useState(initial?.error || '');
+  const [pending, setPending] = useState(false);
+  const followUpSaved = useRef<FollowUpRecord | null>(null);
+  const followUpDraft = useRef<MailFollowUpForm>(followUpFields);
+  const keepFollowUpInput = useRef(initial?.keepInput || initial?.sourceId !== sourceId && !!initial);
+  const mounted = useRef(true);
+  followUpSaved.current = followUpRecord; followUpDraft.current = followUpFields;
+  snapshot.current = { identity, sourceId, open: followUpOpen, record: followUpRecord, fields: followUpFields,
+    readRequired: followUpReadRequired, keepInput: keepFollowUpInput.current, notice: followUpNotice, error: followUpError };
+  const previousSourceId = useRef(initial?.sourceId || sourceId);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
+  useEffect(() => {
+    if (followUpSaved.current && previousSourceId.current !== sourceId) {
+      keepFollowUpInput.current = true; setFollowUpReadRequired(true);
+      setFollowUpNotice('原草稿已变化，已保留你的输入。请重新核对任务，再读取跟进记录。');
+    }
+    previousSourceId.current = sourceId;
+  }, [sourceId]);
+  const current = (expectedOperation: number, saved?: FollowUpRecord) => mounted.current && isCurrent(target, expectedOperation)
+    && (!saved || followUpSaved.current === saved);
+  const readFollowUp = async () => {
+    if (!current(operationId) || busy || !sourceVerified) return;
+    const op = begin(target.kind === 'mail' ? 'mail' : 'other'); if (!op) return;
+    setPending(true);
+    setFollowUpOpen(true); setFollowUpError(''); setFollowUpNotice('');
+    try {
+      const saved = target.kind === 'mail' ? await readMailFollowUp(op.client, target.receipt) : await readTaskFollowUp(op.client, target);
+      op.ensure(); if (!current(op.id)) return;
+      followUpSaved.current = saved; setFollowUpRecord(saved); setFollowUpReadRequired(false);
+      if (!keepFollowUpInput.current) { followUpDraft.current = mailFollowUpForm(saved); setFollowUpFields(followUpDraft.current); }
+      setFollowUpNotice(keepFollowUpInput.current ? '已读取最新记录，保留了你的输入。请对照下方已保存摘要，确认后再保存。' : '已读取跟进记录。结果由本人填写。');
+    } catch (e) {
+      if (current(op.id)) { setFollowUpReadRequired(true); setFollowUpError(friendly(e)); }
+    } finally { if (mounted.current) setPending(false); op.finish(); }
+  };
+  const toggleFollowUp = () => {
+    if (!current(operationId) || busy || !sourceVerified) return;
+    if (followUpOpen) { setFollowUpOpen(false); return; }
+    setFollowUpOpen(true);
+    if (!followUpSaved.current || followUpReadRequired) void readFollowUp();
+  };
+  const changeFollowUpField = <K extends keyof MailFollowUpForm,>(saved: FollowUpRecord, field: K, value: MailFollowUpForm[K]) => {
+    if (!current(operationId, saved) || busy || followUpReadRequired || !sourceVerified) return;
+    const next = { ...followUpDraft.current, [field]: value }; followUpDraft.current = next; setFollowUpFields(next);
+    keepFollowUpInput.current = true; setFollowUpNotice(''); setFollowUpError('');
+  };
+  const saveFollowUp = async (saved: FollowUpRecord) => {
+    if (!current(operationId, saved) || busy || followUpReadRequired || !sourceVerified) return;
+    const op = begin(target.kind === 'mail' ? 'mail' : 'other'); if (!op) return;
+    setPending(true);
+    setFollowUpError(''); setFollowUpNotice('');
+    let requested = false;
+    try {
+      let updated: FollowUpRecord;
+      if (target.kind === 'mail' && 'mailDeliveryId' in saved) {
+        const input = newMailFollowUpInput(saved, followUpDraft.current); requested = true;
+        updated = await saveMailFollowUp(op.client, target.receipt, saved, input);
+      } else if (target.kind === 'task' && 'sourceHash' in saved) {
+        const input = newTaskFollowUpInput(saved, followUpDraft.current); requested = true;
+        updated = await saveTaskFollowUp(op.client, target, saved, input);
+      } else throw new Error('TASK_FOLLOWUP_UNCONFIRMED');
+      op.ensure(); if (!current(op.id, saved)) return;
+      followUpSaved.current = updated; setFollowUpRecord(updated); followUpDraft.current = mailFollowUpForm(updated); setFollowUpFields(followUpDraft.current);
+      keepFollowUpInput.current = false; setFollowUpReadRequired(false); setFollowUpNotice('本人填写的跟进记录已保存。');
+    } catch (e) {
+      if (current(op.id, saved)) {
+        setFollowUpError(friendly(e));
+        if (requested || e instanceof Error && ['MAIL_FOLLOWUP_CHANGED', 'TASK_FOLLOWUP_CHANGED', 'TASK_FOLLOWUP_SOURCE_CHANGED'].includes(e.message.split(':')[0])) {
+          keepFollowUpInput.current = true; setFollowUpReadRequired(true);
+          setFollowUpNotice('已保留你的输入。请先读取最新跟进记录，再继续编辑或保存。');
+        }
+      }
+    } finally { if (mounted.current) setPending(false); op.finish(); }
+  };
+  const followUpEditable = !!followUpRecord && !busy && !followUpReadRequired && sourceVerified;
+  const button = (label: string, action: () => void, disabled = false, secondary = false) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={action} style={[s.button, secondary && s.secondary, disabled && s.disabled]}><Text style={[s.buttonText, secondary && { color: C.ink }]}>{label}</Text></TouchableOpacity>;
+  const followUpResults: Array<{ value: MailFollowUp['result']; label: string }> = [{ value: null, label: '未记录' }, { value: 'pending', label: '待跟进' }, { value: 'replied', label: '已回复' }, { value: 'won', label: '已成交' }, { value: 'lost', label: '未成交' }];
+  return <View style={s.followUpCard}>
+            <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded: followUpOpen, disabled: busy || !sourceVerified }} disabled={busy || !sourceVerified} onPress={() => toggleFollowUp()} style={s.followUpToggle}>
+              <View style={{ flex: 1 }}><Text style={s.followUpTitle}>{target.kind === 'task' ? '客户跟进 · 本人记录' : '邮件跟进 · 本人记录'}</Text><Text style={s.small}>{!!followUpRecord ? `${followUpResults.find(item => item.value === followUpRecord.result)?.label || '未记录'}${followUpRecord.followUpOn ? ` · ${followUpRecord.followUpOn}` : ''}` : target.kind === 'task' ? '下一步、结果和证据，留在这项任务下。' : '下一步、结果和证据，留在这封邮件下。'}</Text></View>
+              <Text style={s.followUpLink}>{followUpOpen ? '收起 −' : '展开 +'}</Text>
+            </TouchableOpacity>
+            {pending && followUpOpen && <ActivityIndicator accessibilityLabel="正在读取或保存跟进记录" color={C.green} />}
+            {followUpOpen && <>
+              {!sourceVerified && <Text style={s.footnote}>请先查看任务结果，重新核对原草稿。你的跟进输入仍保留在这里。</Text>}
+              <Text style={s.footnote}>{target.kind === 'task' ? '复制草稿到微信或线下沟通后，也可在这里记录进展。无需连接邮箱。' : '仅保存本人填写的记录。'}客户结果与金额尚未独立核实。</Text>
+              {followUpError ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{followUpError}</Text></View> : null}
+              {followUpNotice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{followUpNotice}</Text></View> : null}
+              {button(followUpReadRequired ? '先读取最新跟进记录' : '重新读取跟进记录', () => { void readFollowUp(); }, busy || !sourceVerified, true)}
+              {!!followUpRecord && <>
+                <View style={s.followUpSummary}><Text style={s.small}>{followUpRecord.version === 0 ? '尚未记录' : '已保存'} · {followUpResults.find(item => item.value === followUpRecord.result)?.label || '未记录'}</Text><Text style={s.small}>下一步：{followUpRecord.nextStep || '未记录'}{followUpRecord.followUpOn ? ` · ${followUpRecord.followUpOn}` : ''}</Text><Text style={s.small}>证据引用：{followUpRecord.evidenceReference || '未记录'}</Text><Text style={s.small}>本人填写金额：{followUpRecord.reportedRevenueMinor === null ? '未记录' : `${followUpRecord.reportedRevenueCurrency} ${mailFollowUpForm(followUpRecord).reportedRevenue}`}</Text></View>
+                <Text style={s.label}>下一步</Text><TextInput accessibilityLabel="客户跟进下一步" value={followUpFields.nextStep} onChangeText={value => changeFollowUpField(followUpRecord, 'nextStep', value)} editable={followUpEditable} maxLength={1000} placeholder="例如：确认客户方便沟通的时间" placeholderTextColor={C.muted} style={s.input} />
+                <Text style={s.label}>跟进日期（可选）</Text><TextInput accessibilityLabel="客户跟进日期" value={followUpFields.followUpOn} onChangeText={value => changeFollowUpField(followUpRecord, 'followUpOn', value)} editable={followUpEditable} maxLength={10} autoCapitalize="none" autoCorrect={false} placeholder="YYYY-MM-DD" placeholderTextColor={C.muted} style={s.input} />
+                <Text style={s.label}>本人标记的结果</Text><View style={s.followUpChoices}>{followUpResults.map(item => <TouchableOpacity key={item.value || 'unrecorded'} accessibilityRole="button" accessibilityState={{ selected: followUpFields.result === item.value, disabled: !followUpEditable }} disabled={!followUpEditable} onPress={() => changeFollowUpField(followUpRecord, 'result', item.value)} style={[s.followUpChoice, followUpFields.result === item.value && s.selected, !followUpEditable && s.disabled]}><Text style={s.small}>{item.label}</Text></TouchableOpacity>)}</View>
+                <Text style={s.label}>说明（可选）</Text><TextInput accessibilityLabel="客户跟进说明" value={followUpFields.notes} onChangeText={value => changeFollowUpField(followUpRecord, 'notes', value)} editable={followUpEditable} multiline maxLength={8000} placeholder="写下本人确认的情况与仍待核实的内容" placeholderTextColor={C.muted} style={[s.input, s.followUpNotes]} />
+                <Text style={s.label}>证据引用（可选）</Text><TextInput accessibilityLabel="客户跟进证据引用" value={followUpFields.evidenceReference} onChangeText={value => changeFollowUpField(followUpRecord, 'evidenceReference', value)} editable={followUpEditable} multiline maxLength={2000} autoCapitalize="none" autoCorrect={false} placeholder="例如：合同编号、客户回复日期或记录链接" placeholderTextColor={C.muted} style={s.input} />
+                <Text style={s.label}>本人填写金额（可选）</Text><TextInput accessibilityLabel="本人填写客户金额" value={followUpFields.reportedRevenue} onChangeText={value => changeFollowUpField(followUpRecord, 'reportedRevenue', value)} editable={followUpEditable} keyboardType="decimal-pad" placeholder="留空表示未记录，例如 1200.00" placeholderTextColor={C.muted} style={s.input} /><View style={s.followUpChoices}>{(['CNY', 'USD'] as const).map(currency => <TouchableOpacity key={currency} accessibilityRole="button" accessibilityState={{ selected: followUpFields.reportedRevenueCurrency === currency, disabled: !followUpEditable }} disabled={!followUpEditable} onPress={() => changeFollowUpField(followUpRecord, 'reportedRevenueCurrency', currency)} style={[s.followUpChoice, followUpFields.reportedRevenueCurrency === currency && s.selected, !followUpEditable && s.disabled]}><Text style={s.small}>{currency === 'CNY' ? 'CNY · 人民币' : 'USD · 美元'}</Text></TouchableOpacity>)}</View>
+                <Text style={s.footnote}>留空会保存为“未记录”；填写 0 会保留为 0。金额由本人填写。</Text>
+                {button('保存客户跟进记录', () => { void saveFollowUp(followUpRecord); }, !followUpEditable)}
+              </>}
+            </>}
+          </View>;
 }
 
 export default function BusinessTasks({ client, active, onBusyChange }: Props) {
@@ -104,6 +239,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const [historyKnown, setHistoryKnown] = useState(false);
   const [files, setFiles] = useState<DraftArtifact[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
+  const previewRef = useRef<Preview | null>(null); previewRef.current = preview;
   const [charge, setCharge] = useState<number | null>(null);
   const [retryAllowed, setRetryAllowed] = useState(false);
   const [canStop, setCanStop] = useState(false);
@@ -120,12 +256,6 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const [resendKey, setResendKey] = useState('');
   const [mailNotice, setMailNotice] = useState('');
   const [mailError, setMailError] = useState('');
-  const [followUpOpen, setFollowUpOpen] = useState(false);
-  const [followUpRecord, setFollowUpRecord] = useState<MailFollowUp | null>(null);
-  const [followUpFields, setFollowUpFields] = useState<MailFollowUpForm>(() => mailFollowUpForm());
-  const [followUpReadRequired, setFollowUpReadRequired] = useState(true);
-  const [followUpNotice, setFollowUpNotice] = useState('');
-  const [followUpError, setFollowUpError] = useState('');
   const mounted = useRef(true);
   const operation = useRef(0);
   const busyRef = useRef(false);
@@ -138,12 +268,10 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const preparation = useRef<MailPreparation | null>(null);
   const preparationConflict = useRef(false);
   const selectedMail = useRef<MailReceipt | null>(null);
-  const followUpSaved = useRef<MailFollowUp | null>(null);
-  const followUpDraft = useRef<MailFollowUpForm>(followUpFields);
-  const keepFollowUpInput = useRef(false);
+  const taskFollowUpSnapshot = useRef<FollowUpSnapshot | null>(null);
+  const mailFollowUpSnapshot = useRef<FollowUpSnapshot | null>(null);
   clientRef.current = client; busyCallback.current = onBusyChange;
   selectedMail.current = mailReceipt;
-  followUpSaved.current = followUpRecord; followUpDraft.current = followUpFields;
 
   const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other', boundedRead = true) => {
     // A callback from an earlier account must never borrow the new client's credentials.
@@ -174,20 +302,16 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
     return { id, client: scoped, signal: abort.signal, ensure, finish: () => { clearTimeout(timer); if (mounted.current && operation.current === id) { busyRef.current = false; setBusy(false); controller.current = null; } } };
   };
   const cancelled = (e: unknown) => e instanceof Error && ['DRAFT_STOPPED', 'REQUEST_CANCELLED', 'SESSION_CHANGED'].includes(e.message.split(':')[0]);
-  const resetFollowUp = () => {
-    followUpSaved.current = null; followUpDraft.current = mailFollowUpForm(); keepFollowUpInput.current = false;
-    setFollowUpOpen(false); setFollowUpRecord(null); setFollowUpFields(followUpDraft.current); setFollowUpReadRequired(true);
-    setFollowUpNotice(''); setFollowUpError('');
-  };
   const resetMail = (threadId = '') => {
-    resetFollowUp();
+    // Preserve only the current task/mail editor while reopening that same task.
+    if (!threadId || taskFollowUpSnapshot.current?.identity !== threadId) taskFollowUpSnapshot.current = null;
+    if (!threadId || mailThread.current !== threadId) mailFollowUpSnapshot.current = null;
     mailThread.current = threadId; preparation.current = null; preparationConflict.current = false; selectedMail.current = null;
     setMailOpen(false); setMailFields({ from: '', to: '', subject: '', text: '' }); setMailRecords([]); setMailReceipt(null);
     setMailListKnown(false); setMailUncertain(false); setMailChecked(false); setMailRetryPreparation(false);
     setMailNotice(''); setMailError(''); setResendKey('');
   };
   const adoptMail = (receipt: MailReceipt) => {
-    if (selectedMail.current?.id !== receipt.id) resetFollowUp();
     selectedMail.current = receipt; setMailReceipt(receipt);
     setMailRecords(previous => [receipt, ...previous.filter(row => row.id !== receipt.id)]);
     setMailListKnown(true); setMailUncertain(false); setMailRetryPreparation(false);
@@ -463,7 +587,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       setMailNotice(action === 'approve' || action === 'recover' ? '已读取原邮件的最新回执。服务接收和实际送达分别显示，不会把接收当作送达。'
         : action === 'cancel' ? '已读取取消结果。只有“已取消 · 尚未提交邮件服务”才表示未提交。' : '已读取原邮件记录；本次查看不会发送或生成新邮件。');
       if (editAfterCancel && updated.status === 'cancelled') {
-        resetFollowUp(); setMailFields({ ...updated.envelope }); selectedMail.current = null; setMailReceipt(null); preparation.current = null; preparationConflict.current = false;
+        setMailFields({ ...updated.envelope }); selectedMail.current = null; setMailReceipt(null); preparation.current = null; preparationConflict.current = false;
         setMailNotice('原预览已取消，尚未提交邮件服务。现在可以编辑，再准备新的完整预览。');
       }
     } catch (e) { mailFailure(e, op.id, changesState); }
@@ -471,7 +595,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   };
   const editCancelledMail = () => {
     if (busyRef.current || clientRef.current !== client || preparation.current || !selectedMail.current || !['cancelled', 'rejected'].includes(selectedMail.current.status) || mailUncertain) return;
-    resetFollowUp(); setMailFields({ ...selectedMail.current.envelope }); selectedMail.current = null; setMailReceipt(null); preparationConflict.current = false;
+    setMailFields({ ...selectedMail.current.envelope }); selectedMail.current = null; setMailReceipt(null); preparationConflict.current = false;
     setMailChecked(false); setMailNotice('请编辑后重新准备完整预览；再次发送仍需你的批准。');
   };
   const changeMailField = (field: keyof MailEnvelope, value: string) => {
@@ -480,71 +604,26 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   };
   const selectSavedMail = (receipt: MailReceipt, expectedOperation: number) => {
     if (!mounted.current || clientRef.current !== client || busyRef.current || preparation.current || operation.current !== expectedOperation) return;
-    resetFollowUp(); selectedMail.current = receipt; setMailReceipt(receipt); setMailChecked(false); setMailUncertain(true); setMailError('');
+    selectedMail.current = receipt; setMailReceipt(receipt); setMailChecked(false); setMailUncertain(true); setMailError('');
     setMailNotice('这是上次读取的记录，请先查看保存的状态，再执行下一步。');
   };
 
-  const followUpCurrent = (receipt: MailReceipt, expectedOperation: number, saved?: MailFollowUp) => mounted.current
-    && clientRef.current === client && operation.current === expectedOperation && selectedMail.current?.id === receipt.id
-    && (!saved || followUpSaved.current === saved && saved.mailDeliveryId === receipt.id);
-  const readFollowUp = async (receipt: MailReceipt, expectedOperation: number) => {
-    if (!followUpCurrent(receipt, expectedOperation) || busyRef.current) return;
-    const op = begin('mail'); if (!op) return;
-    setFollowUpOpen(true); setFollowUpError(''); setFollowUpNotice('');
-    try {
-      const saved = await readMailFollowUp(op.client, receipt); op.ensure();
-      if (selectedMail.current?.id !== receipt.id) return;
-      followUpSaved.current = saved; setFollowUpRecord(saved); setFollowUpReadRequired(false);
-      if (!keepFollowUpInput.current) { followUpDraft.current = mailFollowUpForm(saved); setFollowUpFields(followUpDraft.current); }
-      setFollowUpNotice(keepFollowUpInput.current ? '已读取最新记录，保留了你的输入。请对照下方已保存摘要，确认后再保存。' : '已读取这封邮件的跟进记录。结果由本人填写。');
-      keepFollowUpInput.current = false;
-    } catch (e) {
-      if (!cancelled(e) && mounted.current && operation.current === op.id && selectedMail.current?.id === receipt.id) {
-        setFollowUpReadRequired(true); setFollowUpError(friendly(e));
-      }
-    } finally { op.finish(); }
-  };
-  const toggleFollowUp = (receipt: MailReceipt, expectedOperation: number) => {
-    if (!followUpCurrent(receipt, expectedOperation) || busyRef.current) return;
-    if (followUpOpen) { setFollowUpOpen(false); return; }
-    setFollowUpOpen(true);
-    if (!followUpSaved.current || followUpSaved.current.mailDeliveryId !== receipt.id || followUpReadRequired) void readFollowUp(receipt, expectedOperation);
-  };
-  const changeFollowUpField = <K extends keyof MailFollowUpForm,>(receipt: MailReceipt, saved: MailFollowUp, expectedOperation: number, field: K, value: MailFollowUpForm[K]) => {
-    if (!followUpCurrent(receipt, expectedOperation, saved) || busyRef.current || followUpReadRequired) return;
-    const next = { ...followUpDraft.current, [field]: value }; followUpDraft.current = next; setFollowUpFields(next);
-    setFollowUpNotice(''); setFollowUpError('');
-  };
-  const saveFollowUp = async (receipt: MailReceipt, saved: MailFollowUp, expectedOperation: number) => {
-    if (!followUpCurrent(receipt, expectedOperation, saved) || busyRef.current || followUpReadRequired) return;
-    const op = begin('mail'); if (!op) return;
-    setFollowUpError(''); setFollowUpNotice('');
-    let requested = false;
-    try {
-      const input = newMailFollowUpInput(saved, followUpDraft.current);
-      requested = true;
-      const updated = await saveMailFollowUp(op.client, receipt, saved, input); op.ensure();
-      if (selectedMail.current?.id !== receipt.id) return;
-      followUpSaved.current = updated; setFollowUpRecord(updated); followUpDraft.current = mailFollowUpForm(updated); setFollowUpFields(followUpDraft.current);
-      keepFollowUpInput.current = false; setFollowUpReadRequired(false); setFollowUpNotice('本人填写的跟进记录已保存。');
-    } catch (e) {
-      if (!cancelled(e) && mounted.current && operation.current === op.id && selectedMail.current?.id === receipt.id) {
-        setFollowUpError(friendly(e));
-        if (requested || e instanceof Error && e.message.split(':')[0] === 'MAIL_FOLLOWUP_CHANGED') {
-          keepFollowUpInput.current = true; setFollowUpReadRequired(true);
-          setFollowUpNotice('已保留你的输入。请先读取最新跟进记录，再继续编辑或保存。');
-        }
-      }
-    } finally { op.finish(); }
-  };
+  const followUpCurrent = (target: FollowUpTarget, expectedOperation: number) => mounted.current
+    && clientRef.current === client && operation.current === expectedOperation
+    && (target.kind === 'mail' ? selectedMail.current?.id === target.receipt.id
+      : jobRef.current?.threadId === target.job.threadId && jobRef.current.requestId === target.job.requestId
+        && jobRef.current.release.releaseId === target.job.release.releaseId
+        && previewRef.current?.artifact.id === target.artifact.id && previewRef.current.artifact.version === target.artifact.version
+        && previewRef.current.report?.runId === target.runId && previewRef.current.verified && knownCharge(previewRef.current.report) === 0
+        && previewRef.current.report.files.find(file => file.id === target.artifact.id && file.version === target.artifact.version && file.original)?.sha256 === target.artifactSha256);
   const button = (label: string, action: () => void, disabled = false, secondary = false) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={action} style={[s.button, secondary && s.secondary, disabled && s.disabled]}><Text style={[s.buttonText, secondary && { color: C.ink }]}>{label}</Text></TouchableOpacity>;
   const text = (value: string) => <Text selectable style={s.previewText}>{value}</Text>;
   const content = preview?.value;
   const displayedOperation = operation.current;
   const mailLocked = !!mailReceipt && !['cancelled', 'rejected'].includes(mailReceipt.status) || !!preparation.current || mailUncertain;
   const mailSourceVerified = jobRef.current?.origin !== 'twilio-inbound' && preview?.verified === true && !!preview.value && knownCharge(preview.report) === 0;
-  const followUpEditable = !!mailReceipt && followUpRecord?.mailDeliveryId === mailReceipt.id && !busy && !followUpReadRequired;
-  const followUpResults: Array<{ value: MailFollowUp['result']; label: string }> = [{ value: null, label: '未记录' }, { value: 'pending', label: '待跟进' }, { value: 'replied', label: '已回复' }, { value: 'won', label: '已成交' }, { value: 'lost', label: '未成交' }];
+  const taskSourceSha256 = preview?.report?.files.find(file => file.id === preview.artifact.id && file.version === preview.artifact.version && file.original)?.sha256 || '';
+
 
   return <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
     {view === 'compose' ? <View style={s.heading}><Text style={s.eyebrow}>工作先有草稿</Text><Text style={s.hero}>把想法，{'\n'}变成可用的文字。</Text><Text style={s.intro}>给一份真实资料，收一份保存好的草稿。{'\n'}由你检查，再决定怎样使用。</Text></View> : <View style={s.heading}><Text style={s.eyebrow}>{view === 'history' ? '工作记录' : view === 'incoming' ? 'FORGE / INBOX' : view === 'incoming-calls' ? 'FORGE / CALLS' : '本次草稿'}</Text><Text style={s.title}>{view === 'history' ? '已保存的工作' : view === 'incoming' ? '来信先有草稿。' : view === 'incoming-calls' || jobRef.current?.origin === 'twilio-inbound' ? '来电需求记录与后续草稿。' : draftLabel(jobRef.current?.input.kind || kind)}</Text>{view === 'result' && jobRef.current && <Text style={s.small}>{jobRef.current.input.name}</Text>}</View>}
@@ -575,6 +654,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       <View style={s.phase}><Text style={s.title}>{phase || '工作结果'}</Text>{busy && busyKind === 'draft' && <ActivityIndicator color={C.green} />}</View>
       <Text style={s.small}>{charge === null ? '模型费用：尚未确认' : `模型费用：$${charge === 0 ? '0.00' : charge.toFixed(6)} · 已核对`}</Text>
       {busy ? busyKind === 'draft' && jobRef.current?.origin !== 'twilio-inbound' && button('停止本次任务', () => { void stop(displayedOperation); }, phase === '正在请求停止', true) : jobRef.current?.threadId ? <>{button('查看任务结果', () => { void checkResult(); }, false, true)}{retryAllowed && button('重新提交原任务', () => { void checkResult(true); })}{canStop && button('请求停止原任务', () => { void stop(displayedOperation); }, false, true)}</> : null}
+      {preview && jobRef.current && <FollowUpCard key={jobRef.current.threadId} target={{ kind: 'task', job: jobRef.current, artifact: preview.artifact, runId: preview.report?.runId || '', artifactSha256: taskSourceSha256 }} sourceVerified={preview.verified && !!preview.value && knownCharge(preview.report) === 0 && /^[a-f0-9]{64}$/.test(taskSourceSha256)} snapshot={taskFollowUpSnapshot} busy={busy} operationId={displayedOperation} begin={begin} isCurrent={followUpCurrent} />}
       {files.length > 1 && files.map(file => button(file.filename, () => { setPreview({ artifact: file, report: null, verified: false }); setRaw(true); }, busy, true))}
       {preview && <View style={s.saved}><Text style={s.eyebrow}>{preview.verified ? '文件与交付要求已核对' : '已保存文件 · 请检查内容'}</Text><Text style={s.filename}>{preview.artifact.filename}</Text><Text style={s.small}>长按正文即可选择并复制。草稿仍需本人审阅。</Text>
         {content && !raw ? <>{jobRef.current?.input.kind === 'reply' ? <><Text style={s.label}>主题</Text>{text(String(content.subject))}<Text style={s.label}>{jobRef.current?.origin === 'twilio-inbound' ? '来电跟进草稿' : '回复草稿'}</Text>{text(String(content.body))}{content.followUpDraft && <><Text style={s.label}>后续跟进草稿</Text>{text(String(content.followUpDraft))}</>}</> : <><Text style={s.label}>邮件主题</Text>{text(String(content.emailDraft?.subject || ''))}{text(String(content.emailDraft?.body || ''))}{content.socialDrafts?.map((item: any, index: number) => <View key={index}><Text style={s.label}>{String(item.channel)}</Text>{text(String(item.text))}</View>)}</>}
@@ -616,29 +696,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
           {['cancelled', 'rejected'].includes(mailReceipt.status) && button('返回编辑，再准备新的预览', editCancelledMail, busy || mailUncertain, true)}
           {mailReceipt.status === 'accepted' && <Text style={s.footnote}>邮件服务接收后不能在这里撤回。核实送达需要邮件服务查询权限；客户回复、成交和收入尚未核实。</Text>}
 
-          <View style={s.followUpCard}>
-            <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded: followUpOpen, disabled: busy }} disabled={busy} onPress={() => toggleFollowUp(mailReceipt, displayedOperation)} style={s.followUpToggle}>
-              <View style={{ flex: 1 }}><Text style={s.followUpTitle}>客户跟进 · 本人记录</Text><Text style={s.small}>{followUpRecord?.mailDeliveryId === mailReceipt.id ? `${followUpResults.find(item => item.value === followUpRecord.result)?.label || '未记录'}${followUpRecord.followUpOn ? ` · ${followUpRecord.followUpOn}` : ''}` : '下一步、结果和证据，留在这封邮件下。'}</Text></View>
-              <Text style={s.followUpLink}>{followUpOpen ? '收起 −' : '展开 +'}</Text>
-            </TouchableOpacity>
-            {followUpOpen && <>
-              <Text style={s.footnote}>仅保存本人填写的记录。客户结果与金额尚未独立核实。</Text>
-              {followUpError ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{followUpError}</Text></View> : null}
-              {followUpNotice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{followUpNotice}</Text></View> : null}
-              {button(followUpReadRequired ? '先读取最新跟进记录' : '重新读取跟进记录', () => { void readFollowUp(mailReceipt, displayedOperation); }, busy, true)}
-              {followUpRecord?.mailDeliveryId === mailReceipt.id && <>
-                <View style={s.followUpSummary}><Text style={s.small}>{followUpRecord.version === 0 ? '尚未记录' : '已保存'} · {followUpResults.find(item => item.value === followUpRecord.result)?.label || '未记录'}</Text><Text style={s.small}>下一步：{followUpRecord.nextStep || '未记录'}{followUpRecord.followUpOn ? ` · ${followUpRecord.followUpOn}` : ''}</Text><Text style={s.small}>证据引用：{followUpRecord.evidenceReference || '未记录'}</Text><Text style={s.small}>本人填写金额：{followUpRecord.reportedRevenueMinor === null ? '未记录' : `${followUpRecord.reportedRevenueCurrency} ${mailFollowUpForm(followUpRecord).reportedRevenue}`}</Text></View>
-                <Text style={s.label}>下一步</Text><TextInput accessibilityLabel="客户跟进下一步" value={followUpFields.nextStep} onChangeText={value => changeFollowUpField(mailReceipt, followUpRecord, displayedOperation, 'nextStep', value)} editable={followUpEditable} maxLength={1000} placeholder="例如：确认客户方便沟通的时间" placeholderTextColor={C.muted} style={s.input} />
-                <Text style={s.label}>跟进日期（可选）</Text><TextInput accessibilityLabel="客户跟进日期" value={followUpFields.followUpOn} onChangeText={value => changeFollowUpField(mailReceipt, followUpRecord, displayedOperation, 'followUpOn', value)} editable={followUpEditable} maxLength={10} autoCapitalize="none" autoCorrect={false} placeholder="YYYY-MM-DD" placeholderTextColor={C.muted} style={s.input} />
-                <Text style={s.label}>本人标记的结果</Text><View style={s.followUpChoices}>{followUpResults.map(item => <TouchableOpacity key={item.value || 'unrecorded'} accessibilityRole="button" accessibilityState={{ selected: followUpFields.result === item.value, disabled: !followUpEditable }} disabled={!followUpEditable} onPress={() => changeFollowUpField(mailReceipt, followUpRecord, displayedOperation, 'result', item.value)} style={[s.followUpChoice, followUpFields.result === item.value && s.selected, !followUpEditable && s.disabled]}><Text style={s.small}>{item.label}</Text></TouchableOpacity>)}</View>
-                <Text style={s.label}>说明（可选）</Text><TextInput accessibilityLabel="客户跟进说明" value={followUpFields.notes} onChangeText={value => changeFollowUpField(mailReceipt, followUpRecord, displayedOperation, 'notes', value)} editable={followUpEditable} multiline maxLength={8000} placeholder="写下本人确认的情况与仍待核实的内容" placeholderTextColor={C.muted} style={[s.input, s.followUpNotes]} />
-                <Text style={s.label}>证据引用（可选）</Text><TextInput accessibilityLabel="客户跟进证据引用" value={followUpFields.evidenceReference} onChangeText={value => changeFollowUpField(mailReceipt, followUpRecord, displayedOperation, 'evidenceReference', value)} editable={followUpEditable} multiline maxLength={2000} autoCapitalize="none" autoCorrect={false} placeholder="例如：合同编号、客户回复日期或记录链接" placeholderTextColor={C.muted} style={s.input} />
-                <Text style={s.label}>本人填写金额（可选）</Text><TextInput accessibilityLabel="本人填写客户金额" value={followUpFields.reportedRevenue} onChangeText={value => changeFollowUpField(mailReceipt, followUpRecord, displayedOperation, 'reportedRevenue', value)} editable={followUpEditable} keyboardType="decimal-pad" placeholder="留空表示未记录，例如 1200.00" placeholderTextColor={C.muted} style={s.input} /><View style={s.followUpChoices}>{(['CNY', 'USD'] as const).map(currency => <TouchableOpacity key={currency} accessibilityRole="button" accessibilityState={{ selected: followUpFields.reportedRevenueCurrency === currency, disabled: !followUpEditable }} disabled={!followUpEditable} onPress={() => changeFollowUpField(mailReceipt, followUpRecord, displayedOperation, 'reportedRevenueCurrency', currency)} style={[s.followUpChoice, followUpFields.reportedRevenueCurrency === currency && s.selected, !followUpEditable && s.disabled]}><Text style={s.small}>{currency === 'CNY' ? 'CNY · 人民币' : 'USD · 美元'}</Text></TouchableOpacity>)}</View>
-                <Text style={s.footnote}>留空会保存为“未记录”；填写 0 会保留为 0。金额由本人填写。</Text>
-                {button('保存客户跟进记录', () => { void saveFollowUp(mailReceipt, followUpRecord, displayedOperation); }, !followUpEditable)}
-              </>}
-            </>}
-          </View>
+          <FollowUpCard key={mailReceipt.id} target={{ kind: 'mail', receipt: mailReceipt }} snapshot={mailFollowUpSnapshot} busy={busy} operationId={displayedOperation} begin={begin} isCurrent={followUpCurrent} />
 
         </View>}
       </View>}
