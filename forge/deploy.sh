@@ -36,9 +36,10 @@ cd "$SCRIPT_DIR"
 
 printf '[forge] Installing web dependencies from %s\n' "$NPM_REGISTRY"
 cd "$WEB_DIR"
-npm ci --registry="$NPM_REGISTRY" --no-fund
-npm audit --omit=dev --audit-level=high --registry="$NPM_REGISTRY"
+npm ci --registry="$NPM_REGISTRY" --no-fund --no-audit
+# The domestic mirror does not implement npm's security audit API.
+npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
 npm run build
 
 printf '[forge] Creating protected Vercel Preview; Production is not promoted by this script\n'
-npx --yes --registry="$NPM_REGISTRY" vercel deploy --yes
+npx --yes --registry="$NPM_REGISTRY" vercel deploy --yes --target=preview
