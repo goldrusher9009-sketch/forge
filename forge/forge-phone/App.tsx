@@ -50,6 +50,7 @@ function errorText(value: unknown): string {
     PHONE_NATIVE_ACTION_NOT_DISPATCHED: '系统未受理这一步，本次动作未执行。请检查无障碍权限后重试。',
     DESKTOP_PROVIDER_FUNDING_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     DESKTOP_PROVIDER_STREAM_FAILED: '模型服务返回异常，本次任务已中断。请先检查任务记录，再决定是否重新开始。',
+    DESKTOP_PROVIDER_HTTP_429: '免费模型当前请求较多，本次任务已中断。请稍后再试。',
     DESKTOP_FREE_MODEL_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     PHONE_FREE_MODEL_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     PHONE_SESSION_ACTIVE: '已有任务在运行，请先结束当前任务。', APP_UNAVAILABLE: '无法打开所选应用，请重新选择。',
@@ -354,7 +355,7 @@ export default function App() {
       <Text style={s.label}>你想完成什么？</Text><TextInput accessibilityLabel="任务目标" value={goal} onChangeText={setGoal} multiline maxLength={2000} placeholder="例如：根据客户消息写好回复，先不发送…" placeholderTextColor={C.muted} style={[s.input, s.goalInput]} />
       <View style={s.mode}><View style={s.flex}><Text style={s.body}>先预览步骤</Text><Text style={s.small}>{planningOnly ? '只生成计划，不操作手机' : '逐项批准后，操作所选应用'}</Text></View><Switch accessibilityLabel="先预览步骤" value={planningOnly} onValueChange={setPlanningOnly} trackColor={{ true: C.green, false: C.line }} thumbColor={C.paper} /></View>
       {!planningOnly && <View style={s.appSection}><Text style={s.label}>本次只操作这个应用</Text>{button(target?.label || '选择手机应用', () => { void chooseApp(); }, loadingApps, true)}{choosingApp && <View style={s.appList}>{loadingApps ? <ActivityIndicator color={C.green} /> : apps.length ? apps.map(app => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: target?.packageName === app.packageName }} key={app.packageName} onPress={() => { setTarget(app); setChoosingApp(false); }} style={s.appRow}><Text style={s.body}>{app.label}</Text><Text style={s.small}>{target?.packageName === app.packageName ? '已选择' : '选择'}</Text></TouchableOpacity>) : <Text style={s.small}>暂无可打开的应用。请安装目标应用后重试。</Text>}</View>}
-        {target && button('打开目标应用，准备页面', () => { setNotice('准备好目标页面后，返回 Forge 开始任务。'); void accessibility!.openApp(target.packageName).catch(e => setError(errorText(e))); }, false, true)}
+        {target && button('打开目标应用，准备页面', () => { setError(''); setNotice('准备好目标页面后，返回 Forge 开始任务。'); void accessibility!.openApp(target.packageName).catch(e => setError(errorText(e))); }, false, true)}
         <Text style={s.footnote}>在目标应用准备好页面后，返回 Forge 开始。开始和审批后会恢复原页面；若出现其他应用，任务会停止。屏幕截图会用于规划和你的审核。</Text>{button('设置无障碍权限', () => { void showAccessibilitySettings(); }, false, true)}
       </View>}
       <View style={s.limit}><Text style={s.small}>本次最多</Text><View style={s.choices}>{[5, 8, 10, 12].map(value => <TouchableOpacity accessibilityRole="button" accessibilityLabel={`最多 ${value} 步`} accessibilityState={{ selected: maxSteps === value }} key={value} onPress={() => setMaxSteps(value)} style={[s.choice, maxSteps === value && s.chosen]}><Text style={[s.small, maxSteps === value && { color: C.paper }]}>{value} 步</Text></TouchableOpacity>)}</View></View>
