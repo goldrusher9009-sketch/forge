@@ -24,12 +24,12 @@ function configuration(value: any): Configuration {
   return { name:text(value.name,200), system_prompt:text(value.system_prompt,16000), model:value.model, tools:[...new Set<string>(value.tools)].sort() };
 }
 // A fixed published version must not inherit the workspace's ambient tools.
-// Source lookup and receipt recall are scoped to that version and its task.
+// Source lookup and receipt recall must also be explicitly declared.
 export function publishedChatToolNames(value: unknown): string[] {
   const supported = Object.keys(PORTABLE_AGENT_TOOLS);
   if (!Array.isArray(value) || value.some(name => typeof name !== 'string' || !supported.includes(name)))
     fail('AGENT_RELEASE_CHAT_TOOLS_UNAVAILABLE',409);
-  return [...new Set([...(value as string[]),'knowledge_search','tool_result_recall'])].sort();
+  return [...new Set(value as string[])].sort();
 }
 export function validateCases(value: any): Case[] {
   if (!Array.isArray(value) || !value.length || value.length > 5) fail('AGENT_EVALUATION_CASES_REQUIRED');
