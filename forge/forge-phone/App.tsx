@@ -36,6 +36,7 @@ function errorText(value: unknown): string {
     INVALID_CREDENTIALS: '邮箱或密码不正确，请重新输入。', AUTH_RATE_LIMITED: '尝试次数较多，请稍后再登录。',
     NETWORK_UNAVAILABLE: '连接未完成，请检查网络后再试。', AUTH_REQUIRED: '请先登录 Forge。',
     REQUEST_CANCELLED: '连接等待超时，请检查网络后重试。',
+    REQUEST_READ_TIMEOUT: '资料读取超时，请检查网络后重新登录或重试。',
     SESSION_EXPIRED: '登录已过期，请重新登录。', SESSION_CHANGED: '登录状态已变化，请重新登录。',
     AUTH_RESPONSE_INVALID: '此服务尚未支持手机登录，请使用已更新的测试服务。',
     PHONE_COOKIE_AUTH_UNSUPPORTED: '手机登录凭据与浏览器凭据冲突，请重新打开应用。',

@@ -20,6 +20,7 @@ function friendly(error: unknown): string {
   const messages: Record<string, string> = {
     NETWORK_UNAVAILABLE: '连接中断了。任务可能已被保存，请先查看服务端结果。',
     DRAFT_READ_TIMEOUT: '读取等待超时，请重新查看；不会重新提交任务。',
+    REQUEST_READ_TIMEOUT: '记录读取超时了。已保存内容仍保留，请重新读取原记录。',
     DRAFT_HISTORY_UNCONFIRMED: '工作记录尚未确认，请重新查看。',
     DRAFT_FREE_AGENT_UNAVAILABLE: '这位助手暂时没有可用的免费模型，请刷新后重新选择。',
     DRAFT_INPUT_REQUIRED: '请填写对象名称和需要参考的真实资料。',
@@ -241,6 +242,9 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const [incomingBusy, setIncomingBusy] = useState(false);
   const [history, setHistory] = useState<SavedThread[]>([]);
   const [historyKnown, setHistoryKnown] = useState(false);
+  const [historyLimit, setHistoryLimit] = useState(30);
+  const [historyHasMore, setHistoryHasMore] = useState(false);
+  const [historyQuery, setHistoryQuery] = useState('');
   const [files, setFiles] = useState<DraftArtifact[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
   const previewRef = useRef<Preview | null>(null); previewRef.current = preview;
@@ -265,6 +269,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const busyRef = useRef(false);
   const controller = useRef<AbortController | null>(null);
   const jobRef = useRef<DraftJob | null>(null);
+  const savedThread = useRef('');
   const assistantRef = useRef<DraftAssistantPreparation | null>(null);
   const clientRef = useRef(client);
   const busyCallback = useRef(onBusyChange);
@@ -277,7 +282,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   clientRef.current = client; busyCallback.current = onBusyChange;
   selectedMail.current = mailReceipt;
 
-  const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other', boundedRead = true) => {
+  const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other') => {
     // A callback from an earlier account must never borrow the new client's credentials.
     if (!mounted.current || busyRef.current || clientRef.current !== client) return null;
     const id = ++operation.current;
@@ -285,7 +290,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
     const abort = new AbortController(); controller.current = abort;
     busyRef.current = true; setBusy(true); setBusyKind(purpose); setError('');
     let timedOut = false;
-    const timer = purpose === 'mail' || purpose === 'other' && boundedRead ? setTimeout(() => { timedOut = true; abort.abort(); }, 20000) : undefined;
+    const timer = purpose === 'mail' || purpose === 'other' ? setTimeout(() => { timedOut = true; abort.abort(); }, 20000) : undefined;
     const ensure = () => {
       if (!mounted.current || operation.current !== id || clientRef.current !== accountClient) throw new Error('DRAFT_STOPPED');
       if (timedOut) throw new Error(purpose === 'mail' ? 'MAIL_REQUEST_UNCONFIRMED' : 'DRAFT_READ_TIMEOUT');
@@ -365,8 +370,9 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   };
   useEffect(() => {
     mounted.current = true;
-    resetMail(); setResendState('unread'); jobRef.current = null;
+    resetMail(); setResendState('unread'); jobRef.current = null; savedThread.current = '';
     setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setHistoryKnown(false); setFiles([]); setPreview(null); setCharge(null);
+    setHistoryLimit(30); setHistoryHasMore(false); setHistoryQuery('');
     resultParent.current = 'compose'; setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
     busyRef.current = false; setBusy(false); setIncomingBusy(false);
     const accountBusyCallback = busyCallback.current;
@@ -414,6 +420,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
     const release = releases.find(item => item.releaseId === chosen);
     if (!release) return;
     const op = begin('draft'); if (!op) return;
+    savedThread.current = '';
     resultParent.current = 'compose';
     setView('result'); setPhase('正在准备工作区'); setNotice(''); setPreview(null); setFiles([]); setCharge(null); setRaw(false); setRetryAllowed(false); setCanStop(false);
     resetMail();
@@ -462,20 +469,29 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
     } catch (e) { if (mounted.current && clientRef.current === accountClient) { setPhase('停止状态待确认'); setNotice('暂未确认服务端停止。请查看任务结果后再决定下一步。'); } }
     finally { if (mounted.current && clientRef.current === accountClient) { busyRef.current = false; setBusy(false); } }
   };
-  const showHistory = async () => {
+  const showHistory = async (limit = historyLimit) => {
+    if (!Number.isSafeInteger(limit) || limit < 30 || limit % 30 !== 0) return;
     const op = begin(); if (!op) return;
     setView('history'); setHistoryKnown(false);
     try {
-      const reply = await op.client.request<{ success: boolean; data: SavedThread[] }>('/api/threads?limit=30&published_only=true'); op.ensure();
-      if (reply.success !== true || !Array.isArray(reply.data)) throw new Error('DRAFT_HISTORY_UNCONFIRMED');
-      setHistory(reply.data.filter(thread => !!thread.publishedAgent?.releaseId)); setHistoryKnown(true);
+      const reply = await op.client.request<{ success: boolean; data: SavedThread[] }>(`/api/threads?limit=${limit}&published_only=true`); op.ensure();
+      if (reply.success !== true || !Array.isArray(reply.data) || reply.data.some(thread => !thread || typeof thread.id !== 'string' || !thread.id
+        || typeof thread.title !== 'string' || typeof thread.model !== 'string' || !thread.model
+        || thread.created_at !== undefined && typeof thread.created_at !== 'string'
+        || !thread.publishedAgent || typeof thread.publishedAgent.agentId !== 'string' || !thread.publishedAgent.agentId
+        || typeof thread.publishedAgent.releaseId !== 'string' || !thread.publishedAgent.releaseId || typeof thread.publishedAgent.name !== 'string'
+        || !Number.isSafeInteger(thread.publishedAgent.version) || thread.publishedAgent.version < 1)) throw new Error('DRAFT_HISTORY_UNCONFIRMED');
+      const seen = new Set<string>();
+      setHistory(reply.data.filter(thread => { if (seen.has(thread.id)) return false; seen.add(thread.id); return true; }));
+      setHistoryHasMore(reply.data.length >= limit); setHistoryLimit(limit); setHistoryKnown(true);
     }
     catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setError(friendly(e)); }
     finally { op.finish(); }
   };
   const openSaved = async (saved: SavedThread | string) => {
-    const op = begin('other', false); if (!op) return; // Restoration also writes delivery checks.
+    const op = begin('other'); if (!op) return;
     const threadId = typeof saved === 'string' ? saved : saved.id;
+    savedThread.current = threadId;
     jobRef.current = null;
     if (view !== 'result') resultParent.current = view;
     setView('result'); setPreview(null); setFiles([]); setCharge(null); setRetryAllowed(false); setCanStop(false); setRaw(false); setNotice(''); setPhase('正在读取已保存的工作');
@@ -486,10 +502,10 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       const job = await restoreDraftJob(op.client, thread); op.ensure(); jobRef.current = job;
       if (job) { await inspect(op.client, job); op.ensure(); }
       else { await loadFiles(op.client, thread.id); op.ensure(); setPhase('已保存的工作'); setNotice('这是已有工作区文件，可阅读和复制。没有完整的本次草稿核对记录时，不会标记为已交付。'); }
-    } catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) { setError(friendly(e)); try { await loadFiles(op.client, threadId); } catch {} } }
+    } catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) { setError(friendly(e)); setPhase('读取尚未完成'); try { await loadFiles(op.client, threadId); } catch {} } }
     finally {
       try { op.ensure(); if (jobRef.current?.origin !== 'twilio-inbound') await loadMailRecords(op.client, threadId); op.ensure(); }
-      catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setMailError('邮件记录尚未确认。可以重新读取；不会自动再次发送。'); }
+      catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) { setMailError('邮件记录尚未确认。可以重新读取；不会自动再次发送。'); setNotice('原工作与已保存文件仍保留。邮件记录暂未读取完成，可以重新读取原工作后查看；不会自动发送。'); } }
       op.finish();
     }
   };
@@ -624,9 +640,11 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const text = (value: string) => <Text selectable style={s.previewText}>{value}</Text>;
   const content = preview?.value;
   const displayedOperation = operation.current;
+  const savedThreadId = savedThread.current;
   const mailLocked = !!mailReceipt && !['cancelled', 'rejected'].includes(mailReceipt.status) || !!preparation.current || mailUncertain;
   const mailSourceVerified = jobRef.current?.origin !== 'twilio-inbound' && preview?.verified === true && !!preview.value && knownCharge(preview.report) === 0;
   const taskSourceSha256 = preview?.report?.files.find(file => file.id === preview.artifact.id && file.version === preview.artifact.version && file.original)?.sha256 || '';
+  const historyMatches = history.filter(thread => `${thread.title.split('\n')[0]}\n${thread.publishedAgent?.name || ''}`.toLocaleLowerCase().includes(historyQuery.trim().toLocaleLowerCase()));
 
 
   return <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
@@ -653,11 +671,23 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       {button('刷新可用助手', () => { void refreshAssistants(); }, busy, true)}{button(busy ? '正在准备…' : '生成并保存草稿 →', () => { void start(); }, busy || !chosen || !name.trim() || !source.trim())}
       <Text style={s.footnote}>本次模型费用上限为 $0。只起草，不自动发送或发布。免费模型繁忙时可稍后查看原任务。</Text>
     </>}
-    {view === 'history' && <><Text style={s.label}>最近保存的工作</Text>{!busy && !historyKnown && <Text style={s.body}>工作记录尚未确认，请重新查看。</Text>}{!busy && historyKnown && !history.length && <Text style={s.body}>这里还没有已发布助手的工作记录。</Text>}{history.map(thread => <TouchableOpacity accessibilityRole="button" disabled={busy} key={thread.id} onPress={() => { void openSaved(thread); }} style={s.history}><Text style={s.body}>{thread.title.split('\n')[0]}</Text>{thread.created_at && <Text style={s.small}>创建时间（UTC）：{thread.created_at}</Text>}<Text style={s.small}>{thread.publishedAgent?.name} · 查看文件与核对记录 →</Text></TouchableOpacity>)}</>}
+    {view === 'history' && <><Text style={s.label}>最近保存的工作</Text><Text style={s.small}>已载入 {history.length} 条最近记录 · 本次读取上限 {historyLimit} 条</Text>
+      <TextInput accessibilityLabel="查找已载入的工作" value={historyQuery} onChangeText={value => { if (mounted.current && clientRef.current === client && !busyRef.current) setHistoryQuery(value); }} editable={!busy} maxLength={100} autoCapitalize="none" autoCorrect={false} placeholder="按对象名称、任务标题或助手查找" placeholderTextColor={C.muted} style={[s.input, { marginTop: 12 }]} />
+      <Text style={s.small}>仅查找当前已载入的记录。</Text>
+      {!busy && !historyKnown && <Text style={s.body}>这次读取尚未完成，上次载入的记录仍保留。请重新读取。</Text>}
+      {!busy && historyKnown && !history.length && <Text style={s.body}>这里还没有已发布助手的工作记录。</Text>}
+      {!busy && history.length > 0 && !historyMatches.length && <Text style={s.body}>已载入的记录中没有匹配项，可以修改查找内容或读取更多记录。</Text>}
+      {historyMatches.map(thread => <TouchableOpacity accessibilityRole="button" disabled={busy} key={thread.id} onPress={() => { void openSaved(thread); }} style={s.history}><Text style={s.body}>{thread.title.split('\n')[0]}</Text>{thread.created_at && <Text style={s.small}>创建时间（UTC）：{thread.created_at}</Text>}<Text style={s.small}>{thread.publishedAgent?.name} · 查看文件与核对记录 →</Text></TouchableOpacity>)}
+      {button('重新读取已载入范围', () => { void showHistory(); }, busy, true)}
+      {/* ponytail: refetches the loaded range; use a cursor API if history volume warrants. */}
+      {historyHasMore && button(`读取最近 ${historyLimit + 30} 条记录`, () => { void showHistory(historyLimit + 30); }, busy, true)}
+      {historyKnown && !historyHasMore && history.length > 0 && <Text style={s.footnote}>本次读取已包含全部现有记录。新保存的工作可重新读取查看。</Text>}
+    </>}
     {view === 'result' && <>
-      <View style={s.phase}><Text style={s.title}>{phase || '工作结果'}</Text>{busy && busyKind === 'draft' && <ActivityIndicator color={C.green} />}</View>
+      <View style={s.phase}><Text style={s.title}>{busy && busyKind === 'other' && phase !== '正在读取已保存的工作' ? '正在读取或保存记录' : phase || '工作结果'}</Text>{busy && (busyKind === 'draft' || busyKind === 'other') && <ActivityIndicator accessibilityLabel="正在处理工作" color={C.green} />}</View>
       <Text style={s.small}>{charge === null ? '模型费用：尚未确认' : `模型费用：$${charge === 0 ? '0.00' : charge.toFixed(6)} · 已核对`}</Text>
       {busy ? busyKind === 'draft' && jobRef.current?.origin !== 'twilio-inbound' && button('停止本次任务', () => { void stop(displayedOperation); }, phase === '正在请求停止', true) : jobRef.current?.threadId ? <>{button('查看任务结果', () => { void checkResult(); }, false, true)}{retryAllowed && button('重新提交原任务', () => { void checkResult(true); })}{canStop && button('请求停止原任务', () => { void stop(displayedOperation); }, false, true)}</> : null}
+      {!busy && savedThreadId && (error || mailError || !jobRef.current) && button('重新读取原工作', () => { if (operation.current === displayedOperation && savedThread.current === savedThreadId) void openSaved(savedThreadId); }, false, true)}
       {preview && jobRef.current && <FollowUpCard key={jobRef.current.threadId} target={{ kind: 'task', job: jobRef.current, artifact: preview.artifact, runId: preview.report?.runId || '', artifactSha256: taskSourceSha256 }} sourceVerified={preview.verified && !!preview.value && knownCharge(preview.report) === 0 && /^[a-f0-9]{64}$/.test(taskSourceSha256)} snapshot={taskFollowUpSnapshot} busy={busy} operationId={displayedOperation} begin={begin} isCurrent={followUpCurrent} />}
       {files.length > 1 && files.map(file => button(file.filename, () => { setPreview({ artifact: file, report: null, verified: false }); setRaw(true); }, busy, true))}
       {preview && <View style={s.saved}><Text style={s.eyebrow}>{preview.verified ? '文件与交付要求已核对' : '已保存文件 · 请检查内容'}</Text><Text style={s.filename}>{preview.artifact.filename}</Text><Text style={s.small}>长按正文即可选择并复制。草稿仍需本人审阅。</Text>

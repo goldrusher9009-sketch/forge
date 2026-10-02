@@ -43,13 +43,13 @@ function responseError(reply: Reply): ForgeSessionError {
     ? code : `HTTP_${reply.response.status}`, reply.response.status);
 }
 
-function waitForRefresh(job: Promise<void>, signal?: AbortSignal | null): Promise<void> {
+function waitForRequest<T>(job: Promise<T>, signal?: AbortSignal | null, errorCode = () => 'REQUEST_CANCELLED'): Promise<T> {
   if (!signal) return job;
-  if (signal.aborted) return Promise.reject(new ForgeSessionError('REQUEST_CANCELLED'));
+  if (signal.aborted) { void job.catch(() => {}); return Promise.reject(new ForgeSessionError(errorCode())); }
   return new Promise((resolve, reject) => {
-    const abort = () => reject(new ForgeSessionError('REQUEST_CANCELLED'));
+    const abort = () => reject(new ForgeSessionError(errorCode()));
     signal.addEventListener('abort', abort, { once: true });
-    job.then(() => { signal.removeEventListener('abort', abort); resolve(); }, error => {
+    job.then(value => { signal.removeEventListener('abort', abort); resolve(value); }, error => {
       signal.removeEventListener('abort', abort); reject(error);
     });
   });
@@ -85,28 +85,44 @@ export class ForgeSessionClient {
     headers.set('X-Forge-Client', 'phone');
     if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
     else headers.delete('Authorization');
-    let response: Response;
+    const read = ['GET', 'HEAD'].includes((init.method || 'GET').toUpperCase());
+    const controller = read ? new AbortController() : null;
+    let timedOut = false;
+    const cancel = () => controller?.abort();
+    if (controller) init.signal?.addEventListener('abort', cancel, { once: true });
+    const timeout = controller ? setTimeout(() => {
+      if (!controller.signal.aborted) { timedOut = true; controller.abort(); }
+    }, 20000) : undefined;
+    const signal = controller?.signal || init.signal;
+    const abortCode = () => timedOut ? 'REQUEST_READ_TIMEOUT' : 'REQUEST_CANCELLED';
     try {
-      response = await fetch(`${apiUrl}${path}`, { ...init, credentials: 'omit', headers });
-    } catch {
-      throw new ForgeSessionError(init.signal?.aborted ? 'REQUEST_CANCELLED' : 'NETWORK_UNAVAILABLE');
+      let response: Response;
+      try {
+        response = await waitForRequest(fetch(`${apiUrl}${path}`, { ...init, signal, credentials: 'omit', headers }), signal, abortCode);
+      } catch {
+        throw new ForgeSessionError(signal?.aborted ? abortCode() : 'NETWORK_UNAVAILABLE');
+      }
+      if (signal?.aborted) throw new ForgeSessionError(abortCode());
+      const contentType = response.headers.get('Content-Type') || '';
+      if (mode === 'json' && contentType.toLowerCase().includes('text/event-stream')) {
+        await waitForRequest(response.body?.cancel().catch(() => {}) || Promise.resolve(), signal, abortCode);
+        throw new ForgeSessionError('RESPONSE_FORMAT_UNSUPPORTED');
+      }
+      let text = '', payload: Record<string, any> = {};
+      try {
+        if (mode === 'text') {
+          text = await waitForRequest(response.text(), signal, abortCode);
+          if (!response.ok) { try { payload = JSON.parse(text); } catch {} }
+        } else { payload = await waitForRequest(response.json().catch(() => ({})), signal, abortCode); }
+      } catch {
+        throw new ForgeSessionError(signal?.aborted ? abortCode() : 'NETWORK_UNAVAILABLE');
+      }
+      if (signal?.aborted) throw new ForgeSessionError(abortCode());
+      return { response, payload: payload && typeof payload === 'object' ? payload : {}, text, contentType };
+    } finally {
+      clearTimeout(timeout);
+      if (controller) init.signal?.removeEventListener('abort', cancel);
     }
-    const contentType = response.headers.get('Content-Type') || '';
-    if (mode === 'json' && contentType.toLowerCase().includes('text/event-stream')) {
-      await response.body?.cancel().catch(() => {});
-      throw new ForgeSessionError('RESPONSE_FORMAT_UNSUPPORTED');
-    }
-    let text = '', payload: Record<string, any> = {};
-    try {
-      if (mode === 'text') {
-        text = await response.text();
-        if (!response.ok) { try { payload = JSON.parse(text); } catch {} }
-      } else { payload = await response.json().catch(() => ({})); }
-    } catch {
-      throw new ForgeSessionError(init.signal?.aborted ? 'REQUEST_CANCELLED' : 'NETWORK_UNAVAILABLE');
-    }
-    if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
-    return { response, payload: payload && typeof payload === 'object' ? payload : {}, text, contentType };
   }
 
   private async auth(path: string, body: Record<string, string>, accessToken?: string): Promise<Reply> {
@@ -195,7 +211,7 @@ export class ForgeSessionClient {
     this.current(generation);
     if (reply.response.status === 401) {
       if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
-      if (this.accessToken === accessToken) await waitForRefresh(this.refresh(generation), init.signal);
+      if (this.accessToken === accessToken) await waitForRequest(this.refresh(generation), init.signal);
       this.current(generation);
       if (init.signal?.aborted) throw new ForgeSessionError('REQUEST_CANCELLED');
       reply = await this.send(path, init, this.accessToken, mode);
