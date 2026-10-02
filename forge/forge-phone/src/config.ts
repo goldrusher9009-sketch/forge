@@ -87,6 +87,14 @@ export interface NativeExecutionResult {
   error?: string;
 }
 
+export interface NativeScreenCapture {
+  screenshot: string;
+  captureId: string;
+  width: number;
+  height: number;
+  captureMode: string;
+}
+
 export interface PhoneSessionOptions {
   maxSteps: number;
   planningOnly: boolean;

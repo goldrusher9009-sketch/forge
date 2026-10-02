@@ -11,6 +11,7 @@ import {
   FORGE_API,
   normalizeForgeApiUrl,
   NativeExecutionResult,
+  NativeScreenCapture,
   PHONE_ACTION_NAMES,
   PhoneAction,
   PhoneSessionOptions,
@@ -56,19 +57,19 @@ export class ForgeAgentLoop {
   private onStep?: (step: AgentStep) => void;
   private onDone?: (summary: string, steps: AgentStep[]) => void;
   private onError?: (message: string) => void;
-  private captureScreenshot: () => Promise<string | null>;
+  private captureScreenshot: () => Promise<NativeScreenCapture | null>;
   private getCurrentPackage: () => Promise<string>;
-  private executeAction: (action: PhoneAction, expectedPackage: string) => Promise<NativeExecutionResult>;
-  private requestApproval: (step: AgentStep) => Promise<boolean>;
+  private executeAction: (action: PhoneAction, expectedPackage: string, captureId: string) => Promise<NativeExecutionResult>;
+  private requestApproval: (step: AgentStep, screen: NativeScreenCapture) => Promise<boolean>;
   private authenticatedRequest?: ForgeRequest;
 
   constructor(opts: {
     token?: string;
     request?: ForgeRequest;
-    captureScreenshot: () => Promise<string | null>;
+    captureScreenshot: () => Promise<NativeScreenCapture | null>;
     getCurrentPackage: () => Promise<string>;
-    executeAction: (action: PhoneAction, expectedPackage: string) => Promise<NativeExecutionResult>;
-    requestApproval: (step: AgentStep) => Promise<boolean>;
+    executeAction: (action: PhoneAction, expectedPackage: string, captureId: string) => Promise<NativeExecutionResult>;
+    requestApproval: (step: AgentStep, screen: NativeScreenCapture) => Promise<boolean>;
     onStep?: (step: AgentStep) => void;
     onDone?: (summary: string, steps: AgentStep[]) => void;
     onError?: (message: string) => void;
@@ -109,7 +110,12 @@ export class ForgeAgentLoop {
     return step;
   }
 
-  private async cancelSession(): Promise<void> {
+  private async cancelSession(reason = 'PHONE_SESSION_STOPPED'): Promise<void> {
+    for (const step of this.steps) {
+      if (step.status === 'pending_approval' || step.status === 'approved') {
+        this.publishStep(step, { status: 'not_executed', executed: false, success: false, error: reason });
+      }
+    }
     if (!this.sessionId || this.sessionTerminal) return;
     try {
       await this.request(`/api/phone-agent/sessions/${this.sessionId}/cancel`, {
@@ -152,9 +158,10 @@ export class ForgeAgentLoop {
       }
 
       for (let index = 0; index < options.maxSteps && this.running; index += 1) {
-        const screenshot = options.planningOnly ? null : await this.captureScreenshot();
+        const capturedScreen = options.planningOnly ? null : await this.captureScreenshot();
+        const screenshot = capturedScreen?.screenshot || null;
         if (!this.running) break;
-        if (!options.planningOnly && !screenshot) throw new Error('PHONE_SCREENSHOT_REQUIRED');
+        if (!options.planningOnly && (!screenshot || !capturedScreen?.captureId)) throw new Error('PHONE_SCREENSHOT_REQUIRED');
 
         const currentPackage = options.planningOnly ? '' : (await this.getCurrentPackage()).trim();
         if (!this.running) break;
@@ -213,7 +220,7 @@ export class ForgeAgentLoop {
 
         if (planned.approval_required) {
           if (!planned.approval_id) throw new Error('PHONE_ACTION_APPROVAL_ORPHANED');
-          const approved = await this.requestApproval({ ...step, args: { ...step.args } });
+          const approved = await this.requestApproval({ ...step, args: { ...step.args } }, capturedScreen!);
           if (!this.running) break;
           if (!approved) {
             await this.request(`/api/approvals/${planned.approval_id}/reject`, { method: 'POST', body: '{}' });
@@ -247,16 +254,10 @@ export class ForgeAgentLoop {
 
         let nativeResult: NativeExecutionResult;
         try {
-          if (planned.approval_required) {
-            const reviewedScreen = await this.captureScreenshot();
-            if (!this.running) break;
-            // ponytail: exact JPEG comparison rejects dynamic pages too; use a
-            // verified screen revision when dynamic-page support is required.
-            if (!reviewedScreen || reviewedScreen !== screenshot) throw new Error('PHONE_SCREEN_CHANGED');
-          }
           nativeResult = await this.executeAction(
             { action: authorized.action, args: authorized.args } as PhoneAction,
             authorized.expected_package,
+            capturedScreen!.captureId,
           );
         } catch (error) {
           nativeResult = {
@@ -298,7 +299,7 @@ export class ForgeAgentLoop {
         throw new Error('PHONE_MAX_STEPS_REACHED');
       }
     } catch (error) {
-      await this.cancelSession();
+      await this.cancelSession(asErrorMessage(error));
       if (this.running) this.onError?.(asErrorMessage(error));
     } finally {
       this.running = false;

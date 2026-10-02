@@ -13,6 +13,13 @@ export type BusinessMailReceipt = {
   providerMessageId: string | null; providerLastEvent: string | null; modelChargeUsd: 0; providerChargeUsd: null;
   errorCode: string | null; approvedAt: number | null; acceptedAt: number | null; firstDispatchAt: number | null; createdAt: number; updatedAt: number;
 };
+export type MailFollowUp = {
+  mailDeliveryId: string; version: number; recordedBy: 'owner'; updatedAt: number | null;
+  nextStep: string | null; followUpOn: string | null; result: 'pending' | 'replied' | 'won' | 'lost' | null;
+  notes: string | null; evidenceReference: string | null;
+  reportedRevenueMinor: number | null; reportedRevenueCurrency: 'CNY' | 'USD' | null;
+};
+type FollowUpInput = Omit<MailFollowUp, 'mailDeliveryId' | 'version' | 'recordedBy' | 'updatedAt'> & { expectedVersion: number };
 export class BusinessMailError extends Error {
   constructor(public code: string, public status = 400) { super(code); }
 }
@@ -65,7 +72,11 @@ export function createBusinessMail({ db, deliveryChecks, getCredential, fetcher 
     approved_at INTEGER,accepted_at INTEGER,first_dispatch_at INTEGER,dispatch_started_at INTEGER,attempt_id TEXT,
     created_at INTEGER NOT NULL,updated_at INTEGER NOT NULL,UNIQUE(user_id,client_request_id));
     CREATE INDEX IF NOT EXISTS business_mail_owner_thread ON business_mail_deliveries(user_id,thread_id,created_at DESC);
-    CREATE INDEX IF NOT EXISTS business_mail_unresolved ON business_mail_deliveries(user_id,input_hash,status);`);
+    CREATE INDEX IF NOT EXISTS business_mail_unresolved ON business_mail_deliveries(user_id,input_hash,status);
+    CREATE TABLE IF NOT EXISTS business_mail_followups (
+      mail_delivery_id TEXT PRIMARY KEY REFERENCES business_mail_deliveries(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      version INTEGER NOT NULL,fields_json TEXT NOT NULL,updated_at INTEGER NOT NULL);`);
   if (!db.prepare('PRAGMA table_info(business_mail_deliveries)').all().some(column => column.name === 'accepted_at')) db.exec('ALTER TABLE business_mail_deliveries ADD COLUMN accepted_at INTEGER');
   const atomic = <T extends (...args: any[]) => any>(fn: T): T => {
     const transaction = db.transaction(fn) as T & { immediate?: T }; return transaction.immediate || transaction;
@@ -82,9 +93,13 @@ export function createBusinessMail({ db, deliveryChecks, getCredential, fetcher 
       providerLastEvent: row.provider_last_event, modelChargeUsd: 0, providerChargeUsd: null, errorCode: row.error_code,
       approvedAt: row.approved_at, acceptedAt: row.accepted_at, firstDispatchAt: row.first_dispatch_at, createdAt: row.created_at, updatedAt: row.updated_at };
   }
-  function owned(user: string, id: string) {
+  function ownedRow(user: string, id: string) {
     const row = db.prepare('SELECT * FROM business_mail_deliveries WHERE id=? AND user_id=?').get(id, user);
     if (!row) return fail('MAIL_DELIVERY_NOT_FOUND', 404);
+    return row;
+  }
+  function owned(user: string, id: string) {
+    const row = ownedRow(user, id);
     if (row.status === 'dispatching' && now() - row.dispatch_started_at > 30000) {
       db.prepare("UPDATE business_mail_deliveries SET status='unknown',error_code='MAIL_DISPATCH_INTERRUPTED',updated_at=? WHERE id=? AND user_id=? AND status='dispatching' AND attempt_id=?")
         .run(now(), id, user, row.attempt_id);
@@ -137,6 +152,37 @@ export function createBusinessMail({ db, deliveryChecks, getCredential, fetcher 
     if (!db.prepare('SELECT id FROM threads WHERE id=? AND user_id=?').get(threadId, user)) fail('MAIL_THREAD_NOT_FOUND', 404);
     return db.prepare('SELECT id FROM business_mail_deliveries WHERE user_id=? AND thread_id=? ORDER BY created_at DESC,rowid DESC LIMIT 100').all(user, threadId).map(row => get(user, row.id));
   };
+  const followUpFields = (input: FollowUpInput) => {
+    exact(input, ['expectedVersion', 'nextStep', 'followUpOn', 'result', 'notes', 'evidenceReference', 'reportedRevenueMinor', 'reportedRevenueCurrency']);
+    if (!Number.isSafeInteger(input.expectedVersion) || input.expectedVersion < 0) fail('MAIL_FOLLOWUP_INVALID');
+    const optional = (value: unknown, maximum: number) => value === null ? null : text(value, maximum, 'MAIL_FOLLOWUP_INVALID').trim();
+    const nextStep = optional(input.nextStep, 1000), notes = optional(input.notes, 8000), evidenceReference = optional(input.evidenceReference, 2000);
+    const followUpOn = input.followUpOn;
+    if (followUpOn !== null) {
+      if (typeof followUpOn !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(followUpOn) || !nextStep) fail('MAIL_FOLLOWUP_INVALID');
+      const day = new Date(followUpOn + 'T00:00:00.000Z');
+      if (!Number.isFinite(day.getTime()) || day.toISOString().slice(0, 10) !== followUpOn) fail('MAIL_FOLLOWUP_INVALID');
+    }
+    if (input.result !== null && !['pending', 'replied', 'won', 'lost'].includes(input.result)) fail('MAIL_FOLLOWUP_INVALID');
+    const amount = input.reportedRevenueMinor, currency = input.reportedRevenueCurrency;
+    if (amount === null ? currency !== null : !Number.isSafeInteger(amount) || amount < 0 || !['CNY', 'USD'].includes(currency as string)) fail('MAIL_FOLLOWUP_INVALID');
+    return { nextStep, followUpOn, result: input.result, notes, evidenceReference, reportedRevenueMinor: amount, reportedRevenueCurrency: currency };
+  };
+  const getFollowUp = (user: string, id: string): MailFollowUp => {
+    ownedRow(user, id);
+    const row = db.prepare('SELECT * FROM business_mail_followups WHERE mail_delivery_id=? AND user_id=?').get(id, user);
+    return { mailDeliveryId: id, version: row?.version || 0, recordedBy: 'owner', updatedAt: row?.updated_at ?? null,
+      ...(row ? JSON.parse(row.fields_json) : { nextStep: null, followUpOn: null, result: null, notes: null, evidenceReference: null, reportedRevenueMinor: null, reportedRevenueCurrency: null }) };
+  };
+  const saveFollowUp = atomic((user: string, id: string, input: FollowUpInput): MailFollowUp => {
+    ownedRow(user, id);
+    const fields = followUpFields(input), current = getFollowUp(user, id);
+    if (current.version !== input.expectedVersion) fail('MAIL_FOLLOWUP_CHANGED', 409);
+    db.prepare(`INSERT INTO business_mail_followups(mail_delivery_id,user_id,version,fields_json,updated_at) VALUES(?,?,?,?,?)
+      ON CONFLICT(mail_delivery_id) DO UPDATE SET version=excluded.version,fields_json=excluded.fields_json,updated_at=excluded.updated_at`)
+      .run(id, user, current.version + 1, JSON.stringify(fields), now());
+    return getFollowUp(user, id);
+  });
   function checkKey(user: string, row: any) {
     const key = credential(user);
     if (hash(key) !== row.credential_hash) fail('MAIL_CREDENTIAL_CHANGED', 409);
@@ -228,7 +274,7 @@ export function createBusinessMail({ db, deliveryChecks, getCredential, fetcher 
     })();
     return get(user, id);
   }
-  return { prepare, get, list, approve, cancel, refresh, recover };
+  return { prepare, get, list, approve, cancel, refresh, recover, getFollowUp, saveFollowUp };
 }
 
 export function registerBusinessMailRoutes(app: any, requireAuth: any, service: ReturnType<typeof createBusinessMail>) {
@@ -245,6 +291,8 @@ export function registerBusinessMailRoutes(app: any, requireAuth: any, service: 
   app.post('/api/threads/:id/mail-deliveries', requireAuth, route((user, req) => service.prepare(user, req.params.id, req.body), 201));
   app.get('/api/threads/:id/mail-deliveries', requireAuth, route((user, req) => service.list(user, req.params.id)));
   app.get('/api/mail-deliveries/:id', requireAuth, route((user, req) => service.get(user, req.params.id)));
+  app.get('/api/mail-deliveries/:id/follow-up', requireAuth, route((user, req) => service.getFollowUp(user, req.params.id)));
+  app.put('/api/mail-deliveries/:id/follow-up', requireAuth, route((user, req) => service.saveFollowUp(user, req.params.id, req.body)));
   app.post('/api/mail-deliveries/:id/approve', requireAuth, route((user, req) => service.approve(user, req.params.id, req.body)));
   app.post('/api/mail-deliveries/:id/cancel', requireAuth, route((user, req) => { exact(req.body || {}, []); return service.cancel(user, req.params.id); }));
   app.post('/api/mail-deliveries/:id/refresh', requireAuth, route((user, req) => { exact(req.body || {}, []); return service.refresh(user, req.params.id); }));

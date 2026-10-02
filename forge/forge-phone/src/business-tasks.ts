@@ -10,7 +10,7 @@ export type DraftReport = {
   files: Array<{ id: string; filename: string; version: number; original: boolean }>;
 };
 export type DraftJob = { input: DraftInput; requestId: string; threadId: string; release: DraftRelease; body: string; runId?: string; origin?: 'resend-received' };
-export type SavedThread = { id: string; title: string; model: string; publishedAgent?: { agentId: string; releaseId: string; name: string; version: number } | null };
+export type SavedThread = { id: string; title: string; created_at?: string; model: string; publishedAgent?: { agentId: string; releaseId: string; name: string; version: number } | null };
 export type DraftRequestState = { requestId: string; runId: string; status: string; result?: { success?: boolean; error?: string } | null; error?: string };
 export type DraftClient = { request: ForgeRequest; requestText(path: string, init?: RequestInit): Promise<{ text: string; contentType: string }> };
 
@@ -277,4 +277,79 @@ export function mailStatusText(receipt: MailReceipt): string {
   if (receipt.deliveryStatus === 'complained') return '邮件服务已接收 · 收到投诉记录';
   if (receipt.deliveryStatus === 'delayed') return '邮件服务已接收 · 送达延迟';
   return '邮件服务已接收 · 送达尚未确认';
+}
+
+
+export type MailFollowUp = {
+  mailDeliveryId: string; version: number; recordedBy: 'owner'; updatedAt: number | null;
+  nextStep: string | null; followUpOn: string | null; result: 'pending' | 'replied' | 'won' | 'lost' | null;
+  notes: string | null; evidenceReference: string | null;
+  reportedRevenueMinor: number | null; reportedRevenueCurrency: 'CNY' | 'USD' | null;
+};
+export type MailFollowUpInput = Omit<MailFollowUp, 'mailDeliveryId' | 'version' | 'recordedBy' | 'updatedAt'> & { expectedVersion: number };
+export type MailFollowUpForm = {
+  nextStep: string; followUpOn: string; result: MailFollowUp['result']; notes: string; evidenceReference: string;
+  reportedRevenue: string; reportedRevenueCurrency: 'CNY' | 'USD';
+};
+const followUpKeys = ['mailDeliveryId', 'version', 'recordedBy', 'updatedAt', 'nextStep', 'followUpOn', 'result', 'notes', 'evidenceReference', 'reportedRevenueMinor', 'reportedRevenueCurrency'];
+const followUpFieldKeys = ['nextStep', 'followUpOn', 'result', 'notes', 'evidenceReference', 'reportedRevenueMinor', 'reportedRevenueCurrency'] as const;
+const realCalendarDay = (value: unknown): value is string => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const day = new Date(value + 'T00:00:00.000Z');
+  return Number.isFinite(day.getTime()) && day.toISOString().slice(0, 10) === value;
+};
+function checkedMailFollowUp(value: unknown, id: string, version?: number): MailFollowUp {
+  const optionalText = (text: unknown, maximum: number) => text === null || typeof text === 'string' && !!text.trim()
+    && text === text.trim() && !text.includes('\0') && utf8Size(text) <= maximum;
+  if (!object(value) || Object.keys(value).length !== followUpKeys.length || followUpKeys.some(key => !Object.prototype.hasOwnProperty.call(value, key))
+    || value.mailDeliveryId !== id || !Number.isSafeInteger(value.version) || value.version < 0 || version !== undefined && value.version !== version
+    || value.recordedBy !== 'owner' || (value.version === 0 ? value.updatedAt !== null : !Number.isSafeInteger(value.updatedAt) || value.updatedAt < 0)
+    || !optionalText(value.nextStep, 1000) || !optionalText(value.notes, 8000) || !optionalText(value.evidenceReference, 2000)
+    || value.followUpOn !== null && (!realCalendarDay(value.followUpOn) || !value.nextStep)
+    || value.result !== null && !['pending', 'replied', 'won', 'lost'].includes(value.result)
+    || (value.reportedRevenueMinor === null ? value.reportedRevenueCurrency !== null
+      : !Number.isSafeInteger(value.reportedRevenueMinor) || value.reportedRevenueMinor < 0 || !['CNY', 'USD'].includes(value.reportedRevenueCurrency))) fail('MAIL_FOLLOWUP_UNCONFIRMED');
+  if (value.version === 0 && followUpFieldKeys.some(key => value[key] !== null)) fail('MAIL_FOLLOWUP_UNCONFIRMED');
+  return value as MailFollowUp;
+}
+export function mailFollowUpForm(saved?: MailFollowUp | null): MailFollowUpForm {
+  const digits = saved?.reportedRevenueMinor === null || saved?.reportedRevenueMinor === undefined ? '' : String(saved.reportedRevenueMinor).padStart(3, '0');
+  return { nextStep: saved?.nextStep || '', followUpOn: saved?.followUpOn || '', result: saved?.result ?? null,
+    notes: saved?.notes || '', evidenceReference: saved?.evidenceReference || '',
+    reportedRevenue: digits ? `${digits.slice(0, -2)}.${digits.slice(-2)}` : '', reportedRevenueCurrency: saved?.reportedRevenueCurrency || 'CNY' };
+}
+export function newMailFollowUpInput(saved: MailFollowUp, form: MailFollowUpForm): MailFollowUpInput {
+  const current = checkedMailFollowUp(saved, saved.mailDeliveryId);
+  if (current.version >= Number.MAX_SAFE_INTEGER) fail('MAIL_FOLLOWUP_CHANGED');
+  const optional = (value: string, maximum: number): string | null => {
+    if (typeof value !== 'string' || value.includes('\0') || utf8Size(value) > maximum) fail('MAIL_FOLLOWUP_INPUT_INVALID');
+    return value.trim() || null;
+  };
+  const nextStep = optional(form.nextStep, 1000), notes = optional(form.notes, 8000), evidenceReference = optional(form.evidenceReference, 2000);
+  const followUpOn = form.followUpOn.trim() || null;
+  if (followUpOn !== null && (!realCalendarDay(followUpOn) || !nextStep)) fail('MAIL_FOLLOWUP_DATE_INVALID');
+  if (form.result !== null && !['pending', 'replied', 'won', 'lost'].includes(form.result)) fail('MAIL_FOLLOWUP_INPUT_INVALID');
+  const amount = form.reportedRevenue.trim();
+  let reportedRevenueMinor: number | null = null;
+  if (amount) {
+    if (!/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/.test(amount)) fail('MAIL_FOLLOWUP_AMOUNT_INVALID');
+    const [major, fraction = ''] = amount.split('.');
+    reportedRevenueMinor = Number(major + fraction.padEnd(2, '0'));
+    if (!Number.isSafeInteger(reportedRevenueMinor) || reportedRevenueMinor < 0 || !['CNY', 'USD'].includes(form.reportedRevenueCurrency)) fail('MAIL_FOLLOWUP_AMOUNT_INVALID');
+  }
+  return { expectedVersion: current.version, nextStep, followUpOn, result: form.result, notes, evidenceReference,
+    reportedRevenueMinor, reportedRevenueCurrency: reportedRevenueMinor === null ? null : form.reportedRevenueCurrency };
+}
+export async function readMailFollowUp(client: DraftClient, receipt: MailReceipt): Promise<MailFollowUp> {
+  const reply = await client.request<{ success: boolean; data: unknown }>(`/api/mail-deliveries/${segment(receipt.id)}/follow-up`);
+  if (reply.success !== true) fail('MAIL_FOLLOWUP_UNCONFIRMED');
+  return checkedMailFollowUp(reply.data, receipt.id);
+}
+export async function saveMailFollowUp(client: DraftClient, receipt: MailReceipt, saved: MailFollowUp, input: MailFollowUpInput): Promise<MailFollowUp> {
+  if (checkedMailFollowUp(saved, receipt.id).version !== input.expectedVersion) fail('MAIL_FOLLOWUP_CHANGED');
+  const reply = await client.request<{ success: boolean; data: unknown }>(`/api/mail-deliveries/${segment(receipt.id)}/follow-up`, { method: 'PUT', body: JSON.stringify(input) });
+  if (reply.success !== true) fail('MAIL_FOLLOWUP_UNCONFIRMED');
+  const updated = checkedMailFollowUp(reply.data, receipt.id, input.expectedVersion + 1);
+  if (followUpFieldKeys.some(key => updated[key] !== input[key])) fail('MAIL_FOLLOWUP_UNCONFIRMED');
+  return updated;
 }

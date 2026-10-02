@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Alert, KeyboardAvoidingView, NativeModules, Platform, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, NativeModules, Platform, SafeAreaView, ScrollView, StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import * as FileSystem from 'expo-file-system';
 import { ForgeAgentLoop } from './src/ForgeAgent';
-import { AgentStep, FORGE_API, NativeExecutionResult, normalizeForgeApiUrl, PhoneAction } from './src/config';
+import { AgentStep, FORGE_API, NativeExecutionResult, NativeScreenCapture, normalizeForgeApiUrl, PhoneAction } from './src/config';
 import { ForgeIdentity, ForgeSessionClient } from './src/session';
 import BusinessTasks from './src/BusinessTasks';
 import type { DraftClient } from './src/business-tasks';
@@ -15,9 +15,11 @@ type ForgeAccessibilityBridge = {
   listLaunchableApps(): Promise<InstalledApp[]>;
   openApp(packageName: string): Promise<boolean>;
   openReview(): Promise<boolean>;
-  captureScreen(expectedPackage: string): Promise<string>;
+  returnToApp(packageName: string): Promise<boolean>;
+  captureScreen(expectedPackage: string): Promise<NativeScreenCapture>;
   getCurrentPackage(): Promise<string>;
-  performAction(actionJson: string, expectedPackage: string): Promise<NativeExecutionResult>;
+  performAction(actionJson: string, expectedPackage: string, captureId: string): Promise<NativeExecutionResult>;
+  cancelPendingActions(): void;
 };
 const accessibility = NativeModules.ForgeAccessibility as ForgeAccessibilityBridge | undefined;
 const C = { bg: '#f3f0e8', paper: '#fffdf7', ink: '#20251f', muted: '#686f63', line: '#dcded2', accent: '#b5db57', green: '#3d6229', red: '#a33d30' };
@@ -40,11 +42,15 @@ function errorText(value: unknown): string {
     PHONE_MAX_STEPS_REACHED: '已达到本次步骤上限。请查看结果后再决定是否继续。',
     PHONE_PACKAGE_CHANGED: '目标应用发生变化，任务已停止。请重新打开目标应用后开始。',
     PHONE_SCREEN_CHANGED: '审核后屏幕发生变化，本次动作未执行。请检查目标页面后重新开始。',
+    PHONE_ACTION_CAPTURE_REQUIRED: '审核截图已失效，本次动作未执行。请重新开始。',
+    PHONE_ACTION_TARGET_BLOCKED: '目标位置被其他窗口覆盖，本次动作未执行。请整理页面后重新开始。',
     PHONE_SCREENSHOT_REQUIRED: '无法读取屏幕，请检查无障碍权限和目标应用。',
     PHONE_ACCESSIBILITY_DISABLED: '请在系统设置中开启 Forge 无障碍服务。',
     PHONE_NATIVE_ACTION_FAILED: '手机未能完成这一步，请查看目标应用后重试。',
+    PHONE_NATIVE_ACTION_NOT_DISPATCHED: '系统未受理这一步，本次动作未执行。请检查无障碍权限后重试。',
     DESKTOP_PROVIDER_FUNDING_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     DESKTOP_FREE_MODEL_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
+    PHONE_FREE_MODEL_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     PHONE_SESSION_ACTIVE: '已有任务在运行，请先结束当前任务。', APP_UNAVAILABLE: '无法打开所选应用，请重新选择。',
     SERVICE_URL_REQUIRED: '请先设置 Forge 服务地址。',
     SERVICE_URL_INVALID: '请输入完整的服务网址，不要附带路径、参数或账号密码。',
@@ -95,6 +101,7 @@ export default function App() {
   const [notice, setNotice] = useState('');
   const [phase, setPhase] = useState('正在准备');
   const [pendingStep, setPendingStep] = useState<AgentStep | null>(null);
+  const [pendingScreen, setPendingScreen] = useState<NativeScreenCapture | null>(null);
   const [existingTask, setExistingTask] = useState<{ id: number; goal: string; generation: number } | null>(null);
   const [closingTask, setClosingTask] = useState(false);
   const [screen, setScreen] = useState<'main' | 'running'>('main');
@@ -153,6 +160,7 @@ export default function App() {
 
   useEffect(() => () => {
     runRef.current += 1;
+    accessibility?.cancelPendingActions();
     approvalRef.current?.(false);
     void agentRef.current?.stop();
     authRef.current += 1; void session.signOut();
@@ -171,9 +179,10 @@ export default function App() {
   };
   const stopAgent = async () => {
     runRef.current += 1;
+    accessibility?.cancelPendingActions();
     setDraining(startingRef.current);
     setStarting(false); setRunning(false); setPhase('已停止');
-    approvalRef.current?.(false); approvalRef.current = null; setPendingStep(null);
+    approvalRef.current?.(false); approvalRef.current = null; setPendingStep(null); setPendingScreen(null);
     await agentRef.current?.stop();
   };
   const signOut = async () => {
@@ -233,7 +242,8 @@ export default function App() {
     const returnToTarget = async (expectedPackage: string) => {
       ensureCurrent();
       if (!allowedPackages.includes(expectedPackage)) throw new Error('PHONE_PACKAGE_CHANGED');
-      await accessibility!.openApp(expectedPackage); ensureCurrent();
+      await accessibility!.returnToApp(expectedPackage);
+      ensureCurrent();
       const current = (await accessibility!.getCurrentPackage()).trim(); ensureCurrent();
       if (current !== expectedPackage) throw new Error('PHONE_PACKAGE_CHANGED');
     };
@@ -255,18 +265,18 @@ export default function App() {
         },
         captureScreenshot: async () => planningOnly ? null : accessibility!.captureScreen(target!.packageName),
         getCurrentPackage: async () => planningOnly ? '' : accessibility!.getCurrentPackage(),
-        executeAction: async (action: PhoneAction, expectedPackage: string) => {
+        executeAction: async (action: PhoneAction, expectedPackage: string, captureId: string) => {
           const ensureRunning = () => { ensureCurrent(); if (!agent.isRunning()) throw new Error('PHONE_SESSION_STOPPED'); };
           ensureRunning(); if (planningOnly) throw new Error('PHONE_ACTION_PLANNING_ONLY');
           if (!accessibility || !(await accessibility.isAccessibilityEnabled())) throw new Error('PHONE_ACCESSIBILITY_DISABLED');
           ensureRunning(); const currentPackage = (await accessibility.getCurrentPackage()).trim(); ensureRunning();
           if (currentPackage !== expectedPackage) throw new Error('PHONE_PACKAGE_CHANGED');
-          return accessibility.performAction(JSON.stringify(action), expectedPackage);
+          return accessibility.performAction(JSON.stringify(action), expectedPackage, captureId);
         },
-        requestApproval: async step => {
-          ensureCurrent(); setPendingStep(step); setPhase('等你确认下一步');
+        requestApproval: async (step, capturedScreen) => {
+          ensureCurrent(); setPendingStep(step); setPendingScreen(capturedScreen); setPhase('等你确认下一步');
           const decision = new Promise<boolean>(resolve => { approvalRef.current = resolve; });
-          try { await accessibility!.openReview(); }
+          try { await accessibility!.openReview(); if (isCurrentRun()) scrollRef.current?.scrollTo({ y: 0, animated: false }); }
           catch { if (isCurrentRun()) setNotice('请切回 Forge，查看并确认下一步。'); }
           const approved = await decision; ensureCurrent();
           if (!approved) return false;
@@ -277,7 +287,7 @@ export default function App() {
           // Keep actual native receipts visible when Stop follows dispatch.
           setSteps(previous => previous.some(item => item.id === step.id) ? previous.map(item => item.id === step.id ? step : item) : [...previous, step]);
           if (isCurrentRun()) setPhase(step.status === 'executing' ? '正在执行已批准的动作' : '正在准备下一步');
-          setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+          if (step.status !== 'pending_approval') setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
         },
         onDone: message => { if (isCurrentRun()) { setSummary(message); setDone(true); setRunning(false); setPhase('任务已结束'); } },
         onError: message => { if (isCurrentRun()) {
@@ -288,6 +298,10 @@ export default function App() {
       });
       agentRef.current = agent; setPhase(planningOnly ? '正在预览步骤' : '正在读取所选应用');
       await agent.start(goal.trim(), { maxSteps, planningOnly, allowedPackages, confirmationMode: 'every_action', tokenBudget: 1_200_000, costBudgetUsd: 0 });
+      if (!planningOnly && isCurrentRun()) {
+        try { await accessibility!.openReview(); }
+        catch { if (isCurrentRun()) setNotice('任务已结束，请返回 Forge 查看操作记录。'); }
+      }
     } catch (e) { if (isCurrentRun()) { setError(errorText(e)); setRunning(false); } }
     finally {
       // Stop may precede a native receipt; do not overlap a new task with it.
@@ -296,7 +310,7 @@ export default function App() {
       if (isCurrentRun()) { setStarting(false); setRunning(false); }
     }
   };
-  const decide = (approved: boolean) => { const resolve = approvalRef.current; approvalRef.current = null; setPendingStep(null); setNotice(''); resolve?.(approved); };
+  const decide = (approved: boolean) => { const resolve = approvalRef.current; approvalRef.current = null; setPendingStep(null); setPendingScreen(null); setNotice(''); resolve?.(approved); };
   const successfulActions = steps.filter(step => step.executed && step.success).length;
   const message = (text: string, bad = false) => text ? <View accessibilityLiveRegion="polite" style={[s.message, bad && s.error]}><Text style={[s.small, { color: bad ? C.red : C.muted }]}>{text}</Text></View> : null;
   const button = (label: string, onPress: () => void, disabled = false, secondary = false) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled }} onPress={onPress} disabled={disabled} style={[s.button, secondary && s.secondary, disabled && s.disabled]}><Text style={[s.buttonText, secondary && { color: C.ink }]}>{label}</Text></TouchableOpacity>;
@@ -321,13 +335,14 @@ export default function App() {
   </ScrollView></KeyboardAvoidingView></SafeAreaView>;
 
   if (screen === 'running') return <SafeAreaView style={s.root}><StatusBar style="dark" /><View style={s.topbar}>{mark}{running || starting ? button('停止', () => { void stopAgent(); }, false, true) : button('返回', () => setScreen('main'), false, true)}</View>
-    <ScrollView ref={scrollRef} contentContainerStyle={s.content}><Text style={s.eyebrow}>{planningOnly ? '步骤预览' : target?.label || '手机任务'}</Text><View style={s.phaseRow}><Text style={s.title}>{phase}</Text>{running && <ActivityIndicator color={C.green} />}</View><Text style={s.goalSummary}>{goal}</Text><View style={s.meta}><Text style={s.small}>{planningOnly ? '未操作手机' : `${successfulActions} 步已执行`}</Text><Text style={s.small}>最多 {maxSteps} 步</Text></View>
+    <ScrollView ref={scrollRef} contentContainerStyle={s.content}><Text style={s.eyebrow}>{planningOnly ? '步骤预览' : target?.label || '手机任务'}</Text><View style={s.phaseRow}><Text style={s.title}>{phase}</Text>{running && <ActivityIndicator color={C.green} />}</View><Text numberOfLines={3} accessibilityLabel={goal} style={s.goalSummary}>{goal}</Text><View style={s.meta}><Text style={s.small}>{planningOnly ? '未操作手机' : `${successfulActions} 步已执行`}</Text><Text style={s.small}>最多 {maxSteps} 步</Text></View>
       {!planningOnly && running && message('审核时会切回 Forge。批准后返回所选应用继续；请保持目标页面不变。')}{message(notice)}{message(error, true)}{recovery}
       {pendingStep && <View style={s.approval}><Text style={s.eyebrow}>下一步 · 需要你的确认</Text><Text style={s.title}>{describeAction(pendingStep)}</Text><Text style={s.body}>目标：{target?.label || '所选应用'}</Text><Text style={s.body}>{pendingStep.reasoning}</Text><Text style={s.small}>风险：{({ low: '低', medium: '中', high: '高' })[pendingStep.riskLevel]}。批准仅限此动作；发送、删除等操作请仔细检查。</Text>
         {(pendingStep.action === 'tap' || pendingStep.action === 'long_press') && <Text style={s.small}>屏幕位置：横向 {Number(pendingStep.args.x) / 10}% · 纵向 {Number(pendingStep.args.y) / 10}%</Text>}
+        {pendingScreen && <><Text style={s.small}>规划时的页面 · 请结合截图核对这一步</Text><Image accessibilityLabel="规划时的目标页面截图" source={{ uri: `data:image/jpeg;base64,${pendingScreen.screenshot}` }} resizeMode="contain" style={{ width: '100%', aspectRatio: pendingScreen.width / pendingScreen.height, borderRadius: 8 }} /></>}
         {button(`批准并返回${target?.label || '目标应用'}`, () => decide(true))}{button('拒绝并结束', () => decide(false), false, true)}
       </View>}
-      <Text style={[s.label, { marginTop: 22 }]}>操作记录</Text>{steps.length === 0 && <Text style={s.body}>正在准备第一步…</Text>}{steps.map(step => <View key={step.id} style={s.step}><Text style={s.stepNumber}>{String(step.stepIndex).padStart(2, '0')}</Text><View style={s.flex}><Text style={s.body}>{describeAction(step)}</Text><Text style={[s.small, { color: step.success ? C.green : C.muted }]}>{STATUS[step.status]}</Text>{step.error && <Text style={[s.small, { color: C.red }]}>{errorText(new Error(step.error))}</Text>}</View></View>)}
+      <Text style={[s.label, { marginTop: 22 }]}>操作记录</Text>{steps.length === 0 && <Text style={s.body}>{running || starting ? '正在准备第一步…' : '尚无操作记录。'}</Text>}{steps.map(step => <View key={step.id} style={s.step}><Text style={s.stepNumber}>{String(step.stepIndex).padStart(2, '0')}</Text><View style={s.flex}><Text style={s.body}>{describeAction(step)}</Text><Text style={[s.small, { color: step.success ? C.green : C.muted }]}>{STATUS[step.status]}</Text>{step.error && <Text style={[s.small, { color: C.red }]}>{errorText(new Error(step.error))}</Text>}</View></View>)}
       {done && <View style={s.result}><Text style={s.label}>{planningOnly ? '预览已结束' : '结果待你核对'}</Text><Text style={s.body}>{summary}</Text><Text style={s.small}>{planningOnly ? '预览不会操作手机，也不代表任务已实际完成。' : '上方记录反映手机动作回执。请打开目标应用确认草稿或最终结果。'}</Text></View>}{!running && message('停止不能撤回已经执行的操作；已交给手机的动作仍会补充实际结果。')}
     </ScrollView></SafeAreaView>;
 
@@ -338,7 +353,8 @@ export default function App() {
       <Text style={s.label}>你想完成什么？</Text><TextInput accessibilityLabel="任务目标" value={goal} onChangeText={setGoal} multiline maxLength={2000} placeholder="例如：根据客户消息写好回复，先不发送…" placeholderTextColor={C.muted} style={[s.input, s.goalInput]} />
       <View style={s.mode}><View style={s.flex}><Text style={s.body}>先预览步骤</Text><Text style={s.small}>{planningOnly ? '只生成计划，不操作手机' : '逐项批准后，操作所选应用'}</Text></View><Switch accessibilityLabel="先预览步骤" value={planningOnly} onValueChange={setPlanningOnly} trackColor={{ true: C.green, false: C.line }} thumbColor={C.paper} /></View>
       {!planningOnly && <View style={s.appSection}><Text style={s.label}>本次只操作这个应用</Text>{button(target?.label || '选择手机应用', () => { void chooseApp(); }, loadingApps, true)}{choosingApp && <View style={s.appList}>{loadingApps ? <ActivityIndicator color={C.green} /> : apps.length ? apps.map(app => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: target?.packageName === app.packageName }} key={app.packageName} onPress={() => { setTarget(app); setChoosingApp(false); }} style={s.appRow}><Text style={s.body}>{app.label}</Text><Text style={s.small}>{target?.packageName === app.packageName ? '已选择' : '选择'}</Text></TouchableOpacity>) : <Text style={s.small}>暂无可打开的应用。请安装目标应用后重试。</Text>}</View>}
-        <Text style={s.footnote}>开始前请把目标页面准备好。Forge 仅在所选应用中执行操作，屏幕截图会用于规划；审批时会返回这里。</Text>{button('设置无障碍权限', () => { void showAccessibilitySettings(); }, false, true)}
+        {target && button('打开目标应用，准备页面', () => { setNotice('准备好目标页面后，返回 Forge 开始任务。'); void accessibility!.openApp(target.packageName).catch(e => setError(errorText(e))); }, false, true)}
+        <Text style={s.footnote}>在目标应用准备好页面后，返回 Forge 开始。开始和审批后会恢复原页面；若出现其他应用，任务会停止。屏幕截图会用于规划和你的审核。</Text>{button('设置无障碍权限', () => { void showAccessibilitySettings(); }, false, true)}
       </View>}
       <View style={s.limit}><Text style={s.small}>本次最多</Text><View style={s.choices}>{[5, 8, 10, 12].map(value => <TouchableOpacity accessibilityRole="button" accessibilityLabel={`最多 ${value} 步`} accessibilityState={{ selected: maxSteps === value }} key={value} onPress={() => setMaxSteps(value)} style={[s.choice, maxSteps === value && s.chosen]}><Text style={[s.small, maxSteps === value && { color: C.paper }]}>{value} 步</Text></TouchableOpacity>)}</View></View>
       {message(error, true)}{message(notice)}{recovery}{button(draining ? '上一任务正在收尾…' : starting ? '正在准备…' : planningOnly ? '预览任务 →' : '打开应用并开始 →', () => { void startAgent(); }, !!existingTask || draining || starting || !goal.trim() || (!planningOnly && !target))}{button('查看未完成任务', () => { void findExistingTask(); }, false, true)}<Text style={s.footnote}>当前使用免费模型，繁忙时可能需要稍后再试。草稿需你核对，发送与发布也需逐项确认。</Text><View style={s.footer}><Text style={s.small}>时间留给更值得的事。</Text><Text style={s.small}>FORGE</Text></View>
