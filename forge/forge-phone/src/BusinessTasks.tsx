@@ -392,6 +392,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       if (busyRef.current || incomingBusy) return true;
       if (view === 'compose') return false;
       setView(view === 'result' ? resultParent.current : 'compose');
+      setNotice(''); setError('');
       return true;
     });
     return () => subscription.remove();
@@ -472,7 +473,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const showHistory = async (limit = historyLimit) => {
     if (!Number.isSafeInteger(limit) || limit < 30 || limit % 30 !== 0) return;
     const op = begin(); if (!op) return;
-    setView('history'); setHistoryKnown(false);
+    setView('history'); setHistoryKnown(false); setNotice('');
     try {
       const reply = await op.client.request<{ success: boolean; data: SavedThread[] }>(`/api/threads?limit=${limit}&published_only=true`); op.ensure();
       if (reply.success !== true || !Array.isArray(reply.data) || reply.data.some(thread => !thread || typeof thread.id !== 'string' || !thread.id
@@ -649,7 +650,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
 
   return <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
     {view === 'compose' ? <View style={s.heading}><Text style={s.eyebrow}>工作先有草稿</Text><Text style={s.hero}>把想法，{'\n'}变成可用的文字。</Text><Text style={s.intro}>给一份真实资料，收一份保存好的草稿。{'\n'}由你检查，再决定怎样使用。</Text></View> : <View style={s.heading}><Text style={s.eyebrow}>{view === 'history' ? '工作记录' : view === 'incoming' ? 'FORGE / INBOX' : view === 'incoming-calls' ? 'FORGE / CALLS' : '本次草稿'}</Text><Text style={s.title}>{view === 'history' ? '已保存的工作' : view === 'incoming' ? '来信先有草稿。' : view === 'incoming-calls' || jobRef.current?.origin === 'twilio-inbound' ? '来电需求记录与后续草稿。' : draftLabel(jobRef.current?.input.kind || kind)}</Text>{view === 'result' && jobRef.current && <Text style={s.small}>{jobRef.current.input.name}</Text>}</View>}
-    <View style={s.tabs}>{button('新建草稿', () => { setView('compose'); setError(''); }, busy || incomingBusy, view !== 'compose')}{button('已保存的工作', () => { void showHistory(); }, busy || incomingBusy, view !== 'history')}</View>
+    <View style={s.tabs}>{button('新建草稿', () => { setView('compose'); setError(''); setNotice(''); }, busy || incomingBusy, view !== 'compose')}{button('已保存的工作', () => { void showHistory(); }, busy || incomingBusy, view !== 'history')}</View>
     {error ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{error}</Text></View> : null}
     {notice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{notice}</Text></View> : null}
     {busy && view !== 'result' && <ActivityIndicator accessibilityLabel="正在处理当前操作" style={{ marginTop: 20 }} color={C.green} />}
