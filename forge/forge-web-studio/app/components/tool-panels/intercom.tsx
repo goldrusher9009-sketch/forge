@@ -2,6 +2,7 @@
 import React from 'react';
 import { API, BACKEND, API_BASE, getToken, saveToolHistory, INTEGRATION_CATALOG, INTEGRATION_CATS, CHAINABLE_TOOLS } from './shared';
 import { utcStamp } from '../../../lib/platform-time';
+import { previewDocument } from '../../../lib/html-preview';
 
 export function ForgeTab_intercom() {
   const [connected, setConnected] = React.useState(false);
@@ -69,13 +70,14 @@ export function ForgeTab_intercom() {
         {tabs.map(t => <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: '6px 14px', borderRadius: 6, border: 'none', background: tab === t.id ? '#1f8ded' : '#1a1a1a', color: tab === t.id ? '#fff' : '#aaa', cursor: 'pointer', fontSize: 12 }}>{t.label}</button>)}
       </div>
       {tab === 'conversations' && <div>
-        {conversations.map(c => <div key={c.id} onClick={() => setSelected(selected?.id === c.id ? null : c)} style={{ padding: '10px 12px', background: selected?.id === c.id ? '#1f8ded11' : '#111', borderRadius: 6, marginBottom: 4, cursor: 'pointer', fontSize: 13, border: `1px solid ${selected?.id === c.id ? '#1f8ded44' : 'transparent'}` }}>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+        {conversations.map(c => <div key={c.id} style={{ padding: '10px 12px', background: selected?.id === c.id ? '#1f8ded11' : '#111', borderRadius: 6, marginBottom: 4, fontSize: 13, border: `1px solid ${selected?.id === c.id ? '#1f8ded44' : 'transparent'}` }}>
+          <button type="button" aria-pressed={selected?.id === c.id} onClick={() => setSelected(selected?.id === c.id ? null : c)} style={{ display: 'flex', width: '100%', gap: 10, alignItems: 'center', padding: 0, border: 'none', background: 'transparent', textAlign: 'left', font: 'inherit', cursor: 'pointer' }}>
             <span style={{ color: stateColor(c.state), fontSize: 11 }}>● {c.state}</span>
             <span style={{ flex: 1, color: '#ddd', fontWeight: 500 }}>{c.source?.subject || c.id}</span>
             <span style={{ color: '#555', fontSize: 11 }}>{c.updated_at ? new Date(utcStamp(c.updated_at * 1000)).toLocaleDateString() : ''}</span>
-          </div>
-          {c.source?.body && <div style={{ color: '#888', fontSize: 11, marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} dangerouslySetInnerHTML={{ __html: c.source.body }} />}
+          </button>
+          {c.source?.body && <iframe title={`Conversation: ${c.source.subject || c.id}`} sandbox="" referrerPolicy="no-referrer" srcDoc={previewDocument({ content: c.source.body })}
+            style={{ display: 'block', width: '100%', height: 160, marginTop: 8, border: 'none', borderRadius: 4, background: '#fff' }} />}
         </div>)}
         {selected && <div style={{ marginTop: 12, padding: 14, background: '#0d0d0d', borderRadius: 8 }}>
           <div style={{ fontWeight: 600, color: '#aaa', fontSize: 12, marginBottom: 8 }}>Reply</div>

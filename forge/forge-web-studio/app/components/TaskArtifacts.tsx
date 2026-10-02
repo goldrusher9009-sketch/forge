@@ -2,12 +2,12 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import styles from './TaskArtifacts.module.css';
+import { previewDocument } from '../../lib/html-preview';
 
 type Artifact = { id:string; thread_id:string; title:string; language:string; content:string; filename:string; sizeBytes:number; version:number };
 type Props = { threadId:string; accountId:string; locale:string; refreshKey:string; request:(path:string)=>Promise<any> };
 const previewable = (item:Artifact) => ['html','svg'].includes(item.language);
 const sizeLabel = (item:Artifact) => {const bytes=item.sizeBytes??new TextEncoder().encode(item.content).length;return bytes<1024?`${bytes} B`:`${(bytes/1024).toFixed(1)} KB`;};
-const previewDocument = (item:Artifact) => `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><style>body{margin:16px;color:#192027;background:white;font:14px sans-serif}svg{max-width:100%;height:auto}img{max-width:100%}${item.language==='svg'?'body{min-height:calc(100vh - 32px);display:grid;place-items:center;background:#e7e7ec}svg{width:min(100%,900px)}':''}</style></head><body>${item.content}</body></html>`;
 
 /** Always load from the authenticated task. Tool text is never an artifact. */
 export function TaskArtifacts({threadId,accountId,locale,refreshKey,request}:Props) {

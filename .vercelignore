@@ -1,0 +1,11 @@
+*
+!forge
+!forge/forge-web-studio
+!forge/forge-web-studio/**
+forge/forge-web-studio/node_modules
+forge/forge-web-studio/node_modules/**
+forge/forge-web-studio/.next
+forge/forge-web-studio/.next/**
+forge/forge-web-studio/.vercel
+forge/forge-web-studio/.vercel/**
+forge/forge-web-studio/.env*

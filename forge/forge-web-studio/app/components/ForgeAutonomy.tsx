@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { utcStamp } from '../../lib/platform-time';
 import { useUiLanguage } from '../../lib/ui-language';
+import { previewDocument } from '../../lib/html-preview';
 
 type Api = (path: string, opts?: RequestInit) => Promise<any>;
 
@@ -368,9 +369,10 @@ function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: ()
         </div>
       </div>
       {preview && !editing && (
-        <div style={{ marginTop: 10, padding: 10, background: 'var(--fg-bg4,#1a1a1e)', borderRadius: 8, fontSize: 12, color: 'var(--fg-text2,#ccc)', maxHeight: 240, overflow: 'auto', whiteSpace: 'pre-wrap' }}
-          dangerouslySetInnerHTML={a.type === 'seo_page' ? { __html: content } : undefined}
-        >{a.type === 'seo_page' ? undefined : content}</div>
+        a.type === 'seo_page'
+          ? <iframe title={`${T('Preview')}: ${a.title || T(meta.label)}`} sandbox="" referrerPolicy="no-referrer" srcDoc={previewDocument({ content })}
+              style={{ display: 'block', width: '100%', height: 240, marginTop: 10, border: '1px solid var(--fg-border,rgba(255,255,255,0.06))', borderRadius: 8, background: '#fff' }} />
+          : <div style={{ marginTop: 10, padding: 10, background: 'var(--fg-bg4,#1a1a1e)', borderRadius: 8, fontSize: 12, color: 'var(--fg-text2,#ccc)', maxHeight: 240, overflow: 'auto', whiteSpace: 'pre-wrap' }}>{content}</div>
       )}
       {editing && (
         <textarea style={{ ...S.input, marginTop: 10, minHeight: 140, fontFamily: 'inherit' }} value={content} onChange={e => setContent(e.target.value)} />

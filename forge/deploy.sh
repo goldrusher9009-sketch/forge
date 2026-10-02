@@ -42,4 +42,5 @@ npm audit --omit=dev --audit-level=high --registry=https://registry.npmjs.org
 npm run build
 
 printf '[forge] Creating protected Vercel Preview; Production is not promoted by this script\n'
-npx --yes --registry="$NPM_REGISTRY" vercel deploy --yes --target=preview
+cd "$(git rev-parse --show-toplevel)"
+npx --yes --registry="$NPM_REGISTRY" vercel@59.11.7 deploy --yes --target=preview --project="$EXPECTED_PROJECT_ID" --scope="$EXPECTED_ORG_ID"

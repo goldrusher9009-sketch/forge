@@ -283,7 +283,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const showHistory = async () => {
     const op = begin(); if (!op) return;
     setView('history');
-    try { const reply = await op.client.request<{ data: SavedThread[] }>('/api/threads?limit=30'); op.ensure(); setHistory(Array.isArray(reply.data) ? reply.data.filter(thread => !!thread.publishedAgent?.releaseId) : []); }
+    try { const reply = await op.client.request<{ data: SavedThread[] }>('/api/threads?limit=30&published_only=true'); op.ensure(); setHistory(Array.isArray(reply.data) ? reply.data.filter(thread => !!thread.publishedAgent?.releaseId) : []); }
     catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setError(friendly(e)); }
     finally { op.finish(); }
   };
