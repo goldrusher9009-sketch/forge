@@ -20,6 +20,9 @@ export type MailFollowUp = {
   reportedRevenueMinor: number | null; reportedRevenueCurrency: 'CNY' | 'USD' | null;
 };
 type FollowUpInput = Omit<MailFollowUp, 'mailDeliveryId' | 'version' | 'recordedBy' | 'updatedAt'> & { expectedVersion: number };
+type TaskSource = { threadId: string; artifactId: string; artifactVersion: number; runId: string; requestId: string; releaseId: string; artifactSha256: string; filename: string };
+export type TaskFollowUp = Omit<MailFollowUp, 'mailDeliveryId'> & { threadId: string; source: TaskSource; sourceHash: string };
+type TaskFollowUpInput = FollowUpInput & { expectedSourceHash: string };
 export class BusinessMailError extends Error {
   constructor(public code: string, public status = 400) { super(code); }
 }
@@ -76,6 +79,11 @@ export function createBusinessMail({ db, deliveryChecks, getCredential, fetcher 
     CREATE TABLE IF NOT EXISTS business_mail_followups (
       mail_delivery_id TEXT PRIMARY KEY REFERENCES business_mail_deliveries(id) ON DELETE CASCADE,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      version INTEGER NOT NULL,fields_json TEXT NOT NULL,updated_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS business_task_followups (
+      thread_id TEXT PRIMARY KEY REFERENCES threads(id) ON DELETE CASCADE,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      source_json TEXT NOT NULL,source_hash TEXT NOT NULL,
       version INTEGER NOT NULL,fields_json TEXT NOT NULL,updated_at INTEGER NOT NULL);`);
   if (!db.prepare('PRAGMA table_info(business_mail_deliveries)').all().some(column => column.name === 'accepted_at')) db.exec('ALTER TABLE business_mail_deliveries ADD COLUMN accepted_at INTEGER');
   const atomic = <T extends (...args: any[]) => any>(fn: T): T => {
@@ -183,6 +191,62 @@ export function createBusinessMail({ db, deliveryChecks, getCredential, fetcher 
       .run(id, user, current.version + 1, JSON.stringify(fields), now());
     return getFollowUp(user, id);
   });
+  function taskSource(user: string, threadId: string): TaskSource {
+    text(threadId, 128, 'TASK_FOLLOWUP_INVALID');
+    const thread = db.prepare('SELECT agent_release_id,model FROM threads WHERE id=? AND user_id=?').get(threadId, user);
+    if (!thread) fail('TASK_FOLLOWUP_NOT_FOUND', 404);
+    try {
+      const latest = deliveryChecks.latest(user, threadId);
+      const files = latest.files.filter(file => ['reply-draft.json', 'marketing-pack.json'].includes(file.filename));
+      if (files.length !== 1) fail('TASK_FOLLOWUP_SOURCE_UNVERIFIED', 409);
+      const file = files[0], pinned = source(user, threadId, file.id, file.version);
+      const release = db.prepare(`SELECT r.id FROM agent_releases r JOIN workspace_agents a ON a.id=r.agent_id AND a.user_id=r.user_id
+        WHERE r.id=? AND r.user_id=?`).get(thread.agent_release_id, user);
+      const run = db.prepare('SELECT request_id,request_hash,status,finished_at FROM pi_thread_runs WHERE id=? AND user_id=? AND thread_id=?')
+        .get(pinned.runId, user, threadId);
+      if (!release || pinned.releaseId !== release.id || !run || run.status !== 'completed' || !run.finished_at
+        || run.request_id !== pinned.requestId || !/^[a-f0-9]{64}$/.test(run.request_hash || '')) fail('TASK_FOLLOWUP_SOURCE_UNVERIFIED', 409);
+      const receipts = db.prepare(`SELECT p.request_id,p.effective_receipt,p.usage_status,b.state,b.charged_units,b.provider_cost_units,b.model
+        FROM pi_provider_receipts p LEFT JOIN managed_billing_requests b ON b.id=p.request_id AND b.user_id=p.user_id
+        WHERE p.user_id=? AND p.run_id=?`).all(user, `thread:${threadId}:${pinned.runId}`);
+      if (!receipts.length || !receipts.every(row => {
+        const receipt = JSON.parse(row.effective_receipt);
+        if (row.charged_units !== 0 || row.provider_cost_units !== 0 || row.model !== thread.model
+          || receipt?.requestId !== row.request_id || receipt.userId !== user || receipt.runId !== `thread:${threadId}:${pinned.runId}`
+          || receipt.model !== thread.model || receipt.provider !== 'openrouter') return false;
+        if (row.state === 'settled') return row.usage_status === 'reported' && receipt.usageStatus === 'reported'
+          && ['completed', 'failed', 'cancelled'].includes(receipt.state) && receipt.usage?.providerCostUsd === 0;
+        return row.state === 'released' && (row.usage_status === 'not_sent' && receipt.usageStatus === 'not_sent' && receipt.state === 'not_sent'
+          || row.usage_status === 'not_charged' && receipt.usageStatus === 'not_charged' && receipt.state === 'rejected' && receipt.httpStatus === 402
+          && receipt.zeroChargeEvidence?.source === 'openrouter_http_status' && receipt.zeroChargeEvidence.policy === 'openrouter_pre_admission_402_v1'
+          && receipt.zeroChargeEvidence.httpStatus === 402);
+      }) || !receipts.some(row => row.state === 'settled' && JSON.parse(row.effective_receipt).state === 'completed')) fail('TASK_FOLLOWUP_SOURCE_UNVERIFIED', 409);
+      return { threadId, artifactId: file.id, artifactVersion: file.version, runId: pinned.runId, requestId: pinned.requestId,
+        releaseId: release.id, artifactSha256: pinned.artifactSha256, filename: pinned.filename };
+    } catch { return fail('TASK_FOLLOWUP_SOURCE_UNVERIFIED', 409); }
+  }
+  const getTaskFollowUp = atomic((user: string, threadId: string): TaskFollowUp => {
+    const pinned = taskSource(user, threadId), sourceHash = hash(pinned);
+    const row = db.prepare('SELECT * FROM business_task_followups WHERE thread_id=? AND user_id=?').get(threadId, user);
+    if (row && row.source_hash !== sourceHash) fail('TASK_FOLLOWUP_SOURCE_CHANGED', 409);
+    return { threadId, source: pinned, sourceHash, version: row?.version || 0, recordedBy: 'owner', updatedAt: row?.updated_at ?? null,
+      ...(row ? JSON.parse(row.fields_json) : { nextStep: null, followUpOn: null, result: null, notes: null, evidenceReference: null, reportedRevenueMinor: null, reportedRevenueCurrency: null }) };
+  });
+  const saveTaskFollowUp = atomic((user: string, threadId: string, raw: TaskFollowUpInput): TaskFollowUp => {
+    const current = getTaskFollowUp(user, threadId);
+    if (!object(raw)) fail('TASK_FOLLOWUP_INVALID');
+    const { expectedSourceHash, ...input } = raw;
+    let fields: ReturnType<typeof followUpFields>;
+    try { fields = followUpFields(input); } catch { return fail('TASK_FOLLOWUP_INVALID'); }
+    if (typeof expectedSourceHash !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSourceHash)) fail('TASK_FOLLOWUP_INVALID');
+    if (expectedSourceHash !== current.sourceHash) fail('TASK_FOLLOWUP_SOURCE_CHANGED', 409);
+    if (input.expectedVersion !== current.version) fail('TASK_FOLLOWUP_CHANGED', 409);
+    // Owner-entered outcomes are task notes, never payment or revenue evidence.
+    db.prepare(`INSERT INTO business_task_followups(thread_id,user_id,source_json,source_hash,version,fields_json,updated_at) VALUES(?,?,?,?,?,?,?)
+      ON CONFLICT(thread_id) DO UPDATE SET version=excluded.version,fields_json=excluded.fields_json,updated_at=excluded.updated_at`)
+      .run(threadId, user, JSON.stringify(current.source), current.sourceHash, current.version + 1, JSON.stringify(fields), now());
+    return getTaskFollowUp(user, threadId);
+  });
   function checkKey(user: string, row: any) {
     const key = credential(user);
     if (hash(key) !== row.credential_hash) fail('MAIL_CREDENTIAL_CHANGED', 409);
@@ -274,7 +338,7 @@ export function createBusinessMail({ db, deliveryChecks, getCredential, fetcher 
     })();
     return get(user, id);
   }
-  return { prepare, get, list, approve, cancel, refresh, recover, getFollowUp, saveFollowUp };
+  return { prepare, get, list, approve, cancel, refresh, recover, getFollowUp, saveFollowUp, getTaskFollowUp, saveTaskFollowUp };
 }
 
 export function registerBusinessMailRoutes(app: any, requireAuth: any, service: ReturnType<typeof createBusinessMail>) {
@@ -293,6 +357,8 @@ export function registerBusinessMailRoutes(app: any, requireAuth: any, service: 
   app.get('/api/mail-deliveries/:id', requireAuth, route((user, req) => service.get(user, req.params.id)));
   app.get('/api/mail-deliveries/:id/follow-up', requireAuth, route((user, req) => service.getFollowUp(user, req.params.id)));
   app.put('/api/mail-deliveries/:id/follow-up', requireAuth, route((user, req) => service.saveFollowUp(user, req.params.id, req.body)));
+  app.get('/api/threads/:id/follow-up', requireAuth, route((user, req) => service.getTaskFollowUp(user, req.params.id)));
+  app.put('/api/threads/:id/follow-up', requireAuth, route((user, req) => service.saveTaskFollowUp(user, req.params.id, req.body)));
   app.post('/api/mail-deliveries/:id/approve', requireAuth, route((user, req) => service.approve(user, req.params.id, req.body)));
   app.post('/api/mail-deliveries/:id/cancel', requireAuth, route((user, req) => { exact(req.body || {}, []); return service.cancel(user, req.params.id); }));
   app.post('/api/mail-deliveries/:id/refresh', requireAuth, route((user, req) => { exact(req.body || {}, []); return service.refresh(user, req.params.id); }));
