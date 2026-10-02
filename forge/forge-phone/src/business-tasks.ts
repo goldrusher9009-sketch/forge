@@ -190,7 +190,8 @@ function prompt(input: DraftInput, requestId: string, tokenBudget: number): stri
     + `仅起草，不发送、不发布、不联络任何人。请实际调用 create_artifact 保存文件：title 为 "${draftFilename(input.kind)}"，language 为 "json"，type 为 "code"。不能只在聊天回答中粘贴内容。\n`
     + `JSON结构如下，保留所有固定字段，替换草稿内容占位文字；requestId、recipientName/brand 必须与输入完全一致：\n${JSON.stringify(schema)}\n`
     + 'missingInformation 和 unverifiedClaims（营销草稿）必须是字符串数组，每项用一段文字说明，不得放入对象或数组；无内容时保留空数组。营销草稿的 emailDraft 必须是含 subject、body 字符串的对象，socialDrafts 必须是含 channel、text 字符串的非空对象数组。\n'
-    + '营销草稿若没有 input.source 明确提供的既有沟通记录，邮件按首次主动联系起草，不得声称收到过对方来信、询问或已经沟通过、合作过。\n'
+    + '营销草稿只有 input.source 明确说明本次为首次主动联系时，才按首次主动联系起草；首次主动联系不证明此前从未沟通或未收到咨询。\n'
+    + '未提供联系或咨询记录时，不得声称收到过来信、询问、沟通过或合作过，也不得声称从未沟通、从未合作、未收到咨询或从未收到来信；这些历史记录属于未知信息，列入 missingInformation。\n'
     + '营销正文只能陈述 input.source 明确提供的品牌与服务事实；客户画像不代表品牌自身的规模、资历或能力。未提供的品牌属性不得写成事实，也不得先写入正文再用 unverifiedClaims 解释。\n'
     + '营销草稿的发件人姓名、职务或身份，以及后续继续或停止联系的安排，必须由 input.source 明确提供；未提供时不得自称负责人、创始人、经理等身份，不得承诺继续跟进、停止联系或不再打扰，缺失项列入 missingInformation。\n'
     + `保存后简短说明文件已准备好，等待本人检查。不要声称已发送、产生客户、收入或节省了已验证的工作时间。`;
