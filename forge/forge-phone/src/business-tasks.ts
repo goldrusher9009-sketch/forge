@@ -9,7 +9,7 @@ export type DraftReport = {
   accountingComplete: boolean; chargeUsd: number | null; checkedAt?: string;
   files: Array<{ id: string; filename: string; version: number; original: boolean }>;
 };
-export type DraftJob = { input: DraftInput; requestId: string; threadId: string; release: DraftRelease; body: string; runId?: string; origin?: 'resend-received' };
+export type DraftJob = { input: DraftInput; requestId: string; threadId: string; release: DraftRelease; body: string; runId?: string; origin?: 'resend-received' | 'twilio-inbound' };
 export type SavedThread = { id: string; title: string; created_at?: string; model: string; publishedAgent?: { agentId: string; releaseId: string; name: string; version: number } | null };
 export type DraftRequestState = { requestId: string; runId: string; status: string; result?: { success?: boolean; error?: string } | null; error?: string };
 export type DraftClient = { request: ForgeRequest; requestText(path: string, init?: RequestInit): Promise<{ text: string; contentType: string }> };
@@ -105,13 +105,53 @@ export async function readDraftRequest(client: DraftClient, job: DraftJob): Prom
   } catch (error) { if (object(error) && error.status === 404) return null; throw error; }
 }
 
+type IncomingCallSource = {
+  scope: 'business_cloud_number'; callSid: string; from: string; to: string; callerTranscript: string;
+  callerIdentityVerified: false; telephoneCostUsd: null; telephonePricingVerified: false;
+};
+function incomingCallSource(job: DraftJob): { id: string; source: IncomingCallSource } | null {
+  // Canonical server request IDs preserve the boundary even if a saved marker
+  // loses its optional origin. Ordinary drafts retain their existing verifier.
+  if (job.origin !== 'twilio-inbound' && !job.requestId.startsWith('incoming-call:')) return null;
+  const match = /^incoming-call:([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}):1$/i.exec(job.requestId);
+  let source: any; try { source = JSON.parse(job.input.source); } catch { fail('DRAFT_CALL_SOURCE_INVALID'); }
+  const fields = ['scope', 'callSid', 'from', 'to', 'callerTranscript', 'callerIdentityVerified', 'telephoneCostUsd', 'telephonePricingVerified'];
+  if (!match || job.input.kind !== 'reply' || !object(source) || Object.keys(source).length !== fields.length
+    || fields.some(field => !Object.prototype.hasOwnProperty.call(source, field)) || source.scope !== 'business_cloud_number'
+    || typeof source.callSid !== 'string' || !/^CA[a-f0-9]{32}$/i.test(source.callSid)
+    || typeof source.from !== 'string' || !source.from || source.from.length > 254 || /[\x00-\x1f\x7f]/.test(source.from)
+    || typeof source.to !== 'string' || !/^\+[1-9]\d{7,14}$/.test(source.to)
+    || typeof source.callerTranscript !== 'string' || !source.callerTranscript.trim() || source.callerTranscript.includes('\0')
+    || source.callerIdentityVerified !== false || source.telephoneCostUsd !== null || source.telephonePricingVerified !== false
+    || job.input.name !== (source.from.length <= 100 ? source.from : '来电客户')) fail('DRAFT_CALL_SOURCE_INVALID');
+  return { id: match[1], source: source as IncomingCallSource };
+}
+async function verifyIncomingCall(client: DraftClient, job: DraftJob, artifact?: DraftArtifact) {
+  const expected = incomingCallSource(job); if (!expected) return;
+  const reply = await client.request<{ success: boolean; data: Record<string, any> }>(`/api/incoming-call/calls/${segment(expected.id)}`);
+  const call = reply.data, source = expected.source;
+  if (reply.success !== true || !object(call) || call.id !== expected.id || call.scope !== source.scope
+    || call.draftStatus !== 'ready' || call.errorCode !== null || call.threadId !== job.threadId || call.requestId !== job.requestId
+    || call.callSid !== source.callSid || call.from !== source.from || call.to !== source.to || call.transcript !== source.callerTranscript
+    || call.callerIdentityVerified !== false || call.telephoneCostUsd !== null || call.telephonePricingVerified !== false
+    || !['completed', 'busy', 'failed', 'no-answer', 'canceled'].includes(call.terminalStatus)
+    || typeof call.terminalAt !== 'number' || !Number.isFinite(call.terminalAt) || typeof call.artifactId !== 'string' || !call.artifactId
+    || !Number.isSafeInteger(call.artifactVersion) || call.artifactVersion < 1
+    || artifact && (call.artifactId !== artifact.id || call.artifactVersion !== artifact.version || artifact.thread_id !== call.threadId)) fail('DRAFT_CALL_DELIVERY_UNVERIFIED');
+}
 function rules(job: DraftJob) {
   const filename = draftFilename(job.input.kind);
+  const call = incomingCallSource(job);
   return [
     { kind: 'file_exists', filename },
     ...Object.entries({ '/schemaVersion': 1, '/status': 'draft', '/ownerReviewRequired': true, '/requestId': job.requestId,
       [job.input.kind === 'reply' ? '/sent' : '/published']: false, [job.input.kind === 'reply' ? '/recipientName' : '/brand']: job.input.name })
       .map(([field, expected]) => ({ kind: 'json_value', filename, field, expected })),
+    // The verifier permits ten rules. Full source values, including transcripts
+    // longer than its 2000-character rule bound, are also compared after loading
+    // the original receipt-backed artifact below.
+    ...(call ? Object.entries({ '/scope': call.source.scope, '/callSid': call.source.callSid, '/telephoneCostUsd': null })
+      .map(([field, expected]) => ({ kind: 'json_value', filename, field, expected })) : []),
   ];
 }
 
@@ -120,6 +160,8 @@ export function parseDraftArtifact(job: DraftJob, artifact: DraftArtifact): Reco
   try { value = JSON.parse(artifact.content); } catch { fail('DRAFT_FILE_INVALID'); }
   if (!object(value) || value.schemaVersion !== 1 || value.status !== 'draft' || value.ownerReviewRequired !== true || value.requestId !== job.requestId
     || (job.input.kind === 'reply' ? value.sent !== false || value.recipientName !== job.input.name : value.published !== false || value.brand !== job.input.name)) fail('DRAFT_FILE_INVALID');
+  const call = incomingCallSource(job);
+  if (call && Object.entries(call.source).some(([field, expected]) => value[field] !== expected)) fail('DRAFT_CALL_SOURCE_MISMATCH');
   const nonempty = (item: unknown) => typeof item === 'string' && !!item.trim();
   const strings = (items: unknown) => Array.isArray(items) && items.every(item => typeof item === 'string');
   if (!strings(value.missingInformation) || (job.input.kind === 'reply' ? typeof value.followUpDraft !== 'string' : !strings(value.unverifiedClaims))) fail('DRAFT_FILE_INCOMPLETE');
@@ -129,6 +171,7 @@ export function parseDraftArtifact(job: DraftJob, artifact: DraftArtifact): Reco
 }
 
 export async function verifyDraft(client: DraftClient, job: DraftJob): Promise<{ artifact: DraftArtifact; value: Record<string, any>; report: DraftReport }> {
+  await verifyIncomingCall(client, job);
   const state = await readDraftRequest(client, job);
   if (state?.status !== 'completed' || state.result?.success !== true) fail(state?.status === 'running' ? 'DRAFT_STILL_RUNNING' : state?.error || 'DRAFT_RUN_NOT_COMPLETED');
   const listed = await client.request<{ data: DraftArtifact[] }>(`/api/artifacts?thread_id=${segment(job.threadId)}`);
@@ -143,6 +186,7 @@ export async function verifyDraft(client: DraftClient, job: DraftJob): Promise<{
   const value = parseDraftArtifact(job, artifact);
   const latest = await client.request<{ data: { report: DraftReport | null } }>(`/api/threads/${segment(job.threadId)}/delivery-checks`);
   if (latest.data?.report?.id !== report.id || latest.data.report.inputHash !== report.inputHash || latest.data.report.current !== true || latest.data.report.passed !== true || knownCharge(latest.data.report) !== 0) fail('DRAFT_DELIVERY_CHANGED');
+  await verifyIncomingCall(client, job, artifact);
   return { artifact, value, report: latest.data.report };
 }
 
@@ -159,7 +203,8 @@ export async function restoreDraftJob(client: DraftClient, thread: SavedThread):
       || typeof metadata.input.source !== 'string' || !metadata.input.source.trim() || metadata.input.source.length > (metadata.origin === 'resend-received' ? 64000 : 6000)
       || typeof metadata.requestId !== 'string' || !/^[A-Za-z0-9_.:-]{1,128}$/.test(metadata.requestId) || metadata.tokenBudget !== BUSINESS_TOKEN_BUDGET) continue;
     return { input: metadata.input as DraftInput, requestId: metadata.requestId, threadId: thread.id,
-      ...(metadata.origin === 'resend-received' ? { origin: 'resend-received' as const } : {}),
+      ...(metadata.origin === 'twilio-inbound' || metadata.requestId.startsWith('incoming-call:') ? { origin: 'twilio-inbound' as const }
+        : metadata.origin === 'resend-received' ? { origin: 'resend-received' as const } : {}),
       release: { ...thread.publishedAgent, model: thread.model }, body: JSON.stringify({ content: message.content, client_message_id: metadata.requestId, token_budget: metadata.tokenBudget, cost_budget_usd: 0 }) };
   }
   return null;

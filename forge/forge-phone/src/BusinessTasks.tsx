@@ -8,6 +8,7 @@ import {
   MailFollowUp, MailFollowUpForm, mailFollowUpForm, newMailFollowUpInput, readMailFollowUp, saveMailFollowUp,
 } from './business-tasks';
 import IncomingMail from './IncomingMail';
+import IncomingCalls from './IncomingCalls';
 
 type Props = { client: DraftClient; onBusyChange?: (busy: boolean) => void };
 const C = { bg: '#f3f0e8', paper: '#fffdf7', ink: '#20251f', muted: '#686f63', line: '#dcded2', green: '#3d6229', accent: '#b5db57', red: '#a33d30' };
@@ -77,7 +78,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const [phase, setPhase] = useState('');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
-  const [view, setView] = useState<'compose' | 'result' | 'history' | 'incoming'>('compose');
+  const [view, setView] = useState<'compose' | 'result' | 'history' | 'incoming' | 'incoming-calls'>('compose');
   const [incomingBusy, setIncomingBusy] = useState(false);
   const [history, setHistory] = useState<SavedThread[]>([]);
   const [files, setFiles] = useState<DraftArtifact[]>([]);
@@ -193,10 +194,10 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   };
   const inspect = async (api: DraftClient, job: DraftJob) => {
     const state = await readDraftRequest(api, job);
-    setRetryAllowed(!state && job.origin !== 'resend-received');
-    setCanStop(state?.status === 'running');
-    if (!state) { setPhase('等待确认'); setNotice(job.origin === 'resend-received' ? '来信草稿请求尚未确认。请返回收件草稿查看原处理记录，需要检查时从原记录明确重试。' : '服务端尚未找到这项请求。可以用同一个任务编号重新提交，内容保持不变。'); return; }
-    if (state.status === 'running') { setPhase('草稿仍在准备'); setNotice('任务已被服务端接收。请稍后查看结果，或明确停止。'); return; }
+    setRetryAllowed(!state && !['resend-received', 'twilio-inbound'].includes(job.origin || ''));
+    setCanStop(state?.status === 'running' && job.origin !== 'twilio-inbound');
+    if (!state) { setPhase('等待确认'); setNotice(job.origin === 'twilio-inbound' ? '来电草稿请求尚未确认。请返回云号码记录核对；这里不会停止或重新起草。' : job.origin === 'resend-received' ? '来信草稿请求尚未确认。请返回收件草稿查看原处理记录，需要检查时从原记录明确重试。' : '服务端尚未找到这项请求。可以用同一个任务编号重新提交，内容保持不变。'); return; }
+    if (state.status === 'running') { setPhase('草稿仍在准备'); setNotice(job.origin === 'twilio-inbound' ? '原后台工作仍在处理。请返回云号码记录核对；这里只读取现有记录。' : '任务已被服务端接收。请稍后查看结果，或明确停止。'); return; }
     setRetryAllowed(false);
     if (state.status !== 'completed' || state.result?.success !== true) {
       await loadFiles(api, job.threadId); setPhase(state.status === 'cancelled' ? '任务已停止' : '任务需要检查');
@@ -204,7 +205,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     }
     const result = await verifyDraft(api, job);
     setFiles([result.artifact]); setPreview({ ...result, verified: true }); setCharge(knownCharge(result.report));
-    setPhase('草稿已保存'); setNotice('文件与模型费用已核对。请检查事实、措辞和收件对象，再自行发送或发布。');
+    setPhase('草稿已保存'); setNotice(job.origin === 'twilio-inbound' ? '文件与模型费用已核对。来电身份、电话费用与转录事实仍需本人核实；草稿仅供后续跟进参考。' : '文件与模型费用已核对。请检查事实、措辞和收件对象，再自行发送或发布。');
   };
   const refreshAssistants = async () => {
     const op = begin(); if (!op) return;
@@ -249,7 +250,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   };
   const checkResult = async (retry = false) => {
     const job = jobRef.current; if (!job?.threadId) return;
-    if (retry && job.origin === 'resend-received') return;
+    if (retry && ['resend-received', 'twilio-inbound'].includes(job.origin || '')) return;
     const op = begin('draft'); if (!op) return;
     try {
       const state = await readDraftRequest(op.client, job);
@@ -264,7 +265,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     } finally { op.finish(); }
   };
   const stop = async (expectedOperation: number) => {
-    if (!mounted.current || operation.current !== expectedOperation || clientRef.current !== client) return;
+    if (!mounted.current || operation.current !== expectedOperation || clientRef.current !== client || jobRef.current?.origin === 'twilio-inbound') return;
     const job = jobRef.current; const accountClient = clientRef.current;
     operation.current += 1; controller.current?.abort(); controller.current = null;
     busyRef.current = true; setBusy(true); setRetryAllowed(false); setPhase('正在请求停止'); setNotice('');
@@ -300,7 +301,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
       else { await loadFiles(op.client, thread.id); op.ensure(); setPhase('已保存的工作'); setNotice('这是已有工作区文件，可阅读和复制。没有完整的本次草稿核对记录时，不会标记为已交付。'); }
     } catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) { setError(friendly(e)); try { await loadFiles(op.client, threadId); } catch {} } }
     finally {
-      try { op.ensure(); await loadMailRecords(op.client, threadId); op.ensure(); }
+      try { op.ensure(); if (jobRef.current?.origin !== 'twilio-inbound') await loadMailRecords(op.client, threadId); op.ensure(); }
       catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setMailError('邮件记录尚未确认。可以重新读取；不会自动再次发送。'); }
       op.finish();
     }
@@ -482,17 +483,19 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const content = preview?.value;
   const displayedOperation = operation.current;
   const mailLocked = !!mailReceipt && !['cancelled', 'rejected'].includes(mailReceipt.status) || !!preparation.current || mailUncertain;
-  const mailSourceVerified = preview?.verified === true && !!preview.value && knownCharge(preview.report) === 0;
+  const mailSourceVerified = jobRef.current?.origin !== 'twilio-inbound' && preview?.verified === true && !!preview.value && knownCharge(preview.report) === 0;
   const followUpEditable = !!mailReceipt && followUpRecord?.mailDeliveryId === mailReceipt.id && !busy && !followUpReadRequired;
   const followUpResults: Array<{ value: MailFollowUp['result']; label: string }> = [{ value: null, label: '未记录' }, { value: 'pending', label: '待跟进' }, { value: 'replied', label: '已回复' }, { value: 'won', label: '已成交' }, { value: 'lost', label: '未成交' }];
 
   return <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
-    {view === 'compose' ? <View style={s.heading}><Text style={s.eyebrow}>工作先有草稿</Text><Text style={s.hero}>把想法，{'\n'}变成可用的文字。</Text><Text style={s.intro}>给一份真实资料，收一份保存好的草稿。{'\n'}由你检查，再决定怎样使用。</Text></View> : <View style={s.heading}><Text style={s.eyebrow}>{view === 'history' ? '工作记录' : view === 'incoming' ? 'FORGE / INBOX' : '本次草稿'}</Text><Text style={s.title}>{view === 'history' ? '已保存的工作' : view === 'incoming' ? '来信先有草稿。' : draftLabel(jobRef.current?.input.kind || kind)}</Text>{view === 'result' && jobRef.current && <Text style={s.small}>{jobRef.current.input.name}</Text>}</View>}
+    {view === 'compose' ? <View style={s.heading}><Text style={s.eyebrow}>工作先有草稿</Text><Text style={s.hero}>把想法，{'\n'}变成可用的文字。</Text><Text style={s.intro}>给一份真实资料，收一份保存好的草稿。{'\n'}由你检查，再决定怎样使用。</Text></View> : <View style={s.heading}><Text style={s.eyebrow}>{view === 'history' ? '工作记录' : view === 'incoming' ? 'FORGE / INBOX' : view === 'incoming-calls' ? 'FORGE / CALLS' : '本次草稿'}</Text><Text style={s.title}>{view === 'history' ? '已保存的工作' : view === 'incoming' ? '来信先有草稿。' : view === 'incoming-calls' || jobRef.current?.origin === 'twilio-inbound' ? '来电需求记录与后续草稿。' : draftLabel(jobRef.current?.input.kind || kind)}</Text>{view === 'result' && jobRef.current && <Text style={s.small}>{jobRef.current.input.name}</Text>}</View>}
     <View style={s.tabs}>{button('新建草稿', () => { setView('compose'); setError(''); }, busy || incomingBusy, view !== 'compose')}{button('已保存的工作', () => { void showHistory(); }, busy || incomingBusy, view !== 'history')}</View>
     {button('收件草稿 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming'); setError(''); setNotice(''); } }, busy || incomingBusy, view !== 'incoming')}
+    {button('云号码来电 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming-calls'); setError(''); setNotice(''); } }, busy || incomingBusy, view !== 'incoming-calls')}
     {error ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{error}</Text></View> : null}
     {notice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{notice}</Text></View> : null}
     {view === 'incoming' && <IncomingMail client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
+    {view === 'incoming-calls' && <IncomingCalls client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
     {view === 'compose' && <>
       <View style={s.templates}>{(['reply', 'marketing'] as DraftKind[]).map((value, index) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: kind === value, disabled: busy }} disabled={busy} key={value} onPress={() => setKind(value)} style={[s.template, kind === value && s.selected]}><Text style={s.number}>0{index + 1}</Text><Text style={s.templateTitle}>{draftLabel(value)}</Text><Text style={s.small}>{value === 'reply' ? '回复正文 + 后续跟进草稿' : '邮件文案 + 社交媒体文案'}</Text></TouchableOpacity>)}</View>
       <Text style={s.label}>{kind === 'reply' ? '收件对象' : '品牌或产品名称'}</Text><TextInput accessibilityLabel="草稿对象名称" value={name} onChangeText={setName} editable={!busy} maxLength={100} placeholder={kind === 'reply' ? '例如：王经理' : '例如：Northstar Studio'} placeholderTextColor={C.muted} style={s.input} />
@@ -506,17 +509,17 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     {view === 'result' && <>
       <View style={s.phase}><Text style={s.title}>{phase || '工作结果'}</Text>{busy && busyKind === 'draft' && <ActivityIndicator color={C.green} />}</View>
       <Text style={s.small}>{charge === null ? '模型费用：尚未确认' : `模型费用：$${charge === 0 ? '0.00' : charge.toFixed(6)} · 已核对`}</Text>
-      {busy ? busyKind === 'draft' && button('停止本次任务', () => { void stop(displayedOperation); }, phase === '正在请求停止', true) : jobRef.current?.threadId ? <>{button('查看任务结果', () => { void checkResult(); }, false, true)}{retryAllowed && button('重新提交原任务', () => { void checkResult(true); })}{canStop && button('请求停止原任务', () => { void stop(displayedOperation); }, false, true)}</> : null}
+      {busy ? busyKind === 'draft' && jobRef.current?.origin !== 'twilio-inbound' && button('停止本次任务', () => { void stop(displayedOperation); }, phase === '正在请求停止', true) : jobRef.current?.threadId ? <>{button('查看任务结果', () => { void checkResult(); }, false, true)}{retryAllowed && button('重新提交原任务', () => { void checkResult(true); })}{canStop && button('请求停止原任务', () => { void stop(displayedOperation); }, false, true)}</> : null}
       {files.length > 1 && files.map(file => button(file.filename, () => { setPreview({ artifact: file, report: null, verified: false }); setRaw(true); }, busy, true))}
       {preview && <View style={s.saved}><Text style={s.eyebrow}>{preview.verified ? '文件与交付要求已核对' : '已保存文件 · 请检查内容'}</Text><Text style={s.filename}>{preview.artifact.filename}</Text><Text style={s.small}>长按正文即可选择并复制。草稿仍需本人审阅。</Text>
-        {content && !raw ? <>{jobRef.current?.input.kind === 'reply' ? <><Text style={s.label}>主题</Text>{text(String(content.subject))}<Text style={s.label}>回复草稿</Text>{text(String(content.body))}{content.followUpDraft && <><Text style={s.label}>后续跟进草稿</Text>{text(String(content.followUpDraft))}</>}</> : <><Text style={s.label}>邮件主题</Text>{text(String(content.emailDraft?.subject || ''))}{text(String(content.emailDraft?.body || ''))}{content.socialDrafts?.map((item: any, index: number) => <View key={index}><Text style={s.label}>{String(item.channel)}</Text>{text(String(item.text))}</View>)}</>}
+        {content && !raw ? <>{jobRef.current?.input.kind === 'reply' ? <><Text style={s.label}>主题</Text>{text(String(content.subject))}<Text style={s.label}>{jobRef.current?.origin === 'twilio-inbound' ? '来电跟进草稿' : '回复草稿'}</Text>{text(String(content.body))}{content.followUpDraft && <><Text style={s.label}>后续跟进草稿</Text>{text(String(content.followUpDraft))}</>}</> : <><Text style={s.label}>邮件主题</Text>{text(String(content.emailDraft?.subject || ''))}{text(String(content.emailDraft?.body || ''))}{content.socialDrafts?.map((item: any, index: number) => <View key={index}><Text style={s.label}>{String(item.channel)}</Text>{text(String(item.text))}</View>)}</>}
           {Array.isArray(content.missingInformation) && content.missingInformation.length > 0 && <><Text style={s.label}>还需要你补充</Text>{text(content.missingInformation.map((item: unknown) => String(item)).join('\n'))}</>}
           {Array.isArray(content.unverifiedClaims) && content.unverifiedClaims.length > 0 && <><Text style={s.label}>尚未核实的说法</Text>{text(content.unverifiedClaims.map((item: unknown) => String(item)).join('\n'))}</>}
         </> : text(preview.artifact.content)}
         {content && button(raw ? '阅读草稿正文' : '查看 JSON 文件', () => setRaw(!raw), false, true)}
         {preview.report?.checkedAt && <Text style={s.footnote}>最近核对：{new Date(preview.report.checkedAt).toLocaleString()}</Text>}
       </View>}
-      {(mailSourceVerified || mailRecords.length > 0) && !mailOpen && button(mailRecords.length ? '查看邮件准备与发送记录' : '准备一封邮件 →', () => { void openMail(); }, busy, true)}
+      {jobRef.current?.origin !== 'twilio-inbound' && (mailSourceVerified || mailRecords.length > 0) && !mailOpen && button(mailRecords.length ? '查看邮件准备与发送记录' : '准备一封邮件 →', () => { void openMail(); }, busy, true)}
       {mailOpen && <View style={s.mailSection}>
         <View style={s.mailHeading}><View style={{ flex: 1 }}><Text style={s.eyebrow}>FORGE / MAIL</Text><Text style={s.templateTitle}>发出去之前，先看清楚。</Text></View>{busy && busyKind === 'mail' && <ActivityIndicator color={C.green} />}</View>
         <Text style={s.footnote}>只发送本次完整预览中的一封邮件。原草稿文件保持不变，后续跟进与社交内容不会自动发送。</Text>

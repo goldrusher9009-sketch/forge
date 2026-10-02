@@ -66,6 +66,35 @@ Before connecting Vercel, verify that the public control-plane hostname returns:
 - `200` for `/api/health` with the correct secret;
 - `404` for a non-`/api/*` path even with the correct secret.
 
+## Optional business cloud-number calls
+
+`FORGE_INCOMING_CALL_PUBLIC_URL` is an optional server-only exact HTTPS origin,
+for example `https://<public-Forge-app-host>`, with no path, query or fragment.
+The candidate and VPS Compose files forward it to the control plane; leaving it
+empty keeps authenticated incoming-call routes unavailable (`503`) without
+affecting other authenticated features. Setting the origin alone does not enable
+a number or authorize any call processing.
+
+Before an Owner enables a binding, verify the existing published-Agent Pi worker
+is healthy and the public origin reaches Forge's `/api/incoming-call/webhooks/*`
+routes. Twilio must reach these form POST callbacks without an interactive login
+page. A protected Preview alone does not prove that provider reachability. Keep
+the control-plane gateway secret server-side; Twilio callbacks authenticate with
+their own signatures, while the web gateway supplies its internal gateway secret.
+The shared web proxy preserves signed form bytes and limits these requests to
+32 KiB.
+
+The Owner saves their own Twilio credentials in Forge's encrypted connector store,
+prepares a Voice-enabled business cloud number, configures the displayed voice and
+status POST URLs in Twilio, and explicitly confirms webhook setup, background
+draft generation and unverified telephone costs. New bindings start disabled.
+The service receives one spoken need and prepares an Owner-reviewed draft after
+the call ends; it does not handle the phone's SIM calls, provide live model voice
+conversation, call back or send a reply automatically. Model spending is capped
+at $0 with no paid fallback; telephone and speech-recognition costs remain unknown.
+Acceptance still requires a reachable provider callback and an explicitly
+authorized real cloud-number call. Local signed fixtures are not that acceptance.
+
 ## Vercel Preview
 
 Set these server-only variables for Preview and, after acceptance, Production:

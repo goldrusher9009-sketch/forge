@@ -2,7 +2,7 @@
 declare const process: { env: { EXPO_PUBLIC_FORGE_API_URL?: string } };
 declare const __DEV__: boolean;
 // React Native 0.74's global URL does not implement origin or hostname.
-const ForgeURL = require('whatwg-url-without-unicode').URL as typeof URL;
+export const ForgeURL = require('whatwg-url-without-unicode').URL as typeof URL;
 
 const configuredApi = process.env.EXPO_PUBLIC_FORGE_API_URL;
 export const FORGE_API = (() => {

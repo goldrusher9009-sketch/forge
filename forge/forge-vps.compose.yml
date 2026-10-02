@@ -18,6 +18,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:?set ADMIN_EMAIL}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD}
       FRONTEND_URL: ${FRONTEND_URL:?set the exact HTTPS frontend origin}
+      FORGE_INCOMING_CALL_PUBLIC_URL: ${FORGE_INCOMING_CALL_PUBLIC_URL:-}
       FORGE_AGENT_ENGINE: ${FORGE_AGENT_ENGINE:-pi}
       FORGE_PI_WORKER_URL: http://forge-pi-worker:8791
       FORGE_PI_WORKER_TOKEN: ${FORGE_PI_WORKER_TOKEN:?set a random token of at least 32 characters}

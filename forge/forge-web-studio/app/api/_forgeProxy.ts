@@ -136,11 +136,13 @@ export async function proxyForgeApi(
   };
   try {
     if (!['GET', 'HEAD'].includes(request.method)) {
-      if (request.body && /^application\/json(?:\s*;|$)/i.test(request.headers.get('content-type') || '')) {
+      if (request.body && /^(?:application\/json|application\/x-www-form-urlencoded)(?:\s*;|$)/i.test(request.headers.get('content-type') || '')) {
         // A streaming upload has no replayable source. Node fetch can turn an
         // upstream 401 into a network error for such bodies. Buffer bounded JSON
-        // so invalid credentials keep their real status through the gateway.
-        const limit = pathParts[0] === 'pi-events' ? 8192 : 16 * 1024 * 1024;
+        // and forms so invalid credentials/signatures keep their real status.
+        const limit = pathParts[0] === 'pi-events' ? 8192
+          : pathParts[0] === 'incoming-call' && pathParts[1] === 'webhooks' ? 32 * 1024
+          : 16 * 1024 * 1024;
         const reader = request.body.getReader(), chunks: Uint8Array[] = [];
         let size = 0;
         while (true) {

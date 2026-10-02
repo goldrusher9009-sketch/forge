@@ -158,7 +158,18 @@ class ForgeModule(private val reactContext: ReactApplicationContext) :
                 }
             }
             if (ready == true) promise.resolve(true)
-            else promise.reject("PACKAGE_CHANGED", "PHONE_PACKAGE_CHANGED")
+            else {
+                val homePackage = reactContext.packageManager.resolveActivity(
+                    Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),
+                    android.content.pm.PackageManager.MATCH_DEFAULT_ONLY,
+                )?.activityInfo?.packageName
+                if (epoch == executionEpoch.get() && !homePackage.isNullOrBlank() &&
+                    ForgeAccessibilityService.instance?.currentPackageName() == homePackage) {
+                    // Recents can put Home behind Forge. Resume the selected launcher task;
+                    // approval still compares the restored screen with its original ticket.
+                    openPackage(packageName, promise)
+                } else promise.reject("PACKAGE_CHANGED", "PHONE_PACKAGE_CHANGED")
+            }
         }
     }
 
