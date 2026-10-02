@@ -19,6 +19,7 @@ function friendly(error: unknown): string {
   const code = error instanceof Error ? error.message.split(':')[0] : '';
   const messages: Record<string, string> = {
     NETWORK_UNAVAILABLE: '连接中断了。任务可能已被保存，请先查看服务端结果。',
+    REQUEST_READ_UNAVAILABLE: '连接中断了。记录尚未读取完成，请检查网络后重新读取。',
     DRAFT_READ_TIMEOUT: '读取等待超时，请重新查看；不会重新提交任务。',
     REQUEST_READ_TIMEOUT: '记录读取超时了。已保存内容仍保留，请重新读取原记录。',
     DRAFT_HISTORY_UNCONFIRMED: '工作记录尚未确认，请重新查看。',

@@ -100,7 +100,7 @@ export class ForgeSessionClient {
       try {
         response = await waitForRequest(fetch(`${apiUrl}${path}`, { ...init, signal, credentials: 'omit', headers }), signal, abortCode);
       } catch {
-        throw new ForgeSessionError(signal?.aborted ? abortCode() : 'NETWORK_UNAVAILABLE');
+        throw new ForgeSessionError(signal?.aborted ? abortCode() : read ? 'REQUEST_READ_UNAVAILABLE' : 'NETWORK_UNAVAILABLE');
       }
       if (signal?.aborted) throw new ForgeSessionError(abortCode());
       const contentType = response.headers.get('Content-Type') || '';
@@ -113,9 +113,9 @@ export class ForgeSessionClient {
         if (mode === 'text') {
           text = await waitForRequest(response.text(), signal, abortCode);
           if (!response.ok) { try { payload = JSON.parse(text); } catch {} }
-        } else { payload = await waitForRequest(response.json().catch(() => ({})), signal, abortCode); }
+        } else { payload = await waitForRequest(response.json().catch(error => { if (error instanceof SyntaxError) return {}; throw error; }), signal, abortCode); }
       } catch {
-        throw new ForgeSessionError(signal?.aborted ? abortCode() : 'NETWORK_UNAVAILABLE');
+        throw new ForgeSessionError(signal?.aborted ? abortCode() : read ? 'REQUEST_READ_UNAVAILABLE' : 'NETWORK_UNAVAILABLE');
       }
       if (signal?.aborted) throw new ForgeSessionError(abortCode());
       return { response, payload: payload && typeof payload === 'object' ? payload : {}, text, contentType };

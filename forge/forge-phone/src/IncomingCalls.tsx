@@ -54,6 +54,7 @@ function failure(error: unknown): string {
     CALL_DRAFT_UNVERIFIED: '原文件、来源或费用尚未通过核对，暂不标记为草稿准备完成。',
     INCOMING_CALL_RESULT_UNCONFIRMED: '操作结果尚未确认，请先刷新原配置与记录。不会自动重复提交。',
     NETWORK_UNAVAILABLE: '连接中断了。操作可能已保存，请先刷新原配置与记录。',
+    REQUEST_READ_UNAVAILABLE: '来电记录读取未完成，请检查网络后重新读取。',
     SESSION_EXPIRED: '登录已过期，请重新登录。', AUTH_REQUIRED: '请重新登录后继续。',
   };
   return messages[code] || '本次结果尚未确认，请刷新并检查原记录；不会自动重试。';

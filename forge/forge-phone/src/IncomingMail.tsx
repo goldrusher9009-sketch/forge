@@ -31,6 +31,7 @@ function failure(error: unknown): string {
     INCOMING_MULTIPLE_REPLY_ADDRESSES: '来信包含多个回复地址，需要本人确认回复对象。',
     INCOMING_RESULT_UNCONFIRMED: '响应尚未确认。请先读取原配置和记录，再决定下一步。',
     NETWORK_UNAVAILABLE: '连接中断了。操作可能已被保存，请先读取原配置和记录。',
+    REQUEST_READ_UNAVAILABLE: '来信记录读取未完成，请检查网络后重新读取。',
     SESSION_EXPIRED: '登录已过期，请重新登录。', AUTH_REQUIRED: '请重新登录后继续。',
   };
   return messages[code] || '本次处理尚未确认，请检查原记录并刷新。';
