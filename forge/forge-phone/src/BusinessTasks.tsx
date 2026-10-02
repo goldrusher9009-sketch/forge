@@ -551,6 +551,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
     <View style={s.tabs}>{button('新建草稿', () => { setView('compose'); setError(''); }, busy || incomingBusy, view !== 'compose')}{button('已保存的工作', () => { void showHistory(); }, busy || incomingBusy, view !== 'history')}</View>
     {error ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{error}</Text></View> : null}
     {notice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{notice}</Text></View> : null}
+    {busy && view !== 'result' && <ActivityIndicator accessibilityLabel="正在处理当前操作" style={{ marginTop: 20 }} color={C.green} />}
     {view === 'incoming' && <IncomingMail client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
     {view === 'incoming-calls' && <IncomingCalls client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
     {view === 'compose' && <>
@@ -643,7 +644,6 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       </View>}
       {!preview && !busy && <Text style={s.footnote}>尚未确认有完整交付文件。可以查看原任务状态，或从“已保存的工作”找回服务器记录。</Text>}
     </>}
-    {busy && view !== 'result' && <ActivityIndicator style={{ marginTop: 20 }} color={C.green} />}
     {view !== 'incoming' && view !== 'incoming-calls' && <View style={s.moreTasks}><Text style={s.label}>更多业务场景</Text><Text style={s.small}>连接自己的邮箱或业务云号码，查看后台草稿与处理记录。</Text>
       {button('收件草稿 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming'); setError(''); setNotice(''); } }, busy || incomingBusy, true)}
       {button('云号码来电 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming-calls'); setError(''); setNotice(''); } }, busy || incomingBusy, true)}
