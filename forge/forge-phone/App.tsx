@@ -49,6 +49,7 @@ function errorText(value: unknown): string {
     PHONE_NATIVE_ACTION_FAILED: '手机未能完成这一步，请查看目标应用后重试。',
     PHONE_NATIVE_ACTION_NOT_DISPATCHED: '系统未受理这一步，本次动作未执行。请检查无障碍权限后重试。',
     DESKTOP_PROVIDER_FUNDING_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
+    DESKTOP_PROVIDER_STREAM_FAILED: '模型服务返回异常，本次任务已中断。请先检查任务记录，再决定是否重新开始。',
     DESKTOP_FREE_MODEL_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     PHONE_FREE_MODEL_UNAVAILABLE: '免费模型暂时不可用，请稍后再试。',
     PHONE_SESSION_ACTIVE: '已有任务在运行，请先结束当前任务。', APP_UNAVAILABLE: '无法打开所选应用，请重新选择。',

@@ -151,14 +151,15 @@ export function createDesktopModelGateway(deps: Dependencies) {
       ledger.record(receipt);
     })();
     active.add(requestId);
-    const observer = providerUsageObserver('openai-completions', { provider: 'openrouter', model: model.id });
+    let content = '';
+    const observer = providerUsageObserver('openai-completions', { provider: 'openrouter', model: model.id,
+      onText: options.onChunk ? undefined : delta => { content += delta; } });
     const controller = new AbortController();
     const abort = () => controller.abort();
     options.signal?.addEventListener('abort', abort, { once: true });
     const timer = setTimeout(abort, 180000);
     let dispatched = false, completed = false, httpStatus: number | undefined, error: any;
-    let content = '', buffer = '', finalUsage: PiProviderUsage | undefined;
-    const decoder = new TextDecoder();
+    let finalUsage: PiProviderUsage | undefined;
     try {
       options.onStarted?.(requestId);
       if (options.signal?.aborted) abort();
@@ -174,19 +175,13 @@ export function createDesktopModelGateway(deps: Dependencies) {
       for await (const chunk of response.body as any) {
         observer.write(chunk);
         if (options.onChunk) await options.onChunk(chunk);
-        else {
-          buffer += decoder.decode(chunk, { stream: true });
-          const lines = buffer.split('\n'); buffer = lines.pop() || '';
-          for (const line of lines) if (line.startsWith('data: ') && line.trim() !== 'data: [DONE]') {
-            try { const value = JSON.parse(line.slice(6)); if (value.error) error = Object.assign(new Error('DESKTOP_PROVIDER_STREAM_FAILED'), { code: 'DESKTOP_PROVIDER_STREAM_FAILED', statusCode: 502 });
-              const delta = value.choices?.[0]?.delta?.content; if (typeof delta === 'string') content += delta; } catch {}
-          }
-        }
       }
-      completed = !controller.signal.aborted;
+      completed = !observer.failed() && !controller.signal.aborted;
     } catch (caught: any) { error = caught; }
     finally {
       clearTimeout(timer); options.signal?.removeEventListener('abort', abort);
+      observer.finish();
+      if (observer.failed()) error = Object.assign(new Error('DESKTOP_PROVIDER_STREAM_FAILED'), { code: 'DESKTOP_PROVIDER_STREAM_FAILED', statusCode: 502 });
       let reported: PiProviderUsage | undefined = observer.result();
       const generationId = observer.generationId();
       if (reported?.providerCostUsd === undefined && generationId && httpStatus === 200) reported = await queryOpenRouterGeneration(apiKey, generationId, { model: model.id }) || reported;
@@ -196,7 +191,7 @@ export function createDesktopModelGateway(deps: Dependencies) {
       try {
         db.transaction(() => {
           const effective = ledger.record({ ...receipt, endedAt: new Date().toISOString(), ...(httpStatus === undefined ? {} : { httpStatus }),
-            state: !dispatched ? 'not_sent' : completed ? 'completed' : controller.signal.aborted ? 'cancelled' : 'failed',
+            state: !dispatched ? 'not_sent' : observer.failed() ? 'failed' : completed ? 'completed' : controller.signal.aborted ? 'cancelled' : 'failed',
             usageStatus: !dispatched ? 'not_sent' : authoritative ? 'reported' : 'unknown',
             ...(authoritative ? { usage: reported } : {}), ...(generationId ? { generationId } : {}), ...(rejection ?? {}) });
           deps.settleReceipt(effective);

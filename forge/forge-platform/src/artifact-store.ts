@@ -19,6 +19,16 @@ export function artifactFilename(title: string, language: string) {
   return base.toLowerCase().endsWith('.'+extension) ? base : base+'.'+extension;
 }
 
+/** Pure text validation shared by private and isolated marketplace storage. */
+export function normalizeArtifactValues(input: any) {
+  const title = string(input?.title ?? 'Untitled',200,'ARTIFACT_INVALID_TITLE').trim();
+  const language = string(input?.language ?? '',40,'ARTIFACT_INVALID_LANGUAGE',true).trim().toLowerCase();
+  const type = string(input?.type ?? (['html','svg'].includes(language)?language:'code'),40,'ARTIFACT_INVALID_TYPE');
+  const content = string(input?.content ?? '',MAX_BYTES,'ARTIFACT_INVALID_CONTENT',true);
+  if (Buffer.byteLength(content,'utf8') > MAX_BYTES) fail('ARTIFACT_TOO_LARGE',413);
+  return {title,language,type,content};
+}
+
 /** The saved artifact and tool receipt commit together, before reporting success.
  * Receipts survive user deletion so a retried tool cannot recreate deleted work. */
 export function createArtifactStore(db: BrainDatabase) {
@@ -45,14 +55,7 @@ export function createArtifactStore(db: BrainDatabase) {
     const row = db.prepare('SELECT * FROM threads WHERE user_id=? AND id=?').get(user,string(id,128,'ARTIFACT_INVALID_THREAD'));
     if (!row) fail('THREAD_NOT_FOUND',404); return row;
   };
-  function values(input: any) {
-    const title = string(input?.title ?? 'Untitled',200,'ARTIFACT_INVALID_TITLE').trim();
-    const language = string(input?.language ?? '',40,'ARTIFACT_INVALID_LANGUAGE',true).trim().toLowerCase();
-    const type = string(input?.type ?? (['html','svg'].includes(language)?language:'code'),40,'ARTIFACT_INVALID_TYPE');
-    const content = string(input?.content ?? '',MAX_BYTES,'ARTIFACT_INVALID_CONTENT',true);
-    if (Buffer.byteLength(content,'utf8') > MAX_BYTES) fail('ARTIFACT_TOO_LARGE',413);
-    return {title,language,type,content};
-  }
+  const values = normalizeArtifactValues;
   const quota = (user: string, nextBytes: number, replacedId?: string) => {
     const state = db.prepare("SELECT COUNT(*) n,COALESCE(SUM(length(CAST(content AS BLOB))),0) bytes FROM artifacts WHERE user_id=? AND id<>?").get(user,replacedId || '');
     if (state.n >= 1000 || state.bytes+nextBytes > ACCOUNT_BYTES) fail('ARTIFACT_STORAGE_LIMIT',413);

@@ -219,11 +219,12 @@ export function resolveModel(provider: string, model: string) {
 }
 
 // Observe only the public provider's usage fields. Never retain response text,
-// request bodies or credentials in a billing receipt. Incomplete/malformed usage
+// request bodies or credentials in a billing receipt. Optional text delivery uses
+// the same framing without retaining text in this observer. Incomplete/malformed usage
 // stays unknown; the reservation remains available for explicit reconciliation.
-export function providerUsageObserver(api: string, options: { provider?: string; model?: string } = {}) {
+export function providerUsageObserver(api: string, options: { provider?: string; model?: string; onText?(text: string): void } = {}) {
   const decoder = new TextDecoder();
-  let buffer = '', invalid = false, finalUsage = false, stopped = false;
+  let buffer = '', invalid = false, finalUsage = false, stopped = false, failed = false;
   let prompt: number | undefined, completion: number | undefined;
   let anthropicInput: number | undefined, cacheRead = 0, cacheWrite = 0;
   let generationId: string | undefined;
@@ -235,6 +236,9 @@ export function providerUsageObserver(api: string, options: { provider?: string;
     if (data.trim() === '[DONE]') { if (prompt !== undefined && completion !== undefined) finalUsage = true; return; }
     let event: any;
     try { event = JSON.parse(data); } catch { invalid = true; return; }
+    if (!event || typeof event !== 'object' || Array.isArray(event)) { invalid = true; return; }
+    const choices = Array.isArray(event.choices) ? event.choices : [];
+    if (event.error || choices.some((choice: any) => choice?.finish_reason === 'error')) failed = true;
     if (options.provider === 'openrouter') {
       if (options.model && event.model && !matchesOpenRouterModel(options.model, event.model)) { invalid = true; return; }
       const observedId = openRouterGenerationId(event.id);
@@ -261,7 +265,12 @@ export function providerUsageObserver(api: string, options: { provider?: string;
         if (stopped) finalUsage = true;
       }
     } else {
-      if (event.choices?.some((choice: any) => choice.finish_reason)) stopped = true;
+      if (failed || choices.some((choice: any) => choice?.finish_reason)) {
+        stopped = true;
+        if (prompt !== undefined && completion !== undefined) finalUsage = true;
+      }
+      const delta = choices[0]?.delta?.content;
+      if (typeof delta === 'string') options.onText?.(delta);
       const usage = event.usage;
       if (count(usage?.prompt_tokens) !== undefined && count(usage?.completion_tokens) !== undefined) {
         if (usage.total_tokens !== undefined && (count(usage.total_tokens) === undefined || usage.total_tokens !== usage.prompt_tokens + usage.completion_tokens)) { invalid = true; return; }
@@ -283,7 +292,7 @@ export function providerUsageObserver(api: string, options: { provider?: string;
   };
   return {
     write(chunk: Uint8Array) {
-      if (invalid) return;
+      // Continue framing after invalid usage so a later provider error is still observed.
       buffer += decoder.decode(chunk, { stream: true });
       let boundary: RegExpExecArray | null;
       while ((boundary = /\r?\n\r?\n/.exec(buffer))) {
@@ -293,6 +302,12 @@ export function providerUsageObserver(api: string, options: { provider?: string;
       }
       if (buffer.length > 1024 * 1024) { invalid = true; buffer = ''; }
     },
+    finish() {
+      buffer += decoder.decode();
+      if (buffer.trim()) parse(buffer);
+      buffer = '';
+    },
+    failed: () => failed,
     result() {
       if (invalid || !finalUsage || prompt === undefined || completion === undefined || !Number.isSafeInteger(prompt + completion)) return undefined;
       return { promptTokens: prompt, completionTokens: completion, totalTokens: prompt + completion,
@@ -436,13 +451,15 @@ export function registerPiModelGateway(app: Express): void {
         if (res.destroyed) break;
         if (!res.write(chunk)) await new Promise<void>(resolve => { res.once('drain', resolve); res.once('close', resolve); });
       }
-      completed = !controller.signal.aborted && !res.destroyed;
+      completed = !usage.failed() && !controller.signal.aborted && !res.destroyed;
       res.end();
     } catch {
       if (!res.headersSent) res.status(502).json({ error: { message: 'PI_PROVIDER_TRANSPORT_FAILED' } });
       else res.end();
     } finally {
       clearTimeout(timer); grant.controller.signal.removeEventListener('abort', abort); res.removeListener('close', abort);
+      usage.finish();
+      completed = completed && !usage.failed();
       let reported: PiProviderUsage | undefined = usage.result();
       const generationId = usage.generationId();
       if (grant.provider === 'openrouter' && reported?.providerCostUsd === undefined && generationId && httpStatus === 200) {
@@ -452,7 +469,7 @@ export function registerPiModelGateway(app: Express): void {
       const rejection = dispatched ? classifyOpenRouterFailure(grant.provider, httpStatus, target) : undefined;
       try {
         await persist({ ...receipt, endedAt: new Date().toISOString(), ...(httpStatus === undefined ? {} : { httpStatus }),
-          state: !dispatched ? 'not_sent' : completed ? 'completed' : controller.signal.aborted ? 'cancelled' : 'failed',
+          state: !dispatched ? 'not_sent' : usage.failed() ? 'failed' : completed ? 'completed' : controller.signal.aborted ? 'cancelled' : 'failed',
           usageStatus: !dispatched ? 'not_sent' : reported ? 'reported' : 'unknown', ...(reported ? { usage: reported } : {}),
           ...(generationId ? { generationId } : {}), ...(rejection || {}),
         });
