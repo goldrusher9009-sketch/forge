@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   availableDraftReleases, createDraftThread, DraftArtifact, DraftClient, DraftJob, DraftKind, DraftRelease, DraftReport,
   draftLabel, knownCharge, newDraftJob, readDraftRequest, restoreDraftJob, SavedThread, submitDraft, verifyDraft,
@@ -11,7 +11,7 @@ import {
 import IncomingMail from './IncomingMail';
 import IncomingCalls from './IncomingCalls';
 
-type Props = { client: DraftClient; onBusyChange?: (busy: boolean) => void };
+type Props = { client: DraftClient; active: boolean; onBusyChange?: (busy: boolean) => void };
 const C = { bg: '#f3f0e8', paper: '#fffdf7', ink: '#20251f', muted: '#686f63', line: '#dcded2', green: '#3d6229', accent: '#b5db57', red: '#a33d30' };
 type Preview = { artifact: DraftArtifact; value?: Record<string, any>; report: DraftReport | null; verified: boolean };
 function friendly(error: unknown): string {
@@ -82,7 +82,7 @@ function friendly(error: unknown): string {
   return messages[code] || '本次操作没有完成。请查看任务结果或稍后重试。';
 }
 
-export default function BusinessTasks({ client, onBusyChange }: Props) {
+export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const [kind, setKind] = useState<DraftKind>('reply');
   const [name, setName] = useState('');
   const [source, setSource] = useState('');
@@ -97,6 +97,8 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [view, setView] = useState<'compose' | 'result' | 'history' | 'incoming' | 'incoming-calls'>('compose');
+  const resultParent = useRef<'compose' | 'history' | 'incoming' | 'incoming-calls'>('compose');
+  const scroll = useRef<ScrollView>(null);
   const [incomingBusy, setIncomingBusy] = useState(false);
   const [history, setHistory] = useState<SavedThread[]>([]);
   const [historyKnown, setHistoryKnown] = useState(false);
@@ -237,7 +239,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     mounted.current = true;
     resetMail(); setResendState('unread'); jobRef.current = null;
     setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setHistoryKnown(false); setFiles([]); setPreview(null); setCharge(null);
-    setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
+    resultParent.current = 'compose'; setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
     busyRef.current = false; setBusy(false); setIncomingBusy(false);
     const accountBusyCallback = busyCallback.current;
     void refreshAssistants();
@@ -248,6 +250,18 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     };
   }, [client]);
   useEffect(() => { onBusyChange?.(busy || incomingBusy); }, [busy, incomingBusy, onBusyChange]);
+  useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [view]);
+  useEffect(() => {
+    if (!active || Platform.OS !== 'android') return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (!mounted.current || clientRef.current !== client) return false;
+      if (busyRef.current || incomingBusy) return true;
+      if (view === 'compose') return false;
+      setView(view === 'result' ? resultParent.current : 'compose');
+      return true;
+    });
+    return () => subscription.remove();
+  }, [active, client, view, incomingBusy]);
 
   const prepareAssistant = async (retryEvaluation = false) => {
     if (incomingBusy || retryEvaluation && !assistantRef.current?.retryAllowed) return;
@@ -272,6 +286,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     const release = releases.find(item => item.releaseId === chosen);
     if (!release) return;
     const op = begin('draft'); if (!op) return;
+    resultParent.current = 'compose';
     setView('result'); setPhase('正在准备工作区'); setNotice(''); setPreview(null); setFiles([]); setCharge(null); setRaw(false); setRetryAllowed(false); setCanStop(false);
     resetMail();
     try {
@@ -334,6 +349,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     const op = begin('other', false); if (!op) return; // Restoration also writes delivery checks.
     const threadId = typeof saved === 'string' ? saved : saved.id;
     jobRef.current = null;
+    if (view !== 'result') resultParent.current = view;
     setView('result'); setPreview(null); setFiles([]); setCharge(null); setRetryAllowed(false); setCanStop(false); setRaw(false); setNotice(''); setPhase('正在读取已保存的工作');
     resetMail(threadId);
     try {
@@ -530,11 +546,9 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const followUpEditable = !!mailReceipt && followUpRecord?.mailDeliveryId === mailReceipt.id && !busy && !followUpReadRequired;
   const followUpResults: Array<{ value: MailFollowUp['result']; label: string }> = [{ value: null, label: '未记录' }, { value: 'pending', label: '待跟进' }, { value: 'replied', label: '已回复' }, { value: 'won', label: '已成交' }, { value: 'lost', label: '未成交' }];
 
-  return <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
+  return <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
     {view === 'compose' ? <View style={s.heading}><Text style={s.eyebrow}>工作先有草稿</Text><Text style={s.hero}>把想法，{'\n'}变成可用的文字。</Text><Text style={s.intro}>给一份真实资料，收一份保存好的草稿。{'\n'}由你检查，再决定怎样使用。</Text></View> : <View style={s.heading}><Text style={s.eyebrow}>{view === 'history' ? '工作记录' : view === 'incoming' ? 'FORGE / INBOX' : view === 'incoming-calls' ? 'FORGE / CALLS' : '本次草稿'}</Text><Text style={s.title}>{view === 'history' ? '已保存的工作' : view === 'incoming' ? '来信先有草稿。' : view === 'incoming-calls' || jobRef.current?.origin === 'twilio-inbound' ? '来电需求记录与后续草稿。' : draftLabel(jobRef.current?.input.kind || kind)}</Text>{view === 'result' && jobRef.current && <Text style={s.small}>{jobRef.current.input.name}</Text>}</View>}
     <View style={s.tabs}>{button('新建草稿', () => { setView('compose'); setError(''); }, busy || incomingBusy, view !== 'compose')}{button('已保存的工作', () => { void showHistory(); }, busy || incomingBusy, view !== 'history')}</View>
-    {button('收件草稿 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming'); setError(''); setNotice(''); } }, busy || incomingBusy, view !== 'incoming')}
-    {button('云号码来电 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming-calls'); setError(''); setNotice(''); } }, busy || incomingBusy, view !== 'incoming-calls')}
     {error ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{error}</Text></View> : null}
     {notice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{notice}</Text></View> : null}
     {view === 'incoming' && <IncomingMail client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
@@ -630,6 +644,10 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
       {!preview && !busy && <Text style={s.footnote}>尚未确认有完整交付文件。可以查看原任务状态，或从“已保存的工作”找回服务器记录。</Text>}
     </>}
     {busy && view !== 'result' && <ActivityIndicator style={{ marginTop: 20 }} color={C.green} />}
+    {view !== 'incoming' && view !== 'incoming-calls' && <View style={s.moreTasks}><Text style={s.label}>更多业务场景</Text><Text style={s.small}>连接自己的邮箱或业务云号码，查看后台草稿与处理记录。</Text>
+      {button('收件草稿 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming'); setError(''); setNotice(''); } }, busy || incomingBusy, true)}
+      {button('云号码来电 · 设置与记录', () => { if (mounted.current && clientRef.current === client && !busyRef.current && !incomingBusy) { setView('incoming-calls'); setError(''); setNotice(''); } }, busy || incomingBusy, true)}
+    </View>}
     <View style={s.footer}><Text style={s.small}>草稿有据，决定在你。</Text><Text style={s.small}>FORGE / WORK</Text></View>
   </ScrollView>;
 }
@@ -637,7 +655,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
 const s = StyleSheet.create({
   content: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 44, backgroundColor: C.bg }, heading: { paddingBottom: 16 }, eyebrow: { color: C.green, fontSize: 12, fontWeight: '600', letterSpacing: 1.2, marginTop: 20, marginBottom: 12 }, hero: { color: C.ink, fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 33, lineHeight: 45 }, intro: { color: C.muted, fontSize: 15, lineHeight: 24, marginTop: 16 },
   tabs: { flexDirection: 'row', gap: 10, marginBottom: 12 }, button: { flexGrow: 1, minHeight: 50, backgroundColor: C.ink, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', marginTop: 12 }, buttonText: { color: C.accent, fontWeight: '700', fontSize: 14 }, secondary: { backgroundColor: C.paper, borderWidth: 1, borderColor: C.line }, disabled: { opacity: 0.45 },
-  templates: { marginTop: 12, gap: 12 }, template: { backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 18, gap: 7 }, selected: { borderColor: C.green, borderWidth: 1.5 }, number: { color: C.green, fontSize: 12, fontFamily: 'monospace' }, templateTitle: { color: C.ink, fontSize: 20, fontWeight: '600' }, label: { color: C.muted, fontSize: 12, fontWeight: '600', marginTop: 24, marginBottom: 10 }, input: { minHeight: 52, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 15, color: C.ink, fontSize: 16 }, source: { minHeight: 180, textAlignVertical: 'top', lineHeight: 24 },
+  templates: { marginTop: 12, gap: 12, flexDirection: 'row' }, template: { flex: 1, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, borderRadius: 14, padding: 14, gap: 7 }, selected: { borderColor: C.green, borderWidth: 1.5 }, number: { color: C.green, fontSize: 12, fontFamily: 'monospace' }, templateTitle: { color: C.ink, fontSize: 18, lineHeight: 26, fontWeight: '600' }, label: { color: C.muted, fontSize: 12, fontWeight: '600', marginTop: 24, marginBottom: 10 }, input: { minHeight: 52, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, borderRadius: 12, padding: 15, color: C.ink, fontSize: 16 }, source: { minHeight: 180, textAlignVertical: 'top', lineHeight: 24 }, moreTasks: { marginTop: 28, borderTopWidth: 1, borderColor: C.line },
   assistant: { padding: 15, marginBottom: 8, backgroundColor: C.paper, borderWidth: 1, borderColor: C.line, borderRadius: 12, gap: 5 }, body: { color: C.ink, fontSize: 15, lineHeight: 24 }, small: { color: C.muted, fontSize: 12, lineHeight: 20 }, footnote: { color: C.muted, fontSize: 12, lineHeight: 20, marginTop: 16 }, message: { backgroundColor: C.paper, padding: 14, borderWidth: 1, borderColor: C.line, borderRadius: 10, marginTop: 12 }, error: { borderColor: '#dab4a9' },
   history: { borderBottomWidth: 1, borderColor: C.line, paddingVertical: 18, gap: 6 }, phase: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 24, marginBottom: 12 }, title: { color: C.ink, fontSize: 23, lineHeight: 32, fontWeight: '600', flexShrink: 1 }, saved: { borderLeftWidth: 3, borderColor: C.green, backgroundColor: C.paper, padding: 18, marginTop: 24 }, filename: { color: C.ink, fontSize: 16, lineHeight: 24, fontFamily: 'monospace', marginBottom: 10 }, previewText: { color: C.ink, fontSize: 15, lineHeight: 25, marginTop: 8 }, footer: { borderTopWidth: 1, borderColor: C.line, paddingTop: 18, marginTop: 32, flexDirection: 'row', justifyContent: 'space-between' },
   followUpCard: { marginTop: 24, paddingTop: 18, borderTopWidth: 1, borderColor: C.line }, followUpToggle: { minHeight: 52, flexDirection: 'row', alignItems: 'center', gap: 12 }, followUpTitle: { color: C.ink, fontSize: 16, fontWeight: '600', lineHeight: 26 }, followUpLink: { color: C.green, fontSize: 13, fontWeight: '600' }, followUpSummary: { padding: 12, marginTop: 14, backgroundColor: C.bg, borderRadius: 10, gap: 4 }, followUpChoices: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6 }, followUpChoice: { paddingVertical: 10, paddingHorizontal: 12, minHeight: 42, borderWidth: 1, borderColor: C.line, borderRadius: 9, backgroundColor: C.paper }, followUpNotes: { minHeight: 120, textAlignVertical: 'top', lineHeight: 24 },
