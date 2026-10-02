@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { BrainDatabase } from './brain-service';
 import { createPersonalLibrary, LibraryError } from './personal-library';
-import { getOpenRouterModel } from './openrouter-catalog';
+import { getOpenRouterModel, isFreeOpenRouterModel } from './openrouter-catalog';
+import { moneyUnits } from './managed-billing';
 import { readPortableArchive, portableSourceInstructions, portableIncludedFiles, portableSourceName, PORTABLE_AGENT_TOOLS, PORTABLE_SOURCE_LIMITS } from './apptopia-packages';
 import { isLibraryText } from './personal-library';
 const { raw } = require('express');
@@ -100,6 +101,43 @@ export function createAgentLifecycle(db: BrainDatabase, library: Library, comple
     db.prepare('INSERT INTO agent_evaluation_suites(user_id,agent_id,cases_json) VALUES(?,?,?) ON CONFLICT(user_id,agent_id) DO UPDATE SET cases_json=excluded.cases_json').run(user,id,JSON.stringify(cases));
     return cases;
   };
+  const confirmedZeroCost = (user: string,requestId: string,model: string) => {
+    const cost = db.prepare('SELECT state,charged_units,provider_cost_units FROM managed_billing_requests WHERE id=? AND user_id=?').get(requestId,user);
+    if (cost?.state !== 'settled' || cost.charged_units !== 0 || cost.provider_cost_units !== 0) return false;
+    try {
+      const row = db.prepare('SELECT effective_receipt FROM pi_provider_receipts WHERE request_id=? AND user_id=?').get(requestId,user);
+      const receipt = JSON.parse(row?.effective_receipt || 'null');
+      return receipt?.requestId === requestId && receipt.userId === user && receipt.model === model && receipt.provider === 'openrouter'
+        && receipt.state === 'completed' && receipt.usageStatus === 'reported' && receipt.usage?.providerCostUsd === 0;
+    } catch { return false; }
+  };
+  const confirmedEvaluationCost = (user: string,result: any,model: string,zeroBudget: boolean) => {
+    if (typeof result.requestId !== 'string' || !Number.isFinite(result.chargeUsd) || result.chargeUsd < 0) return false;
+    const cost = db.prepare('SELECT * FROM managed_billing_requests WHERE id=?').get(result.requestId);
+    const row = db.prepare('SELECT user_id,effective_receipt FROM pi_provider_receipts WHERE request_id=?').get(result.requestId);
+    // The gateway reserves money and records admission in one transaction. Only
+    // an explicit unsent attempt may be confirmed when neither record exists.
+    if (!cost && !row) return result.status === 'not_sent' && result.chargeUsd === 0;
+    if (cost?.user_id !== user || cost.model !== model || row?.user_id !== user
+      || !Number.isSafeInteger(cost.charged_units) || cost.charged_units < 0
+      || !Number.isSafeInteger(cost.provider_cost_units) || cost.provider_cost_units < 0
+      || result.chargeUsd !== cost.charged_units / 1e9) return false;
+    try {
+      const receipt = JSON.parse(row.effective_receipt);
+      if (receipt?.requestId !== result.requestId || receipt.userId !== user || receipt.model !== model || receipt.provider !== 'openrouter') return false;
+      if (cost.state === 'released') {
+        const rejected = receipt.state === 'rejected' && receipt.usageStatus === 'not_charged' && receipt.httpStatus === 402
+          && receipt.zeroChargeEvidence?.source === 'openrouter_http_status'
+          && receipt.zeroChargeEvidence.policy === 'openrouter_pre_admission_402_v1' && receipt.zeroChargeEvidence.httpStatus === 402;
+        return cost.charged_units === 0 && cost.provider_cost_units === 0
+          && (receipt.state === 'not_sent' && receipt.usageStatus === 'not_sent' || rejected);
+      }
+      const providerCost = receipt.usage?.providerCostUsd;
+      return cost.state === 'settled' && ['completed','failed','cancelled'].includes(receipt.state) && receipt.usageStatus === 'reported'
+        && typeof providerCost === 'number' && Number.isFinite(providerCost) && providerCost >= 0 && moneyUnits(providerCost) === cost.provider_cost_units
+        && (!zeroBudget || providerCost === 0 && cost.charged_units === 0 && cost.provider_cost_units === 0);
+    } catch { return false; }
+  };
   const evaluation = (user: string, id: string) => {
     const row = db.prepare('SELECT * FROM agent_evaluations WHERE id=? AND user_id=?').get(id,user);
     if (!row) fail('AGENT_EVALUATION_NOT_FOUND',404);
@@ -113,24 +151,51 @@ export function createAgentLifecycle(db: BrainDatabase, library: Library, comple
       }
       return result;
     }), cases = JSON.parse(row.suite_json), snap = JSON.parse(row.snapshot_json);
-    return { id:row.id, agentId:row.agent_id, status:row.status, error:row.error, createdAt:row.created_at, maximumUsd:row.maximum_usd,
-      configurationHash:snap.hash, cases, results, passed:row.status === 'completed' && results.length === cases.length && results.every((r: any) => r.checks.every((check: any) => check.passed)),
-      chargeUsd:results.reduce((sum: number,r: any) => sum + (r.chargeUsd ?? 0),0), costPending:results.some((r: any) => r.chargeUsd == null), model:snap.configuration.model };
+    const costPending = results.some((result: any) => !confirmedEvaluationCost(user,result,snap.configuration.model,row.maximum_usd === 0));
+    const zeroCostConfirmed = row.maximum_usd === 0 && ['completed','failed','interrupted'].includes(row.status) && !costPending;
+    const financialErrors = ['AGENT_EVALUATION_COST_PENDING','AGENT_EVALUATION_ZERO_COST_UNCONFIRMED'];
+    let error = row.error;
+    if (!costPending && financialErrors.includes(error)) error = null;
+    if (costPending && row.status !== 'running' && (!error || financialErrors.includes(error)))
+      error = row.maximum_usd === 0 ? 'AGENT_EVALUATION_ZERO_COST_UNCONFIRMED' : 'AGENT_EVALUATION_COST_PENDING';
+    return { id:row.id, agentId:row.agent_id, status:row.status, error, createdAt:row.created_at, maximumUsd:row.maximum_usd,
+      configurationHash:snap.hash, cases, results, passed:row.status === 'completed' && !costPending && results.length === cases.length && results.every((r: any) => r.status === 'completed' && Number.isFinite(r.chargeUsd) && r.chargeUsd >= 0
+        && (row.maximum_usd !== 0 || r.chargeUsd === 0 && confirmedZeroCost(user,r.requestId,snap.configuration.model)) && r.checks.every((check: any) => check.passed)),
+      chargeUsd:results.reduce((sum: number,r: any) => sum + (r.chargeUsd ?? 0),0), costPending, zeroCostConfirmed, model:snap.configuration.model };
+  };
+  const evaluationGate = (user: string,id: string) => {
+    let runningCount = 0, costPendingCount = 0;
+    // ponytail: scan this agent's full history; index a durable accounting flag
+    // only if history size makes this measured admission check too expensive.
+    for (const row of db.prepare('SELECT id,status FROM agent_evaluations WHERE user_id=? AND agent_id=?').all(user,id)) {
+      if (row.status === 'running') runningCount++;
+      else if (evaluation(user,row.id).costPending) costPendingCount++;
+    }
+    return { blocked:runningCount > 0 || costPendingCount > 0,runningCount,costPendingCount };
   };
   const active = new Set<string>();
   const run = async (user: string, id: string, input: any, key: any, signal?: AbortSignal) => {
     if (typeof key !== 'string' || !/^[A-Za-z0-9_.:-]{8,128}$/.test(key)) fail('AGENT_EVALUATION_KEY_REQUIRED');
-    if (!Number.isFinite(input?.maximumUsd) || input.maximumUsd < 0.01 || input.maximumUsd > 25) fail('AGENT_EVALUATION_BUDGET_INVALID');
-    library.agent(user,id);
-    const prior = db.prepare('SELECT * FROM agent_evaluations WHERE user_id=? AND idempotency_key=?').get(user,key);
-    if (prior) {
-      if (prior.agent_id !== id || prior.maximum_usd !== input.maximumUsd) fail('AGENT_EVALUATION_KEY_CONFLICT',409);
-      return evaluation(user,prior.id); // Never redispatch a saved operation, even after a crash.
-    }
-    const cases = validateCases(suite(user,id)), snap = snapshot(user,id), runId = randomUUID();
-    const contexts = cases.map(item => library.recall(user,{agentIds:[id],query:item.prompt}));
-    db.prepare('INSERT INTO agent_evaluations(id,user_id,agent_id,idempotency_key,input_hash,snapshot_json,suite_json,status,maximum_usd) VALUES(?,?,?,?,?,?,?,?,?)')
-      .run(runId,user,id,key,hash({ snapshot:snap.hash,cases,maximumUsd:input.maximumUsd }),JSON.stringify(snap),JSON.stringify(cases),'running',input.maximumUsd);
+    if (!Number.isFinite(input?.maximumUsd) || input.maximumUsd < 0 || input.maximumUsd > 25 || input.maximumUsd > 0 && input.maximumUsd < 0.01) fail('AGENT_EVALUATION_BUDGET_INVALID');
+    const operation = db.transaction(() => {
+      library.agent(user,id);
+      const prior = db.prepare('SELECT * FROM agent_evaluations WHERE user_id=? AND idempotency_key=?').get(user,key);
+      if (prior) {
+        if (prior.agent_id !== id || prior.maximum_usd !== input.maximumUsd) fail('AGENT_EVALUATION_KEY_CONFLICT',409);
+        return { prior:evaluation(user,prior.id) }; // Recovery never redispatches or inherits today's admission gate.
+      }
+      const gate = evaluationGate(user,id);
+      if (gate.runningCount) fail('AGENT_EVALUATION_RUNNING',409);
+      if (gate.costPendingCount) fail('AGENT_EVALUATION_COST_UNCONFIRMED',409);
+      const cases = validateCases(suite(user,id)), snap = snapshot(user,id), runId = randomUUID();
+      if (input.maximumUsd === 0 && !isFreeOpenRouterModel(snap.configuration.model)) fail('AGENT_EVALUATION_ZERO_BUDGET_REQUIRES_FREE_MODEL');
+      const contexts = cases.map(item => library.recall(user,{agentIds:[id],query:item.prompt}));
+      db.prepare('INSERT INTO agent_evaluations(id,user_id,agent_id,idempotency_key,input_hash,snapshot_json,suite_json,status,maximum_usd) VALUES(?,?,?,?,?,?,?,?,?)')
+        .run(runId,user,id,key,hash({ snapshot:snap.hash,cases,maximumUsd:input.maximumUsd }),JSON.stringify(snap),JSON.stringify(cases),'running',input.maximumUsd);
+      return { cases,snap,runId,contexts };
+    })();
+    if ('prior' in operation) return operation.prior;
+    const { cases,snap,runId,contexts } = operation;
     active.add(runId); const results: any[] = []; let chargeUsd = 0;
     try {
       for (let index = 0; index < cases.length; index++) {
@@ -148,6 +213,8 @@ export function createAgentLifecycle(db: BrainDatabase, library: Library, comple
         ] },callKey,signal,Math.max(0,input.maximumUsd-chargeUsd));
         const cost = db.prepare('SELECT state,charged_units FROM managed_billing_requests WHERE user_id=? AND id=?').get(user,result.requestId);
         if (cost?.state !== 'settled' || cost.charged_units == null) fail('AGENT_EVALUATION_COST_PENDING',409);
+        if (!Number.isSafeInteger(cost.charged_units) || cost.charged_units < 0) fail('AGENT_EVALUATION_COST_INVALID',409);
+        if (input.maximumUsd === 0 && (result.requestId !== attempt.requestId || !confirmedZeroCost(user,result.requestId,snap.configuration.model))) fail('AGENT_EVALUATION_ZERO_COST_UNCONFIRMED',409);
         const charged = cost.charged_units / 1e9; chargeUsd += charged;
         Object.assign(attempt,{ response:result.content,requestId:result.requestId,status:'completed',chargeUsd:charged,durationMs:Date.now()-start,
           checks:scoreAnswer(result.content,item.rules,knowledge.sources) });
@@ -278,7 +345,7 @@ export function createAgentLifecycle(db: BrainDatabase, library: Library, comple
     try { currentHash = snapshot(user,id).hash; } catch {}
     const required = sourceRequirement(user,id);
     const knowledge = required ? library.recall(user,{agentIds:[id],query:'source setup'}) : null;
-    return { cases:suite(user,id),evaluations,releases:releases(user,id),currentHash,
+    return { cases:suite(user,id),evaluations,evaluationGate:evaluationGate(user,id),releases:releases(user,id),currentHash,
       buyerSourceSetup: required ? { instructions:required.instructions, ready:!!knowledge?.sources.some(source => source.excerpt.trim()), readableFiles:knowledge ? knowledge.selectedFiles-knowledge.unreadableFiles : 0 } : null,
       scope:'Deterministic answer checks only; tool execution and factual correctness are not certified.' };
   };

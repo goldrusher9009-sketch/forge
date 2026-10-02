@@ -6,6 +6,7 @@ import {
   canRecoverMail, freezeMail, listMailReceipts, MailEnvelope, MailPreparation, MailReceipt, mailReceiptAction, mailStatusText,
   newMailPreparation, readMailReceipt, resendConfiguration, saveResendCredential, singleMailAddress,
   MailFollowUp, MailFollowUpForm, mailFollowUpForm, newMailFollowUpInput, readMailFollowUp, saveMailFollowUp,
+  DraftAssistantPreparation, newDraftAssistantPreparation, prepareDraftAssistant,
 } from './business-tasks';
 import IncomingMail from './IncomingMail';
 import IncomingCalls from './IncomingCalls';
@@ -19,6 +20,18 @@ function friendly(error: unknown): string {
     NETWORK_UNAVAILABLE: '连接中断了。任务可能已被保存，请先查看服务端结果。',
     DRAFT_FREE_AGENT_UNAVAILABLE: '这位助手暂时没有可用的免费模型，请刷新后重新选择。',
     DRAFT_INPUT_REQUIRED: '请填写对象名称和需要参考的真实资料。',
+    DRAFT_ASSISTANT_TEMPLATE_UNAVAILABLE: '当前没有与内置草稿模板匹配的可用免费模型。请稍后刷新，或在工作区准备自己的助手。',
+    DRAFT_ASSISTANT_IMPORT_UNCONFIRMED: '助手保存结果尚未确认。继续原准备会使用同一编号，避免重复导入。',
+    DRAFT_ASSISTANT_RESULT_UNCONFIRMED: '准备结果尚未完整核对。请继续查看原准备，暂时不能选择这位助手。',
+    DRAFT_ASSISTANT_CONFIGURATION_CHANGED: '助手配置或检查规则已经变化。你的修改和原记录会保留，请到工作区检查后再测评。',
+    DRAFT_ASSISTANT_EVALUATION_RUNNING: '这位助手仍有测评未完成。请稍后继续查看原准备，暂时不会另开测评。',
+    DRAFT_ASSISTANT_EVALUATION_FAILED: '原答题测评没有通过，记录已保留。可明确选择重新免费测评，或先到工作区检查。',
+    DRAFT_ASSISTANT_COST_UNCONFIRMED: '这位助手仍有测评费用未确认。请继续查看原记录，暂时不会重新测评或发布版本。',
+    AGENT_EVALUATION_RUNNING: '这位助手已有测评正在运行。请继续查看原准备，暂时不能新开测评。',
+    AGENT_EVALUATION_COST_UNCONFIRMED: '这位助手的原测评费用仍待核对。请继续查看原准备，暂时不能新开测评。',
+    AGENT_EVALUATION_BUDGET_INVALID: '当前服务暂不支持零预算测评。原助手保留，请等待服务更新后继续准备。',
+    AGENT_EVALUATION_ZERO_BUDGET_REQUIRES_FREE_MODEL: '这位助手已不符合免费测评要求，请刷新可用模型。',
+    AGENT_RELEASE_STALE_EVALUATION: '助手或检查规则在测评后变化了。原记录保留，请到工作区检查后再测评。',
     DRAFT_RESULT_UNKNOWN: '暂未收到完整结果，请查看服务端任务状态。',
     DRAFT_STILL_RUNNING: '草稿仍在准备，请稍后查看结果。',
     DRAFT_DELIVERY_UNVERIFIED: '文件或费用尚未通过核对，请先查看已保存的内容。',
@@ -73,8 +86,11 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const [source, setSource] = useState('');
   const [releases, setReleases] = useState<DraftRelease[]>([]);
   const [chosen, setChosen] = useState('');
+  const [assistantsKnown, setAssistantsKnown] = useState(false);
+  const [assistantPreparation, setAssistantPreparation] = useState<DraftAssistantPreparation | null>(null);
+  const [assistantPhase, setAssistantPhase] = useState('');
   const [busy, setBusy] = useState(false);
-  const [busyKind, setBusyKind] = useState<'draft' | 'mail' | 'other'>('other');
+  const [busyKind, setBusyKind] = useState<'draft' | 'mail' | 'assistant' | 'other'>('other');
   const [phase, setPhase] = useState('');
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
@@ -110,6 +126,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const busyRef = useRef(false);
   const controller = useRef<AbortController | null>(null);
   const jobRef = useRef<DraftJob | null>(null);
+  const assistantRef = useRef<DraftAssistantPreparation | null>(null);
   const clientRef = useRef(client);
   const busyCallback = useRef(onBusyChange);
   const mailThread = useRef('');
@@ -123,7 +140,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   selectedMail.current = mailReceipt;
   followUpSaved.current = followUpRecord; followUpDraft.current = followUpFields;
 
-  const begin = (purpose: 'draft' | 'mail' | 'other' = 'other') => {
+  const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other') => {
     // A callback from an earlier account must never borrow the new client's credentials.
     if (!mounted.current || busyRef.current || clientRef.current !== client) return null;
     const id = ++operation.current;
@@ -209,14 +226,14 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   };
   const refreshAssistants = async () => {
     const op = begin(); if (!op) return;
-    try { const list = await availableDraftReleases(op.client); op.ensure(); setReleases(list); setChosen(previous => list.some(item => item.releaseId === previous) ? previous : list[0]?.releaseId || ''); }
+    try { const list = await availableDraftReleases(op.client); op.ensure(); setReleases(list); setAssistantsKnown(true); setChosen(previous => list.some(item => item.releaseId === previous) ? previous : list[0]?.releaseId || ''); }
     catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setError(friendly(e)); }
     finally { op.finish(); }
   };
   useEffect(() => {
     mounted.current = true;
     resetMail(); setResendState('unread'); jobRef.current = null;
-    setName(''); setSource(''); setChosen(''); setReleases([]); setHistory([]); setFiles([]); setPreview(null); setCharge(null);
+    setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setFiles([]); setPreview(null); setCharge(null);
     setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
     busyRef.current = false; setBusy(false); setIncomingBusy(false);
     const accountBusyCallback = busyCallback.current;
@@ -228,6 +245,25 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     };
   }, [client]);
   useEffect(() => { onBusyChange?.(busy || incomingBusy); }, [busy, incomingBusy, onBusyChange]);
+
+  const prepareAssistant = async (retryEvaluation = false) => {
+    if (incomingBusy || retryEvaluation && !assistantRef.current?.retryAllowed) return;
+    const op = begin('assistant'); if (!op) return;
+    setNotice(''); setAssistantPhase('正在查看可用免费模型');
+    try {
+      const preparation = { ...(assistantRef.current || await newDraftAssistantPreparation(op.client)), retryAllowed: false }; op.ensure();
+      assistantRef.current = preparation; setAssistantPreparation(preparation);
+      const result = await prepareDraftAssistant(op.client, preparation, (saved, phase) => {
+        op.ensure(); assistantRef.current = saved; setAssistantPreparation(saved); setAssistantPhase(phase);
+      }, retryEvaluation);
+      op.ensure(); setReleases(result.releases); setChosen(result.release.releaseId); setAssistantsKnown(true);
+      setNotice('你的助手版本已准备好，答题测评费用已核对为 $0。接下来填写真实资料生成草稿；实际文件与费用会另行核对。');
+    } catch (e) {
+      if (!cancelled(e) && mounted.current && operation.current === op.id) {
+        setError(friendly(e)); setAssistantPhase('准备尚未完成 · 原记录会保留');
+      }
+    } finally { op.finish(); }
+  };
 
   const start = async () => {
     const release = releases.find(item => item.releaseId === chosen);
@@ -501,7 +537,14 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
       <Text style={s.label}>{kind === 'reply' ? '收件对象' : '品牌或产品名称'}</Text><TextInput accessibilityLabel="草稿对象名称" value={name} onChangeText={setName} editable={!busy} maxLength={100} placeholder={kind === 'reply' ? '例如：王经理' : '例如：Northstar Studio'} placeholderTextColor={C.muted} style={s.input} />
       <Text style={s.label}>{kind === 'reply' ? '来信内容与需要说明的事实' : '真实卖点、目标用户与使用场景'}</Text><TextInput accessibilityLabel="草稿参考资料" value={source} onChangeText={setSource} editable={!busy} multiline maxLength={6000} placeholder={kind === 'reply' ? '粘贴来信，并补充可以确认的交付时间、产品信息和你的回复意图。' : '写下已确认的功能、优势和适用人群。没有证据的效果或价格，请明确说明。'} placeholderTextColor={C.muted} style={[s.input, s.source]} />
       <Text style={s.label}>本次使用的助手</Text>{releases.map(release => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: chosen === release.releaseId, disabled: busy }} disabled={busy} key={release.releaseId} onPress={() => setChosen(release.releaseId)} style={[s.assistant, chosen === release.releaseId && s.selected]}><Text style={s.body}>{release.name}</Text><Text style={s.small}>v{release.version} · 免费模型{chosen === release.releaseId ? ' · 已选择' : ''}</Text></TouchableOpacity>)}
-      {!releases.length && <Text style={s.small}>{busy ? '正在查看可用助手…' : '暂无可用的免费草稿助手。请先在工作区准备并发布支持保存文件的助手，或稍后刷新。'}</Text>}
+      {!releases.length && <View style={s.saved}>
+        <Text style={s.eyebrow}>从第一份草稿开始</Text><Text style={s.templateTitle}>{assistantsKnown ? '还没有草稿助手。' : '先看看你的可用助手。'}</Text>
+        <Text style={s.small}>{assistantsKnown ? '在这里准备你自己的免费助手：保存模板、完成答题测评，再发布固定版本供你使用。' : '可用助手尚未读取成功，请先刷新。'}</Text>
+        {assistantPhase ? <View accessibilityLiveRegion="polite" style={s.phase}><Text style={s.body}>{assistantPhase}</Text>{busyKind === 'assistant' && busy && <ActivityIndicator color={C.green} />}</View> : null}
+        {assistantsKnown && button(assistantPreparation ? '继续查看原准备 →' : '准备免费草稿助手 →', () => { void prepareAssistant(); }, busy || incomingBusy)}
+        {assistantPreparation?.retryAllowed && button('重新免费测评原助手', () => { void prepareAssistant(true); }, busy || incomingBusy, true)}
+        <Text style={s.footnote}>点击准备只会为当前账号保存助手并进行 $0 答题测评。不会发出邮件、联系他人或发布外部内容。答题检查不代表实际文件交付或事实准确性已经通过。</Text>
+      </View>}
       {button('刷新可用助手', () => { void refreshAssistants(); }, busy, true)}{button(busy ? '正在准备…' : '生成并保存草稿 →', () => { void start(); }, busy || !chosen || !name.trim() || !source.trim())}
       <Text style={s.footnote}>本次模型费用上限为 $0。只起草，不自动发送或发布。免费模型繁忙时可稍后查看原任务。</Text>
     </>}
