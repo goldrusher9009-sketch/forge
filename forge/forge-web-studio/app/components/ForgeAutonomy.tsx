@@ -12,6 +12,48 @@ type Api = (path: string, opts?: RequestInit) => Promise<any>;
 
 /** Chinese labels for the autonomy panels. Anything not listed falls back to English. */
 const AUTONOMY_ZH: Record<string, string> = {
+  "Approved. Agent result sync is not confirmed. Review the original task.": "已批准；Agent 结果同步尚未确认，请查看原任务。",
+  "Save or cancel editing before approving all pending items.": "全部批准前，请先保存或取消正在编辑的内容。",
+  "Phone action": "手机操作",
+  "Agent result": "Agent 结果",
+  "Task result": "任务结果",
+  "Proposed time": "建议时间",
+  "Approval text": "审批正文",
+  "Cancel editing": "取消编辑",
+  "Reject": "驳回",
+  "Saving decision…": "正在保存决定…",
+  "Approval records this decision. Sending, publishing and scheduling are separate actions.": "这里记录审批决定；发送、发布和排期需通过对应操作完成。",
+  "This fixed result is reviewed individually; its original content cannot be edited here.": "请逐项审阅这份固定结果；原内容不能在这里修改。",
+  "The dashboard response is incomplete. Refresh before approving.": "晨报内容尚未完整确认，请刷新后再审批。",
+  "The result is not confirmed. Refresh the saved record before trying again.": "操作结果尚未确认，请先刷新保存的记录，再决定是否重试。",
+  "This approval is no longer available. Refresh the list.": "这项审批已不可用，请刷新列表。",
+  "This item was already resolved. Refresh the list.": "这项审批已经处理，请刷新列表。",
+  "The original text changed. Refresh and review it before saving again.": "原文已被更新。请刷新并审阅最新原文，再决定怎样保存。",
+  "The text must be valid and no longer than 64 KiB.": "请检查正文格式，内容上限为 64 KiB。",
+  "This action has a fixed review record and cannot be edited here.": "此操作对应固定审核记录，不能在这里修改。",
+  "Phone actions require individual approval. Review them one by one.": "手机操作需要逐项批准，请分别审阅。",
+  "An agent result no longer matches its approval. Review the original task.": "Agent 结果与审批记录不再匹配，请查看原任务。",
+  "A task result no longer matches its approval. Review the original task.": "任务结果与审批记录不再匹配，请查看原任务。",
+  "This phone action no longer matches its approval. Review the original task.": "手机操作与审批记录不再匹配，请查看原任务。",
+  "This phone action was already handled. Refresh the list.": "手机操作已经处理，请刷新列表。",
+  "This phone action was rejected. Refresh the list.": "手机操作已被驳回，请刷新列表。",
+  "This agent result was rejected. Refresh the list.": "Agent 结果已被驳回，请刷新列表。",
+  "This agent result was already handled. Refresh the list.": "Agent 结果已经处理，请刷新列表。",
+  "This task result was rejected. Refresh the list.": "任务结果已被驳回，请刷新列表。",
+  "This task result was already handled. Refresh the list.": "任务结果已经处理，请刷新列表。",
+  "The request did not finish. Refresh the saved record before trying again.": "请求尚未完成，请先刷新保存的记录，再决定是否重试。",
+  "The decision was saved, but the list could not be refreshed. Refresh before another action.": "操作已保存，但列表尚未刷新。请先刷新，再处理下一项。",
+  "The pipeline request finished. Review the saved drafts below.": "流水线请求已完成，请审阅下方保存的草稿。",
+  "Loading your approval records…": "正在读取审批记录…",
+  "Approval records have not been confirmed.": "审批记录尚未确认。",
+  "Showing the last confirmed records. Refresh before approving.": "当前显示上次确认的记录，请刷新后再审批。",
+  "Refreshing…": "正在刷新…",
+  "Refresh records": "刷新记录",
+  "Latest nightly run time": "最近夜间运行时间",
+  "No nightly run time is recorded.": "尚未记录夜间运行时间。",
+  "Recently generated SEO pages": "最近生成的 SEO 页面",
+  "words recorded": "词（记录值）",
+  "These are generation records; approval does not establish publication.": "这是生成记录；审批并不代表页面已经发布。",
   'Forge Autonomy OS': 'Forge 自主运营中心',
   'Welcome back, ': '欢迎回来，',
   '⚙️ Setup': '⚙️ 设置向导',
@@ -334,114 +376,235 @@ export function OnboardingWizard({ api, onDone, onClose }: { api: Api; onDone: (
 }
 
 // ─── Approval inbox card ─────────────────────────────────────────────────────
-const TYPE_META: Record<string, { icon: string; label: string; verb: string }> = {
-  seo_page: { icon: '📄', label: 'New SEO Page Ready', verb: 'Publish' },
-  social_post: { icon: '📱', label: 'Social Post', verb: 'Schedule' },
-  email: { icon: '📧', label: 'Email Campaign', verb: 'Send' },
-  sms: { icon: '💬', label: 'SMS', verb: 'Send' },
-  review_request: { icon: '⭐', label: 'Review Request', verb: 'Send' },
+type ApprovalItem = {
+  id: string; type: string; title: string; status: 'pending'; created_at: string;
+  content: string | null; preview_data: string | null; platform: string | null; scheduled_for: string | null;
 };
-
-function ApprovalCard({ a, api, onResolved }: { a: any; api: Api; onResolved: () => void }) {
-  const [T] = useAutonomyText();
-  const [editing, setEditing] = useState(false);
-  const [content, setContent] = useState(a.content || '');
-  const [preview, setPreview] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const meta = TYPE_META[a.type] || { icon: '🤖', label: a.type, verb: T('Approve') };
-  const pv = (() => { try { return JSON.parse(a.preview_data || '{}'); } catch { return {}; } })();
-  const act = async (action: string, body?: any) => {
-    setBusy(true);
-    try { await api(`/approvals/${a.id}/${action}`, { method: 'POST', body: JSON.stringify(body || {}) }); onResolved(); }
-    catch {} finally { setBusy(false); }
+type MorningData = {
+  pendingApprovals: ApprovalItem[]; pendingApprovalCount: number;
+  recentSeoPages: Array<{ keyword: string; word_count: number | null; created_at: string }>;
+  lastNightlyRun: string | null;
+};
+const PROTECTED_APPROVAL_TYPES = new Set(['phone_action', 'agent_run', 'autonomous_task']);
+const autonomyRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+function approvalReply(value: unknown): Record<string, unknown> {
+  if (!autonomyRecord(value) || value.success !== true) throw new Error(autonomyRecord(value) && typeof value.error === 'string' ? value.error : 'APPROVAL_RESULT_UNCONFIRMED');
+  return value;
+}
+function morningData(value: unknown): MorningData {
+  const data = approvalReply(value).data;
+  if (!autonomyRecord(data) || !Array.isArray(data.pendingApprovals) || typeof data.pendingApprovalCount !== 'number' || !Number.isSafeInteger(data.pendingApprovalCount)
+    || (data.pendingApprovalCount as number) < data.pendingApprovals.length || !Array.isArray(data.recentSeoPages)
+    || data.lastNightlyRun !== null && typeof data.lastNightlyRun !== 'string') throw new Error('MORNING_DATA_INVALID');
+  const pendingApprovals = data.pendingApprovals.map((item: unknown): ApprovalItem => {
+    if (!autonomyRecord(item) || typeof item.id !== 'string' || !item.id || typeof item.type !== 'string' || typeof item.title !== 'string'
+      || item.status !== 'pending' || typeof item.created_at !== 'string'
+      || ['content', 'preview_data', 'platform', 'scheduled_for'].some(key => item[key] !== null && item[key] !== undefined && typeof item[key] !== 'string')) throw new Error('MORNING_DATA_INVALID');
+    return { id: item.id, type: item.type, title: item.title, status: 'pending', created_at: item.created_at,
+      content: (item.content as string | null) ?? null, preview_data: (item.preview_data as string | null) ?? null,
+      platform: (item.platform as string | null) ?? null, scheduled_for: (item.scheduled_for as string | null) ?? null };
+  });
+  if (new Set(pendingApprovals.map(item => item.id)).size !== pendingApprovals.length) throw new Error('MORNING_DATA_INVALID');
+  const recentSeoPages = data.recentSeoPages.map((item: unknown) => {
+    if (!autonomyRecord(item) || typeof item.keyword !== 'string' || typeof item.created_at !== 'string'
+      || item.word_count !== null && (typeof item.word_count !== 'number' || !Number.isFinite(item.word_count) || item.word_count < 0)) throw new Error('MORNING_DATA_INVALID');
+    return { keyword: item.keyword, created_at: item.created_at, word_count: item.word_count as number | null };
+  });
+  return { pendingApprovals, pendingApprovalCount: data.pendingApprovalCount as number, recentSeoPages, lastNightlyRun: data.lastNightlyRun as string | null };
+}
+function approvalError(error: unknown): string {
+  const code = error instanceof Error ? error.message : '';
+  const messages: Record<string, string> = {
+    MORNING_DATA_INVALID: 'The dashboard response is incomplete. Refresh before approving.',
+    APPROVAL_RESULT_UNCONFIRMED: 'The result is not confirmed. Refresh the saved record before trying again.',
+    APPROVAL_NOT_FOUND: 'This approval is no longer available. Refresh the list.',
+    APPROVAL_NOT_PENDING: 'This item was already resolved. Refresh the list.',
+    APPROVAL_CONTENT_CHANGED: 'The original text changed. Refresh and review it before saving again.',
+    APPROVAL_CONTENT_INVALID: 'The text must be valid and no longer than 64 KiB.',
+    APPROVAL_CONTENT_TOO_LARGE: 'The text must be valid and no longer than 64 KiB.',
+    APPROVAL_EDIT_NOT_SUPPORTED: 'This action has a fixed review record and cannot be edited here.',
+    PHONE_ACTION_INDIVIDUAL_APPROVAL_REQUIRED: 'Phone actions require individual approval. Review them one by one.',
+    AGENT_RUN_APPROVAL_ORPHANED: 'An agent result no longer matches its approval. Review the original task.',
+    AUTONOMOUS_TASK_APPROVAL_ORPHANED: 'A task result no longer matches its approval. Review the original task.',
+    PHONE_ACTION_APPROVAL_ORPHANED: 'This phone action no longer matches its approval. Review the original task.',
+    PHONE_ACTION_APPROVAL_LOCKED: 'This phone action was already handled. Refresh the list.',
+    PHONE_ACTION_REJECTED: 'This phone action was rejected. Refresh the list.',
+    AGENT_RUN_REJECTED: 'This agent result was rejected. Refresh the list.',
+    AGENT_RUN_APPROVAL_LOCKED: 'This agent result was already handled. Refresh the list.',
+    AUTONOMOUS_TASK_REJECTED: 'This task result was rejected. Refresh the list.',
+    AUTONOMOUS_TASK_APPROVAL_LOCKED: 'This task result was already handled. Refresh the list.',
   };
-  return (
-    <div style={S.card} className="fg-approval-card">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-        <div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg-text,#f0f1f5)' }}>{meta.icon} {T(meta.label)}</div>
-          <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', marginTop: 3 }}>{a.title}</div>
-          <div style={{ fontSize: 10, color: 'var(--fg-text3,#888)', marginTop: 3 }}>
-            {a.platform && <span style={S.tag}>{a.platform}</span>}
-            {pv.word_count ? `${pv.word_count} words · ` : ''}
-            {a.scheduled_for ? `scheduled ${new Date(utcStamp(a.scheduled_for)).toLocaleDateString()}` : new Date(a.created_at + 'Z').toLocaleString()}
-          </div>
-        </div>
-      </div>
-      {preview && !editing && (
-        a.type === 'seo_page'
-          ? <iframe title={`${T('Preview')}: ${a.title || T(meta.label)}`} sandbox="" referrerPolicy="no-referrer" srcDoc={previewDocument({ content })}
-              style={{ display: 'block', width: '100%', height: 240, marginTop: 10, border: '1px solid var(--fg-border,rgba(255,255,255,0.06))', borderRadius: 8, background: '#fff' }} />
-          : <div style={{ marginTop: 10, padding: 10, background: 'var(--fg-bg4,#1a1a1e)', borderRadius: 8, fontSize: 12, color: 'var(--fg-text2,#ccc)', maxHeight: 240, overflow: 'auto', whiteSpace: 'pre-wrap' }}>{content}</div>
-      )}
-      {editing && (
-        <textarea style={{ ...S.input, marginTop: 10, minHeight: 140, fontFamily: 'inherit' }} value={content} onChange={e => setContent(e.target.value)} />
-      )}
-      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-        <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => setPreview(p => !p)}>{preview ? T('Hide') : T('Preview')}</button>
-        {!editing
-          ? <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => { setEditing(true); setPreview(false); }}>{T('✏️ Edit')}</button>
-          : <button style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={async () => { await act('edit', { content }); setEditing(false); }}>{T('💾 Save')}</button>}
-        <div style={{ flex: 1 }} />
-        <button disabled={busy} style={{ ...S.btn, fontSize: 11, background: 'rgba(248,113,113,0.15)', color: '#f87171' }} onClick={() => act('reject')}>{T('❌ Skip')}</button>
-        <button disabled={busy} style={{ ...S.btn, ...S.primary, fontSize: 11 }} onClick={() => act('approve', editing ? { content } : {})}>✅ {T(meta.verb)}</button>
-      </div>
+  return messages[code] || 'The request did not finish. Refresh the saved record before trying again.';
+}
+async function saveApprovalContent(api: Api, item: ApprovalItem, content: string, expectedContent: string): Promise<void> {
+  const reply = approvalReply(await api(`/approvals/${encodeURIComponent(item.id)}/edit`, { method: 'POST', body: JSON.stringify({ content, expectedContent }) }));
+  if (!autonomyRecord(reply.data) || reply.data.id !== item.id || reply.data.status !== 'pending' || reply.data.content !== content) throw new Error('APPROVAL_RESULT_UNCONFIRMED');
+}
+const TYPE_META: Record<string, { icon: string; label: string }> = {
+  seo_page: { icon: '📄', label: 'New SEO Page Ready' }, social_post: { icon: '📱', label: 'Social Post' },
+  email: { icon: '📧', label: 'Email Campaign' }, sms: { icon: '💬', label: 'SMS' }, review_request: { icon: '⭐', label: 'Review Request' },
+  phone_action: { icon: '📱', label: 'Phone action' }, agent_run: { icon: '🤖', label: 'Agent result' }, autonomous_task: { icon: '🤖', label: 'Task result' },
+};
+function autonomyTime(value: string): string {
+  const date = new Date(utcStamp(value));
+  return Number.isFinite(date.getTime()) ? date.toLocaleString() : value;
+}
+function ApprovalCard({ a, api, onResolved, disabled, onBusyChange, onEditingChange, onNeedsRefresh, onNotice }: {
+  a: ApprovalItem; api: Api; onResolved: () => Promise<boolean>; disabled: boolean; onBusyChange: (busy: boolean) => boolean;
+  onEditingChange: (editing: boolean) => void; onNeedsRefresh: () => void; onNotice: (message: string) => void;
+}) {
+  const [T] = useAutonomyText();
+  const [editing, setEditing] = useState(false), [content, setContent] = useState(a.content ?? '');
+  const [preview, setPreview] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('');
+  const original = useRef(a.content ?? ''), busyRef = useRef(false), live = useRef(true), apiRef = useRef(api);
+  apiRef.current = api;
+  useEffect(() => { live.current = true; return () => { live.current = false; if (busyRef.current) onBusyChange(false); }; }, [api, a.id]);
+  useEffect(() => { onEditingChange(editing); return () => onEditingChange(false); }, [editing, api, a.id]);
+  useEffect(() => { if (!editing && !busy) { setContent(a.content ?? ''); original.current = a.content ?? ''; } }, [a.content, editing, busy]);
+  const editable = !PROTECTED_APPROVAL_TYPES.has(a.type);
+  const meta = TYPE_META[a.type] || { icon: '🤖', label: a.type };
+  const pv = (() => { try { const value: unknown = JSON.parse(a.preview_data || '{}'); return autonomyRecord(value) ? value : {}; } catch { return {}; } })();
+  const act = async (action: 'save' | 'approve' | 'reject') => {
+    if (disabled || busyRef.current || !live.current || apiRef.current !== api || !onBusyChange(true)) return;
+    busyRef.current = true; setBusy(true); setError(''); onNotice('');
+    let saved = false;
+    try {
+      let approvedContent = a.content ?? '';
+      if (action === 'save' || action === 'approve' && editing) {
+        await saveApprovalContent(api, a, content, original.current);
+        if (!live.current || apiRef.current !== api) return;
+        saved = true;
+        original.current = content; approvedContent = content; setEditing(false);
+      }
+      if (action !== 'save') {
+        const reply = approvalReply(await api(`/approvals/${encodeURIComponent(a.id)}/${action}`, { method: 'POST', body: JSON.stringify(action === 'approve' && editable ? { expectedContent: approvedContent } : {}) }));
+        if (!live.current || apiRef.current !== api) return;
+        if (action === 'approve' && autonomyRecord(reply.data) && 'syncAttemptStatus' in reply.data
+          && (reply.data.syncAttemptStatus !== 200 || !autonomyRecord(reply.data.run) || reply.data.run.sync_status !== 'synced')) onNotice(T('Approved. Agent result sync is not confirmed. Review the original task.'));
+      }
+      const refreshed = await onResolved();
+      if (!refreshed && live.current && apiRef.current === api) setError('The decision was saved, but the list could not be refreshed. Refresh before another action.');
+    } catch (caught) {
+      if (live.current && apiRef.current === api) {
+        setError(approvalError(caught)); onNeedsRefresh();
+        if (saved) await onResolved();
+      }
+    }
+    finally { busyRef.current = false; onBusyChange(false); if (live.current && apiRef.current === api) setBusy(false); }
+  };
+  const locked = disabled || busy;
+  const displayedContent = editing ? content : a.content ?? '';
+  return <div style={S.card} className="fg-approval-card">
+    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--fg-text,#f0f1f5)' }}>{meta.icon} {T(meta.label)}</div>
+    <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', marginTop: 3 }}>{a.title}</div>
+    <div style={{ fontSize: 10, color: 'var(--fg-text3,#888)', marginTop: 3 }}>
+      {a.platform && <span style={S.tag}>{a.platform}</span>}
+      {typeof pv.word_count === 'number' ? `${pv.word_count} words · ` : typeof pv.wordCount === 'number' ? `${pv.wordCount} words · ` : ''}
+      {a.scheduled_for ? `${T('Proposed time')}: ${autonomyTime(a.scheduled_for)}` : autonomyTime(a.created_at)}
     </div>
-  );
+    {error && <p role="alert" style={{ color: '#f87171', fontSize: 12 }}>{T(error)}</p>}
+    {preview && !editing && (a.type === 'seo_page'
+      ? <iframe title={`${T('Preview')}: ${a.title}`} sandbox="" referrerPolicy="no-referrer" srcDoc={previewDocument({ content: displayedContent })} style={{ display: 'block', width: '100%', height: 240, marginTop: 10, border: '1px solid var(--fg-border,rgba(255,255,255,0.06))', borderRadius: 8, background: '#fff' }} />
+      : <div style={{ marginTop: 10, padding: 10, background: 'var(--fg-bg4,#1a1a1e)', borderRadius: 8, fontSize: 12, color: 'var(--fg-text2,#ccc)', maxHeight: 240, overflow: 'auto', whiteSpace: 'pre-wrap' }}>{displayedContent}</div>)}
+    {editing && <textarea aria-label={T('Approval text')} disabled={locked} style={{ ...S.input, marginTop: 10, minHeight: 140, fontFamily: 'inherit' }} value={content} onChange={event => setContent(event.target.value)} />}
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+      <button disabled={locked} style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => setPreview(value => !value)}>{preview ? T('Hide') : T('Preview')}</button>
+      {editable && (!editing
+        ? <button disabled={locked} style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => { original.current = a.content ?? ''; setContent(a.content ?? ''); setEditing(true); setPreview(false); setError(''); }}>{T('✏️ Edit')}</button>
+        : <><button disabled={locked} style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => void act('save')}>{T('💾 Save')}</button><button disabled={locked} style={{ ...S.btn, ...S.ghostBtn, fontSize: 11 }} onClick={() => { setEditing(false); setContent(a.content ?? ''); setError(''); }}>{T('Cancel editing')}</button></>)}
+      <div style={{ flex: 1 }} />
+      <button disabled={locked} style={{ ...S.btn, fontSize: 11, background: 'rgba(248,113,113,0.15)', color: '#f87171' }} onClick={() => void act('reject')}>{T('Reject')}</button>
+      <button disabled={locked} style={{ ...S.btn, ...S.primary, fontSize: 11 }} onClick={() => void act('approve')}>✅ {busy ? T('Saving decision…') : T('Approve')}</button>
+    </div>
+    <p style={{ fontSize: 11, color: 'var(--fg-text3,#888)' }}>{T(editable ? 'Approval records this decision. Sending, publishing and scheduling are separate actions.' : 'This fixed result is reviewed individually; its original content cannot be edited here.')}</p>
+  </div>;
 }
 
 // ─── Morning dashboard + approval inbox ──────────────────────────────────────
 export function MorningDashboard({ api, username }: { api: Api; username?: string }) {
   const [T, zh] = useAutonomyText();
-  const [data, setData] = useState<any>(null);
-  const [running, setRunning] = useState(false);
-  const load = useCallback(async () => { try { const d = await api('/morning-dashboard'); if (d?.success) setData(d.data); } catch {} }, [api]);
-  useEffect(() => { load(); const t = setInterval(load, 45000); return () => clearInterval(t); }, [load]);
-  const runNow = async () => {
-    setRunning(true);
-    try { await api('/nightly/run', { method: 'POST', body: '{}' }); await load(); } catch {} finally { setRunning(false); }
+  const [data, setData] = useState<MorningData | null>(null), [loading, setLoading] = useState(true);
+  const [readError, setReadError] = useState(''), [actionError, setActionError] = useState(''), [notice, setNotice] = useState('');
+  const [activity, setActivity] = useState<string | null>(null);
+  const [editingCount, setEditingCount] = useState(0);
+  const live = useRef(true), apiRef = useRef(api), dataApi = useRef<Api | null>(null), sequence = useRef(0), actionLock = useRef<string | null>(null);
+  const editingIds = useRef(new Set<string>());
+  apiRef.current = api;
+  const load = useCallback(async (): Promise<boolean> => {
+    const request = ++sequence.current;
+    if (!live.current || apiRef.current !== api) return false;
+    setLoading(true);
+    try {
+      const value = morningData(await api('/morning-dashboard'));
+      if (!live.current || apiRef.current !== api || request !== sequence.current) return false;
+      dataApi.current = api; setData(value); setReadError(''); return true;
+    } catch (caught) { if (live.current && apiRef.current === api && request === sequence.current) setReadError(approvalError(caught)); return false; }
+    finally { if (live.current && apiRef.current === api && request === sequence.current) setLoading(false); }
+  }, [api]);
+  useEffect(() => {
+    live.current = true; dataApi.current = null; sequence.current += 1; actionLock.current = null;
+    editingIds.current.clear(); setEditingCount(0);
+    setData(null); setReadError(''); setActionError(''); setNotice(''); setActivity(null); void load();
+    const timer = setInterval(() => { if (!actionLock.current) void load(); }, 45000);
+    return () => { live.current = false; sequence.current += 1; clearInterval(timer); };
+  }, [api, load]);
+  const current = dataApi.current === api ? data : null;
+  const approvals = current?.pendingApprovals || [];
+  const locked = loading || !!readError || !!activity || !current;
+  const changeCardBusy = (id: string, busy: boolean) => {
+    if (!live.current || apiRef.current !== api) return false;
+    if (busy) { if (actionLock.current) return false; actionLock.current = id; setActivity(id); }
+    else if (actionLock.current === id) { actionLock.current = null; setActivity(null); }
+    return true;
   };
-  const s = data?.lastRun?.summary || {};
-  const approvals = data?.approvals || [];
-  const hour = new Date().getHours();
-  const greet = hour < 12 ? T('Good morning') : hour < 18 ? T('Good afternoon') : T('Good evening');
-  return (
-    <div>
-      <div style={{ ...S.card, background: 'linear-gradient(135deg, rgba(255,31,53,0.10), rgba(14,165,233,0.06))' }} className="fg-living">
-        <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--fg-text,#f0f1f5)' }}>🌅 {greet}{username ? `, ${username}` : ''}. {T("Here's your day.")}</div>
-        <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', marginTop: 4 }}>
-          {approvals.length > 0 ? (zh ? `${approvals.length} 项待你审批。` : `${approvals.length} thing${approvals.length === 1 ? '' : 's'} need your approval.`) : T('Nothing needs your approval. All clear. ✨')}
-        </div>
-      </div>
-      {data?.lastRun && (
-        <div style={S.card}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--fg-text,#f0f1f5)', marginBottom: 8 }}>
-            {T("Last Night's Run")} {data.lastRun.status === 'complete' ? '✅' : '⚠️'} <span style={{ fontWeight: 400, color: 'var(--fg-text3,#888)' }}>[{new Date(data.lastRun.started_at + 'Z').toLocaleString()}]</span>
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', lineHeight: 1.9 }}>
-            📄 {s.seo_pages || 0} {T('new SEO pages drafted')}<br />
-            📱 {s.social_posts || 0} {T('posts scheduled for this week')}<br />
-            ⭐ {s.review_requests || 0} {T('review requests in flight')}<br />
-            🌐 {data.publishedPages || 0} {T('pages live total')}
-          </div>
-        </div>
-      )}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <button disabled={running} style={{ ...S.btn, ...S.ghostBtn }} onClick={runNow}>{running ? <span className="fg-tool-running" style={{ display: 'inline-block' }}>⚙️</span> : '🌙'} {running ? T('Agents working…') : T('Run nightly pipeline now')}</button>
-        {approvals.length > 1 && (
-          <button style={{ ...S.btn, ...S.primary }} onClick={async () => { await api('/approvals/approve-all', { method: 'POST', body: '{}' }); load(); }}>✅ {T('Approve All')} {approvals.length}</button>
-        )}
-      </div>
-      {approvals.map((a: any) => <ApprovalCard key={a.id} a={a} api={api} onResolved={load} />)}
-      {approvals.length === 0 && !data?.lastRun && (
-        <div style={{ ...S.card, textAlign: 'center', color: 'var(--fg-text3,#888)', fontSize: 12 }}>
-          {T('No runs yet. Hit "Run nightly pipeline now" to watch Forge work, or finish onboarding so it runs at 2am automatically.')}
-        </div>
-      )}
+  const changeEditing = (id: string, editing: boolean) => {
+    if (!live.current || apiRef.current !== api) return;
+    if (editing) editingIds.current.add(id); else editingIds.current.delete(id);
+    setEditingCount(editingIds.current.size);
+  };
+  const runAction = async (kind: 'nightly' | 'batch') => {
+    if (locked || actionLock.current || kind === 'batch' && editingIds.current.size > 0 || !live.current || apiRef.current !== api) return;
+    actionLock.current = kind; setActivity(kind); setActionError(''); setNotice('');
+    try {
+      const reply = approvalReply(await api(kind === 'batch' ? '/approvals/approve-all' : '/nightly/run', { method: 'POST', body: '{}' }));
+      if (!live.current || apiRef.current !== api) return;
+      if (kind === 'batch') {
+        if (typeof reply.updated !== 'number' || !Number.isSafeInteger(reply.updated) || reply.updated < 0 || !Array.isArray(reply.agentRuns)) throw new Error('APPROVAL_RESULT_UNCONFIRMED');
+        const pendingSync = reply.agentRuns.filter((item: unknown) => !autonomyRecord(item) || item.statusCode !== 200 || item.syncStatus !== 'synced').length;
+        setNotice(zh ? `已批准 ${reply.updated} 项。${pendingSync ? `另有 ${pendingSync} 项 Agent 结果同步尚未确认。` : ''}` : `Approved ${reply.updated} items.${pendingSync ? ` Sync is not confirmed for ${pendingSync} agent results.` : ''}`);
+      } else setNotice(T('The pipeline request finished. Review the saved drafts below.'));
+      if (!await load() && live.current && apiRef.current === api) setActionError('The decision was saved, but the list could not be refreshed. Refresh before another action.');
+    } catch (caught) { if (live.current && apiRef.current === api) { setActionError(approvalError(caught)); setReadError('The result is not confirmed. Refresh the saved record before trying again.'); } }
+    finally { if (live.current && apiRef.current === api && actionLock.current === kind) { actionLock.current = null; setActivity(null); } }
+  };
+  const hour = new Date().getHours(), greet = hour < 12 ? T('Good morning') : hour < 18 ? T('Good afternoon') : T('Good evening');
+  return <div>
+    <div style={{ ...S.card, background: 'linear-gradient(135deg, rgba(255,31,53,0.10), rgba(14,165,233,0.06))' }} className="fg-living">
+      <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--fg-text,#f0f1f5)' }}>🌅 {greet}{username ? `, ${username}` : ''}. {T("Here's your day.")}</div>
+      <div aria-live="polite" style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', marginTop: 4 }}>{!current
+        ? T(loading ? 'Loading your approval records…' : 'Approval records have not been confirmed.')
+        : current.pendingApprovalCount > 0 ? (zh ? `${current.pendingApprovalCount} 项待你审批。` : `${current.pendingApprovalCount} items need your approval.`)
+          : readError ? T('Approval records have not been confirmed.') : T('Nothing needs your approval. All clear. ✨')}</div>
     </div>
-  );
+    {readError && <div style={S.card}><p role="alert" style={{ color: '#f87171', fontSize: 12 }}>{T(readError)}</p>{current && <p style={S.sub}>{T('Showing the last confirmed records. Refresh before approving.')}</p>}</div>}
+    {actionError && <p role="alert" style={{ color: '#f87171', fontSize: 12 }}>{T(actionError)}</p>}
+    {notice && <p role="status" style={S.sub}>{notice}</p>}
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+      <button disabled={loading || !!activity} style={{ ...S.btn, ...S.ghostBtn }} onClick={() => void load()}>{T(loading ? 'Refreshing…' : 'Refresh records')}</button>
+      <button disabled={locked} style={{ ...S.btn, ...S.ghostBtn }} onClick={() => void runAction('nightly')}>🌙 {activity === 'nightly' ? T('Agents working…') : T('Run nightly pipeline now')}</button>
+      {!!current && current.pendingApprovalCount > 1 && <button disabled={locked || editingCount > 0} style={{ ...S.btn, ...S.primary }} onClick={() => void runAction('batch')}>✅ {activity === 'batch' ? T('Saving decision…') : T('Approve All')} ({current.pendingApprovalCount})</button>}
+    </div>
+    {editingCount > 0 && <p style={S.sub}>{T('Save or cancel editing before approving all pending items.')}</p>}
+    {current && <>
+      <p style={S.sub}>{zh ? `当前显示最近 ${approvals.length} 项，最多 20 项。全部待办共 ${current.pendingApprovalCount} 项；“全部批准”处理全部待办，手机操作仍需逐项批准。` : `Showing the latest ${approvals.length} items, up to 20. There are ${current.pendingApprovalCount} pending items in total; Approve All applies to all pending items. Phone actions still require individual approval.`}</p>
+      <div style={S.card}><div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>{T('Latest nightly run time')}</div><div style={S.sub}>{current.lastNightlyRun ? autonomyTime(current.lastNightlyRun) : T('No nightly run time is recorded.')}</div></div>
+      {current.recentSeoPages.length > 0 && <div style={S.card}><div style={{ fontSize: 12, fontWeight: 700, marginBottom: 8 }}>{T('Recently generated SEO pages')}</div>{current.recentSeoPages.map((page, index) => <div key={`${page.keyword}:${page.created_at}:${index}`} style={{ fontSize: 12, color: 'var(--fg-text2,#ccc)', marginTop: 8 }}>{page.keyword}<div style={{ fontSize: 10, color: 'var(--fg-text3,#888)' }}>{autonomyTime(page.created_at)}{page.word_count !== null ? ` · ${page.word_count} ${T('words recorded')}` : ''}</div></div>)}<p style={S.sub}>{T('These are generation records; approval does not establish publication.')}</p></div>}
+    </>}
+    {approvals.map(item => <ApprovalCard key={item.id} a={item} api={api} onResolved={load} disabled={locked}
+      onBusyChange={busy => changeCardBusy(item.id, busy)} onEditingChange={editing => changeEditing(item.id, editing)}
+      onNeedsRefresh={() => setReadError('The result is not confirmed. Refresh the saved record before trying again.')} onNotice={setNotice} />)}
+  </div>;
 }
-
 // ─── Agent roster browser ────────────────────────────────────────────────────
 export function AgentRoster({ api }: { api: Api }) {
   const [T] = useAutonomyText();
