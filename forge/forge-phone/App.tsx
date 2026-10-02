@@ -35,6 +35,7 @@ function errorText(value: unknown): string {
   const messages: Record<string, string> = {
     INVALID_CREDENTIALS: '邮箱或密码不正确，请重新输入。', AUTH_RATE_LIMITED: '尝试次数较多，请稍后再登录。',
     NETWORK_UNAVAILABLE: '连接未完成，请检查网络后再试。', AUTH_REQUIRED: '请先登录 Forge。',
+    REQUEST_CANCELLED: '连接等待超时，请检查网络后重试。',
     SESSION_EXPIRED: '登录已过期，请重新登录。', SESSION_CHANGED: '登录状态已变化，请重新登录。',
     AUTH_RESPONSE_INVALID: '此服务尚未支持手机登录，请使用已更新的测试服务。',
     PHONE_COOKIE_AUTH_UNSUPPORTED: '手机登录凭据与浏览器凭据冲突，请重新打开应用。',
@@ -119,9 +120,19 @@ export default function App() {
   const businessClient = useMemo<DraftClient & { onBusyChange(busy: boolean): void }>(() => {
     const generation = authRef.current;
     const current = () => { if (authRef.current !== generation) throw new Error('SESSION_CHANGED'); };
+    const perform = async <T,>(request: () => Promise<T>): Promise<T> => {
+      current();
+      try { const result = await request(); current(); return result; }
+      catch (error) {
+        if (authRef.current === generation && error instanceof Error && ['SESSION_EXPIRED', 'AUTH_REQUIRED'].includes(error.message.split(':')[0])) {
+          void signOut(); setError(errorText(error));
+        }
+        throw error;
+      }
+    };
     return {
-      request: async <T,>(path: string, init?: RequestInit) => { current(); const result = await session.request<T>(path, init); current(); return result; },
-      requestText: async (path, init) => { current(); const result = await session.requestText(path, init); current(); return result; },
+      request: <T,>(path: string, init?: RequestInit) => perform(() => session.request<T>(path, init)),
+      requestText: (path, init) => perform(() => session.requestText(path, init)),
       onBusyChange: busy => { if (authRef.current === generation) setBusinessBusy(busy); },
     };
   }, [session, identity?.user.id]);
@@ -319,7 +330,7 @@ export default function App() {
   const mark = <View style={s.brand}><View style={s.brandMark}><Text style={s.brandLetter}>F</Text></View><Text style={s.wordmark}>FORGE <Text style={s.wordmarkLight}>/ POCKET</Text></Text></View>;
   const recovery = existingTask && <View style={s.message}><Text style={s.body}>已有手机任务未结束</Text><Text style={s.small}>{existingTask.goal}</Text><Text style={s.footnote}>结束后才能开始新任务。结束不会撤回已派发到手机的操作。</Text>{button(closingTask ? '正在结束…' : '结束未完成任务', () => { void closeExistingTask(); }, closingTask, true)}</View>;
 
-  if (!identity) return <SafeAreaView style={s.root}><StatusBar style="dark" /><KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.loginContent}>
+  if (!identity) return <SafeAreaView style={s.root}><StatusBar style="dark" translucent={false} backgroundColor={C.bg} /><KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.loginContent}>
     {mark}<Text style={s.eyebrow}>你的随身工作助手</Text><Text style={s.hero}>少一点琐事。{'\n'}多一点时间。</Text><Text style={s.intro}>把重复操作交给 Forge。{'\n'}每一步，都由你掌握。</Text>
     <View style={s.service}><Text style={s.label}>连接到你的 Forge</Text>
       {loadingService ? <ActivityIndicator accessibilityLabel="正在读取服务设置" color={C.green} /> : editingService ? <>
@@ -336,7 +347,9 @@ export default function App() {
     </View><View style={s.footer}><Text style={s.small}>逐项确认 · 随时停止</Text><Text style={s.small}>01 / ANDROID</Text></View>
   </ScrollView></KeyboardAvoidingView></SafeAreaView>;
 
-  if (screen === 'running') return <SafeAreaView style={s.root}><StatusBar style="dark" /><View style={s.topbar}>{mark}{running || starting ? button('停止', () => { void stopAgent(); }, false, true) : button('返回', () => setScreen('main'), false, true)}</View>
+  const businessPane = <View key="business" style={[s.flex, (screen === 'running' || taskMode !== 'business') && { display: 'none' }]}><BusinessTasks key={identity.user.id} client={businessClient} onBusyChange={businessClient.onBusyChange} /></View>;
+  if (screen === 'running') return <SafeAreaView style={s.root}><StatusBar style="dark" translucent={false} backgroundColor={C.bg} /><View style={s.topbar}>{mark}{running || starting ? button('停止', () => { void stopAgent(); }, false, true) : button('返回', () => setScreen('main'), false, true)}</View>
+    {businessPane}
     <ScrollView ref={scrollRef} contentContainerStyle={s.content}><Text style={s.eyebrow}>{planningOnly ? '步骤预览' : target?.label || '手机任务'}</Text><View style={s.phaseRow}><Text style={s.title}>{phase}</Text>{running && <ActivityIndicator color={C.green} />}</View><Text numberOfLines={3} accessibilityLabel={goal} style={s.goalSummary}>{goal}</Text><View style={s.meta}><Text style={s.small}>{planningOnly ? '未操作手机' : `${successfulActions} 步已执行`}</Text><Text style={s.small}>最多 {maxSteps} 步</Text></View>
       {!planningOnly && running && message('审核时会切回 Forge。批准后返回所选应用继续；请保持目标页面不变。')}{message(notice)}{message(error, true)}{recovery}
       {pendingStep && <View style={s.approval}><Text style={s.eyebrow}>下一步 · 需要你的确认</Text><Text style={s.title}>{describeAction(pendingStep)}</Text><Text style={s.body}>目标：{target?.label || '所选应用'}</Text><Text style={s.body}>{pendingStep.reasoning}</Text><Text style={s.small}>风险：{({ low: '低', medium: '中', high: '高' })[pendingStep.riskLevel]}。批准仅限此动作；发送、删除等操作请仔细检查。</Text>
@@ -348,9 +361,10 @@ export default function App() {
       {done && <View style={s.result}><Text style={s.label}>{planningOnly ? '预览已结束' : '结果待你核对'}</Text><Text style={s.body}>{summary}</Text><Text style={s.small}>{planningOnly ? '预览不会操作手机，也不代表任务已实际完成。' : '上方记录反映手机动作回执。请打开目标应用确认草稿或最终结果。'}</Text></View>}{!running && message('停止不能撤回已经执行的操作；已交给手机的动作仍会补充实际结果。')}
     </ScrollView></SafeAreaView>;
 
-  return <SafeAreaView style={s.root}><StatusBar style="dark" /><View style={s.topbar}>{mark}<TouchableOpacity accessibilityRole="button" accessibilityLabel="退出登录" onPress={() => { void signOut(); }} style={s.account}><Text style={s.small}>退出</Text></TouchableOpacity></View>
+  return <SafeAreaView style={s.root}><StatusBar style="dark" translucent={false} backgroundColor={C.bg} /><View style={s.topbar}>{mark}<TouchableOpacity accessibilityRole="button" accessibilityLabel="退出登录" onPress={() => { void signOut(); }} style={s.account}><Text style={s.small}>退出</Text></TouchableOpacity></View>
     <View style={s.taskModes}>{(['business', 'phone'] as const).map(mode => <TouchableOpacity key={mode} accessibilityRole="button" accessibilityState={{ selected: taskMode === mode, disabled: businessBusy && taskMode !== mode }} disabled={businessBusy && taskMode !== mode} onPress={() => setTaskMode(mode)} style={[s.taskMode, taskMode === mode && s.activeTaskMode, businessBusy && taskMode !== mode && s.disabled]}><Text style={[s.body, taskMode === mode && { color: C.paper }]}>{mode === 'business' ? '业务草稿' : '手机操作'}</Text></TouchableOpacity>)}</View>
-    {taskMode === 'business' ? <BusinessTasks key={identity.user.id} client={businessClient} onBusyChange={businessClient.onBusyChange} /> : <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}><Text style={s.eyebrow}>你好，{identity.user.firstName || identity.user.email.split('@')[0]}</Text><Text style={s.hero}>这次，{'\n'}交给 Forge。</Text><Text style={s.intro}>从一个小任务开始。你确认，助手执行。</Text>
+    {businessPane}
+    {taskMode === 'phone' && <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}><Text style={s.eyebrow}>你好，{identity.user.firstName || identity.user.email.split('@')[0]}</Text><Text style={s.hero}>这次，{'\n'}交给 Forge。</Text><Text style={s.intro}>从一个小任务开始。你确认，助手执行。</Text>
       <View style={s.taskShelf}>{TASKS.map((task, i) => <TouchableOpacity accessibilityRole="button" key={task.name} onPress={() => setGoal(task.goal)} style={s.task}><Text style={s.taskNumber}>0{i + 1}</Text><Text style={s.taskName}>{task.name}</Text><Text style={s.small}>{task.hint}</Text></TouchableOpacity>)}</View>
       <Text style={s.label}>你想完成什么？</Text><TextInput accessibilityLabel="任务目标" value={goal} onChangeText={setGoal} multiline maxLength={2000} placeholder="例如：根据客户消息写好回复，先不发送…" placeholderTextColor={C.muted} style={[s.input, s.goalInput]} />
       <View style={s.mode}><View style={s.flex}><Text style={s.body}>先预览步骤</Text><Text style={s.small}>{planningOnly ? '只生成计划，不操作手机' : '逐项批准后，操作所选应用'}</Text></View><Switch accessibilityLabel="先预览步骤" value={planningOnly} onValueChange={setPlanningOnly} trackColor={{ true: C.green, false: C.line }} thumbColor={C.paper} /></View>
