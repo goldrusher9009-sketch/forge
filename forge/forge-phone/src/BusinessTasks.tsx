@@ -189,18 +189,21 @@ function FollowUpCard({ target, busy, operationId, sourceVerified = true, snapsh
   };
   const followUpEditable = !!followUpRecord && !busy && !followUpReadRequired && sourceVerified;
   const button = (label: string, action: () => void, disabled = false, secondary = false) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled} onPress={action} style={[s.button, secondary && s.secondary, disabled && s.disabled]}><Text style={[s.buttonText, secondary && { color: C.ink }]}>{label}</Text></TouchableOpacity>;
+  const followUpFeedback = <>
+    {pending && <ActivityIndicator accessibilityLabel="正在读取或保存跟进记录" color={C.green} style={{ marginTop: 16 }} />}
+    {followUpError ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{followUpError}</Text></View> : null}
+    {followUpNotice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{followUpNotice}</Text></View> : null}
+  </>;
   const followUpResults: Array<{ value: MailFollowUp['result']; label: string }> = [{ value: null, label: '未记录' }, { value: 'pending', label: '待跟进' }, { value: 'replied', label: '已回复' }, { value: 'won', label: '已成交' }, { value: 'lost', label: '未成交' }];
   return <View style={s.followUpCard}>
             <TouchableOpacity accessibilityRole="button" accessibilityState={{ expanded: followUpOpen, disabled: busy || !sourceVerified }} disabled={busy || !sourceVerified} onPress={() => toggleFollowUp()} style={s.followUpToggle}>
               <View style={{ flex: 1 }}><Text style={s.followUpTitle}>{target.kind === 'task' ? '客户跟进 · 本人记录' : '邮件跟进 · 本人记录'}</Text><Text style={s.small}>{!!followUpRecord ? `${followUpResults.find(item => item.value === followUpRecord.result)?.label || '未记录'}${followUpRecord.followUpOn ? ` · ${followUpRecord.followUpOn}` : ''}` : target.kind === 'task' ? '下一步、结果和证据，留在这项任务下。' : '下一步、结果和证据，留在这封邮件下。'}</Text></View>
               <Text style={s.followUpLink}>{followUpOpen ? '收起 −' : '展开 +'}</Text>
             </TouchableOpacity>
-            {pending && followUpOpen && <ActivityIndicator accessibilityLabel="正在读取或保存跟进记录" color={C.green} />}
             {followUpOpen && <>
               {!sourceVerified && <Text style={s.footnote}>请先查看任务结果，重新核对原草稿。你的跟进输入仍保留在这里。</Text>}
               <Text style={s.footnote}>{target.kind === 'task' ? '复制草稿到微信或线下沟通后，也可在这里记录进展。无需连接邮箱。' : '仅保存本人填写的记录。'}客户结果与金额尚未独立核实。</Text>
-              {followUpError ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{followUpError}</Text></View> : null}
-              {followUpNotice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{followUpNotice}</Text></View> : null}
+              {followUpFeedback}
               {button(followUpReadRequired ? '先读取最新跟进记录' : '重新读取跟进记录', () => { void readFollowUp(); }, busy || !sourceVerified, true)}
               {!!followUpRecord && <>
                 <View style={s.followUpSummary}><Text style={s.small}>{followUpRecord.version === 0 ? '尚未记录' : '已保存'} · {followUpResults.find(item => item.value === followUpRecord.result)?.label || '未记录'}</Text><Text style={s.small}>下一步：{followUpRecord.nextStep || '未记录'}{followUpRecord.followUpOn ? ` · ${followUpRecord.followUpOn}` : ''}</Text><Text style={s.small}>证据引用：{followUpRecord.evidenceReference || '未记录'}</Text><Text style={s.small}>本人填写金额：{followUpRecord.reportedRevenueMinor === null ? '未记录' : `${followUpRecord.reportedRevenueCurrency} ${mailFollowUpForm(followUpRecord).reportedRevenue}`}</Text></View>
@@ -211,6 +214,7 @@ function FollowUpCard({ target, busy, operationId, sourceVerified = true, snapsh
                 <Text style={s.label}>证据引用（可选）</Text><TextInput accessibilityLabel="客户跟进证据引用" value={followUpFields.evidenceReference} onChangeText={value => changeFollowUpField(followUpRecord, 'evidenceReference', value)} editable={followUpEditable} multiline maxLength={2000} autoCapitalize="none" autoCorrect={false} placeholder="例如：合同编号、客户回复日期或记录链接" placeholderTextColor={C.muted} style={s.input} />
                 <Text style={s.label}>本人填写金额（可选）</Text><TextInput accessibilityLabel="本人填写客户金额" value={followUpFields.reportedRevenue} onChangeText={value => changeFollowUpField(followUpRecord, 'reportedRevenue', value)} editable={followUpEditable} keyboardType="decimal-pad" placeholder="留空表示未记录，例如 1200.00" placeholderTextColor={C.muted} style={s.input} /><View style={s.followUpChoices}>{(['CNY', 'USD'] as const).map(currency => <TouchableOpacity key={currency} accessibilityRole="button" accessibilityState={{ selected: followUpFields.reportedRevenueCurrency === currency, disabled: !followUpEditable }} disabled={!followUpEditable} onPress={() => changeFollowUpField(followUpRecord, 'reportedRevenueCurrency', currency)} style={[s.followUpChoice, followUpFields.reportedRevenueCurrency === currency && s.selected, !followUpEditable && s.disabled]}><Text style={s.small}>{currency === 'CNY' ? 'CNY · 人民币' : 'USD · 美元'}</Text></TouchableOpacity>)}</View>
                 <Text style={s.footnote}>留空会保存为“未记录”；填写 0 会保留为 0。金额由本人填写。</Text>
+                {followUpFeedback}
                 {button('保存客户跟进记录', () => { void saveFollowUp(followUpRecord); }, !followUpEditable)}
               </>}
             </>}
