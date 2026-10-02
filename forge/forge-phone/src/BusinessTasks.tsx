@@ -18,6 +18,8 @@ function friendly(error: unknown): string {
   const code = error instanceof Error ? error.message.split(':')[0] : '';
   const messages: Record<string, string> = {
     NETWORK_UNAVAILABLE: '连接中断了。任务可能已被保存，请先查看服务端结果。',
+    DRAFT_READ_TIMEOUT: '读取等待超时，请重新查看；不会重新提交任务。',
+    DRAFT_HISTORY_UNCONFIRMED: '工作记录尚未确认，请重新查看。',
     DRAFT_FREE_AGENT_UNAVAILABLE: '这位助手暂时没有可用的免费模型，请刷新后重新选择。',
     DRAFT_INPUT_REQUIRED: '请填写对象名称和需要参考的真实资料。',
     DRAFT_ASSISTANT_TEMPLATE_UNAVAILABLE: '当前没有与内置草稿模板匹配的可用免费模型。请稍后刷新，或在工作区准备自己的助手。',
@@ -97,6 +99,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   const [view, setView] = useState<'compose' | 'result' | 'history' | 'incoming' | 'incoming-calls'>('compose');
   const [incomingBusy, setIncomingBusy] = useState(false);
   const [history, setHistory] = useState<SavedThread[]>([]);
+  const [historyKnown, setHistoryKnown] = useState(false);
   const [files, setFiles] = useState<DraftArtifact[]>([]);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [charge, setCharge] = useState<number | null>(null);
@@ -140,7 +143,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   selectedMail.current = mailReceipt;
   followUpSaved.current = followUpRecord; followUpDraft.current = followUpFields;
 
-  const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other') => {
+  const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other', boundedRead = true) => {
     // A callback from an earlier account must never borrow the new client's credentials.
     if (!mounted.current || busyRef.current || clientRef.current !== client) return null;
     const id = ++operation.current;
@@ -148,10 +151,10 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
     const abort = new AbortController(); controller.current = abort;
     busyRef.current = true; setBusy(true); setBusyKind(purpose); setError('');
     let timedOut = false;
-    const timer = purpose === 'mail' ? setTimeout(() => { timedOut = true; abort.abort(); }, 20000) : undefined;
+    const timer = purpose === 'mail' || purpose === 'other' && boundedRead ? setTimeout(() => { timedOut = true; abort.abort(); }, 20000) : undefined;
     const ensure = () => {
       if (!mounted.current || operation.current !== id || clientRef.current !== accountClient) throw new Error('DRAFT_STOPPED');
-      if (timedOut) throw new Error('MAIL_REQUEST_UNCONFIRMED');
+      if (timedOut) throw new Error(purpose === 'mail' ? 'MAIL_REQUEST_UNCONFIRMED' : 'DRAFT_READ_TIMEOUT');
       if (abort.signal.aborted) throw new Error('DRAFT_STOPPED');
     };
     const scoped: DraftClient = {
@@ -233,7 +236,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   useEffect(() => {
     mounted.current = true;
     resetMail(); setResendState('unread'); jobRef.current = null;
-    setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setFiles([]); setPreview(null); setCharge(null);
+    setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setHistoryKnown(false); setFiles([]); setPreview(null); setCharge(null);
     setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
     busyRef.current = false; setBusy(false); setIncomingBusy(false);
     const accountBusyCallback = busyCallback.current;
@@ -318,13 +321,17 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
   };
   const showHistory = async () => {
     const op = begin(); if (!op) return;
-    setView('history');
-    try { const reply = await op.client.request<{ data: SavedThread[] }>('/api/threads?limit=30&published_only=true'); op.ensure(); setHistory(Array.isArray(reply.data) ? reply.data.filter(thread => !!thread.publishedAgent?.releaseId) : []); }
+    setView('history'); setHistoryKnown(false);
+    try {
+      const reply = await op.client.request<{ success: boolean; data: SavedThread[] }>('/api/threads?limit=30&published_only=true'); op.ensure();
+      if (reply.success !== true || !Array.isArray(reply.data)) throw new Error('DRAFT_HISTORY_UNCONFIRMED');
+      setHistory(reply.data.filter(thread => !!thread.publishedAgent?.releaseId)); setHistoryKnown(true);
+    }
     catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setError(friendly(e)); }
     finally { op.finish(); }
   };
   const openSaved = async (saved: SavedThread | string) => {
-    const op = begin(); if (!op) return;
+    const op = begin('other', false); if (!op) return; // Restoration also writes delivery checks.
     const threadId = typeof saved === 'string' ? saved : saved.id;
     jobRef.current = null;
     setView('result'); setPreview(null); setFiles([]); setCharge(null); setRetryAllowed(false); setCanStop(false); setRaw(false); setNotice(''); setPhase('正在读取已保存的工作');
@@ -548,7 +555,7 @@ export default function BusinessTasks({ client, onBusyChange }: Props) {
       {button('刷新可用助手', () => { void refreshAssistants(); }, busy, true)}{button(busy ? '正在准备…' : '生成并保存草稿 →', () => { void start(); }, busy || !chosen || !name.trim() || !source.trim())}
       <Text style={s.footnote}>本次模型费用上限为 $0。只起草，不自动发送或发布。免费模型繁忙时可稍后查看原任务。</Text>
     </>}
-    {view === 'history' && <><Text style={s.label}>最近保存的工作</Text>{!busy && !history.length && <Text style={s.body}>这里还没有已发布助手的工作记录。</Text>}{history.map(thread => <TouchableOpacity accessibilityRole="button" disabled={busy} key={thread.id} onPress={() => { void openSaved(thread); }} style={s.history}><Text style={s.body}>{thread.title.split('\n')[0]}</Text>{thread.created_at && <Text style={s.small}>创建时间（UTC）：{thread.created_at}</Text>}<Text style={s.small}>{thread.publishedAgent?.name} · 查看文件与核对记录 →</Text></TouchableOpacity>)}</>}
+    {view === 'history' && <><Text style={s.label}>最近保存的工作</Text>{!busy && !historyKnown && <Text style={s.body}>工作记录尚未确认，请重新查看。</Text>}{!busy && historyKnown && !history.length && <Text style={s.body}>这里还没有已发布助手的工作记录。</Text>}{history.map(thread => <TouchableOpacity accessibilityRole="button" disabled={busy} key={thread.id} onPress={() => { void openSaved(thread); }} style={s.history}><Text style={s.body}>{thread.title.split('\n')[0]}</Text>{thread.created_at && <Text style={s.small}>创建时间（UTC）：{thread.created_at}</Text>}<Text style={s.small}>{thread.publishedAgent?.name} · 查看文件与核对记录 →</Text></TouchableOpacity>)}</>}
     {view === 'result' && <>
       <View style={s.phase}><Text style={s.title}>{phase || '工作结果'}</Text>{busy && busyKind === 'draft' && <ActivityIndicator color={C.green} />}</View>
       <Text style={s.small}>{charge === null ? '模型费用：尚未确认' : `模型费用：$${charge === 0 ? '0.00' : charge.toFixed(6)} · 已核对`}</Text>
