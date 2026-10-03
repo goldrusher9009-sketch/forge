@@ -172,10 +172,14 @@ export async function availableDraftReleases(client: DraftClient, draftOnly = fa
     try {
       const pack = await client.request<{ success: boolean; data: { configuration: { model: string; tools: string[] } } }>(`/api/workspace-agents/${segment(release.agentId)}/releases/${segment(release.releaseId)}/package`);
       const config = pack.data?.configuration;
-      if (pack.success === true && config?.model === release.model && Array.isArray(config.tools) && config.tools.includes('create_artifact') && config.tools.every(tool => draftOnly ? tool === 'create_artifact' : tools.has(tool))) result.push(release);
+      if (pack.success !== true || !config || typeof config.model !== 'string' || !Array.isArray(config.tools)
+        || config.tools.some(tool => typeof tool !== 'string')) fail('DRAFT_SERVICE_UNAVAILABLE');
+      if (config.model === release.model && config.tools.includes('create_artifact') && config.tools.every(tool => draftOnly ? tool === 'create_artifact' : tools.has(tool))) result.push(release);
     } catch (error) {
-      // A changed account or stopped component must end all further requests.
-      if (['SESSION_CHANGED', 'SESSION_EXPIRED', 'AUTH_REQUIRED', 'DRAFT_STOPPED'].includes(error instanceof Error ? error.message.split(':')[0] : '')) throw error;
+      // Only a confirmed missing package may be omitted from a complete refresh.
+      const gone = error instanceof Error && ['AGENT_NOT_FOUND', 'AGENT_RELEASE_NOT_FOUND'].includes(error.message.split(':')[0])
+        && (error as Error & { status?: number }).status === 404;
+      if (!gone) throw error;
     }
   }
   return result;

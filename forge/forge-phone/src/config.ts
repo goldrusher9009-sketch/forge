@@ -1,5 +1,9 @@
 // Forge Phone Agent — controlled runtime configuration and shared contracts.
-declare const process: { env: { EXPO_PUBLIC_FORGE_API_URL?: string } };
+declare const process: { env: {
+  EXPO_PUBLIC_FORGE_API_URL?: string;
+  EXPO_PUBLIC_FORGE_WEB_ORIGIN?: string;
+  EXPO_PUBLIC_APPTOPIA_ORIGIN?: string;
+} };
 declare const __DEV__: boolean;
 // React Native 0.74's global URL does not implement origin or hostname.
 export const ForgeURL = require('whatwg-url-without-unicode').URL as typeof URL;
@@ -29,6 +33,26 @@ export function normalizeForgeApiUrl(value: string, allowLocalHttp = typeof __DE
     throw new Error('SERVICE_HTTPS_REQUIRED');
   }
   return url.origin;
+}
+
+function httpsOrigin(value: string): string {
+  try { return normalizeForgeApiUrl(value, false); }
+  catch { return ''; }
+}
+
+const OFFICIAL_FORGE_ORIGIN = 'https://forge-sand-two.vercel.app';
+// A custom API has a web counterpart only when both origins are explicitly configured.
+const pairedApiOrigin = httpsOrigin(configuredApi || '');
+const pairedWebOrigin = httpsOrigin(process.env.EXPO_PUBLIC_FORGE_WEB_ORIGIN || '');
+const configuredMarketplace = process.env.EXPO_PUBLIC_APPTOPIA_ORIGIN;
+const marketplaceOrigin = httpsOrigin(configuredMarketplace === undefined ? 'https://apptopia.ai' : configuredMarketplace);
+export const APPTOPIA_MARKETPLACE_URL = marketplaceOrigin ? `${marketplaceOrigin}/marketplace` : '';
+
+export function forgeWebUrlForApi(apiUrl: string): string {
+  const origin = httpsOrigin(apiUrl);
+  if (origin === OFFICIAL_FORGE_ORIGIN) return `${OFFICIAL_FORGE_ORIGIN}/?lang=zh`;
+  if (origin && origin === pairedApiOrigin && pairedWebOrigin) return `${pairedWebOrigin}/?lang=zh`;
+  return '';
 }
 
 export const PHONE_ACTION_NAMES = [

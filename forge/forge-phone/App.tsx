@@ -349,7 +349,7 @@ export default function App() {
     </View><View style={s.footer}><Text style={s.small}>逐项确认 · 随时停止</Text><Text style={s.small}>01 / ANDROID</Text></View>
   </ScrollView></KeyboardAvoidingView></SafeAreaView>;
 
-  const businessPane = <View key="business" style={[s.flex, (screen === 'running' || taskMode !== 'business') && { display: 'none' }]}><BusinessTasks key={identity.user.id} client={businessClient} active={screen === 'main' && taskMode === 'business'} onBusyChange={businessClient.onBusyChange} /></View>;
+  const businessPane = <View key="business" style={[s.flex, (screen === 'running' || taskMode !== 'business') && { display: 'none' }]}><BusinessTasks key={identity.user.id} client={businessClient} apiUrl={apiUrl} active={screen === 'main' && taskMode === 'business'} onBusyChange={businessClient.onBusyChange} /></View>;
   if (screen === 'running') return <SafeAreaView style={s.root}><StatusBar style="dark" translucent={false} backgroundColor={C.bg} /><View style={s.topbar}>{mark}{running || starting ? button('停止', () => { void stopAgent(); }, false, true) : button('返回', () => setScreen('main'), false, true)}</View>
     {businessPane}
     <ScrollView ref={scrollRef} contentContainerStyle={s.content}><Text style={s.eyebrow}>{planningOnly ? '步骤预览' : target?.label || '手机任务'}</Text><View style={s.phaseRow}><Text style={s.title}>{phase}</Text>{running && <ActivityIndicator color={C.green} />}</View><Text numberOfLines={3} accessibilityLabel={goal} style={s.goalSummary}>{goal}</Text><View style={s.meta}><Text style={s.small}>{planningOnly ? '未操作手机' : `${successfulActions} 步已执行`}</Text><Text style={s.small}>最多 {maxSteps} 步</Text></View>

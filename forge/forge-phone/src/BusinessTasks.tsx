@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, BackHandler, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, BackHandler, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   availableDraftReleases, createDraftThread, DraftArtifact, DraftClient, DraftJob, DraftKind, DraftRelease, DraftReport,
   draftLabel, knownCharge, newDraftJob, readDraftRequest, restoreDraftJob, SavedThread, submitDraft, verifyDraft,
@@ -11,8 +11,9 @@ import {
 } from './business-tasks';
 import IncomingMail from './IncomingMail';
 import IncomingCalls from './IncomingCalls';
+import { APPTOPIA_MARKETPLACE_URL, forgeWebUrlForApi } from './config';
 
-type Props = { client: DraftClient; active: boolean; onBusyChange?: (busy: boolean) => void };
+type Props = { client: DraftClient; apiUrl: string; active: boolean; onBusyChange?: (busy: boolean) => void };
 const C = { bg: '#f3f0e8', paper: '#fffdf7', ink: '#20251f', muted: '#686f63', line: '#dcded2', green: '#3d6229', accent: '#b5db57', red: '#a33d30' };
 type Preview = { artifact: DraftArtifact; value?: Record<string, any>; report: DraftReport | null; verified: boolean };
 function friendly(error: unknown): string {
@@ -223,7 +224,7 @@ function FollowUpCard({ target, busy, operationId, sourceVerified = true, snapsh
           </View>;
 }
 
-export default function BusinessTasks({ client, active, onBusyChange }: Props) {
+export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: Props) {
   const [kind, setKind] = useState<DraftKind>('reply');
   const [name, setName] = useState('');
   const [source, setSource] = useState('');
@@ -232,6 +233,9 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const [assistantsKnown, setAssistantsKnown] = useState(false);
   const [assistantPreparation, setAssistantPreparation] = useState<DraftAssistantPreparation | null>(null);
   const [assistantPhase, setAssistantPhase] = useState('');
+  const [assistantHandoffOpen, setAssistantHandoffOpen] = useState(false);
+  const [assistantHandoffNotice, setAssistantHandoffNotice] = useState('');
+  const [assistantHandoffError, setAssistantHandoffError] = useState('');
   const [busy, setBusy] = useState(false);
   const [busyKind, setBusyKind] = useState<'draft' | 'mail' | 'assistant' | 'other'>('other');
   const [phase, setPhase] = useState('');
@@ -273,6 +277,9 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const savedThread = useRef('');
   const assistantRef = useRef<DraftAssistantPreparation | null>(null);
   const clientRef = useRef(client);
+  const assistantUi = useRef({ active, view, apiUrl, open: assistantHandoffOpen, incomingBusy });
+  const assistantLinkRequest = useRef(0);
+  const assistantLinkOpening = useRef(false);
   const busyCallback = useRef(onBusyChange);
   const mailThread = useRef('');
   const preparation = useRef<MailPreparation | null>(null);
@@ -281,6 +288,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const taskFollowUpSnapshot = useRef<FollowUpSnapshot | null>(null);
   const mailFollowUpSnapshot = useRef<FollowUpSnapshot | null>(null);
   clientRef.current = client; busyCallback.current = onBusyChange;
+  assistantUi.current = { active, view, apiUrl, open: assistantHandoffOpen, incomingBusy };
   selectedMail.current = mailReceipt;
 
   const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other') => {
@@ -363,16 +371,53 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
     setFiles([result.artifact]); setPreview({ ...result, verified: true }); setCharge(knownCharge(result.report));
     setPhase('草稿已保存'); setNotice(job.origin === 'twilio-inbound' ? '文件与模型费用已核对。来电身份、电话费用与转录事实仍需本人核实；草稿仅供后续跟进参考。' : '文件与模型费用已核对。请检查事实、措辞和收件对象，再自行发送或发布。');
   };
-  const refreshAssistants = async () => {
+  const assistantHandoffCurrent = () => mounted.current && clientRef.current === client
+    && assistantUi.current.active && assistantUi.current.view === 'compose' && assistantUi.current.apiUrl === apiUrl
+    && !busyRef.current && !assistantUi.current.incomingBusy;
+  const toggleAssistantHandoff = () => {
+    if (!assistantHandoffCurrent()) return;
+    assistantLinkRequest.current += 1; assistantLinkOpening.current = false;
+    setAssistantHandoffError(''); setAssistantHandoffOpen(previous => !previous);
+  };
+  const openAssistantWebsite = async (target: 'marketplace' | 'forge') => {
+    if (!assistantHandoffCurrent() || !assistantUi.current.open || assistantLinkOpening.current) return;
+    const url = target === 'marketplace' ? APPTOPIA_MARKETPLACE_URL : forgeWebUrlForApi(apiUrl);
+    if (!url) return;
+    const accountClient = client;
+    const id = ++assistantLinkRequest.current;
+    assistantLinkOpening.current = true; setAssistantHandoffError('');
+    try { await Linking.openURL(url); }
+    catch {
+      if (assistantLinkRequest.current === id && clientRef.current === accountClient && assistantHandoffCurrent() && assistantUi.current.open) {
+        setAssistantHandoffError(target === 'marketplace' ? '暂时无法打开助手市场，请检查手机是否有可用浏览器后重试。当前草稿已保留。' : '暂时无法打开对应 Forge 网页，请检查手机是否有可用浏览器后重试。当前草稿已保留。');
+      }
+    } finally { if (assistantLinkRequest.current === id) assistantLinkOpening.current = false; }
+  };
+  const refreshAssistants = async (explicit = false) => {
+    if (explicit && !assistantHandoffCurrent()) return;
     const op = begin(); if (!op) return;
-    try { const list = await availableDraftReleases(op.client); op.ensure(); setReleases(list); setAssistantsKnown(true); setChosen(previous => list.some(item => item.releaseId === previous) ? previous : list[0]?.releaseId || ''); }
-    catch (e) { if (!cancelled(e) && mounted.current && operation.current === op.id) setError(friendly(e)); }
+    if (explicit) { setAssistantHandoffNotice(''); setAssistantHandoffError(''); }
+    try {
+      const list = await availableDraftReleases(op.client); op.ensure(); setReleases(list); setAssistantsKnown(true);
+      setChosen(previous => list.some(item => item.releaseId === previous) ? previous : explicit ? '' : list[0]?.releaseId || '');
+      if (explicit) setAssistantHandoffNotice(list.length ? '可用助手已刷新，当前草稿已保留。请确认选择后继续。' : '已刷新，暂未找到可用于零价模型草稿任务的私人版本。当前草稿已保留，请在对应网页版检查模型、工具和发布状态。');
+    }
+    catch (e) {
+      if (!cancelled(e) && mounted.current && operation.current === op.id) {
+        const code = e instanceof Error ? e.message.split(':')[0] : '';
+        const message = ['DRAFT_READ_TIMEOUT', 'REQUEST_READ_TIMEOUT', 'REQUEST_READ_UNAVAILABLE'].includes(code)
+          ? friendly(e) : '助手列表读取未完成，原列表、选择和草稿仍保留。请稍后刷新。';
+        setError(message); if (explicit) setAssistantHandoffError(message);
+      }
+    }
     finally { op.finish(); }
   };
   useEffect(() => {
     mounted.current = true;
     resetMail(); setResendState('unread'); jobRef.current = null; savedThread.current = '';
     setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setHistoryKnown(false); setFiles([]); setPreview(null); setCharge(null);
+    assistantLinkRequest.current += 1; assistantLinkOpening.current = false;
+    setAssistantHandoffOpen(false); setAssistantHandoffNotice(''); setAssistantHandoffError('');
     setHistoryLimit(30); setHistoryHasMore(false); setHistoryQuery('');
     resultParent.current = 'compose'; setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
     busyRef.current = false; setBusy(false); setIncomingBusy(false);
@@ -384,6 +429,9 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       accountBusyCallback?.(false);
     };
   }, [client]);
+  useEffect(() => {
+    if (!active || view !== 'compose') { assistantLinkRequest.current += 1; assistantLinkOpening.current = false; }
+  }, [active, view]);
   useEffect(() => { onBusyChange?.(busy || incomingBusy); }, [busy, incomingBusy, onBusyChange]);
   useEffect(() => { scroll.current?.scrollTo({ y: 0, animated: false }); }, [view]);
   useEffect(() => {
@@ -647,6 +695,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
   const mailSourceVerified = jobRef.current?.origin !== 'twilio-inbound' && preview?.verified === true && !!preview.value && knownCharge(preview.report) === 0;
   const taskSourceSha256 = preview?.report?.files.find(file => file.id === preview.artifact.id && file.version === preview.artifact.version && file.original)?.sha256 || '';
   const historyMatches = history.filter(thread => `${thread.title.split('\n')[0]}\n${thread.publishedAgent?.name || ''}`.toLocaleLowerCase().includes(historyQuery.trim().toLocaleLowerCase()));
+  const forgeWebUrl = forgeWebUrlForApi(apiUrl);
 
 
   return <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
@@ -661,7 +710,7 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
       <View style={s.templates}>{(['reply', 'marketing'] as DraftKind[]).map((value, index) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: kind === value, disabled: busy }} disabled={busy} key={value} onPress={() => setKind(value)} style={[s.template, kind === value && s.selected]}><Text style={s.number}>0{index + 1}</Text><Text style={s.templateTitle}>{draftLabel(value)}</Text><Text style={s.small}>{value === 'reply' ? '回复正文 + 后续跟进草稿' : '邮件文案 + 社交媒体文案'}</Text></TouchableOpacity>)}</View>
       <Text style={s.label}>{kind === 'reply' ? '收件对象' : '品牌或产品名称'}</Text><TextInput accessibilityLabel="草稿对象名称" value={name} onChangeText={setName} editable={!busy} maxLength={100} placeholder={kind === 'reply' ? '例如：王经理' : '例如：Northstar Studio'} placeholderTextColor={C.muted} style={s.input} />
       <Text style={s.label}>{kind === 'reply' ? '来信内容与需要说明的事实' : '真实卖点、目标用户与使用场景'}</Text><TextInput accessibilityLabel="草稿参考资料" value={source} onChangeText={setSource} editable={!busy} multiline maxLength={6000} placeholder={kind === 'reply' ? '粘贴来信，并补充可以确认的交付时间、产品信息和你的回复意图。' : '写下已确认的功能、优势和适用人群。没有证据的效果或价格，请明确说明。'} placeholderTextColor={C.muted} style={[s.input, s.source]} />
-      <Text style={s.label}>本次使用的助手</Text>{releases.map(release => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: chosen === release.releaseId, disabled: busy }} disabled={busy} key={release.releaseId} onPress={() => setChosen(release.releaseId)} style={[s.assistant, chosen === release.releaseId && s.selected]}><Text style={s.body}>{release.name}</Text><Text style={s.small}>v{release.version} · 免费模型{chosen === release.releaseId ? ' · 已选择' : ''}</Text></TouchableOpacity>)}
+      <Text style={s.label}>本次使用的助手</Text>{releases.map(release => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: chosen === release.releaseId, disabled: busy }} disabled={busy} key={release.releaseId} onPress={() => setChosen(release.releaseId)} style={[s.assistant, chosen === release.releaseId && s.selected]}><Text style={s.body}>{release.name}</Text><Text style={s.small}>v{release.version} · 当前零价模型{chosen === release.releaseId ? ' · 已选择' : ''}</Text></TouchableOpacity>)}
       {!releases.length && <View style={s.saved}>
         <Text style={s.eyebrow}>从第一份草稿开始</Text><Text style={s.templateTitle}>{assistantsKnown ? '还没有草稿助手。' : '先看看你的可用助手。'}</Text>
         <Text style={s.small}>{assistantsKnown ? '在这里准备你自己的免费助手：保存模板、完成答题测评，再发布固定版本供你使用。' : '可用助手尚未读取成功，请先刷新。'}</Text>
@@ -670,7 +719,28 @@ export default function BusinessTasks({ client, active, onBusyChange }: Props) {
         {assistantPreparation?.retryAllowed && button('重新免费测评原助手', () => { void prepareAssistant(true); }, busy || incomingBusy, true)}
         <Text style={s.footnote}>点击准备只会为当前账号保存助手并进行 $0 答题测评。不会发出邮件、联系他人或发布外部内容。答题检查不代表实际文件交付或事实准确性已经通过。</Text>
       </View>}
-      {button('刷新可用助手', () => { void refreshAssistants(); }, busy, true)}{button(busy ? '正在准备…' : '生成并保存草稿 →', () => { void start(); }, busy || !chosen || !name.trim() || !source.trim())}
+      <View style={s.saved}>
+        <TouchableOpacity accessibilityRole="button" accessibilityLabel="获取更多助手" accessibilityState={{ expanded: assistantHandoffOpen, disabled: busy || incomingBusy }} disabled={busy || incomingBusy} onPress={toggleAssistantHandoff} style={[s.followUpToggle, (busy || incomingBusy) && s.disabled]}>
+          <View style={{ flex: 1 }}><Text style={s.followUpTitle}>获取更多助手</Text><Text style={s.small}>浏览市场 · 网页准备 · 回到草稿</Text></View><Text style={s.followUpLink}>{assistantHandoffOpen ? '收起' : '展开'}</Text>
+        </TouchableOpacity>
+        {assistantHandoffOpen && <>
+          <Text style={s.small}>手机当前不直接购买或安装助手。市场入口仅用于浏览，导入与发布需在对应网页版完成。</Text>
+          <Text style={s.label}>01 / 浏览商品与许可</Text><Text style={s.body}>查看市场中的商品与许可，使用自己合法获得的 Forge 助手包。</Text>
+          {button('浏览助手市场', () => { void openAssistantWebsite('marketplace'); }, busy || incomingBusy || !APPTOPIA_MARKETPLACE_URL, true)}
+          {!APPTOPIA_MARKETPLACE_URL && <Text style={s.footnote}>助手市场地址尚未配置正确，请联系服务提供者。</Text>}
+          <Text style={s.footnote}>零价模型仅指当前模型调用费用。Agent 商品价格与使用许可需要单独核对。</Text>
+          <Text style={s.label}>02 / 在对应网页版准备</Text><Text style={s.body}>在对应 Forge 网页单独登录同一账号，并确认使用与手机相同的服务。进入菜单“Agent 工作台与资料库” → “Agent 工作台”，导入 JSON/ZIP，绑定必要资料、测评，再发布自己的私人固定版本。</Text>
+          {button('打开对应 Forge 网页', () => { void openAssistantWebsite('forge'); }, busy || incomingBusy || !forgeWebUrl, true)}
+          {!forgeWebUrl && <Text style={s.footnote}>当前服务尚未配置对应网页版地址。请向服务提供者获取网页地址，并确认同一账号与服务。</Text>}
+          <Text style={s.label}>03 / 回到手机继续</Text><Text style={s.body}>返回这里后，手动刷新可用助手。对象名称与参考资料会保留；确认助手选择后，再继续原草稿。</Text>
+          {button('导入发布后，刷新可用助手', () => { if (assistantHandoffCurrent() && assistantUi.current.open) void refreshAssistants(true); }, busy || incomingBusy, true)}
+          {assistantHandoffError ? <View accessibilityLiveRegion="polite" style={[s.message, s.error]}><Text style={[s.small, { color: C.red }]}>{assistantHandoffError}</Text></View> : null}
+          <Text style={s.footnote}>网页版发布的是你自己的私人固定版本，不是发布到 Apptopia。浏览网页或刷新助手不会自动生成草稿。</Text>
+        </>}
+      </View>
+      {button('刷新可用助手', () => { void refreshAssistants(true); }, busy, true)}
+      {assistantHandoffNotice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{assistantHandoffNotice}</Text></View> : null}
+      {button(busy ? '正在准备…' : '生成并保存草稿 →', () => { void start(); }, busy || !chosen || !name.trim() || !source.trim())}
       <Text style={s.footnote}>本次模型费用上限为 $0。只起草，不自动发送或发布。免费模型繁忙时可稍后查看原任务。</Text>
     </>}
     {view === 'history' && <><Text style={s.label}>最近保存的工作</Text><Text style={s.small}>已载入 {history.length} 条最近记录 · 本次读取上限 {historyLimit} 条</Text>
