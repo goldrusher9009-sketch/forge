@@ -1,6 +1,6 @@
 # Forge VPS deployment
 
-Host: the Forge VPS `ubuntu@135.148.52.149` (Ubuntu 24.04, Docker 29, nginx + certbot on the host). It also runs the older `forge-private-isolated` stack on 3401 and Apptopia on 80/443; this stack sits beside them on loopback 3400. The China mirrors in the Dockerfiles hang from this overseas host, so deploy.sh rewrites them to official sources.
+Host: the Forge VPS `ubuntu@135.148.52.149` (Ubuntu 24.04, Docker 29, nginx + certbot on the host). It also runs the older `forge-private-isolated` stack on 3401 and Apptopia on 80/443; this stack sits beside them on loopback 3400. The deployment script keeps the pinned domestic Docker, APT, and npm sources. Transfer verified locally built images if the VPS cannot reach those sources reliably.
 Everything lives in `/opt/forge-pi` (a copy of this `forge/` folder without node_modules).
 
 ## Files
@@ -32,6 +32,5 @@ FORGE_BENCH_MODEL=claude-sonnet-4-6 FORGE_BENCH_ANTHROPIC_KEY=... node forge-pla
 ```
 
 ## Frontend
-Vercel project `forge` (root `forge/forge-web-studio`) with
-`NEXT_PUBLIC_API_BASE_URL=https://forge-api.135-148-52-149.sslip.io/api` and `NEXT_PUBLIC_API_URL=https://forge-api.135-148-52-149.sslip.io`.
+Vercel project `forge` (root `forge/forge-web-studio`) uses same-origin browser requests under `/api/*`. Configure only the server-side `FORGE_CONTROL_PLANE_API_URL=https://forge-api.135-148-52-149.sslip.io/api/` and `FORGE_CONTROL_PLANE_GATEWAY_SECRET` in Vercel; do not expose the control-plane URL or secret through `NEXT_PUBLIC_*` variables.
 `FRONTEND_URL` in `.env.forge-vps` must equal the Vercel production origin (CORS).

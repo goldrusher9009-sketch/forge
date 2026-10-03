@@ -1,5 +1,7 @@
 'use client';
 
+import { assertAccountToken, refreshAccountToken, sessionRevision } from '../../lib/session-state';
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type SandboxAgentConsoleProps = {
@@ -14,6 +16,7 @@ type GoogleDriveConnectionCardProps = {
   apiBase: string;
   token: string;
   onToast?: (message: string) => void;
+  zh?: boolean;
 };
 
 type TokenRef = React.MutableRefObject<string>;
@@ -74,23 +77,9 @@ async function ensureGooglePickerRuntime(): Promise<any> {
 }
 
 async function refreshForgeToken(apiBase: string, tokenRef: TokenRef): Promise<string | null> {
-  const response = await fetch(`${apiBase}/auth/refresh`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
-    body: '{}',
-    cache: 'no-store',
-  }).catch(() => null);
-  if (!response?.ok) return null;
-  const body = await response.json().catch(() => ({}));
-  const token = body?.data?.accessToken || body?.accessToken || '';
-  if (!token) return null;
-  tokenRef.current = token;
-  try {
-    const stored = JSON.parse(localStorage.getItem('forge_user') || '{}');
-    stored.token = token;
-    localStorage.setItem('forge_user', JSON.stringify(stored));
-  } catch {}
+  const generation=sessionRevision(),token=await refreshAccountToken(apiBase);
+  if(generation!==sessionRevision())throw new Error('ACCOUNT_SESSION_CHANGED');
+  if(token)tokenRef.current=token;
   return token;
 }
 
@@ -101,6 +90,8 @@ async function forgeJson(
   options: RequestInit = {},
   retry = true,
 ): Promise<any> {
+  assertAccountToken(tokenRef.current);
+  const generation=sessionRevision();
   const response = await fetch(`${apiBase}${path}`, {
     ...options,
     credentials: 'include',
@@ -111,10 +102,12 @@ async function forgeJson(
       Authorization: `Bearer ${tokenRef.current}`,
     },
   });
+  if(generation!==sessionRevision())throw new Error('ACCOUNT_SESSION_CHANGED');
   if (response.status === 401 && retry && await refreshForgeToken(apiBase, tokenRef)) {
     return forgeJson(apiBase, tokenRef, path, options, false);
   }
   const body = await response.json().catch(() => ({}));
+  if(generation!==sessionRevision())throw new Error('ACCOUNT_SESSION_CHANGED');
   if (!response.ok) {
     const code = typeof body?.error === 'string' ? body.error : '';
     const friendlyByCode: Record<string, string> = {
@@ -231,7 +224,7 @@ async function startGoogleOAuth(apiBase: string, tokenRef: TokenRef): Promise<Wi
   return popup;
 }
 
-function GoogleDriveConnectionCard({ apiBase, token, onToast }: GoogleDriveConnectionCardProps) {
+function GoogleDriveConnectionCard({ apiBase, token, onToast, zh = false }: GoogleDriveConnectionCardProps) {
   const tokenRef = useTokenRef(token);
   const [config, setConfig] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -300,27 +293,29 @@ function GoogleDriveConnectionCard({ apiBase, token, onToast }: GoogleDriveConne
         <div className="gdc-title-row">
           <strong>Google Drive</strong>
           <span className="gdc-badge" style={{ color: statusColor(config?.connected ? 'connected' : 'offline') }}>
-            {loading ? 'CHECKING' : config?.connected ? 'CONNECTED' : 'NOT CONNECTED'}
+            {loading ? (zh ? '检测中' : 'CHECKING') : config?.connected ? (zh ? '已连接' : 'CONNECTED') : (zh ? '未连接' : 'NOT CONNECTED')}
           </span>
         </div>
         <p>
-          User-owned persistent storage for selected inputs and approved artifact write-back. OAuth tokens stay encrypted in Forge and never enter a sandbox.
+          {zh
+            ? '把你选定的文件作为输入，并在你批准后把产物写回自己的网盘。OAuth 凭据在 Forge 中加密保存，不会进入沙箱。'
+            : 'User-owned persistent storage for selected inputs and approved artifact write-back. OAuth tokens stay encrypted in Forge and never enter a sandbox.'}
         </p>
         {config?.connected && (
           <div className="gdc-account">
-            <span>{config.account?.displayName || 'Google account'}</span>
-            <code>{config.account?.email || 'Account email unavailable'}</code>
+            <span>{config.account?.displayName || (zh ? 'Google 账号' : 'Google account')}</span>
+            <code>{config.account?.email || (zh ? '暂时读不到账号邮箱' : 'Account email unavailable')}</code>
           </div>
         )}
-        {!config?.configured && !loading && <div className="gdc-warning">Google OAuth environment variables are not configured on the Forge backend.</div>}
-        {config?.configured && !config?.pickerConfigured && <div className="gdc-warning">OAuth is configured, but Picker requires GOOGLE_DRIVE_DEVELOPER_KEY and GOOGLE_DRIVE_APP_ID.</div>}
-        {config?.reauthorizationRequired && <div className="gdc-warning">Reconnect to grant offline access and restore automatic token refresh.</div>}
+        {!config?.configured && !loading && <div className="gdc-warning">{zh ? 'Forge 后端还没有配置 Google OAuth 环境变量。' : 'Google OAuth environment variables are not configured on the Forge backend.'}</div>}
+        {config?.configured && !config?.pickerConfigured && <div className="gdc-warning">{zh ? 'OAuth 已配置，但文件选择器还需要 GOOGLE_DRIVE_DEVELOPER_KEY 和 GOOGLE_DRIVE_APP_ID。' : 'OAuth is configured, but Picker requires GOOGLE_DRIVE_DEVELOPER_KEY and GOOGLE_DRIVE_APP_ID.'}</div>}
+        {config?.reauthorizationRequired && <div className="gdc-warning">{zh ? '重新连接以授予离线访问权限，恢复令牌自动刷新。' : 'Reconnect to grant offline access and restore automatic token refresh.'}</div>}
         <ErrorNotice message={error} onDismiss={() => setError('')} />
       </div>
       <div className="gdc-actions">
         {config?.connected
-          ? <ActionButton tone="danger" onClick={disconnect} disabled={busy}>Disconnect</ActionButton>
-          : <ActionButton tone="primary" onClick={connect} disabled={busy || !config?.configured}>{busy ? 'Connecting…' : 'Connect Drive'}</ActionButton>}
+          ? <ActionButton tone="danger" onClick={disconnect} disabled={busy}>{zh ? '断开连接' : 'Disconnect'}</ActionButton>
+          : <ActionButton tone="primary" onClick={connect} disabled={busy || !config?.configured}>{busy ? (zh ? '连接中…' : 'Connecting…') : (zh ? '连接 Google Drive' : 'Connect Drive')}</ActionButton>}
       </div>
     </div>
   );

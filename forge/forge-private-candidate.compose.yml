@@ -17,7 +17,13 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:?set the invitation-only administrator email}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set a unique administrator bootstrap password}
       FRONTEND_URL: ${FRONTEND_URL:?set the exact HTTPS Forge frontend origin}
+      FORGE_INCOMING_CALL_PUBLIC_URL: ${FORGE_INCOMING_CALL_PUBLIC_URL:-}
       CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?set a separate high-entropy credential encryption key}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      FORGE_AGENT_ENGINE: pi
+      FORGE_PI_WORKER_URL: http://forge-pi-worker:8791
+      FORGE_PI_WORKER_TOKEN: ${FORGE_PI_WORKER_TOKEN:?set a random token of at least 32 characters}
+      FORGE_PI_PLATFORM_URL: http://forge-platform:3000
       FORGE_SANDBOX_ORCHESTRATOR_URL: http://forge-sandbox-orchestrator:3001
       FORGE_SANDBOX_HMAC_SECRET: ${FORGE_SANDBOX_HMAC_SECRET:?set FORGE_SANDBOX_HMAC_SECRET}
       GOOGLE_DRIVE_CLIENT_ID: ${GOOGLE_DRIVE_CLIENT_ID:?set the Google OAuth web client ID}
@@ -31,6 +37,7 @@ services:
       - forge_platform_data:/data
     networks:
       - control
+      - pi-private
     read_only: true
     tmpfs:
       - /tmp:rw,nosuid,nodev,size=64m
@@ -39,6 +46,8 @@ services:
     security_opt:
       - no-new-privileges:true
     depends_on:
+      forge-pi-worker:
+        condition: service_healthy
       forge-sandbox-orchestrator:
         condition: service_healthy
     restart: unless-stopped
@@ -47,6 +56,38 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+
+  forge-pi-worker:
+    image: forge-pi-worker:sandbox-candidate
+    build:
+      context: ./forge-pi-worker
+      dockerfile: Dockerfile
+    environment:
+      PORT: "8791"
+      HOST: 0.0.0.0
+      FORGE_PI_WORKER_TOKEN: ${FORGE_PI_WORKER_TOKEN:?set a random token of at least 32 characters}
+      FORGE_PI_MAX_CONCURRENT: "3"
+    networks:
+      - pi-private
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=256m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+    pids_limit: 256
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8791/health',{headers:{Authorization:'Bearer '+process.env.FORGE_PI_WORKER_TOKEN}}).then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  pi-private:
+    internal: true
 
 volumes:
   forge_platform_data:

@@ -1,3 +1,5 @@
+import { utcStamp } from './platform-time';
+
 // Tailwind CSS class name utility
 export function classNames(...classes: (string | undefined | false)[]): string {
   return classes.filter(Boolean).join(' ');
@@ -18,7 +20,7 @@ export function formatDuration(ms: number): string {
 
 // Format date to readable string
 export function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = typeof date === 'string' ? new Date(utcStamp(date)) : date;
   return d.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',
@@ -30,7 +32,7 @@ export function formatDate(date: Date | string): string {
 
 // Format date to short form (e.g., "Jan 5")
 export function formatDateShort(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  const d = typeof date === 'string' ? new Date(utcStamp(date)) : date;
   return d.toLocaleString('en-US', {
     month: 'short',
     day: 'numeric',

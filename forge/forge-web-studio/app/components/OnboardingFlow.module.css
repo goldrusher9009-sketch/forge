@@ -1,0 +1,17 @@
+.backdrop { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; padding: 20px; background: rgba(8,8,9,.84); backdrop-filter: blur(12px); overflow-y: auto; }
+.dialog { width: 100%; max-width: 600px; max-height: calc(100dvh - 40px); overflow-y: auto; border: 1px solid var(--fg-border2); border-radius: 22px; background: var(--fg-bg2); color: var(--fg-text); padding: 32px; box-shadow: 0 24px 100px #0006; }
+.brand { display: flex; align-items: center; gap: 12px; font: 600 11px var(--fg-font-mono, monospace); letter-spacing: .14em; margin-bottom: 32px; }
+.brand > span:first-child { font: 800 20px var(--fg-font-display, sans-serif); color: var(--fg-orange); padding: 10px; border: 1px solid var(--fg-border2); border-radius: 12px; }
+.eyebrow { color: var(--fg-text3); font: 10px/1.5 var(--fg-font-mono, monospace); letter-spacing: .1em; }
+.dialog h2 { font: 550 34px/1.15 var(--fg-font-display, sans-serif); letter-spacing: -.04em; margin: 12px 0 16px; text-wrap: balance; }
+.intro { font-size: 14px; color: var(--fg-text2); line-height: 1.7; margin: 0; }
+.steps { padding: 0; margin: 28px 0; list-style: none; }
+.steps li { display: flex; gap: 16px; padding: 18px 0; border-top: 1px solid var(--fg-border); }
+.number { font: 11px var(--fg-font-mono, monospace); padding-top: 4px; color: var(--fg-orange); }
+.steps h3 { font-size: 14px; font-weight: 550; margin: 0 0 6px; }
+.steps p { font-size: 12px; line-height: 1.7; color: var(--fg-text2); margin: 0; }
+.footer { border-top: 1px solid var(--fg-border); padding-top: 20px; }
+.footer p { font-size: 11px; line-height: 1.7; color: var(--fg-text3); margin: 0 0 18px; }
+.footer button { width: 100%; display: flex; justify-content: space-between; background: var(--fg-text); color: var(--fg-bg); padding: 14px 16px; border: 0; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; }
+.footer button:focus-visible { outline: 2px solid var(--fg-orange); outline-offset: 4px; }
+@media (max-width: 767px) { .backdrop { padding: 12px; } .dialog { padding: 22px; max-height: calc(100dvh - 24px); border-radius: 16px; } .brand { margin-bottom: 22px; } .dialog h2 { font-size: 29px; } .steps { margin: 22px 0 6px; } .steps li { padding: 15px 0; } }

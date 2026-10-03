@@ -1,9 +1,9 @@
 # Forge Deploy Map — READ THIS FIRST
 
-Updated 2026-09-08. Single source of truth for how Forge deploys. Railway is retired.
+Updated 2026-09-29. Railway is retired. This map describes the deployed VPS/Vercel topology; `DEPLOY.md` defines the candidate Preview and promotion gates.
 
 ## TL;DR
-- **Branch:** `sasaky/forge-pi-on-gdl` (old Google-Drive production line + Pi engine). Not merged to `main` yet.
+- **Deployed line:** `sasaky/forge-pi-on-gdl` (Google Drive + Pi). The current commercial candidate is `sasaky/forge-commercial-launch-candidate`; verify its HEAD and acceptance evidence before deployment.
 - **Backend:** VPS `ubuntu@135.148.52.149` (OVH, Ubuntu 24.04, Docker 29). Stack `/opt/forge-pi/forge-vps.compose.yml`, project `forge-pi`.
   Public hostname `https://forge-api.135-148-52-149.sslip.io` → nginx → Caddy gateway (loopback 3400) → platform.
   The gateway only forwards `/api/*` requests carrying `X-Forge-Gateway-Secret` (Vercel) or `Stripe-Signature` (webhook). Everything else is 404 by design. `/healthz` is open.
@@ -22,10 +22,10 @@ tar --exclude=node_modules --exclude=.next --exclude=dist --exclude=.omc --exclu
 scp /tmp/forge-sync.tgz ubuntu@135.148.52.149:/opt/forge-pi/
 ssh ubuntu@135.148.52.149 'cd /opt/forge-pi && tar xzf forge-sync.tgz && rm forge-sync.tgz && sudo bash deploy/vps/deploy.sh'
 ```
-`deploy.sh` rewrites the China mirrors in the Dockerfiles to official sources (they hang from this host), builds the four images, and restarts with health waits.
+`deploy.sh` keeps the pinned domestic Docker, APT, and npm sources, builds the four images, and restarts with health waits. If building on the VPS is slow, transfer locally built images after verifying their identities; do not rewrite dependency sources during deployment.
 
 ## Deploy the frontend
-From the monorepo root (`D:\zjh\self\Hash\forge`, must be the main checkout, not a worktree): `npx vercel deploy --prod --yes`. Builds take ~15 min (TypeScript over a 56k-line component).
+Follow `DEPLOY.md`: build a protected Preview from the candidate branch, verify the external control plane and browser acceptance, then promote the exact accepted deployment. Direct production deployment is not the candidate release path.
 
 ## Verify
 ```bash

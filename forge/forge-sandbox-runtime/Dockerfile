@@ -1,12 +1,14 @@
 FROM docker.m.daocloud.io/library/node:20-bookworm-slim
 
-RUN sed -i \
-      -e 's|http://deb.debian.org/debian-security|http://mirrors.aliyun.com/debian-security|g' \
-      -e 's|http://security.debian.org/debian-security|http://mirrors.aliyun.com/debian-security|g' \
-      -e 's|http://deb.debian.org/debian|http://mirrors.aliyun.com/debian|g' \
+# Bootstrap HTTPS with Node's bundled Mozilla roots; Debian ca-certificates replaces this bundle.
+RUN node -e "const fs = require('fs'); fs.mkdirSync('/etc/ssl/certs', {recursive:true}); fs.writeFileSync('/etc/ssl/certs/ca-certificates.crt', require('tls').rootCertificates.join('\n') + '\n')" \
+    && sed -i \
+      -e 's|http://deb.debian.org/debian-security|https://mirrors.ustc.edu.cn/debian-security|g' \
+      -e 's|http://security.debian.org/debian-security|https://mirrors.ustc.edu.cn/debian-security|g' \
+      -e 's|http://deb.debian.org/debian|https://mirrors.ustc.edu.cn/debian|g' \
       /etc/apt/sources.list.d/debian.sources \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
+    && apt-get -o Acquire::By-Hash=false -o Acquire::Retries=2 -o Acquire::https::Timeout=30 update \
+    && apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=30 install -y --no-install-recommends \
       ca-certificates \
       chromium \
       fonts-noto-cjk \

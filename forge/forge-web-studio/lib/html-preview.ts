@@ -1,0 +1,4 @@
+type PreviewContent = { content: string; language?: string };
+
+/** Pair this document with an empty iframe sandbox and no-referrer policy. */
+export const previewDocument = (item: PreviewContent) => `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src 'none'; connect-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><style>body{margin:16px;color:#192027;background:white;font:14px sans-serif}svg{max-width:100%;height:auto}img{max-width:100%}${item.language==='svg'?'body{min-height:calc(100vh - 32px);display:grid;place-items:center;background:#e7e7ec}svg{width:min(100%,900px)}':''}</style></head><body>${item.content}</body></html>`;

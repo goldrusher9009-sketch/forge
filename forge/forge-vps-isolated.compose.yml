@@ -114,6 +114,7 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:?set the invitation-only administrator email}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set a unique administrator bootstrap password}
       FRONTEND_URL: ${FRONTEND_URL:?set the exact HTTPS Forge frontend origin}
+      FORGE_INCOMING_CALL_PUBLIC_URL: ${FORGE_INCOMING_CALL_PUBLIC_URL:-}
       CREDENTIAL_ENCRYPTION_KEY: ${CREDENTIAL_ENCRYPTION_KEY:?set a separate high-entropy credential encryption key}
       GOOGLE_DRIVE_CLIENT_ID: ${GOOGLE_DRIVE_CLIENT_ID:-}
       GOOGLE_DRIVE_CLIENT_SECRET: ${GOOGLE_DRIVE_CLIENT_SECRET:-}

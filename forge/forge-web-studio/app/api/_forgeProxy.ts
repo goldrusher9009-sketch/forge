@@ -65,6 +65,10 @@ function forwardedRequestHeaders(request: NextRequest, gatewaySecret: string): H
   // Ask the gateway for identity encoding so bodies pass through byte-for-byte.
   headers.set('accept-encoding', 'identity');
   headers.delete('x-forge-gateway-secret');
+  // Vercel resolves the real client address; forward only that so auth throttling keys on the visitor.
+  const clientIp = request.headers.get('x-vercel-forwarded-for') || request.headers.get('x-real-ip') || '';
+  headers.delete('x-forwarded-for');
+  if (clientIp) headers.set('x-forwarded-for', clientIp.split(',')[0].trim());
   headers.set('x-forwarded-host', request.nextUrl.host);
   headers.set('x-forwarded-proto', request.nextUrl.protocol.replace(':', ''));
   headers.set('x-forge-proxy', 'vercel');
@@ -130,12 +134,33 @@ export async function proxyForgeApi(
     redirect: 'manual',
     cache: 'no-store',
   };
-  if (!['GET', 'HEAD'].includes(request.method)) {
-    init.body = request.body;
-    init.duplex = 'half';
-  }
-
   try {
+    if (!['GET', 'HEAD'].includes(request.method)) {
+      if (request.body && /^(?:application\/json|application\/x-www-form-urlencoded)(?:\s*;|$)/i.test(request.headers.get('content-type') || '')) {
+        // A streaming upload has no replayable source. Node fetch can turn an
+        // upstream 401 into a network error for such bodies. Buffer bounded JSON
+        // and forms so invalid credentials/signatures keep their real status.
+        const limit = pathParts[0] === 'pi-events' ? 8192
+          : pathParts[0] === 'incoming-call' && pathParts[1] === 'webhooks' ? 32 * 1024
+          : 16 * 1024 * 1024;
+        const reader = request.body.getReader(), chunks: Uint8Array[] = [];
+        let size = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          size += value.byteLength;
+          if (size > limit) {
+            await reader.cancel();
+            return NextResponse.json({ success: false, error: pathParts[0] === 'pi-events' ? 'EVENT_DATA_TOO_LARGE' : 'REQUEST_BODY_TOO_LARGE' }, { status: 413, headers: { 'Cache-Control': 'no-store' } });
+          }
+          chunks.push(value);
+        }
+        init.body = new Uint8Array(Buffer.concat(chunks)).buffer;
+      } else {
+        init.body = request.body;
+        init.duplex = 'half';
+      }
+    }
     const upstream = await fetch(targetUrl, init);
     const headers = forwardedResponseHeaders(upstream, targetUrl, request.nextUrl.origin);
     const contentType = upstream.headers.get('content-type') || '';
