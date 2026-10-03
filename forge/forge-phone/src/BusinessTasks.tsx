@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, BackHandler, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, AppState, BackHandler, Linking, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   availableDraftReleases, createDraftThread, DraftArtifact, DraftClient, DraftJob, DraftKind, DraftRelease, DraftReport,
   draftLabel, knownCharge, newDraftJob, readDraftRequest, restoreDraftJob, SavedThread, submitDraft, verifyDraft,
@@ -12,8 +12,10 @@ import {
 import IncomingMail from './IncomingMail';
 import IncomingCalls from './IncomingCalls';
 import { APPTOPIA_MARKETPLACE_URL, forgeWebUrlForApi } from './config';
+import { clearComposeDraft, ComposeDraft, readComposeDraft, saveComposeDraft } from './compose-draft-store';
 
-type Props = { client: DraftClient; apiUrl: string; active: boolean; onBusyChange?: (busy: boolean) => void };
+type Props = { client: DraftClient; apiUrl: string; userId: string; active: boolean; onBusyChange?: (busy: boolean) => void };
+type LocalCompose = { client: DraftClient; apiUrl: string; userId: string; draft: ComposeDraft; ready: boolean; revision: number; stored: number; queued: number; clearing: boolean; timer?: ReturnType<typeof setTimeout> };
 const C = { bg: '#f3f0e8', paper: '#fffdf7', ink: '#20251f', muted: '#686f63', line: '#dcded2', green: '#3d6229', accent: '#b5db57', red: '#a33d30' };
 type Preview = { artifact: DraftArtifact; value?: Record<string, any>; report: DraftReport | null; verified: boolean };
 function friendly(error: unknown): string {
@@ -224,12 +226,19 @@ function FollowUpCard({ target, busy, operationId, sourceVerified = true, snapsh
           </View>;
 }
 
-export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: Props) {
+export default function BusinessTasks({ client, apiUrl, userId, active, onBusyChange }: Props) {
   const [kind, setKind] = useState<DraftKind>('reply');
   const [name, setName] = useState('');
   const [source, setSource] = useState('');
   const [releases, setReleases] = useState<DraftRelease[]>([]);
   const [chosen, setChosen] = useState('');
+  const [composeReady, setComposeReady] = useState(false);
+  const [composeClearing, setComposeClearing] = useState(false);
+  const [composeMessage, setComposeMessage] = useState('正在读取本机草稿…');
+  const [composeError, setComposeError] = useState(false);
+  const localCompose = useRef<LocalCompose | null>(null);
+  const composeOwner = useRef({ client, apiUrl, userId });
+  composeOwner.current = { client, apiUrl, userId };
   const [assistantsKnown, setAssistantsKnown] = useState(false);
   const [assistantPreparation, setAssistantPreparation] = useState<DraftAssistantPreparation | null>(null);
   const [assistantPhase, setAssistantPhase] = useState('');
@@ -290,6 +299,47 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
   clientRef.current = client; busyCallback.current = onBusyChange;
   assistantUi.current = { active, view, apiUrl, open: assistantHandoffOpen, incomingBusy };
   selectedMail.current = mailReceipt;
+
+  const localCurrent = (entry: LocalCompose | null): entry is LocalCompose => !!entry && mounted.current && localCompose.current === entry
+    && entry.client === client && composeOwner.current.client === client && entry.apiUrl === apiUrl && composeOwner.current.apiUrl === apiUrl
+    && entry.userId === userId && composeOwner.current.userId === userId;
+  const flushCompose = (entry: LocalCompose) => {
+    clearTimeout(entry.timer); entry.timer = undefined;
+    if (!entry.ready || entry.clearing || entry.revision <= entry.stored || entry.queued === entry.revision) return;
+    const revision = entry.revision; entry.queued = revision;
+    // Capture the old account and snapshot before logout can mount another account.
+    void saveComposeDraft(entry.apiUrl, entry.userId, { ...entry.draft }).then(() => {
+      entry.stored = Math.max(entry.stored, revision);
+      if (localCurrent(entry) && entry.revision === revision && !entry.clearing) { setComposeMessage('已保存到本机。'); setComposeError(false); }
+    }).catch(() => {
+      if (entry.queued === revision) entry.queued = -1;
+      if (localCurrent(entry) && entry.revision === revision && !entry.clearing) { setComposeMessage('本机保存未完成，当前输入仍在。请重试保存。'); setComposeError(true); }
+    });
+  };
+  const changeCompose = (patch: Partial<ComposeDraft>, internal = false) => {
+    const entry = localCompose.current;
+    if (!localCurrent(entry) || !entry.ready || entry.clearing || !internal && (!assistantUi.current.active || assistantUi.current.view !== 'compose' || busyRef.current)) return;
+    const next = { ...entry.draft, ...patch };
+    if (JSON.stringify(next) === JSON.stringify(entry.draft)) return;
+    entry.draft = next; entry.revision += 1;
+    setKind(next.kind); setName(next.name); setSource(next.source); setChosen(next.releaseId);
+    setComposeMessage('正在保存到本机…'); setComposeError(false);
+    clearTimeout(entry.timer); entry.timer = setTimeout(() => flushCompose(entry), 500);
+  };
+  const clearLocalCompose = async () => {
+    const entry = localCompose.current;
+    if (!localCurrent(entry) || !entry.ready || entry.clearing || !assistantHandoffCurrent()) return;
+    clearTimeout(entry.timer); entry.timer = undefined; entry.clearing = true; entry.revision += 1;
+    setComposeClearing(true); setComposeMessage('正在清除本机草稿…'); setComposeError(false);
+    try {
+      await clearComposeDraft(entry.apiUrl, entry.userId);
+      entry.draft = { kind: 'reply', name: '', source: '', releaseId: '' }; entry.stored = entry.revision; entry.queued = entry.revision;
+      if (localCurrent(entry)) { setKind('reply'); setName(''); setSource(''); setChosen(''); setComposeMessage('本机草稿已清除。'); }
+    } catch {
+      entry.stored = entry.revision; entry.queued = entry.revision;
+      if (localCurrent(entry)) { setComposeMessage('本机草稿未能清除，当前输入仍保留。'); setComposeError(true); }
+    } finally { entry.clearing = false; if (localCurrent(entry)) setComposeClearing(false); }
+  };
 
   const begin = (purpose: 'draft' | 'mail' | 'assistant' | 'other' = 'other') => {
     // A callback from an earlier account must never borrow the new client's credentials.
@@ -373,6 +423,7 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
   };
   const assistantHandoffCurrent = () => mounted.current && clientRef.current === client
     && assistantUi.current.active && assistantUi.current.view === 'compose' && assistantUi.current.apiUrl === apiUrl
+    && localCurrent(localCompose.current) && localCompose.current.ready && !localCompose.current.clearing
     && !busyRef.current && !assistantUi.current.incomingBusy;
   const toggleAssistantHandoff = () => {
     if (!assistantHandoffCurrent()) return;
@@ -393,13 +444,20 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
       }
     } finally { if (assistantLinkRequest.current === id) assistantLinkOpening.current = false; }
   };
-  const refreshAssistants = async (explicit = false) => {
+  const refreshAssistants = async (explicit = false, restored = false) => {
+    if (!localCurrent(localCompose.current) || !localCompose.current.ready || localCompose.current.clearing) return;
     if (explicit && !assistantHandoffCurrent()) return;
     const op = begin(); if (!op) return;
     if (explicit) { setAssistantHandoffNotice(''); setAssistantHandoffError(''); }
     try {
       const list = await availableDraftReleases(op.client); op.ensure(); setReleases(list); setAssistantsKnown(true);
-      setChosen(previous => list.some(item => item.releaseId === previous) ? previous : explicit ? '' : list[0]?.releaseId || '');
+      const entry = localCompose.current;
+      if (!localCurrent(entry)) return;
+      const previous = entry.draft.releaseId;
+      const next = list.some(item => item.releaseId === previous) ? previous : explicit || restored ? '' : list[0]?.releaseId || '';
+      if (explicit || restored) changeCompose({ releaseId: next }, true);
+      else { entry.draft.releaseId = next; setChosen(next); }
+      if (restored && previous && !next) setComposeMessage('已恢复草稿文字，原助手暂不可用，请重新选择。');
       if (explicit) setAssistantHandoffNotice(list.length ? '可用助手已刷新，当前草稿已保留。请确认选择后继续。' : '已刷新，暂未找到可用于零价模型草稿任务的私人版本。当前草稿已保留，请在对应网页版检查模型、工具和发布状态。');
     }
     catch (e) {
@@ -414,21 +472,38 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
   };
   useEffect(() => {
     mounted.current = true;
+    const entry: LocalCompose = { client, apiUrl, userId, draft: { kind: 'reply', name: '', source: '', releaseId: '' }, ready: false, revision: 0, stored: 0, queued: -1, clearing: false };
+    localCompose.current = entry; setComposeReady(false); setComposeClearing(false); setComposeError(false); setComposeMessage('正在读取本机草稿…');
     resetMail(); setResendState('unread'); jobRef.current = null; savedThread.current = '';
-    setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setHistoryKnown(false); setFiles([]); setPreview(null); setCharge(null);
+    setKind('reply'); setName(''); setSource(''); setChosen(''); setReleases([]); setAssistantsKnown(false); assistantRef.current = null; setAssistantPreparation(null); setAssistantPhase(''); setHistory([]); setHistoryKnown(false); setFiles([]); setPreview(null); setCharge(null);
     assistantLinkRequest.current += 1; assistantLinkOpening.current = false;
     setAssistantHandoffOpen(false); setAssistantHandoffNotice(''); setAssistantHandoffError('');
     setHistoryLimit(30); setHistoryHasMore(false); setHistoryQuery('');
     resultParent.current = 'compose'; setView('compose'); setNotice(''); setError(''); setPhase(''); setRetryAllowed(false); setCanStop(false); setRaw(false);
     busyRef.current = false; setBusy(false); setIncomingBusy(false);
     const accountBusyCallback = busyCallback.current;
-    void refreshAssistants();
+    void (async () => {
+      let restored = false;
+      try {
+        const saved = await readComposeDraft(apiUrl, userId);
+        if (!localCurrent(entry)) return;
+        if (saved) { entry.draft = saved; restored = true; setKind(saved.kind); setName(saved.name); setSource(saved.source); setChosen(saved.releaseId); }
+        setComposeMessage(saved ? '已恢复此账号在本机保存的草稿。' : '输入会自动保存到本机，供此账号下次继续。');
+      } catch {
+        if (!localCurrent(entry)) return;
+        setComposeMessage('本机草稿暂未恢复，当前输入仍可使用。重新打开后可重试恢复。'); setComposeError(true);
+      }
+      if (!localCurrent(entry)) return;
+      entry.ready = true; setComposeReady(true); void refreshAssistants(false, restored);
+    })();
+    const background = AppState.addEventListener('change', state => { if (state !== 'active') flushCompose(entry); });
     return () => {
       mounted.current = false; operation.current += 1; controller.current?.abort(); busyRef.current = false;
+      background.remove(); flushCompose(entry);
       preparation.current = null; preparationConflict.current = false; selectedMail.current = null; mailThread.current = '';
       accountBusyCallback?.(false);
     };
-  }, [client]);
+  }, [client, apiUrl, userId]);
   useEffect(() => {
     if (!active || view !== 'compose') { assistantLinkRequest.current += 1; assistantLinkOpening.current = false; }
   }, [active, view]);
@@ -448,7 +523,7 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
   }, [active, client, view, incomingBusy]);
 
   const prepareAssistant = async (retryEvaluation = false) => {
-    if (incomingBusy || retryEvaluation && !assistantRef.current?.retryAllowed) return;
+    if (!assistantHandoffCurrent() || incomingBusy || retryEvaluation && !assistantRef.current?.retryAllowed) return;
     const op = begin('assistant'); if (!op) return;
     setNotice(''); setAssistantPhase('正在查看可用免费模型');
     try {
@@ -457,7 +532,7 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
       const result = await prepareDraftAssistant(op.client, preparation, (saved, phase) => {
         op.ensure(); assistantRef.current = saved; setAssistantPreparation(saved); setAssistantPhase(phase);
       }, retryEvaluation);
-      op.ensure(); setReleases(result.releases); setChosen(result.release.releaseId); setAssistantsKnown(true);
+      op.ensure(); setReleases(result.releases); changeCompose({ releaseId: result.release.releaseId }, true); setAssistantsKnown(true);
       setNotice('你的助手版本已准备好，答题测评费用已核对为 $0。接下来填写真实资料生成草稿；实际文件与费用会另行核对。');
     } catch (e) {
       if (!cancelled(e) && mounted.current && operation.current === op.id) {
@@ -467,6 +542,7 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
   };
 
   const start = async () => {
+    if (!assistantHandoffCurrent()) return;
     const release = releases.find(item => item.releaseId === chosen);
     if (!release) return;
     const op = begin('draft'); if (!op) return;
@@ -696,6 +772,7 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
   const taskSourceSha256 = preview?.report?.files.find(file => file.id === preview.artifact.id && file.version === preview.artifact.version && file.original)?.sha256 || '';
   const historyMatches = history.filter(thread => `${thread.title.split('\n')[0]}\n${thread.publishedAgent?.name || ''}`.toLocaleLowerCase().includes(historyQuery.trim().toLocaleLowerCase()));
   const forgeWebUrl = forgeWebUrlForApi(apiUrl);
+  const composeDisabled = busy || !composeReady || composeClearing || !localCurrent(localCompose.current);
 
 
   return <ScrollView ref={scroll} keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
@@ -707,10 +784,13 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
     {view === 'incoming' && <IncomingMail client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
     {view === 'incoming-calls' && <IncomingCalls client={client} onBusyChange={setIncomingBusy} onOpenDraft={threadId => { if (mounted.current && clientRef.current === client && !busyRef.current) void openSaved(threadId); }} />}
     {view === 'compose' && <>
-      <View style={s.templates}>{(['reply', 'marketing'] as DraftKind[]).map((value, index) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: kind === value, disabled: busy }} disabled={busy} key={value} onPress={() => setKind(value)} style={[s.template, kind === value && s.selected]}><Text style={s.number}>0{index + 1}</Text><Text style={s.templateTitle}>{draftLabel(value)}</Text><Text style={s.small}>{value === 'reply' ? '回复正文 + 后续跟进草稿' : '邮件文案 + 社交媒体文案'}</Text></TouchableOpacity>)}</View>
-      <Text style={s.label}>{kind === 'reply' ? '收件对象' : '品牌或产品名称'}</Text><TextInput accessibilityLabel="草稿对象名称" value={name} onChangeText={setName} editable={!busy} maxLength={100} placeholder={kind === 'reply' ? '例如：王经理' : '例如：Northstar Studio'} placeholderTextColor={C.muted} style={s.input} />
-      <Text style={s.label}>{kind === 'reply' ? '来信内容与需要说明的事实' : '真实卖点、目标用户与使用场景'}</Text><TextInput accessibilityLabel="草稿参考资料" value={source} onChangeText={setSource} editable={!busy} multiline maxLength={6000} placeholder={kind === 'reply' ? '粘贴来信，并补充可以确认的交付时间、产品信息和你的回复意图。' : '写下已确认的功能、优势和适用人群。没有证据的效果或价格，请明确说明。'} placeholderTextColor={C.muted} style={[s.input, s.source]} />
-      <Text style={s.label}>本次使用的助手</Text>{releases.map(release => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: chosen === release.releaseId, disabled: busy }} disabled={busy} key={release.releaseId} onPress={() => setChosen(release.releaseId)} style={[s.assistant, chosen === release.releaseId && s.selected]}><Text style={s.body}>{release.name}</Text><Text style={s.small}>v{release.version} · 当前零价模型{chosen === release.releaseId ? ' · 已选择' : ''}</Text></TouchableOpacity>)}
+      <View style={s.templates}>{(['reply', 'marketing'] as DraftKind[]).map((value, index) => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: kind === value, disabled: composeDisabled }} disabled={composeDisabled} key={value} onPress={() => changeCompose({ kind: value })} style={[s.template, kind === value && s.selected]}><Text style={s.number}>0{index + 1}</Text><Text style={s.templateTitle}>{draftLabel(value)}</Text><Text style={s.small}>{value === 'reply' ? '回复正文 + 后续跟进草稿' : '邮件文案 + 社交媒体文案'}</Text></TouchableOpacity>)}</View>
+      <Text style={s.label}>{kind === 'reply' ? '收件对象' : '品牌或产品名称'}</Text><TextInput accessibilityLabel="草稿对象名称" value={name} onChangeText={value => changeCompose({ name: value })} editable={!composeDisabled} maxLength={100} placeholder={kind === 'reply' ? '例如：王经理' : '例如：Northstar Studio'} placeholderTextColor={C.muted} style={s.input} />
+      <Text style={s.label}>{kind === 'reply' ? '来信内容与需要说明的事实' : '真实卖点、目标用户与使用场景'}</Text><TextInput accessibilityLabel="草稿参考资料" value={source} onChangeText={value => changeCompose({ source: value })} editable={!composeDisabled} multiline maxLength={6000} placeholder={kind === 'reply' ? '粘贴来信，并补充可以确认的交付时间、产品信息和你的回复意图。' : '写下已确认的功能、优势和适用人群。没有证据的效果或价格，请明确说明。'} placeholderTextColor={C.muted} style={[s.input, s.source]} />
+      <View accessibilityLiveRegion="polite" style={s.message}><Text style={[s.small, composeError && { color: C.red }]}>{composeMessage}</Text><Text style={s.small}>仅保存在这部手机；退出登录后，输入草稿仍为此账号保留。</Text></View>
+      {composeError && localCompose.current && localCompose.current.revision > localCompose.current.stored && button('重试保存到本机', () => { const entry = localCompose.current; if (localCurrent(entry) && !composeDisabled) { setComposeMessage('正在保存到本机…'); flushCompose(entry); } }, composeDisabled, true)}
+      {button('清除本机草稿', () => { void clearLocalCompose(); }, composeDisabled || !name && !source && kind === 'reply' && !chosen, true)}
+      <Text style={s.label}>本次使用的助手</Text>{releases.map(release => <TouchableOpacity accessibilityRole="button" accessibilityState={{ selected: chosen === release.releaseId, disabled: composeDisabled }} disabled={composeDisabled} key={release.releaseId} onPress={() => changeCompose({ releaseId: release.releaseId })} style={[s.assistant, chosen === release.releaseId && s.selected]}><Text style={s.body}>{release.name}</Text><Text style={s.small}>v{release.version} · 当前零价模型{chosen === release.releaseId ? ' · 已选择' : ''}</Text></TouchableOpacity>)}
       {!releases.length && <View style={s.saved}>
         <Text style={s.eyebrow}>从第一份草稿开始</Text><Text style={s.templateTitle}>{assistantsKnown ? '还没有草稿助手。' : '先看看你的可用助手。'}</Text>
         <Text style={s.small}>{assistantsKnown ? '在这里准备你自己的免费助手：保存模板、完成答题测评，再发布固定版本供你使用。' : '可用助手尚未读取成功，请先刷新。'}</Text>
@@ -740,7 +820,7 @@ export default function BusinessTasks({ client, apiUrl, active, onBusyChange }: 
       </View>
       {button('刷新可用助手', () => { void refreshAssistants(true); }, busy, true)}
       {assistantHandoffNotice ? <View accessibilityLiveRegion="polite" style={s.message}><Text style={s.small}>{assistantHandoffNotice}</Text></View> : null}
-      {button(busy ? '正在准备…' : '生成并保存草稿 →', () => { void start(); }, busy || !chosen || !name.trim() || !source.trim())}
+      {button(busy ? '正在准备…' : '生成并保存草稿 →', () => { void start(); }, composeDisabled || !assistantsKnown || !releases.some(item => item.releaseId === chosen) || !name.trim() || !source.trim())}
       <Text style={s.footnote}>本次模型费用上限为 $0。只起草，不自动发送或发布。免费模型繁忙时可稍后查看原任务。</Text>
     </>}
     {view === 'history' && <><Text style={s.label}>最近保存的工作</Text><Text style={s.small}>已载入 {history.length} 条最近记录 · 本次读取上限 {historyLimit} 条</Text>
